@@ -1,6 +1,8 @@
 # Huginn
 Huginn: Odin’s Thought, in Every Move
 
+![Huginn Logo](images/Huginn.png)
+
 # MSYS2 ucrt64 C++ Build Instructions
 
 ## Prerequisites
