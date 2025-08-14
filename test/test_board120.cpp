@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "board120.hpp"    // core: File, Rank, sq(), is_playable, file_of, rank_of, deltas, MAILBOX_MAPS
 #include "squares120.hpp"  // extras: Square120::E4, Playable120 (no redefs)
+#include "board_state.hpp"
 
 TEST(Board120, SqCalculation) {
     EXPECT_EQ(sq(File::A, Rank::R1), 21);
@@ -113,4 +114,15 @@ TEST(Board120, ExplicitOffboardSentinels) {
     // And a couple of sanity checks that real squares ARE playable:
     EXPECT_TRUE(is_playable(sq(File::A, Rank::R1))); // 21
     EXPECT_TRUE(is_playable(sq(File::H, Rank::R8))); // 98
+}
+
+TEST(Board120, BoardClearSetsFramesOffboard) {
+    S_BOARD b; b.clear_board();
+    // A0, I1, A10 are offboard
+    auto raw120 = [](int file1, int row){ return row*10 + file1; };
+    EXPECT_EQ(b.pieces[ raw120(1,0) ],  OFFBOARD);  // A0
+    EXPECT_EQ(b.pieces[ raw120(9,2) ],  OFFBOARD);  // I1 (right frame)
+    EXPECT_EQ(b.pieces[ raw120(1,10) ], OFFBOARD);  // A10 (top frame)
+    // E4 playable = EMPTY
+    EXPECT_EQ(b.pieces[ sq(File::E, Rank::R4) ], EMPTY);
 }

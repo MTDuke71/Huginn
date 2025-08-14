@@ -6,6 +6,8 @@
 #include "chess_types.hpp"  // Piece, Color, PieceType, helpers
 #include "board120.hpp"     // File, Rank, sq(), is_playable, etc.
 #include "squares120.hpp" // MailboxMaps, ALL64, ALL120, etc.
+#include "board_state.hpp"
+#include "zobrist.hpp"
 
 int main() {
     // 120-cell mailbox board storing Pieces
@@ -60,5 +62,15 @@ int main() {
         // stop if blocked; otherwise keep extending
     }
 
+    Zobrist::init_zobrist();  // call once at startup
+
+    S_BOARD B;
+    set_startpos(B);
+    B.posKey = Zobrist::compute(B);
+
+    // If you re-count later:
+    rebuild_counts(B);
+    const U64 check = Zobrist::compute(B);
+    // assert(B.posKey == check); // once you maintain posKey incrementally
     return 0;
 }
