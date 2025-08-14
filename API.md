@@ -108,3 +108,33 @@
   - `unmake_move(Position&, const Move&, const State&)`
 
 ---
+
+## board_state.hpp — Classic Board State API
+
+- **Enums:**
+  - `Side` (WHITE, BLACK, BOTH)
+  - `PieceCode` (EMPTY, wP, wN, ..., bK)
+- **Constants:**
+  - `BRD_SQ_NUM`, `NO_SQ`, `OFFBOARD`, castling masks (`WKCA`, ...)
+- **Structs:**
+  - `S_BOARD` — main board state
+    - `pieces[120]` — int codes for pieces
+    - `pawns[3]` — bitboards for pawns (WHITE, BLACK, BOTH)
+    - `KingSq[2]` — king locations
+    - `side`, `enPas`, `fiftyMove`, `ply`, `hisPly`, `posKey`, `castlePerm`
+    - Piece counters: `pceNum`, `bigPce`, `majPce`, `minPce`
+- **Methods:**
+  - `clear_board()` — reset board and counters
+  - `set_startpos()` — set up standard chess position
+  - `rebuild_counts()` — update piece counters and bitboards
+- **Bitboard Helpers:**
+  - `bb_set`, `bb_clear`, `bb_test` — manipulate pawn bitboards
+
+---
+
+### Redundancy Note
+- `position` and `board_state` both represent board state, side, castling, en passant, and setup/reset.
+- `position` is modern, type-safe, minimal; `board_state` is classic, tracks more stats and bitboards.
+- Use one or merge features for a unified board representation.
+
+---
