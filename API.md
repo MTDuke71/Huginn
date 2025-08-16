@@ -10,6 +10,9 @@
   - `setBit(bb, sq)` / `addBit(bb, sq)` — Set bit at square position
   - `popBit(bb, sq)` / `PopBit(bb, sq)` — Clear bit at square position
   - `getBit(bb, sq)` — Check if bit is set at square position
+- **Utility Macros:**
+  - `POP(bb)` — Pop and return least significant bit (modifies bitboard)
+  - `CNT(bb)` — Count number of set bits (non-destructive)
 - **Constants:**
   - `EMPTY_BB` (0), `FULL_BB` (all bits set)
   - File bitboards: `FILE_A` through `FILE_H`, `FILE_BB[8]` array
@@ -35,6 +38,14 @@
   setBit(bb, 28);           // Set e4
   if (getBit(bb, 28)) {     // Check e4
       printBitboard(bb);    // Visualize board
+  }
+  
+  // Using utility macros
+  Bitboard pieces = 0x0F00ULL;  // Some pieces on rank 2
+  int count = CNT(pieces);      // Count bits (4)
+  while (!is_empty(pieces)) {
+      int square = POP(pieces); // Pop LSB and get its position
+      // Process piece at 'square'...
   }
   ```
 

@@ -16,6 +16,10 @@ using Bitboard = uint64_t;
 #define addBit(bb, sq)   setBit(bb, sq)
 #define PopBit(bb, sq)   popBit(bb, sq)
 
+// Utility macros for common operations
+#define POP(bb)          pop_lsb(bb)     // Pop and return least significant bit
+#define CNT(bb)          countBit(bb)    // Count number of set bits
+
 // ---- Bitboard Constants ----
 constexpr Bitboard EMPTY_BB = 0ULL;
 constexpr Bitboard FULL_BB = 0xFFFFFFFFFFFFFFFFULL;

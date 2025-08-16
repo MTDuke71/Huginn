@@ -129,6 +129,24 @@ TEST_F(BitboardTest, LSBFunctions) {
     EXPECT_EQ(pop_lsb(bb), -1);  // empty bitboard
 }
 
+// Test utility macros
+TEST_F(BitboardTest, UtilityMacros) {
+    // Test CNT macro
+    EXPECT_EQ(CNT(EMPTY_BB), 0);
+    EXPECT_EQ(CNT(1ULL), 1);
+    EXPECT_EQ(CNT(3ULL), 2);  // bits 0 and 1
+    EXPECT_EQ(CNT(FULL_BB), 64);
+    EXPECT_EQ(CNT(0xAAAAAAAAAAAAAAAAULL), 32);  // alternating bits
+    
+    // Test POP macro
+    bb = 12ULL;  // bits 2 and 3 set (binary: 1100)
+    EXPECT_EQ(POP(bb), 2);    // should pop bit 2 (LSB)
+    EXPECT_EQ(bb, 8ULL);      // only bit 3 remaining (binary: 1000)
+    EXPECT_EQ(POP(bb), 3);    // should pop bit 3
+    EXPECT_EQ(bb, EMPTY_BB);  // should be empty now
+    EXPECT_EQ(POP(bb), -1);   // empty bitboard returns -1
+}
+
 // Test file and rank constants
 TEST_F(BitboardTest, FileAndRankConstants) {
     // Test file constants
