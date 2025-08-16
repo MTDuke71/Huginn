@@ -2,6 +2,43 @@
 
 ---
 
+## bitboard.hpp — Bitboard API
+
+- **Type Definition:**
+  - `Bitboard` — alias for `uint64_t`, represents 64 squares using bits
+- **Bit Manipulation Macros:**
+  - `setBit(bb, sq)` / `addBit(bb, sq)` — Set bit at square position
+  - `popBit(bb, sq)` / `PopBit(bb, sq)` — Clear bit at square position
+  - `getBit(bb, sq)` — Check if bit is set at square position
+- **Constants:**
+  - `EMPTY_BB` (0), `FULL_BB` (all bits set)
+  - File bitboards: `FILE_A` through `FILE_H`, `FILE_BB[8]` array
+  - Rank bitboards: `RANK_1` through `RANK_8`, `RANK_BB[8]` array
+- **Visualization:**
+  - `printBitboard(Bitboard bb)` — Print with 'x' occupied, '-' empty
+  - `printBitboard(Bitboard bb, char occupied, char empty)` — Custom characters
+  - Output format: Rank 8 at top, Rank 1 at bottom, with file/rank borders
+- **Utility Functions:**
+  - `popcount(Bitboard bb)` — Count number of set bits
+  - `get_lsb(Bitboard bb)` — Get least significant bit position
+  - `pop_lsb(Bitboard& bb)` — Pop and return least significant bit
+  - `is_empty(Bitboard bb)` — Check if bitboard is empty
+  - `is_set(Bitboard bb, int square)` — Check if specific square is set
+- **Square Conversion:**
+  - `square_from_file_rank(int file, int rank)` — Convert file/rank to square (0-63)
+  - `file_of_square(int square)` / `rank_of_square(int square)` — Extract file/rank
+  - `sq64_to_sq120(int sq64)` / `sq120_to_sq64(int sq120)` — Convert between indexing systems
+- **Usage Examples:**
+  ```cpp
+  Bitboard bb = EMPTY_BB;
+  setBit(bb, 28);           // Set e4
+  if (getBit(bb, 28)) {     // Check e4
+      printBitboard(bb);    // Visualize board
+  }
+  ```
+
+---
+
 ## board120.hpp — Mailbox-120 Board API
 
 - **Enums:**  
@@ -30,6 +67,10 @@
   - `Color` (White, Black, None)
   - `PieceType` (None, Pawn, Knight, Bishop, Rook, Queen, King)
   - `Piece` (WhitePawn, BlackPawn, etc.)
+- **Piece List Constants:**
+  - `MAX_PIECES_PER_TYPE 10` — Maximum pieces per type per side
+  - `MAX_PIECE_TYPES` — Number of piece types
+  - `PieceList` — Type alias for 2D piece location array
 - **Castling Rights:**
   - `CASTLE_NONE`, `CASTLE_WK`, `CASTLE_WQ`, `CASTLE_BK`, `CASTLE_BQ`, `CASTLE_ALL`
   - Legacy aliases: `WKCA`, `WQCA`, `BKCA`, `BQCA`
@@ -59,11 +100,24 @@
   - Use `sq(File, Rank)`, algebraic conversion, FEN char printing
 - **Iteration:**  
   - Iterate playable squares: `for (int s : Playable120{})`
+  - Iterate pieces by type: `for (int i = 0; i < pos.pCount[color][type]; ++i)`
 - **Mapping:**  
   - 64↔120 translation: `MAILBOX_MAPS.to120`, `MAILBOX_MAPS.to64`
+  - Bitboard conversion: `sq64_to_sq120()`, `sq120_to_sq64()`
 - **Move Generation:**  
   - Knight moves: `for (int d : KNIGHT_DELTAS)`
   - Sliding moves: `for (int to = from + NORTH; is_playable(to); to += NORTH)`
+- **Bitboard Integration:**
+  ```cpp
+  // Convert position to bitboard representation
+  Bitboard white_pawns = EMPTY_BB;
+  for (int i = 0; i < pos.pCount[0][int(PieceType::Pawn)]; ++i) {
+      int sq120 = pos.pList[0][int(PieceType::Pawn)][i];
+      int sq64 = sq120_to_sq64(sq120);
+      if (sq64 >= 0) setBit(white_pawns, sq64);
+  }
+  printBitboard(white_pawns);  // Visualize pawn positions
+  ```
 
 ---
 
@@ -124,7 +178,11 @@
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
   - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured }` — Complete undo state
-  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, move_history[MAXPLY], ply }`
+  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
+- **Piece List Optimization:**
+  - `pList[color][piece_type][index] = square` — Track piece locations for fast iteration
+  - `pCount[color][piece_type]` — Count of pieces per type per color
+  - `add_piece_to_list()`, `remove_piece_from_list()`, `move_piece_in_list()` — Piece list management
 - **Methods:**
   - `clear()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()`
   - `make_move_with_undo(const Move& m)` — Make move with full undo support (array-based, O(1) performance)
@@ -140,3 +198,31 @@
   - Direct array indexing for maximum speed
   - Overflow protection at MAXPLY limit
 
+---
+
+## Debug Assertions — Development & Testing API
+
+- **Assertion Macros:**
+  - `DEBUG_ASSERT(condition, message)` — Detailed assertion with custom error message
+  - `CHESS_ASSERT(condition)` — Simple assertion for basic checks
+- **Conditional Compilation:**
+  - Active when `DEBUG` is defined, completely compiled out otherwise
+  - Zero performance overhead in release builds
+- **Error Output:**
+  - File name (`__FILE__`), line number (`__LINE__`), function name (`__FUNCTION__`)
+  - Failed condition code and custom message
+- **Build Configuration:**
+  - CMake: `-DENABLE_DEBUG_ASSERTIONS=ON` or `-DCMAKE_BUILD_TYPE=Debug`
+  - Manual: `-DDEBUG` compiler flag
+- **Integration:**
+  - Validates move parameters, square indices, piece list operations
+  - Checks board state consistency and array bounds
+  - Detects programming errors during development
+- **Example Output:**
+  ```
+  ASSERTION FAILED: Too many pieces of this type on the board
+    File: src/position.hpp
+    Line: 175
+    Function: add_piece_to_list
+    Condition: pCount[color][type] < MAX_PIECES_PER_TYPE
+  ```

@@ -28,6 +28,31 @@ cmake --build build
 ./build/huginn.exe
 ```
 
+## Features
+
+### Chess Engine Architecture
+- **Mailbox-120 Board Representation**: 10x12 board with off-board sentinels for efficient boundary checking
+- **Modern C++17**: Type-safe enums, constexpr functions, and std::array for performance
+- **Bitboard Support**: 64-bit bitboards with visualization and manipulation macros
+- **Piece List Optimization**: Fast piece iteration without board scanning (up to 10 pieces per type)
+
+### Move System
+- **Array-Based Undo**: Fixed-size move history (MAXPLY=2048) for zero allocation overhead
+- **Comprehensive Move Encoding**: From/to/promotion packed into single integer
+- **Castling Rights**: Centralized constants and utility functions
+- **Position Hashing**: Zobrist hashing for transposition tables
+
+### Development Tools
+- **Debug Assertions**: Detailed error reporting with file/line information when DEBUG defined
+- **Comprehensive Testing**: 24+ test cases covering all major components
+- **Bitboard Visualization**: ASCII board display with rank/file borders
+- **Square Conversion**: Seamless translation between 64-square and 120-square indexing
+
+### Performance Optimizations
+- **Zero Copy Operations**: Direct array access and bit manipulation
+- **Fast Piece Location**: O(1) piece finding via piece lists
+- **Efficient Memory Layout**: Compact data structures and minimal indirection
+
 ### Running Tests (CTest)
 ```sh
 # Build test binary
