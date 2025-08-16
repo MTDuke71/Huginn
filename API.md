@@ -6,15 +6,17 @@
 
 - **Type Definition:**
   - `Bitboard` — alias for `uint64_t`, represents 64 squares using bits
-- **Bit Manipulation Macros:**
-  - `setBit(bb, sq)` / `addBit(bb, sq)` — Set bit at square position
-  - `popBit(bb, sq)` / `PopBit(bb, sq)` — Clear bit at square position
+- **Bit Manipulation Macros (optimized with pre-computed masks):**
+  - `setBit(bb, sq)` / `addBit(bb, sq)` / `SETBIT(bb, sq)` — Set bit at square position
+  - `popBit(bb, sq)` / `PopBit(bb, sq)` / `CLRBIT(bb, sq)` — Clear bit at square position
   - `getBit(bb, sq)` — Check if bit is set at square position
 - **Utility Macros:**
   - `POP(bb)` — Pop and return least significant bit (modifies bitboard)
   - `CNT(bb)` — Count number of set bits (non-destructive)
 - **Constants:**
   - `EMPTY_BB` (0), `FULL_BB` (all bits set)
+  - `BIT_MASK[64]` — Pre-computed bit masks for each square (performance optimization)
+  - `CLEAR_MASK[64]` — Pre-computed inverted masks for clearing bits (performance optimization)
   - File bitboards: `FILE_A` through `FILE_H`, `FILE_BB[8]` array
   - Rank bitboards: `RANK_1` through `RANK_8`, `RANK_BB[8]` array
 - **Visualization:**
@@ -39,6 +41,10 @@
   if (getBit(bb, 28)) {     // Check e4
       printBitboard(bb);    // Visualize board
   }
+  
+  // Alternative syntax options
+  SETBIT(bb, 35);           // Set d5 using SETBIT alias
+  CLRBIT(bb, 28);           // Clear e4 using CLRBIT alias
   
   // Using utility macros
   Bitboard pieces = 0x0F00ULL;  // Some pieces on rank 2

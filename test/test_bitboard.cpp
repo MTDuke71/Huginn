@@ -33,6 +33,33 @@ TEST_F(BitboardTest, BitManipulationMacros) {
     PopBit(bb, 7);
     EXPECT_FALSE(getBit(bb, 7));
     EXPECT_EQ(bb, EMPTY_BB);
+    
+    // Test new alias macros SETBIT and CLRBIT
+    SETBIT(bb, 10);  // Set bit 10
+    EXPECT_TRUE(getBit(bb, 10));
+    EXPECT_EQ(bb, 1024ULL);  // 2^10 = 1024
+    
+    CLRBIT(bb, 10);  // Clear bit 10
+    EXPECT_FALSE(getBit(bb, 10));
+    EXPECT_EQ(bb, EMPTY_BB);
+}
+
+// Test that pre-computed masks match runtime calculations
+TEST_F(BitboardTest, PrecomputedMasks) {
+    // Verify BIT_MASK matches runtime shift
+    for (int sq = 0; sq < 64; ++sq) {
+        EXPECT_EQ(BIT_MASK[sq], 1ULL << sq) << "BIT_MASK mismatch at square " << sq;
+        EXPECT_EQ(CLEAR_MASK[sq], ~(1ULL << sq)) << "CLEAR_MASK mismatch at square " << sq;
+    }
+    
+    // Test that macros using masks work the same as runtime calculations
+    bb = EMPTY_BB;
+    for (int sq = 0; sq < 64; ++sq) {
+        setBit(bb, sq);
+        EXPECT_TRUE(getBit(bb, sq)) << "setBit/getBit failed at square " << sq;
+        popBit(bb, sq);
+        EXPECT_FALSE(getBit(bb, sq)) << "popBit failed at square " << sq;
+    }
 }
 
 // Test square indexing functions
