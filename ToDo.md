@@ -38,6 +38,10 @@
 ### Unified Board Representation (Previously Completed)
 - Modern `Position` struct with all S_BOARD features
 - Type-safe Piece and Color enums
+- **Centralized Castling Rights**: Constants and utilities in chess_types.hpp
+  - `CASTLE_WK`, `CASTLE_WQ`, `CASTLE_BK`, `CASTLE_BQ`, `CASTLE_ALL`, `CASTLE_NONE`
+  - Utility functions: `can_castle_kingside()`, `can_castle_queenside()`, `can_castle()`, `remove_castling_rights()`
+  - Legacy compatibility: `WKCA`, `WQCA`, `BKCA`, `BQCA` aliases
 - 120-square mailbox board representation
 - Zobrist hashing integration
 - Move generation framework (knights implemented)

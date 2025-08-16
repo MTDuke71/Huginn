@@ -41,7 +41,7 @@ struct Position {
     std::array<Piece, 120> board{};  // Piece::None for empty/offboard
     Color side_to_move{Color::White};
     int ep_square{-1};               // mailbox-120 index or -1
-    uint8_t castling_rights{0};      // bitmask: WKS=1, WQS=2, BKS=4, BQS=8
+    uint8_t castling_rights{0};      // bitmask: CASTLE_WK|CASTLE_WQ|CASTLE_BK|CASTLE_BQ
     uint16_t halfmove_clock{0};
     uint16_t fullmove_number{1};
     std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
@@ -97,7 +97,7 @@ struct Position {
             board[sq(static_cast<File>(f), Rank::R7)] = Piece::BlackPawn;
 
         side_to_move = Color::White;
-        castling_rights = 0b1111; // KQkq
+        castling_rights = CASTLE_ALL; // KQkq
         ep_square = -1;
         halfmove_clock = 0;
         fullmove_number = 1;

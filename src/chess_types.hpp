@@ -13,6 +13,39 @@ constexpr inline Color operator!(Color c) {
                                : Color::None;
 }
 
+// ---------- Castling Rights ----------
+// Bit flags for castling permissions (can be combined with |)
+constexpr uint8_t CASTLE_NONE = 0;     // No castling rights
+constexpr uint8_t CASTLE_WK   = 1;     // White King-side (WKCA)
+constexpr uint8_t CASTLE_WQ   = 2;     // White Queen-side (WQCA)  
+constexpr uint8_t CASTLE_BK   = 4;     // Black King-side (BKCA)
+constexpr uint8_t CASTLE_BQ   = 8;     // Black Queen-side (BQCA)
+constexpr uint8_t CASTLE_ALL  = 15;    // All castling rights (KQkq)
+
+// Legacy aliases for compatibility
+constexpr int WKCA = CASTLE_WK;
+constexpr int WQCA = CASTLE_WQ;
+constexpr int BKCA = CASTLE_BK;
+constexpr int BQCA = CASTLE_BQ;
+
+// Castling utility functions
+constexpr inline bool can_castle_kingside(uint8_t rights, Color c) {
+    return c == Color::White ? (rights & CASTLE_WK) : (rights & CASTLE_BK);
+}
+
+constexpr inline bool can_castle_queenside(uint8_t rights, Color c) {
+    return c == Color::White ? (rights & CASTLE_WQ) : (rights & CASTLE_BQ);
+}
+
+constexpr inline bool can_castle(uint8_t rights, Color c) {
+    return can_castle_kingside(rights, c) || can_castle_queenside(rights, c);
+}
+
+constexpr inline uint8_t remove_castling_rights(uint8_t rights, Color c) {
+    return c == Color::White ? (rights & ~(CASTLE_WK | CASTLE_WQ)) 
+                             : (rights & ~(CASTLE_BK | CASTLE_BQ));
+}
+
 // ---------- Piece Types (colorless) ----------
 enum class PieceType : uint8_t {
     None  = 0,

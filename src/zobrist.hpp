@@ -4,13 +4,8 @@
 
 #include "position.hpp"
 #include "chess_types.hpp"
-#include <cstdint>
 
 using U64 = std::uint64_t;
-constexpr int WKCA = 1;
-constexpr int WQCA = 2;
-constexpr int BKCA = 4;
-constexpr int BQCA = 8;
 constexpr int PIECE_NB = 12;
 
 namespace Zobrist {

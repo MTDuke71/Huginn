@@ -30,6 +30,10 @@
   - `Color` (White, Black, None)
   - `PieceType` (None, Pawn, Knight, Bishop, Rook, Queen, King)
   - `Piece` (WhitePawn, BlackPawn, etc.)
+- **Castling Rights:**
+  - `CASTLE_NONE`, `CASTLE_WK`, `CASTLE_WQ`, `CASTLE_BK`, `CASTLE_BQ`, `CASTLE_ALL`
+  - Legacy aliases: `WKCA`, `WQCA`, `BKCA`, `BQCA`
+  - Utility functions: `can_castle_kingside()`, `can_castle_queenside()`, `can_castle()`, `remove_castling_rights()`
 - **Helpers:**  
   - `operator!(Color)` — flip color
   - `is_none(Piece)`, `type_of(Piece)`, `color_of(Piece)`
