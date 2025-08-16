@@ -49,6 +49,11 @@ struct Position {
     std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
     
+    // Piece lists: pList[color][piece_type][index] = square
+    // Tracks locations of all pieces for fast iteration
+    std::array<PieceList, 2> pList; // [White, Black]
+    std::array<std::array<int, int(PieceType::_Count)>, 2> pCount; // Number of pieces [color][type]
+    
     // Move history for undo functionality - fixed array for performance
     std::array<S_UNDO, MAXPLY> move_history{};
     int ply{0};                      // current search/game ply
@@ -66,6 +71,16 @@ struct Position {
         zobrist_key = 0;
         // Clear move history by resetting ply to 0
         ply = 0;
+        
+        // Clear piece lists
+        for (int color = 0; color < 2; ++color) {
+            for (int type = 0; type < int(PieceType::_Count); ++type) {
+                pCount[color][type] = 0;
+                for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
+                    pList[color][type][i] = -1;
+                }
+            }
+        }
     }
 
     // Put standard start position on 12x10
@@ -104,23 +119,45 @@ struct Position {
         rebuild_counts();
     }
 
-    // Update piece counts, king squares, pawn bitboards
+    // Update piece counts, king squares, pawn bitboards, and piece lists
     void rebuild_counts() {
         king_sq = { -1, -1 };
         pawns_bb = { 0, 0 };
         piece_counts.fill(0);
+        
+        // Clear piece lists and counts
+        for (int color = 0; color < 2; ++color) {
+            for (int type = 0; type < int(PieceType::_Count); ++type) {
+                pCount[color][type] = 0;
+                for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
+                    pList[color][type][i] = -1; // -1 indicates no piece
+                }
+            }
+        }
+        
         for (int s = 0; s < 120; ++s) {
             Piece p = board[s];
             if (is_none(p)) continue;
             PieceType pt = type_of(p);
             ++piece_counts[size_t(pt)];
             Color c = color_of(p);
-            if (pt == PieceType::Pawn && c != Color::None) {
-                int s64 = MAILBOX_MAPS.to64[s];
-                if (s64 >= 0) pawns_bb[size_t(c)] |= (1ULL << s64);
-            }
-            if (pt == PieceType::King && c != Color::None) {
-                king_sq[size_t(c)] = s;
+            if (c != Color::None) {
+                int color_idx = int(c);
+                int type_idx = int(pt);
+                
+                // Add to piece list
+                if (pCount[color_idx][type_idx] < MAX_PIECES_PER_TYPE) {
+                    pList[color_idx][type_idx][pCount[color_idx][type_idx]] = s;
+                    ++pCount[color_idx][type_idx];
+                }
+                
+                if (pt == PieceType::Pawn) {
+                    int s64 = MAILBOX_MAPS.to64[s];
+                    if (s64 >= 0) pawns_bb[size_t(c)] |= (1ULL << s64);
+                }
+                if (pt == PieceType::King) {
+                    king_sq[size_t(c)] = s;
+                }
             }
         }
     }
@@ -129,11 +166,66 @@ struct Position {
     inline Piece at(int s) const { return is_playable(s) ? board[size_t(s)] : Piece::None; }
     inline void set(int s, Piece p) { if (is_playable(s)) board[size_t(s)] = p; }
     
+    // Piece list management helpers
+    void add_piece_to_list(Color c, PieceType pt, int square) {
+        if (c == Color::None || pt == PieceType::None) return;
+        DEBUG_ASSERT(is_playable(square), "Cannot add piece to invalid square");
+        int color_idx = int(c);
+        int type_idx = int(pt);
+        DEBUG_ASSERT(pCount[color_idx][type_idx] < MAX_PIECES_PER_TYPE, 
+                    "Too many pieces of this type on the board");
+        if (pCount[color_idx][type_idx] < MAX_PIECES_PER_TYPE) {
+            pList[color_idx][type_idx][pCount[color_idx][type_idx]] = square;
+            ++pCount[color_idx][type_idx];
+        }
+    }
+    
+    void remove_piece_from_list(Color c, PieceType pt, int square) {
+        if (c == Color::None || pt == PieceType::None) return;
+        DEBUG_ASSERT(is_playable(square), "Cannot remove piece from invalid square");
+        int color_idx = int(c);
+        int type_idx = int(pt);
+        DEBUG_ASSERT(pCount[color_idx][type_idx] > 0, 
+                    "Cannot remove piece from empty piece list");
+        // Find and remove the piece from the list
+        for (int i = 0; i < pCount[color_idx][type_idx]; ++i) {
+            if (pList[color_idx][type_idx][i] == square) {
+                // Move last piece to this position and decrement count
+                --pCount[color_idx][type_idx];
+                pList[color_idx][type_idx][i] = pList[color_idx][type_idx][pCount[color_idx][type_idx]];
+                pList[color_idx][type_idx][pCount[color_idx][type_idx]] = -1;
+                return;
+            }
+        }
+        DEBUG_ASSERT(false, "Piece not found in piece list during removal");
+    }
+    
+    void move_piece_in_list(Color c, PieceType pt, int from_square, int to_square) {
+        if (c == Color::None || pt == PieceType::None) return;
+        DEBUG_ASSERT(is_playable(from_square), "Invalid source square for piece move");
+        DEBUG_ASSERT(is_playable(to_square), "Invalid destination square for piece move");
+        int color_idx = int(c);
+        int type_idx = int(pt);
+        // Find and update the piece location
+        for (int i = 0; i < pCount[color_idx][type_idx]; ++i) {
+            if (pList[color_idx][type_idx][i] == from_square) {
+                pList[color_idx][type_idx][i] = to_square;
+                return;
+            }
+        }
+        DEBUG_ASSERT(false, "Piece not found in piece list during move");
+    }
+    
     // Enhanced move making with full undo support
     void make_move_with_undo(const Move& m) {
+        // Debug assertions for move validity
+        DEBUG_ASSERT(is_playable(m.from), "Move source square must be playable");
+        DEBUG_ASSERT(is_playable(m.to), "Move destination square must be playable");
+        DEBUG_ASSERT(!is_none(at(m.from)), "Cannot move from empty square");
+        
         // Check for ply overflow
         if (ply >= MAXPLY) {
-            // Handle overflow - could throw exception or return false
+            DEBUG_ASSERT(false, "Move history overflow - too many moves in game/search");
             return; // For now, just return without making the move
         }
         
@@ -150,25 +242,42 @@ struct Position {
         
         // Make the move
         Piece moving = at(m.from);
-        if (type_of(moving) == PieceType::Pawn || !is_none(undo.captured)) {
+        Piece captured = undo.captured;
+        
+        if (type_of(moving) == PieceType::Pawn || !is_none(captured)) {
             halfmove_clock = 0;
         } else {
             ++halfmove_clock;
         }
         
-        set(m.to, moving);
-        set(m.from, Piece::None);
+        // Update piece lists before changing the board
+        Color moving_color = color_of(moving);
+        PieceType moving_type = type_of(moving);
         
-        // Handle promotion
-        if (m.promo != PieceType::None) {
-            set(m.to, make_piece(color_of(moving), m.promo));
+        // Remove captured piece from piece list
+        if (!is_none(captured)) {
+            remove_piece_from_list(color_of(captured), type_of(captured), m.to);
         }
+        
+        // Handle promotion - remove pawn and add promoted piece
+        if (m.promo != PieceType::None) {
+            remove_piece_from_list(moving_color, PieceType::Pawn, m.from);
+            add_piece_to_list(moving_color, m.promo, m.to);
+            set(m.to, make_piece(moving_color, m.promo));
+        } else {
+            // Regular move - update piece location in list
+            move_piece_in_list(moving_color, moving_type, m.from, m.to);
+            set(m.to, moving);
+        }
+        
+        set(m.from, Piece::None);
         
         ep_square = -1; // Reset, update with double pawn push logic later
         side_to_move = !side_to_move;
         if (side_to_move == Color::White) ++fullmove_number;
         
-        // Update derived state
+        // Update derived state (piece counts, king squares, etc.)
+        // Note: piece lists are already updated above for performance
         rebuild_counts();
         // Update zobrist_key here when Zobrist integration is complete
     }

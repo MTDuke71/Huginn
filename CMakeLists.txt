@@ -4,6 +4,13 @@ project(Huginn LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ---- Debug Mode Configuration ----
+option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
+if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions(DEBUG)
+    message(STATUS "Debug assertions enabled")
+endif()
+
 # ---- App ----
 add_executable(huginn
   src/main.cpp

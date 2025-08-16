@@ -42,4 +42,6 @@
 
 /build/
 
+/build_debug/
+
 .vscode/

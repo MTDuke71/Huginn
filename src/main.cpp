@@ -25,14 +25,14 @@ int main() {
 
     // Iterate all playable mailbox-120 squares
     for (int s : Playable120{}) {
-        assert(is_playable(s));
+        DEBUG_ASSERT(is_playable(s), "Square should be playable in Playable120 iterator");
     }
 
     // Translate 64→120 and back
     int s64  = 36;                    // e5 in 0..63 (A1=0)
     int s120 = MAILBOX_MAPS.to120[s64];
     int back = MAILBOX_MAPS.to64[s120];
-    assert(back == s64);
+    DEBUG_ASSERT(back == s64, "Mailbox mapping round-trip should preserve square index");
 
     // Knight moves from g1
     int g1 = sq(File::G, Rank::R1);

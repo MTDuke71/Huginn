@@ -3,6 +3,32 @@
 #include <cstdint>
 #include <array>
 #include <cassert>
+#include <iostream>
+
+// ---------- Debug Assertions ----------
+#ifdef DEBUG
+    #define DEBUG_ASSERT(condition, message) \
+        do { \
+            if (!(condition)) { \
+                std::cerr << "ASSERTION FAILED: " << (message) \
+                         << "\n  File: " << __FILE__ \
+                         << "\n  Line: " << __LINE__ \
+                         << "\n  Function: " << __FUNCTION__ \
+                         << "\n  Condition: " << #condition << std::endl; \
+                std::abort(); \
+            } \
+        } while (0)
+#else
+    #define DEBUG_ASSERT(condition, message) ((void)0)
+#endif
+
+// Convenience macro for simple assertions without custom message
+#ifdef DEBUG
+    #define CHESS_ASSERT(condition) \
+        DEBUG_ASSERT(condition, "Chess engine assertion failed")
+#else
+    #define CHESS_ASSERT(condition) ((void)0)
+#endif
 
 // ---------- Colors ----------
 enum class Color : uint8_t { White = 0, Black = 1, None = 2 };
@@ -57,6 +83,15 @@ enum class PieceType : uint8_t {
     King  = 6,
     _Count
 };
+
+// ---------- Piece List Constants ----------
+constexpr int MAX_PIECES_PER_TYPE = 10;  // Maximum pieces of one type per side
+constexpr int MAX_PIECE_TYPES = int(PieceType::_Count);
+
+// 2D array to track piece locations: pList[piece_type][index] = square
+// Each entry contains the square number where the piece is located
+// -1 indicates no piece at that index
+using PieceList = std::array<std::array<int, MAX_PIECES_PER_TYPE>, MAX_PIECE_TYPES>;
 
 // ---------- Colored Pieces (packed: color<<3 | type) ----------
 enum class Piece : uint8_t {
