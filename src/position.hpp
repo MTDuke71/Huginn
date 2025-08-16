@@ -20,6 +20,10 @@ struct Position {
     uint8_t castling_rights{0};      // bitmask: WKS=1, WQS=2, BKS=4, BQS=8
     uint16_t halfmove_clock{0};
     uint16_t fullmove_number{1};
+    std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
+    std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
+    std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
+    uint64_t zobrist_key{0};
 
     void clear() {
         for (auto &p: board) p = Piece::None;
@@ -28,6 +32,10 @@ struct Position {
         castling_rights = 0;
         halfmove_clock = 0;
         fullmove_number = 1;
+        king_sq = { -1, -1 };
+        pawns_bb = { 0, 0 };
+        piece_counts.fill(0);
+        zobrist_key = 0;
     }
 
     // Put standard start position on 12x10
@@ -63,6 +71,28 @@ struct Position {
         ep_square = -1;
         halfmove_clock = 0;
         fullmove_number = 1;
+        rebuild_counts();
+    }
+
+    // Update piece counts, king squares, pawn bitboards
+    void rebuild_counts() {
+        king_sq = { -1, -1 };
+        pawns_bb = { 0, 0 };
+        piece_counts.fill(0);
+        for (int s = 0; s < 120; ++s) {
+            Piece p = board[s];
+            if (is_none(p)) continue;
+            PieceType pt = type_of(p);
+            ++piece_counts[size_t(pt)];
+            Color c = color_of(p);
+            if (pt == PieceType::Pawn && c != Color::None) {
+                int s64 = MAILBOX_MAPS.to64[s];
+                if (s64 >= 0) pawns_bb[size_t(c)] |= (1ULL << s64);
+            }
+            if (pt == PieceType::King && c != Color::None) {
+                king_sq[size_t(c)] = s;
+            }
+        }
     }
 
     // Access

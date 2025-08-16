@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "board120.hpp"    // core: File, Rank, sq(), is_playable, file_of, rank_of, deltas, MAILBOX_MAPS
 #include "squares120.hpp"  // extras: Square120::E4, Playable120 (no redefs)
-#include "board_state.hpp"
+#include "position.hpp"
 
 TEST(Board120, SqCalculation) {
     EXPECT_EQ(sq(File::A, Rank::R1), 21);
@@ -117,12 +117,12 @@ TEST(Board120, ExplicitOffboardSentinels) {
 }
 
 TEST(Board120, BoardClearSetsFramesOffboard) {
-    S_BOARD b; b.clear_board();
-    // A0, I1, A10 are offboard
+    Position b; b.clear();
     auto raw120 = [](int file1, int row){ return row*10 + file1; };
-    EXPECT_EQ(b.pieces[ raw120(1,0) ],  OFFBOARD);  // A0
-    EXPECT_EQ(b.pieces[ raw120(9,2) ],  OFFBOARD);  // I1 (right frame)
-    EXPECT_EQ(b.pieces[ raw120(1,10) ], OFFBOARD);  // A10 (top frame)
-    // E4 playable = EMPTY
-    EXPECT_EQ(b.pieces[ sq(File::E, Rank::R4) ], EMPTY);
+    // Offboard squares should be Piece::None
+    EXPECT_EQ(b.at(raw120(1,0)), Piece::None);  // A0
+    EXPECT_EQ(b.at(raw120(9,2)), Piece::None);  // I1 (right frame)
+    EXPECT_EQ(b.at(raw120(1,10)), Piece::None); // A10 (top frame)
+    // E4 playable = Piece::None after clear
+    EXPECT_EQ(b.at(sq(File::E, Rank::R4)), Piece::None);
 }

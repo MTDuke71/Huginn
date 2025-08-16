@@ -49,8 +49,8 @@
 ## main.cpp — Example Usage
 
 - **Board Setup:**  
-  - `std::array<Piece, 120> board`
-  - Initialize, place pieces, move pieces
+  - `Position pos; pos.set_startpos();`
+  - Modern `Position` struct with `std::array<Piece, 120> board`
 - **Square Operations:**  
   - Use `sq(File, Rank)`, algebraic conversion, FEN char printing
 - **Iteration:**  
@@ -96,45 +96,31 @@
 
 ---
 
+## zobrist.hpp — Position Hashing API
+
+- **Namespace:** `Zobrist`
+- **Hash Tables:**
+  - `Piece[PIECE_NB][64]` — piece-square hash values
+  - `Side` — side to move hash
+  - `Castle[16]` — castling rights hash (0..15)
+  - `EpFile[8]` — en passant file hash (a..h)
+- **Functions:**
+  - `init_zobrist(seed)` — initialize hash tables with random values
+  - `compute(const Position&)` — compute Zobrist hash for current position
+- **Integration:** 
+  - Works with modern `Position` struct
+  - Automatically handles piece placement, side to move, castling rights, en passant
+
+---
+
 ## position.hpp — Position & State API
 
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
-  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number }`
+  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key }`
 - **Methods:**
-  - `clear()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`
+  - `clear()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()`
 - **Move Handling:**
   - `make_move(Position&, const Move&, State&)`
   - `unmake_move(Position&, const Move&, const State&)`
 
----
-
-## board_state.hpp — Classic Board State API
-
-- **Enums:**
-  - `Side` (WHITE, BLACK, BOTH)
-  - `PieceCode` (EMPTY, wP, wN, ..., bK)
-- **Constants:**
-  - `BRD_SQ_NUM`, `NO_SQ`, `OFFBOARD`, castling masks (`WKCA`, ...)
-- **Structs:**
-  - `S_BOARD` — main board state
-    - `pieces[120]` — int codes for pieces
-    - `pawns[3]` — bitboards for pawns (WHITE, BLACK, BOTH)
-    - `KingSq[2]` — king locations
-    - `side`, `enPas`, `fiftyMove`, `ply`, `hisPly`, `posKey`, `castlePerm`
-    - Piece counters: `pceNum`, `bigPce`, `majPce`, `minPce`
-- **Methods:**
-  - `clear_board()` — reset board and counters
-  - `set_startpos()` — set up standard chess position
-  - `rebuild_counts()` — update piece counters and bitboards
-- **Bitboard Helpers:**
-  - `bb_set`, `bb_clear`, `bb_test` — manipulate pawn bitboards
-
----
-
-### Redundancy Note
-- `position` and `board_state` both represent board state, side, castling, en passant, and setup/reset.
-- `position` is modern, type-safe, minimal; `board_state` is classic, tracks more stats and bitboards.
-- Use one or merge features for a unified board representation.
-
----

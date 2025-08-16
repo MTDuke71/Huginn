@@ -1,7 +1,17 @@
 #pragma once
 #include <cstdint>
 #include <random>
-#include "board_state.hpp" // S_BOARD, PieceCode, Side, etc.
+
+#include "position.hpp"
+#include "chess_types.hpp"
+#include <cstdint>
+
+using U64 = std::uint64_t;
+constexpr int WKCA = 1;
+constexpr int WQCA = 2;
+constexpr int BKCA = 4;
+constexpr int BQCA = 8;
+constexpr int PIECE_NB = 12;
 
 namespace Zobrist {
     inline U64 Piece[PIECE_NB][64]; // piece on 64-square
@@ -27,26 +37,25 @@ namespace Zobrist {
         Initialized = true;
     }
 
-    inline U64 compute(const S_BOARD& b) {
+    inline U64 compute(const Position& b) {
         U64 key = 0;
-
         // Pieces on board (iterate playable squares)
         for (int r = 0; r < 8; ++r) {
             for (int f = 0; f < 8; ++f) {
                 const int s120 = sq(static_cast<File>(f), static_cast<Rank>(r));
-                const int pc   = b.pieces[s120];
-                if (pc == EMPTY) continue;
+                const auto piece = b.at(s120);
+                if (is_none(piece)) continue;
+                PieceType pt = type_of(piece);
+                Color c = color_of(piece);
+                int pc = int(pt) + (c == Color::Black ? 6 : 0); // Map to legacy index if needed
                 const int s64  = MAILBOX_MAPS.to64[s120];
                 key ^= Piece[pc][s64];
             }
         }
-
-        if (b.side == BLACK) key ^= Side;
-
-        key ^= Castle[b.castlePerm & 0xF];
-
-        if (b.enPas != NO_SQ) {
-            const int ff = static_cast<int>(file_of(b.enPas)); // 0..7
+        if (b.side_to_move == Color::Black) key ^= Side;
+        key ^= Castle[b.castling_rights & 0xF];
+        if (b.ep_square != -1) {
+            const int ff = static_cast<int>(file_of(b.ep_square)); // 0..7
             if (ff >= 0 && ff < 8)
                 key ^= EpFile[ff];
         }

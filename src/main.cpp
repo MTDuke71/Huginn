@@ -6,35 +6,22 @@
 #include "chess_types.hpp"  // Piece, Color, PieceType, helpers
 #include "board120.hpp"     // File, Rank, sq(), is_playable, etc.
 #include "squares120.hpp" // MailboxMaps, ALL64, ALL120, etc.
-#include "board_state.hpp"
+#include "position.hpp"
 #include "zobrist.hpp"
 
 int main() {
-    // 120-cell mailbox board storing Pieces
-    std::array<Piece, 120> board{};
+    // Modern board representation
+    Position pos;
+    pos.set_startpos();
 
-    // Initialize to empty
-    for (int i = 0; i < 120; ++i) board[i] = Piece::None;
-
-    // Put some pieces down
-    const int a1 = sq(File::A, Rank::R1);
-    const int e1 = sq(File::E, Rank::R1);
-    board[a1] = Piece::WhiteRook;
-    board[e1] = Piece::WhiteKing;
-
-    // Move example: e2 → e4 via +10 twice on mailbox-120
-    const int e2 = sq(File::E, Rank::R2);
-    const int e3 = e2 + 10;  // NORTH
-    const int e4 = e3 + 10;  // NORTH
-    assert(is_playable(e4));
-
-    // Algebraic conversion
+    // Example: print algebraic for e4
+    const int e4 = sq(File::E, Rank::R4);
     char buf[3];
-    to_algebraic(e4, buf); // "e4"
+    to_algebraic(e4, buf);
     std::cout << "Square e4 index: " << e4 << ", algebraic: " << buf << "\n";
 
     // Print a FEN char for the king on e1
-    std::cout << "Piece at e1: " << to_char(board[e1]) << "\n"; // 'K'
+    std::cout << "Piece at e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
 
     // Iterate all playable mailbox-120 squares
     for (int s : Playable120{}) {
@@ -63,14 +50,11 @@ int main() {
     }
 
     Zobrist::init_zobrist();  // call once at startup
-
-    S_BOARD B;
-    set_startpos(B);
-    B.posKey = Zobrist::compute(B);
+    pos.zobrist_key = Zobrist::compute(pos);
 
     // If you re-count later:
-    rebuild_counts(B);
-    const U64 check = Zobrist::compute(B);
-    // assert(B.posKey == check); // once you maintain posKey incrementally
+    pos.rebuild_counts();
+    const U64 check = Zobrist::compute(pos);
+    // assert(pos.zobrist_key == check); // once you maintain zobrist_key incrementally
     return 0;
 }
