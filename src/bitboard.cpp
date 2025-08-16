@@ -35,12 +35,11 @@ void printBitboard(Bitboard bb, char occupied_char, char empty_char) {
 }
 
 int popcount(Bitboard bb) {
-    int count = 0;
-    while (bb) {
-        count++;
-        bb &= bb - 1;  // Clear least significant bit
-    }
-    return count;
+    return __builtin_popcountll(bb);  // GCC builtin for efficient bit counting
+}
+
+int countBit(Bitboard bb) {
+    return __builtin_popcountll(bb);  // Alias for popcount - efficiently count set bits
 }
 
 int get_lsb(Bitboard bb) {

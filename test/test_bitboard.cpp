@@ -96,6 +96,13 @@ TEST_F(BitboardTest, UtilityFunctions) {
     EXPECT_EQ(popcount(3ULL), 2);  // bits 0 and 1
     EXPECT_EQ(popcount(FULL_BB), 64);
     
+    // Test countBit (should be identical to popcount)
+    EXPECT_EQ(countBit(EMPTY_BB), 0);
+    EXPECT_EQ(countBit(1ULL), 1);
+    EXPECT_EQ(countBit(3ULL), 2);  // bits 0 and 1
+    EXPECT_EQ(countBit(FULL_BB), 64);
+    EXPECT_EQ(countBit(0xAAAAAAAAAAAAAAAAULL), 32);  // alternating bits pattern
+    
     // Test is_set
     setBit(bb, 20);
     EXPECT_TRUE(is_set(bb, 20));

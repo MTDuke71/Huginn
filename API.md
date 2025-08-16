@@ -19,7 +19,8 @@
   - `printBitboard(Bitboard bb, char occupied, char empty)` — Custom characters
   - Output format: Rank 8 at top, Rank 1 at bottom, with file/rank borders
 - **Utility Functions:**
-  - `popcount(Bitboard bb)` — Count number of set bits
+  - `popcount(Bitboard bb)` — Count number of set bits (optimized with GCC builtin)
+  - `countBit(Bitboard bb)` — Count number of set bits - alias for popcount (optimized with GCC builtin)
   - `get_lsb(Bitboard bb)` — Get least significant bit position (optimized with GCC builtin)
   - `pop_lsb(Bitboard& bb)` — Pop and return least significant bit (optimized with GCC builtin)
   - `is_empty(Bitboard bb)` — Check if bitboard is empty
