@@ -61,8 +61,8 @@ void printBitboard(Bitboard bb, char occupied_char, char empty_char = '-');
 
 // Utility functions
 int popcount(Bitboard bb);           // Count number of set bits
-int get_lsb(Bitboard bb);           // Get least significant bit position
-int pop_lsb(Bitboard& bb);          // Pop and return least significant bit
+int get_lsb(Bitboard bb);           // Get least significant bit position (optimized with __builtin_ctzll)
+int pop_lsb(Bitboard& bb);          // Pop and return least significant bit (optimized with __builtin_ctzll)
 bool is_empty(Bitboard bb);         // Check if bitboard is empty
 bool is_set(Bitboard bb, int square); // Check if specific square is set
 

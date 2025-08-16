@@ -20,8 +20,8 @@
   - Output format: Rank 8 at top, Rank 1 at bottom, with file/rank borders
 - **Utility Functions:**
   - `popcount(Bitboard bb)` — Count number of set bits
-  - `get_lsb(Bitboard bb)` — Get least significant bit position
-  - `pop_lsb(Bitboard& bb)` — Pop and return least significant bit
+  - `get_lsb(Bitboard bb)` — Get least significant bit position (optimized with GCC builtin)
+  - `pop_lsb(Bitboard& bb)` — Pop and return least significant bit (optimized with GCC builtin)
   - `is_empty(Bitboard bb)` — Check if bitboard is empty
   - `is_set(Bitboard bb, int square)` — Check if specific square is set
 - **Square Conversion:**

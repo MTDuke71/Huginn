@@ -45,24 +45,14 @@ int popcount(Bitboard bb) {
 
 int get_lsb(Bitboard bb) {
     if (bb == 0) return -1;
-    
-    int pos = 0;
-    if ((bb & 0xFFFFFFFF) == 0) { pos += 32; bb >>= 32; }
-    if ((bb & 0xFFFF) == 0) { pos += 16; bb >>= 16; }
-    if ((bb & 0xFF) == 0) { pos += 8; bb >>= 8; }
-    if ((bb & 0xF) == 0) { pos += 4; bb >>= 4; }
-    if ((bb & 0x3) == 0) { pos += 2; bb >>= 2; }
-    if ((bb & 0x1) == 0) { pos += 1; }
-    
-    return pos;
+    return __builtin_ctzll(bb);   // count trailing zeros -> gives index of least significant 1
 }
 
 int pop_lsb(Bitboard& bb) {
-    int pos = get_lsb(bb);
-    if (pos >= 0) {
-        bb &= bb - 1;  // Clear the least significant bit
-    }
-    return pos;
+    if (bb == 0) return -1;
+    int index = __builtin_ctzll(bb);   // count trailing zeros -> gives index of least significant 1
+    bb &= bb - 1;                      // clears the least significant 1 bit
+    return index;
 }
 
 bool is_empty(Bitboard bb) {
