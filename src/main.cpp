@@ -56,5 +56,8 @@ int main() {
     pos.rebuild_counts();
     const U64 check = Zobrist::compute(pos);
     // assert(pos.zobrist_key == check); // once you maintain zobrist_key incrementally
+
+    //DEBUG_ASSERT(4 == 2, "forcing a debug assertion failure");
+
     return 0;
 }
