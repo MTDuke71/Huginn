@@ -115,12 +115,24 @@
 
 ## position.hpp — Position & State API
 
+- **Constants:**
+  - `MAXPLY 2048` — Maximum search depth / game length
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
-  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key }`
+  - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured }` — Complete undo state
+  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, move_history[MAXPLY], ply }`
 - **Methods:**
   - `clear()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()`
+  - `make_move_with_undo(const Move& m)` — Make move with full undo support (array-based, O(1) performance)
+  - `undo_move()` — Undo last move, returns true/false for success (array-based, O(1) performance)
 - **Move Handling:**
-  - `make_move(Position&, const Move&, State&)`
-  - `unmake_move(Position&, const Move&, const State&)`
+  - `make_move(Position&, const Move&, State&)` — Simple move making
+  - `unmake_move(Position&, const Move&, const State&)` — Simple move unmaking
+- **Move Encoding:**
+  - `S_UNDO::encode_move(from, to, promo)` — Pack move into integer
+  - `S_UNDO::decode_move(encoded, from, to, promo)` — Unpack move from integer
+- **Performance Features:**
+  - Fixed-size array storage for zero allocation overhead
+  - Direct array indexing for maximum speed
+  - Overflow protection at MAXPLY limit
 
