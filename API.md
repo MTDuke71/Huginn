@@ -27,7 +27,7 @@
 - **Square Conversion:**
   - `square_from_file_rank(int file, int rank)` — Convert file/rank to square (0-63)
   - `file_of_square(int square)` / `rank_of_square(int square)` — Extract file/rank
-  - `sq64_to_sq120(int sq64)` / `sq120_to_sq64(int sq120)` — Convert between indexing systems
+  - `sq64_to_sq120(int sq64)` / `sq120_to_sq64(int sq120)` — Convert between indexing systems (uses pre-computed MAILBOX_MAPS arrays)
 - **Usage Examples:**
   ```cpp
   Bitboard bb = EMPTY_BB;

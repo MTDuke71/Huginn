@@ -1,6 +1,6 @@
 // bitboard.cpp
 #include "bitboard.hpp"
-#include "board120.hpp"
+#include "board120.hpp"  // For MAILBOX_MAPS conversion arrays
 #include <iostream>
 #include <iomanip>
 
@@ -75,28 +75,10 @@ bool is_set(Bitboard bb, int square) {
 
 int sq64_to_sq120(int sq64) {
     if (sq64 < 0 || sq64 >= 64) return -1;
-    
-    int file = file_of_square(sq64);
-    int rank = rank_of_square(sq64);
-    
-    // Convert to 120-square indexing
-    // 120-square: A1=21, B1=22, ..., H1=28, A2=31, ..., H8=98
-    return (rank + 2) * 10 + (file + 1);
+    return MAILBOX_MAPS.to120[sq64];
 }
 
 int sq120_to_sq64(int sq120) {
-    // Extract file and rank from 120-square index
-    int file120 = sq120 % 10;
-    int rank120 = sq120 / 10;
-    
-    // Check if it's a valid playable square
-    if (file120 < 1 || file120 > 8 || rank120 < 2 || rank120 > 9) {
-        return -1;  // Invalid square
-    }
-    
-    // Convert to 64-square indexing
-    int file64 = file120 - 1;  // 0-7
-    int rank64 = rank120 - 2;  // 0-7
-    
-    return rank64 * 8 + file64;
+    if (sq120 < 0 || sq120 >= 120) return -1;
+    return MAILBOX_MAPS.to64[sq120];
 }

@@ -81,5 +81,6 @@ constexpr int rank_of_square(int square) {
 }
 
 // Convert between different square representations
+// Uses pre-computed MAILBOX_MAPS arrays for consistency and reliability
 int sq64_to_sq120(int sq64);        // Convert 64-square to 120-square index
 int sq120_to_sq64(int sq120);       // Convert 120-square to 64-square index
