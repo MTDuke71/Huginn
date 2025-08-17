@@ -24,7 +24,7 @@ TEST_F(InitTest, ZobristTablesPopulated) {
     // (extremely unlikely to be zero with a good RNG)
     bool has_nonzero_piece = false;
     for (int p = 0; p < 12 && !has_nonzero_piece; ++p) {
-        for (int s = 0; s < 64; ++s) {
+        for (int s = 0; s < 120; ++s) {  // Now checking all 120 squares
             if (Zobrist::Piece[p][s] != 0) {
                 has_nonzero_piece = true;
                 break;

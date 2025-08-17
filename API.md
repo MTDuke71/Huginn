@@ -195,17 +195,18 @@
 ## zobrist.hpp — Position Hashing API
 
 - **Namespace:** `Zobrist`
-- **Hash Tables:**
-  - `Piece[PIECE_NB][64]` — piece-square hash values
+- **Hash Tables (optimized for sq120 indexing):**
+  - `Piece[PIECE_NB][120]` — piece-square hash values (direct sq120 indexing, no conversion needed)
   - `Side` — side to move hash
   - `Castle[16]` — castling rights hash (0..15)
   - `EpFile[8]` — en passant file hash (a..h)
 - **Functions:**
   - `init_zobrist(seed)` — initialize hash tables with random values
-  - `compute(const Position&)` — compute Zobrist hash for current position
+  - `compute(const Position&)` — compute Zobrist hash for current position (optimized, no sq120→sq64 conversion)
 - **Integration:** 
   - Works with modern `Position` struct
   - Automatically handles piece placement, side to move, castling rights, en passant
+  - Performance optimized: direct sq120 indexing eliminates array lookup conversions
 
 ---
 
