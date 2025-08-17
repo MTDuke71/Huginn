@@ -201,12 +201,13 @@
   - `Castle[16]` — castling rights hash (0..15)
   - `EpFile[8]` — en passant file hash (a..h)
 - **Functions:**
-  - `init_zobrist(seed)` — initialize hash tables with random values
+  - `init_zobrist(seed)` — initialize hash tables with SplitMix64 generator (faster than Mersenne Twister)
   - `compute(const Position&)` — compute Zobrist hash for current position (optimized, no sq120→sq64 conversion)
 - **Integration:** 
   - Works with modern `Position` struct
   - Automatically handles piece placement, side to move, castling rights, en passant
   - Performance optimized: direct sq120 indexing eliminates array lookup conversions
+  - Random number generation: SplitMix64 for superior speed and quality
 
 ---
 
