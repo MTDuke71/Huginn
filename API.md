@@ -2,6 +2,26 @@
 
 ---
 
+## init.hpp — Engine Initialization
+
+- **Initialization Functions:**
+  - `Huginn::init()` — Initialize all engine subsystems (call once at startup)
+  - `Huginn::is_initialized()` — Check if engine has been properly initialized
+- **Usage:**
+  ```cpp
+  #include "init.hpp"
+  
+  int main() {
+      Huginn::init();  // Initialize all subsystems
+      // ... use engine functionality
+  }
+  ```
+- **Subsystems Initialized:**
+  - Zobrist hashing tables for position identification
+  - (Future: Attack tables, evaluation tables, opening books, etc.)
+
+---
+
 ## bitboard.hpp — Bitboard API
 
 - **Type Definition:**

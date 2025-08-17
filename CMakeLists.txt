@@ -16,6 +16,7 @@ add_executable(huginn
   src/main.cpp
   src/move_do.cpp        # <-- add this file per our earlier step
   src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
@@ -34,8 +35,10 @@ add_executable(huginn_tests
   test/test_main.cpp
   test/test_zobrist.cpp
   test/test_bitboard.cpp    # <-- bitboard tests
+  test/test_init.cpp        # <-- initialization tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
+  src/init.cpp           # <-- engine initialization for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -8,8 +8,11 @@
 #include "squares120.hpp" // MailboxMaps, ALL64, ALL120, etc.
 #include "position.hpp"
 #include "zobrist.hpp"
+#include "init.hpp"         // Engine initialization
 
 int main() {
+    // Initialize all engine subsystems
+    Huginn::init();
     // Modern board representation
     Position pos;
     pos.set_startpos();
@@ -49,7 +52,7 @@ int main() {
         // stop if blocked; otherwise keep extending
     }
 
-    Zobrist::init_zobrist();  // call once at startup
+    // Zobrist hashing is now initialized via Huginn::init()
     pos.zobrist_key = Zobrist::compute(pos);
 
     // If you re-count later:
