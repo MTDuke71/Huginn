@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "bitboard.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "move.hpp"
@@ -314,7 +315,7 @@ struct Position {
                 
                 if (pt == PieceType::Pawn) {
                     int s64 = MAILBOX_MAPS.to64[s];
-                    if (s64 >= 0) pawns_bb[size_t(c)] |= (1ULL << s64);
+                    if (s64 >= 0) setBit(pawns_bb[size_t(c)], s64);
                 }
                 if (pt == PieceType::King) {
                     king_sq[size_t(c)] = s;
