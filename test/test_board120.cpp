@@ -117,12 +117,12 @@ TEST(Board120, ExplicitOffboardSentinels) {
 }
 
 TEST(Board120, BoardClearSetsFramesOffboard) {
-    Position b; b.clear();
+    Position b; b.reset();
     auto raw120 = [](int file1, int row){ return row*10 + file1; };
-    // Offboard squares should be Piece::None
-    EXPECT_EQ(b.at(raw120(1,0)), Piece::None);  // A0
-    EXPECT_EQ(b.at(raw120(9,2)), Piece::None);  // I1 (right frame)
-    EXPECT_EQ(b.at(raw120(1,10)), Piece::None); // A10 (top frame)
+    // Offboard squares should be Piece::Offboard
+    EXPECT_EQ(b.at(raw120(1,0)), Piece::Offboard);  // A0
+    EXPECT_EQ(b.at(raw120(9,2)), Piece::Offboard);  // I1 (right frame)
+    EXPECT_EQ(b.at(raw120(1,10)), Piece::Offboard); // A10 (top frame)
     // E4 playable = Piece::None after clear
     EXPECT_EQ(b.at(sq(File::E, Rank::R4)), Piece::None);
 }

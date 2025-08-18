@@ -38,7 +38,7 @@ struct S_UNDO {
 };
 
 struct Position {
-    std::array<Piece, 120> board{};  // Piece::None for empty/offboard
+    std::array<Piece, 120> board{};  // Piece::None for empty, Piece::Offboard for offboard
     Color side_to_move{Color::White};
     int ep_square{-1};               // mailbox-120 index or -1
     uint8_t castling_rights{0};      // bitmask: CASTLE_WK|CASTLE_WQ|CASTLE_BK|CASTLE_BQ
@@ -58,35 +58,80 @@ struct Position {
     std::array<S_UNDO, MAXPLY> move_history{};
     int ply{0};                      // current search/game ply
 
-    void clear() {
-        for (auto &p: board) p = Piece::None;
-        side_to_move = Color::White;
-        ep_square = -1;
-        castling_rights = 0;
-        halfmove_clock = 0;
-        fullmove_number = 1;
-        king_sq = { -1, -1 };
-        pawns_bb = { 0, 0 };
-        piece_counts.fill(0);
-        zobrist_key = 0;
-        // Clear move history by resetting ply to 0
-        ply = 0;
+    void reset() {
+        // Set all squares to offboard first
+        for (auto& square : board) {
+            square = Piece::Offboard;
+        }
         
-        // Clear piece lists
+        // Set all real (playable) squares to empty
+        for (int rank = 0; rank < 8; ++rank) {
+            for (int file = 0; file < 8; ++file) {
+                int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
+                board[square] = Piece::None;
+            }
+        }
+        
+        // Clear piece counters - bigPce, majPce, minPce equivalents
+        piece_counts.fill(0);  // Clear all piece type counts
+        
+        // Clear pawn bitboards to 0ULL
+        pawns_bb[0] = 0ULL;  // White pawns
+        pawns_bb[1] = 0ULL;  // Black pawns
+        
+        // Clear all pceNum (piece counts per type per color)
         for (int color = 0; color < 2; ++color) {
             for (int type = 0; type < int(PieceType::_Count); ++type) {
                 pCount[color][type] = 0;
+                
+                // Clear piece lists
                 for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                    pList[color][type][i] = -1;
+                    pList[color][type][i] = -1;  // -1 indicates no piece
                 }
             }
+        }
+        
+        // Clear kingSq for both colors
+        king_sq[0] = -1;  // White king
+        king_sq[1] = -1;  // Black king
+        
+        // Clear side to Both (represented as None since there's no Both enum value)
+        side_to_move = Color::None;  // Neither side to move
+        
+        // Clear enPas (en passant square)
+        ep_square = -1;
+        
+        // Clear fiftyMove (halfmove clock)
+        halfmove_clock = 0;
+        
+        // Clear ply and hiPly equivalent
+        ply = 0;
+        
+        // Reset fullmove number to 1
+        fullmove_number = 1;
+        
+        // Clear castlePerm (castling rights)
+        castling_rights = 0;  // No castling rights
+        
+        // Clear poskey (Zobrist position key)
+        zobrist_key = 0ULL;
+        
+        // Clear all history variables
+        for (int i = 0; i < MAXPLY; ++i) {
+            move_history[i].move = 0;  // No move (0 is safe for encoded move)
+            move_history[i].castling_rights = 0;
+            move_history[i].ep_square = -1;
+            move_history[i].halfmove_clock = 0;
+            move_history[i].zobrist_key = 0ULL;
+            move_history[i].captured = Piece::None;
         }
     }
 
     // Put standard start position on 12x10
     void set_startpos() {
-        clear();
-        // Offboard frame already Piece::None; we only fill playable
+        reset();
+        side_to_move = Color::White;  // White moves first in chess
+        // Offboard frame already Piece::Offboard; we only fill playable squares
         // White pieces
         board[sq(File::A, Rank::R1)] = Piece::WhiteRook;
         board[sq(File::B, Rank::R1)] = Piece::WhiteKnight;
@@ -163,7 +208,9 @@ struct Position {
     }
 
     // Access
-    inline Piece at(int s) const { return is_playable(s) ? board[size_t(s)] : Piece::None; }
+    inline Piece at(int s) const { 
+        return (s >= 0 && s < 120) ? board[size_t(s)] : Piece::Offboard; 
+    }
     inline void set(int s, Piece p) { if (is_playable(s)) board[size_t(s)] = p; }
     
     // Piece list management helpers

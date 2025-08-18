@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iostream>
 #include "chess_types.hpp"
+#include "board120.hpp"  // For MAILBOX_MAPS access in SQ64/SQ120 macros
 
 // Bitboard type - represents 64 squares using bits
 using Bitboard = uint64_t;
@@ -134,3 +135,7 @@ constexpr int rank_of_square(int square) {
 // Uses pre-computed MAILBOX_MAPS arrays for consistency and reliability
 int sq64_to_sq120(int sq64);        // Convert 64-square to 120-square index
 int sq120_to_sq64(int sq120);       // Convert 120-square to 64-square index
+
+// Convenient macros for square conversion (direct MAILBOX_MAPS access)
+#define SQ64(sq120)  (MAILBOX_MAPS.to64[sq120])    // Convert sq120 → sq64
+#define SQ120(sq64)  (MAILBOX_MAPS.to120[sq64])    // Convert sq64 → sq120

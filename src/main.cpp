@@ -9,6 +9,7 @@
 #include "position.hpp"
 #include "zobrist.hpp"
 #include "init.hpp"         // Engine initialization
+#include "board.hpp"        // Board management functions
 
 int main() {
     // Initialize all engine subsystems
@@ -59,6 +60,15 @@ int main() {
     pos.rebuild_counts();
     const U64 check = Zobrist::compute(pos);
     // assert(pos.zobrist_key == check); // once you maintain zobrist_key incrementally
+
+    // Demonstrate board reset functionality
+    std::cout << "\nBoard reset demonstration:\n";
+    std::cout << "Before reset - King at e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
+    std::cout << "Before reset - White pawn count: " << pos.pCount[0][int(PieceType::Pawn)] << "\n";
+    
+    reset_board(pos);
+    std::cout << "After reset - Square e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
+    std::cout << "After reset - White pawn count: " << pos.pCount[0][int(PieceType::Pawn)] << "\n";
 
     //DEBUG_ASSERT(4 == 2, "forcing a debug assertion failure");
 

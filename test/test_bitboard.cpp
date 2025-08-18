@@ -95,6 +95,29 @@ TEST_F(BitboardTest, SquareConversion) {
     EXPECT_EQ(sq120_to_sq64(98), 63);  // h8: 98 -> 63
     EXPECT_EQ(sq120_to_sq64(55), 28);  // e4: 55 -> 28
     
+    // Test new conversion macros match function results
+    EXPECT_EQ(SQ120(0), 21);     // a1: 0 -> 21
+    EXPECT_EQ(SQ120(7), 28);     // h1: 7 -> 28  
+    EXPECT_EQ(SQ120(56), 91);    // a8: 56 -> 91
+    EXPECT_EQ(SQ120(63), 98);    // h8: 63 -> 98
+    EXPECT_EQ(SQ120(28), 55);    // e4: 28 -> 55
+    
+    EXPECT_EQ(SQ64(21), 0);      // a1: 21 -> 0
+    EXPECT_EQ(SQ64(28), 7);      // h1: 28 -> 7
+    EXPECT_EQ(SQ64(91), 56);     // a8: 91 -> 56
+    EXPECT_EQ(SQ64(98), 63);     // h8: 98 -> 63
+    EXPECT_EQ(SQ64(55), 28);     // e4: 55 -> 28
+    
+    // Verify macros match functions for all valid squares
+    for (int sq64 = 0; sq64 < 64; ++sq64) {
+        EXPECT_EQ(SQ120(sq64), sq64_to_sq120(sq64)) << "Macro/function mismatch at sq64=" << sq64;
+    }
+    for (int sq120 = 21; sq120 <= 98; ++sq120) {
+        if ((sq120 % 10) >= 1 && (sq120 % 10) <= 8) { // Valid file
+            EXPECT_EQ(SQ64(sq120), sq120_to_sq64(sq120)) << "Macro/function mismatch at sq120=" << sq120;
+        }
+    }
+    
     // Test invalid squares
     EXPECT_EQ(sq64_to_sq120(-1), -1);
     EXPECT_EQ(sq64_to_sq120(64), -1);

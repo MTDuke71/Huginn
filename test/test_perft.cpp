@@ -57,7 +57,7 @@ TEST(Perft, DISABLED_Startpos_d3_is_8902) {
 
 // Kiwipete covers castling, pins, etc. Enable after specials work.
 TEST(Perft, DISABLED_Kiwipete_d1_48_d2_2039) {
-    Position pos; pos.clear();
+    Position pos; pos.reset();
     // Set up Kiwipete by hand or add a small FEN parser later.
     // For now, leave disabled until FEN parsing + full move-gen exist.
     SUCCEED();

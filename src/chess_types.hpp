@@ -96,6 +96,7 @@ using PieceList = std::array<std::array<int, MAX_PIECES_PER_TYPE>, MAX_PIECE_TYP
 // ---------- Colored Pieces (packed: color<<3 | type) ----------
 enum class Piece : uint8_t {
     None       = 0,
+    Offboard   = 255,  // Sentinel value for offboard squares in mailbox-120
     WhitePawn  = (uint8_t(Color::White) << 3) | uint8_t(PieceType::Pawn),
     WhiteKnight= (uint8_t(Color::White) << 3) | uint8_t(PieceType::Knight),
     WhiteBishop= (uint8_t(Color::White) << 3) | uint8_t(PieceType::Bishop),
@@ -112,12 +113,13 @@ enum class Piece : uint8_t {
 };
 
 constexpr inline bool is_none(Piece p) { return p == Piece::None; }
+constexpr inline bool is_offboard(Piece p) { return p == Piece::Offboard; }
 
 constexpr inline PieceType type_of(Piece p) {
-    return is_none(p) ? PieceType::None : PieceType(uint8_t(p) & 0b111);
+    return (is_none(p) || is_offboard(p)) ? PieceType::None : PieceType(uint8_t(p) & 0b111);
 }
 constexpr inline Color color_of(Piece p) {
-    return is_none(p) ? Color::None : Color((uint8_t(p) >> 3) & 0b1);
+    return (is_none(p) || is_offboard(p)) ? Color::None : Color((uint8_t(p) >> 3) & 0b1);
 }
 constexpr inline Piece make_piece(Color c, PieceType t) {
     if (c == Color::None || t == PieceType::None) return Piece::None;
@@ -134,7 +136,10 @@ constexpr inline bool is_major(PieceType t) { return t == PieceType::Rook   || t
 // ---------- Char ↔ piece type (for FEN) ----------
 constexpr inline char to_char(Piece p) {
     const PieceType t = type_of(p);
-    if (t == PieceType::None) return '.';
+    if (t == PieceType::None) {
+        if (is_offboard(p)) return '#';  // Offboard squares shown as '#'
+        return '.';  // Empty squares shown as '.'
+    }
     const bool white = (color_of(p) == Color::White);
     char c = '?';
     switch (t) {

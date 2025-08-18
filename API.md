@@ -54,6 +54,7 @@
   - `square_from_file_rank(int file, int rank)` — Convert file/rank to square (0-63)
   - `file_of_square(int square)` / `rank_of_square(int square)` — Extract file/rank
   - `sq64_to_sq120(int sq64)` / `sq120_to_sq64(int sq120)` — Convert between indexing systems (uses pre-computed MAILBOX_MAPS arrays)
+  - `SQ120(sq64)` / `SQ64(sq120)` — Convenient macros for square conversion (direct MAILBOX_MAPS access)
 - **Usage Examples:**
   ```cpp
   Bitboard bb = EMPTY_BB;
@@ -73,6 +74,11 @@
       int square = POP(pieces); // Pop LSB and get its position
       // Process piece at 'square'...
   }
+  
+  // Square conversion macros (fast direct access)
+  int sq64 = 28;                // e4 in 64-square indexing
+  int sq120 = SQ120(sq64);      // Convert to 120-square (55)
+  int back = SQ64(sq120);       // Convert back to 64-square (28)
   ```
 
 ---
@@ -219,6 +225,10 @@
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
   - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured }` — Complete undo state
   - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
+- **Position Management:**
+  - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
+  - `set_startpos()` — Set up standard chess starting position (calls `reset()` then places pieces)
+  - `rebuild_counts()` — Recalculate all piece counts from current board state
 - **Piece List Optimization:**
   - `pList[color][piece_type][index] = square` — Track piece locations for fast iteration
   - `pCount[color][piece_type]` — Count of pieces per type per color
@@ -237,6 +247,44 @@
   - Fixed-size array storage for zero allocation overhead
   - Direct array indexing for maximum speed
   - Overflow protection at MAXPLY limit
+
+---
+
+## board.hpp — Board Management API
+
+- **Reset Function:**
+  - `reset_board(Position& pos)` — Wrapper function calling `pos.reset()` for backward compatibility
+- **Reset Operations (via Position::reset()):**
+  - **Board State:** Offboard squares set to `Piece::Offboard`, playable squares set to `Piece::None` (empty)
+  - **Piece Counts:** All piece type counters cleared to 0
+  - **Bitboards:** Pawn bitboards cleared to `0ULL` for both colors
+  - **Piece Lists:** All piece counts and locations cleared (`pCount[color][type] = 0`, `pList` entries set to `-1`)
+  - **King Squares:** Both king positions set to `-1` (no king)
+  - **Game State:** Side to move set to `Color::None`, en passant square to `-1`
+  - **Clock Variables:** Halfmove clock set to 0, fullmove number reset to 1, ply reset to 0
+  - **Castling:** All castling rights cleared (`castling_rights = 0`)
+  - **Zobrist:** Position key cleared (`zobrist_key = 0ULL`)
+  - **Move History:** Complete move history array cleared (all `S_UNDO` entries reset)
+- **Move Generation Benefits:**
+  - Offboard squares contain `Piece::Offboard` (value 255) for instant detection
+  - Empty playable squares contain `Piece::None` (value 0)
+  - Move generation can check `if (is_offboard(pos.at(square)))` to detect board boundaries
+  - No need for separate bounds checking in sliding piece move generation
+- **Usage Example:**
+  ```cpp
+  Position pos;
+  pos.set_startpos();              // Set up starting position
+  
+  // Move generation example using offboard detection
+  int from = sq(File::A, Rank::R1);
+  for (int to = from + WEST; !is_offboard(pos.at(to)); to += WEST) {
+      if (pos.at(to) != Piece::None) break;  // Hit a piece
+      // Process move to 'to'
+  }
+  
+  reset_board(pos);                // Reset to completely empty state
+  // Board is now ready for FEN loading or manual piece placement
+  ```
 
 ---
 
