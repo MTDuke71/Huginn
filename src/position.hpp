@@ -29,6 +29,11 @@ struct S_UNDO {
     uint64_t zobrist_key;     // previous position key (posKey)
     Piece captured;           // captured piece (if any)
     
+    // Derived state for incremental updates (performance optimization)
+    std::array<int, 2> king_sq_backup;        // Previous king positions
+    std::array<uint64_t, 2> pawns_bb_backup;  // Previous pawn bitboards
+    std::array<int, 7> piece_counts_backup;   // Previous piece counts
+    
     // Helper to encode/decode move
     static int encode_move(int from, int to, PieceType promo = PieceType::None) {
         return (from & 0x7F) | ((to & 0x7F) << 7) | ((int(promo) & 0x7) << 14);
@@ -238,6 +243,9 @@ struct Position {
         
         // Rebuild derived state
         rebuild_counts();
+        
+        // Initialize Zobrist key from the parsed position
+        update_zobrist_key();
         return true;
     }
 
@@ -278,6 +286,9 @@ struct Position {
             halfmove_clock = 0;
             fullmove_number = 1;
             rebuild_counts();
+            
+            // Initialize Zobrist key for the starting position
+            update_zobrist_key();
         }
     }
 
@@ -323,6 +334,73 @@ struct Position {
             }
         }
     }
+
+    // Incremental update functions for make/unmake move performance
+    void save_derived_state(S_UNDO& undo) {
+        undo.king_sq_backup = king_sq;
+        undo.pawns_bb_backup = pawns_bb;
+        undo.piece_counts_backup = piece_counts;
+    }
+    
+    void restore_derived_state(const S_UNDO& undo) {
+        king_sq = undo.king_sq_backup;
+        pawns_bb = undo.pawns_bb_backup;
+        piece_counts = undo.piece_counts_backup;
+    }
+    
+    // Update derived state incrementally for a move (much faster than rebuild_counts)
+    void update_derived_state_for_move(const Move& m, Piece moving, Piece captured) {
+        Color moving_color = color_of(moving);
+        PieceType moving_type = type_of(moving);
+        
+        // Handle captured piece
+        if (!is_none(captured)) {
+            --piece_counts[size_t(type_of(captured))];
+            
+            // Remove captured pawn from bitboard
+            if (type_of(captured) == PieceType::Pawn) {
+                int s64_to = MAILBOX_MAPS.to64[m.to];
+                if (s64_to >= 0) {
+                    popBit(pawns_bb[size_t(color_of(captured))], s64_to);
+                }
+            }
+        }
+        
+        // Handle promotion
+        if (m.promo != PieceType::None) {
+            // Remove pawn, add promoted piece
+            --piece_counts[size_t(PieceType::Pawn)];
+            ++piece_counts[size_t(m.promo)];
+            
+            // Remove pawn from bitboard (promoted piece isn't a pawn)
+            int s64_to = MAILBOX_MAPS.to64[m.to];
+            if (s64_to >= 0) {
+                popBit(pawns_bb[size_t(moving_color)], s64_to);
+            }
+        } else {
+            // Regular move - update piece-specific derived state
+            if (moving_type == PieceType::Pawn) {
+                // Update pawn bitboard
+                int s64_from = MAILBOX_MAPS.to64[m.from];
+                int s64_to = MAILBOX_MAPS.to64[m.to];
+                if (s64_from >= 0 && s64_to >= 0) {
+                    popBit(pawns_bb[size_t(moving_color)], s64_from);
+                    setBit(pawns_bb[size_t(moving_color)], s64_to);
+                }
+            }
+            
+            if (moving_type == PieceType::King) {
+                // Update king square
+                king_sq[size_t(moving_color)] = m.to;
+            }
+        }
+    }
+    
+    // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
+    void update_zobrist_for_move(const Move& m, Piece moving, Piece captured);
+    
+    // Compute and set the Zobrist key from current position
+    void update_zobrist_key();
 
     // Access
     inline Piece at(int s) const { 
@@ -401,6 +479,9 @@ struct Position {
         undo.zobrist_key = zobrist_key;
         undo.captured = at(m.to);
         
+        // Save derived state for efficient undo (performance optimization)
+        save_derived_state(undo);
+        
         // Increment ply after saving undo info
         ++ply;
         
@@ -440,10 +521,11 @@ struct Position {
         side_to_move = !side_to_move;
         if (side_to_move == Color::White) ++fullmove_number;
         
-        // Update derived state (piece counts, king squares, etc.)
-        // Note: piece lists are already updated above for performance
-        rebuild_counts();
-        // Update zobrist_key here when Zobrist integration is complete
+        // Update derived state incrementally (much faster than rebuild_counts)
+        update_derived_state_for_move(m, moving, captured);
+        
+        // Update zobrist_key incrementally using XOR (much faster than recomputing)
+        update_zobrist_for_move(m, moving, captured);
     }
     
     // Undo the last move
@@ -481,8 +563,8 @@ struct Position {
         halfmove_clock = undo.halfmove_clock;
         zobrist_key = undo.zobrist_key;
         
-        // Update derived state
-        rebuild_counts();
+        // Restore derived state incrementally (much faster than rebuild_counts)
+        restore_derived_state(undo);
         
         return true;
     }
