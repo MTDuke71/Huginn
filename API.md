@@ -269,6 +269,11 @@
   - `reset_board(Position& pos)` — Wrapper function calling `pos.reset()` for backward compatibility
 - **Position Display:**
   - `print_position(const Position& pos)` — Visual ASCII board display with game state information
+    - Shows 8x8 board with piece placement
+    - Displays side to move, castling rights, en passant square
+    - Shows halfmove clock and fullmove number
+    - Lists piece counts by type
+    - Shows Zobrist position key in hexadecimal format
 - **Reset Operations (via Position::reset()):**
   - **Board State:** Offboard squares set to `Piece::Offboard`, playable squares set to `Piece::None` (empty)
   - **Piece Counts:** All piece type counters cleared to 0

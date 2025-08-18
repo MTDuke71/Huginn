@@ -67,4 +67,6 @@ void print_position(const Position& pos) {
     std::cout << ", Bishops=" << pos.piece_counts[int(PieceType::Bishop)];
     std::cout << ", Queens=" << pos.piece_counts[int(PieceType::Queen)];
     std::cout << ", Kings=" << pos.piece_counts[int(PieceType::King)] << "\n";
+    
+    std::cout << "Position key: 0x" << std::hex << pos.zobrist_key << std::dec << "\n";
 }
