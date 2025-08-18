@@ -227,8 +227,13 @@
   - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
 - **Position Management:**
   - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
-  - `set_startpos()` — Set up standard chess starting position (calls `reset()` then places pieces)
+  - `set_startpos()` — Set up standard chess starting position using FEN parsing
+  - `set_from_fen(const std::string& fen)` — Parse FEN string and set position accordingly
   - `rebuild_counts()` — Recalculate all piece counts from current board state
+- **FEN Support:**
+  - **Full FEN parsing**: Handles piece placement, side to move, castling rights, en passant, move counters
+  - **Error handling**: Returns `false` for invalid FEN strings, maintains position state on failure
+  - **Standard compliance**: Supports all standard FEN notation including KQkq castling and algebraic en passant squares
 - **Piece List Optimization:**
   - `pList[color][piece_type][index] = square` — Track piece locations for fast iteration
   - `pCount[color][piece_type]` — Count of pieces per type per color
@@ -254,6 +259,8 @@
 
 - **Reset Function:**
   - `reset_board(Position& pos)` — Wrapper function calling `pos.reset()` for backward compatibility
+- **Position Display:**
+  - `print_position(const Position& pos)` — Visual ASCII board display with game state information
 - **Reset Operations (via Position::reset()):**
   - **Board State:** Offboard squares set to `Piece::Offboard`, playable squares set to `Piece::None` (empty)
   - **Piece Counts:** All piece type counters cleared to 0
@@ -265,6 +272,13 @@
   - **Castling:** All castling rights cleared (`castling_rights = 0`)
   - **Zobrist:** Position key cleared (`zobrist_key = 0ULL`)
   - **Move History:** Complete move history array cleared (all `S_UNDO` entries reset)
+- **Position Visualization Features:**
+  - **ASCII Board Display:** Clean grid layout with rank/file labels and borders
+  - **Piece Representation:** FEN notation (K/Q/R/B/N/P for white, k/q/r/b/n/p for black)
+  - **Empty Squares:** Shown as dots (.) for clear visualization
+  - **Game State Info:** Side to move, castling rights, en passant square, move counters
+  - **Piece Statistics:** Complete piece counts by type for debugging
+  - **Standard Format:** Rank 8 at top, Rank 1 at bottom, files a-h left to right
 - **Move Generation Benefits:**
   - Offboard squares contain `Piece::Offboard` (value 255) for instant detection
   - Empty playable squares contain `Piece::None` (value 0)
@@ -274,6 +288,9 @@
   ```cpp
   Position pos;
   pos.set_startpos();              // Set up starting position
+  
+  // Display the position visually
+  print_position(pos);             // Shows ASCII board with game state
   
   // Move generation example using offboard detection
   int from = sq(File::A, Rank::R1);

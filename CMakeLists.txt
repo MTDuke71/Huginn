@@ -39,6 +39,8 @@ add_executable(huginn_tests
   test/test_init.cpp        # <-- initialization tests
   test/test_board.cpp       # <-- board management tests
   test/test_offboard_detection.cpp  # <-- offboard detection demo
+  test/test_fen.cpp         # <-- FEN parsing tests
+  test/test_print_position.cpp      # <-- position printing tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests

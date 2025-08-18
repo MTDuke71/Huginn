@@ -1,6 +1,9 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <string>
+#include <vector>
+#include <sstream>
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "move.hpp"
@@ -127,41 +130,154 @@ struct Position {
         }
     }
 
+    // Parse FEN string and set position accordingly
+    bool set_from_fen(const std::string& fen) {
+        reset(); // Start with clean slate
+        
+        // Split FEN into components
+        std::vector<std::string> tokens;
+        std::istringstream iss(fen);
+        std::string token;
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+        
+        if (tokens.size() != 6) {
+            return false; // Invalid FEN format
+        }
+        
+        // 1. Parse piece placement (board)
+        const std::string& placement = tokens[0];
+        int rank = 7; // Start from rank 8 (index 7)
+        int file = 0;
+        
+        for (char ch : placement) {
+            if (ch == '/') {
+                rank--;
+                file = 0;
+                if (rank < 0) return false; // Too many ranks
+            } else if (ch >= '1' && ch <= '8') {
+                // Empty squares
+                int empty_count = ch - '0';
+                file += empty_count;
+                if (file > 8) return false; // Too many files
+            } else {
+                // Piece character
+                Piece piece = from_char(ch);
+                if (is_none(piece) && ch != '.' && ch != '#') {
+                    return false; // Invalid piece character
+                }
+                if (file >= 8) return false; // Too many files
+                
+                int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
+                board[square] = piece;
+                file++;
+            }
+        }
+        
+        if (rank != 0 || file != 8) {
+            return false; // Incomplete board
+        }
+        
+        // 2. Parse side to move
+        const std::string& side = tokens[1];
+        if (side == "w") {
+            side_to_move = Color::White;
+        } else if (side == "b") {
+            side_to_move = Color::Black;
+        } else {
+            return false; // Invalid side to move
+        }
+        
+        // 3. Parse castling rights
+        const std::string& castling = tokens[2];
+        castling_rights = CASTLE_NONE;
+        if (castling != "-") {
+            for (char ch : castling) {
+                switch (ch) {
+                    case 'K': castling_rights |= CASTLE_WK; break;
+                    case 'Q': castling_rights |= CASTLE_WQ; break;
+                    case 'k': castling_rights |= CASTLE_BK; break;
+                    case 'q': castling_rights |= CASTLE_BQ; break;
+                    default: return false; // Invalid castling character
+                }
+            }
+        }
+        
+        // 4. Parse en passant square
+        const std::string& ep = tokens[3];
+        if (ep == "-") {
+            ep_square = -1;
+        } else {
+            if (ep.length() != 2) return false;
+            char file_char = ep[0];
+            char rank_char = ep[1];
+            if (file_char < 'a' || file_char > 'h' || rank_char < '1' || rank_char > '8') {
+                return false;
+            }
+            File ep_file = static_cast<File>(file_char - 'a');
+            Rank ep_rank = static_cast<Rank>(rank_char - '1');
+            ep_square = sq(ep_file, ep_rank);
+        }
+        
+        // 5. Parse halfmove clock
+        try {
+            halfmove_clock = static_cast<uint16_t>(std::stoi(tokens[4]));
+        } catch (...) {
+            return false; // Invalid halfmove clock
+        }
+        
+        // 6. Parse fullmove number
+        try {
+            fullmove_number = static_cast<uint16_t>(std::stoi(tokens[5]));
+            if (fullmove_number == 0) fullmove_number = 1; // Ensure it's at least 1
+        } catch (...) {
+            return false; // Invalid fullmove number
+        }
+        
+        // Rebuild derived state
+        rebuild_counts();
+        return true;
+    }
+
     // Put standard start position on 12x10
     void set_startpos() {
-        reset();
-        side_to_move = Color::White;  // White moves first in chess
-        // Offboard frame already Piece::Offboard; we only fill playable squares
-        // White pieces
-        board[sq(File::A, Rank::R1)] = Piece::WhiteRook;
-        board[sq(File::B, Rank::R1)] = Piece::WhiteKnight;
-        board[sq(File::C, Rank::R1)] = Piece::WhiteBishop;
-        board[sq(File::D, Rank::R1)] = Piece::WhiteQueen;
-        board[sq(File::E, Rank::R1)] = Piece::WhiteKing;
-        board[sq(File::F, Rank::R1)] = Piece::WhiteBishop;
-        board[sq(File::G, Rank::R1)] = Piece::WhiteKnight;
-        board[sq(File::H, Rank::R1)] = Piece::WhiteRook;
-        for (int f = 0; f < 8; ++f)
-            board[sq(static_cast<File>(f), Rank::R2)] = Piece::WhitePawn;
+        // Use FEN parsing for the standard starting position
+        const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        if (!set_from_fen(start_fen)) {
+            // Fallback to manual setup if FEN parsing fails (shouldn't happen)
+            reset();
+            side_to_move = Color::White;
+            // White pieces
+            board[sq(File::A, Rank::R1)] = Piece::WhiteRook;
+            board[sq(File::B, Rank::R1)] = Piece::WhiteKnight;
+            board[sq(File::C, Rank::R1)] = Piece::WhiteBishop;
+            board[sq(File::D, Rank::R1)] = Piece::WhiteQueen;
+            board[sq(File::E, Rank::R1)] = Piece::WhiteKing;
+            board[sq(File::F, Rank::R1)] = Piece::WhiteBishop;
+            board[sq(File::G, Rank::R1)] = Piece::WhiteKnight;
+            board[sq(File::H, Rank::R1)] = Piece::WhiteRook;
+            for (int f = 0; f < 8; ++f)
+                board[sq(static_cast<File>(f), Rank::R2)] = Piece::WhitePawn;
 
-        // Black pieces
-        board[sq(File::A, Rank::R8)] = Piece::BlackRook;
-        board[sq(File::B, Rank::R8)] = Piece::BlackKnight;
-        board[sq(File::C, Rank::R8)] = Piece::BlackBishop;
-        board[sq(File::D, Rank::R8)] = Piece::BlackQueen;
-        board[sq(File::E, Rank::R8)] = Piece::BlackKing;
-        board[sq(File::F, Rank::R8)] = Piece::BlackBishop;
-        board[sq(File::G, Rank::R8)] = Piece::BlackKnight;
-        board[sq(File::H, Rank::R8)] = Piece::BlackRook;
-        for (int f = 0; f < 8; ++f)
-            board[sq(static_cast<File>(f), Rank::R7)] = Piece::BlackPawn;
+            // Black pieces
+            board[sq(File::A, Rank::R8)] = Piece::BlackRook;
+            board[sq(File::B, Rank::R8)] = Piece::BlackKnight;
+            board[sq(File::C, Rank::R8)] = Piece::BlackBishop;
+            board[sq(File::D, Rank::R8)] = Piece::BlackQueen;
+            board[sq(File::E, Rank::R8)] = Piece::BlackKing;
+            board[sq(File::F, Rank::R8)] = Piece::BlackBishop;
+            board[sq(File::G, Rank::R8)] = Piece::BlackKnight;
+            board[sq(File::H, Rank::R8)] = Piece::BlackRook;
+            for (int f = 0; f < 8; ++f)
+                board[sq(static_cast<File>(f), Rank::R7)] = Piece::BlackPawn;
 
-        side_to_move = Color::White;
-        castling_rights = CASTLE_ALL; // KQkq
-        ep_square = -1;
-        halfmove_clock = 0;
-        fullmove_number = 1;
-        rebuild_counts();
+            castling_rights = CASTLE_ALL; // KQkq
+            ep_square = -1;
+            halfmove_clock = 0;
+            fullmove_number = 1;
+            rebuild_counts();
+        }
     }
 
     // Update piece counts, king squares, pawn bitboards, and piece lists

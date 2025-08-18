@@ -14,3 +14,13 @@
  * - Clears move history
  */
 void reset_board(Position& pos);
+
+/**
+ * Print a chess position in a visual ASCII format
+ * Displays the board with pieces, coordinates, and game state information
+ * - Shows pieces using FEN notation (K/Q/R/B/N/P for white, k/q/r/b/n/p for black)
+ * - Empty squares shown as dots (.)
+ * - Includes rank/file labels and borders
+ * - Shows side to move, castling rights, en passant, move counters, piece counts
+ */
+void print_position(const Position& pos);

@@ -2,6 +2,7 @@
 #include <array>
 #include <iostream>
 #include <cassert>
+#include <iomanip>
 
 #include "chess_types.hpp"  // Piece, Color, PieceType, helpers
 #include "board120.hpp"     // File, Rank, sq(), is_playable, etc.
@@ -9,68 +10,60 @@
 #include "position.hpp"
 #include "zobrist.hpp"
 #include "init.hpp"         // Engine initialization
-#include "board.hpp"        // Board management functions
+#include "board.hpp"        // Board management functions including print_position
 
 int main() {
     // Initialize all engine subsystems
     Huginn::init();
-    // Modern board representation
+    
+    std::cout << "=== Huginn Chess Engine - Position Display Demo ===\n";
+    
+    // Create position and set up starting position
     Position pos;
     pos.set_startpos();
-
-    // Example: print algebraic for e4
-    const int e4 = sq(File::E, Rank::R4);
-    char buf[3];
-    to_algebraic(e4, buf);
-    std::cout << "Square e4 index: " << e4 << ", algebraic: " << buf << "\n";
-
-    // Print a FEN char for the king on e1
-    std::cout << "Piece at e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
-
-    // Iterate all playable mailbox-120 squares
-    for (int s : Playable120{}) {
-        DEBUG_ASSERT(is_playable(s), "Square should be playable in Playable120 iterator");
-    }
-
-    // Translate 64→120 and back
-    int s64  = 36;                    // e5 in 0..63 (A1=0)
-    int s120 = MAILBOX_MAPS.to120[s64];
-    int back = MAILBOX_MAPS.to64[s120];
-    DEBUG_ASSERT(back == s64, "Mailbox mapping round-trip should preserve square index");
-
-    // Knight moves from g1
-    int g1 = sq(File::G, Rank::R1);
-    for (int d : KNIGHT_DELTAS) {
-        int to = g1 + d;
-        if (is_playable(to)) {
-            // valid target on board
-        }
-    }
-
-    // Sliding ray (rook north)
-    int from = sq(File::E, Rank::R2);
-    for (int to = from + NORTH; is_playable(to); to += NORTH) {
-        // stop if blocked; otherwise keep extending
-    }
-
-    // Zobrist hashing is now initialized via Huginn::init()
-    pos.zobrist_key = Zobrist::compute(pos);
-
-    // If you re-count later:
-    pos.rebuild_counts();
-    const U64 check = Zobrist::compute(pos);
-    // assert(pos.zobrist_key == check); // once you maintain zobrist_key incrementally
-
-    // Demonstrate board reset functionality
-    std::cout << "\nBoard reset demonstration:\n";
-    std::cout << "Before reset - King at e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
-    std::cout << "Before reset - White pawn count: " << pos.pCount[0][int(PieceType::Pawn)] << "\n";
     
-    reset_board(pos);
-    std::cout << "After reset - Square e1: " << to_char(pos.at(sq(File::E, Rank::R1))) << "\n";
-    std::cout << "After reset - White pawn count: " << pos.pCount[0][int(PieceType::Pawn)] << "\n";
-
-    //DEBUG_ASSERT(4 == 2, "forcing a debug assertion failure");
-
+    std::cout << "\n1. Standard Chess Starting Position:\n";
+    print_position(pos);
+    
+    std::cout << "FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n";
+    
+    // Show a more complex position (Kiwipete)
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "\n2. Kiwipete Test Position (complex position with castling possibilities):\n";
+    
+    const std::string kiwipete_fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    if (pos.set_from_fen(kiwipete_fen)) {
+        print_position(pos);
+        std::cout << "FEN: " << kiwipete_fen << "\n";
+    }
+    
+    // Show a position with en passant
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "\n3. Position with En Passant (after 1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Nxd4 Nf6 5.Nc3 d6 6.f4 Be7 7.Be2 O-O 8.O-O c5 9.Nb3 b6 10.Bf3 Bb7 11.Re1 Rc8 12.e5):\n";
+    
+    const std::string ep_fen = "2r1k2r/pb2bppp/1pn2n2/2ppP3/5P2/1NN1BQ2/PPP3PP/R1B1R1K1 b k - 0 12";
+    if (pos.set_from_fen(ep_fen)) {
+        print_position(pos);
+        std::cout << "FEN: " << ep_fen << "\n";
+    }
+    
+    // Show an endgame position
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "\n4. King and Pawn Endgame:\n";
+    
+    const std::string endgame_fen = "8/8/8/3k4/3P4/3K4/8/8 w - - 0 1";
+    if (pos.set_from_fen(endgame_fen)) {
+        print_position(pos);
+        std::cout << "FEN: " << endgame_fen << "\n";
+    }
+    
+    // Return to starting position and show zobrist
+    pos.set_startpos();
+    pos.zobrist_key = Zobrist::compute(pos);
+    std::cout << "\n" << std::string(60, '=') << "\n";
+    std::cout << "\nStarting position Zobrist key: 0x" << std::hex << pos.zobrist_key << std::dec << "\n";
+    
+    std::cout << "\n=== Position display demo complete ===\n";
+    
     return 0;
 }
