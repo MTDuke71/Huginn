@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <algorithm>
 #include "position.hpp"
 #include "move.hpp"
 #include "board120.hpp"
@@ -299,13 +300,31 @@ inline bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     return false; // No attacks found
 }
 
-// Pseudo-legal move list; start small and grow coverage with tests.
+// Move list using enhanced S_MOVE structure with scoring
 struct MoveList {
-    std::vector<Move> v;
-    void clear(){ v.clear(); }
-    void add(const Move& m){ v.push_back(m); }
+    std::vector<S_MOVE> v;
+    void clear() { v.clear(); }
+    void add(const S_MOVE& m) { v.push_back(m); }
+    void add(int from, int to, PieceType captured = PieceType::None, 
+             bool en_passant = false, bool pawn_start = false, 
+             PieceType promoted = PieceType::None, bool castle = false) {
+        v.emplace_back(from, to, captured, en_passant, pawn_start, promoted, castle);
+    }
     size_t size() const { return v.size(); }
-    const Move& operator[](size_t i) const { return v[i]; }
+    S_MOVE& operator[](size_t i) { return v[i]; }
+    const S_MOVE& operator[](size_t i) const { return v[i]; }
+    
+    // Move ordering functions
+    void sort_by_score() {
+        std::sort(v.begin(), v.end(), [](const S_MOVE& a, const S_MOVE& b) {
+            return a.score > b.score; // Higher scores first
+        });
+    }
+    
+    // Legacy compatibility - add Move objects
+    void add_legacy(const Move& m) {
+        v.push_back(m.to_s_move());
+    }
 };
 
 inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
@@ -326,7 +345,10 @@ inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
                     if (!is_playable(to)) continue;
                     Piece q = pos.at(to);
                     if (!is_none(q) && color_of(q) == pos.side_to_move) continue; // own piece
-                    out.add(make_move(s, to));
+                    
+                    // Check if this is a capture
+                    PieceType captured = is_none(q) ? PieceType::None : type_of(q);
+                    out.add(s, to, captured);
                 }
             }
             // TODO: add other pieces via tests

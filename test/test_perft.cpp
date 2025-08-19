@@ -9,9 +9,10 @@ static uint64_t perft(Position& pos, int depth) {
     uint64_t nodes = 0;
     for (const auto& m : list.v) {
         State st{};
-        make_move(pos, m, st);
+        Move legacy_move = m.to_move();
+        make_move(pos, legacy_move, st);
         nodes += perft(pos, depth-1);
-        unmake_move(pos, m, st);
+        unmake_move(pos, legacy_move, st);
     }
     return nodes;
 }

@@ -238,25 +238,177 @@
 
 ---
 
-## move.hpp — Move Representation API
+## move.hpp — Enhanced Move Representation API
 
-- **Structs:**
-  - `Move { int from, int to, PieceType promo }`
-- **Helpers:**
-  - `make_move(int from, int to, PieceType promo = PieceType::None)`
-  - `operator==(const Move&, const Move&)`
+### **Key Improvements in S_MOVE Architecture**
+
+The new `S_MOVE` structure represents a significant advancement over the previous move representation:
+
+- **Memory Efficiency**: 8 bytes total vs 12+ bytes for separate fields (33% reduction)
+- **Cache Performance**: Compact 25-bit encoding improves memory bandwidth utilization
+- **Integrated Scoring**: Built-in move ordering without separate data structures
+- **Bit-Packed Design**: All move information encoded in a single 32-bit integer
+- **Fast Operations**: Single integer comparisons and efficient bit manipulation
+- **Legacy Compatibility**: Seamless conversion to/from legacy Move structure
+
+### **S_MOVE Structure - High-Performance Packed Move Representation**
+
+- **Primary Structure:**
+  ```cpp
+  struct S_MOVE {
+      int move;   // Packed move data (25 bits used)
+      int score;  // Move score for ordering/evaluation
+  };
+  ```
+
+### **Bit Layout Diagram (25 bits total in `int move`):**
+
+```
+Bit Position:  31    24 23  20 19 18 17    14 13    7 6     0
+               │      │  │   │  │  │  │      │  │     │       │
+Field:         │unused│promoted│C│P│E│captured│ to   │ from  │
+               │      │  piece │A│S│P│ piece  │square│square │
+               │      │ (4bits)│S│T│ │(4bits) │(7bit)│(7bit) │
+               │      │        │T│A│ │        │      │       │
+               │      │        │L│R│ │        │      │       │
+               │      │        │E│T│ │        │      │       │
+
+Bit Usage:     7 bits │ 4 bits│1│1│1│4 bits │7 bits│7 bits │
+               unused │       │ │ │ │        │      │       │
+                     │       │ │ │ │        │      │       │
+Legend:              │       │ │ │ └─En Passant flag       │
+                     │       │ │ └───Pawn Start flag       │
+                     │       │ └─────Castle flag           │
+                     │       └───────Promoted piece type   │
+                     └───────────────Captured piece type   │
+                                                           │
+Total: 25 bits used, 7 bits available for future extensions
+```
+
+### **Bit Field Details:**
+- **Bits 0-6 (7 bits):** `from` square (0-127, supports 120-square notation)
+- **Bits 7-13 (7 bits):** `to` square (0-127, supports 120-square notation)  
+- **Bits 14-17 (4 bits):** `captured` piece type (PieceType enum: 0-15)
+- **Bit 18 (1 bit):** `en_passant` capture flag
+- **Bit 19 (1 bit):** `pawn_start` double-push flag
+- **Bits 20-23 (4 bits):** `promoted` piece type (PieceType enum: 0-15)
+- **Bit 24 (1 bit):** `castle` move flag
+- **Bits 25-31 (7 bits):** Available for future extensions
+
+### **Construction & Encoding:**
+- **Constructor:**
+  ```cpp
+  S_MOVE(int from, int to, PieceType captured = PieceType::None, 
+         bool en_passant = false, bool pawn_start = false, 
+         PieceType promoted = PieceType::None, bool castle = false)
+  ```
+- **Static Encoding:**
+  ```cpp
+  static int encode_move(int from, int to, PieceType captured, 
+                        bool en_passant, bool pawn_start, 
+                        PieceType promoted, bool castle)
+  ```
+
+### **Decoding & Access Methods:**
+- **Square Access:**
+  - `int get_from() const` — Extract from square (bits 0-6)
+  - `int get_to() const` — Extract to square (bits 7-13)
+- **Piece Information:**
+  - `PieceType get_captured() const` — Extract captured piece type (bits 14-17)
+  - `PieceType get_promoted() const` — Extract promoted piece type (bits 20-23)
+- **Move Flags:**
+  - `bool is_en_passant() const` — Check en passant flag (bit 18)
+  - `bool is_pawn_start() const` — Check pawn double-push flag (bit 19)
+  - `bool is_castle() const` — Check castle flag (bit 24)
+
+### **Convenience Query Methods:**
+- **Move Classification:**
+  - `bool is_capture() const` — True if captured piece or en passant
+  - `bool is_promotion() const` — True if promoted piece set
+  - `bool is_quiet() const` — True if no capture, promotion, castle, or en passant
+- **Move Ordering:**
+  - `bool operator<(const S_MOVE&) const` — Compare by score (ascending)
+  - `bool operator>(const S_MOVE&) const` — Compare by score (descending)
+  - `bool operator==(const S_MOVE&) const` — Compare move data only
+
+### **Convenience Factory Functions:**
+```cpp
+S_MOVE make_move(int from, int to)                              // Simple move
+S_MOVE make_capture(int from, int to, PieceType captured)       // Capture move
+S_MOVE make_en_passant(int from, int to)                        // En passant capture
+S_MOVE make_pawn_start(int from, int to)                        // Pawn double-push
+S_MOVE make_promotion(int from, int to, PieceType promoted,     // Promotion move
+                     PieceType captured = PieceType::None)
+S_MOVE make_castle(int from, int to)                            // Castle move
+```
+
+### **Legacy Compatibility:**
+- **Legacy Move struct maintained for backward compatibility:**
+  ```cpp
+  struct Move {
+      int from, to;
+      PieceType promo;
+      
+      S_MOVE to_s_move() const;                    // Convert to S_MOVE
+      static Move from_s_move(const S_MOVE& s);    // Convert from S_MOVE
+  };
+  ```
+
+### **Performance Benefits:**
+- **Memory Efficiency:** 8 bytes total (4 bytes move + 4 bytes score) vs 12+ bytes for separate fields
+- **Cache Performance:** Compact representation reduces memory bandwidth
+- **Fast Operations:** Single integer comparisons and bit manipulation
+- **Integrated Scoring:** Built-in move ordering without separate data structures
+
+### **Usage Examples:**
+```cpp
+// Create different types of moves
+S_MOVE quiet = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
+S_MOVE capture = make_capture(sq(File::D, Rank::R4), sq(File::E, Rank::R5), PieceType::Pawn);
+S_MOVE promotion = make_promotion(sq(File::A, Rank::R7), sq(File::A, Rank::R8), PieceType::Queen);
+S_MOVE castle = make_castle(sq(File::E, Rank::R1), sq(File::G, Rank::R1));
+
+// Query move properties
+if (capture.is_capture()) {
+    PieceType captured = capture.get_captured();
+    // Handle capture logic...
+}
+
+// Move ordering by score
+std::vector<S_MOVE> moves = {...};
+std::sort(moves.begin(), moves.end(), [](const S_MOVE& a, const S_MOVE& b) {
+    return a.score > b.score;  // Higher scores first
+});
+
+// Legacy compatibility
+Move legacy = {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
+S_MOVE enhanced = legacy.to_s_move();
+```
 
 ---
 
 ## movegen.hpp — Move Generation API
 
-- **Structs:**
-  - `MoveList { std::vector<Move> v }`
+- **Enhanced MoveList Structure:**
+  ```cpp
+  struct MoveList {
+      std::vector<S_MOVE> v;  // Uses S_MOVE instead of legacy Move
+  };
+  ```
 - **Methods:**
-  - `clear()`, `add(const Move&)`, `size()`, `operator[]`
+  - `clear()` — Clear all moves from list
+  - `add(const S_MOVE& m)` — Add existing S_MOVE to list
+  - `add(int from, int to, PieceType captured, bool en_passant, bool pawn_start, PieceType promoted, bool castle)` — Create and add move directly
+  - `size() const` — Get number of moves in list
+  - `operator[](size_t i)` — Access move by index
+  - `sort_by_score()` — Sort moves by score (higher scores first) for move ordering
 - **Functions:**
-  - `generate_pseudo_legal_moves(const Position&, MoveList&)`
-  - `generate_legal_moves(const Position&, MoveList&)`
+  - `generate_pseudo_legal_moves(const Position&, MoveList&)` — Generate all pseudo-legal S_MOVE objects
+  - `generate_legal_moves(const Position&, MoveList&)` — Generate legal S_MOVE objects
+- **Integration:**
+  - Seamlessly works with S_MOVE structure and scoring
+  - Supports efficient move ordering with built-in sort functionality
+  - Optimized for performance-critical move generation scenarios
 
 ---
 
@@ -285,7 +437,7 @@
   - `MAXPLY 2048` — Maximum search depth / game length
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
-  - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7], material_score_backup[2] }` — Complete undo state with incremental update support
+  - `S_UNDO { S_MOVE move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7], material_score_backup[2] }` — Complete undo state with incremental update support using S_MOVE structure
   - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
 - **Position Management:**
   - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
@@ -296,7 +448,7 @@
 - **High-Performance Incremental Updates:**
   - `save_derived_state(S_UNDO& undo)` — Save current derived state for O(1) restoration (internal function)
   - `restore_derived_state(const S_UNDO& undo)` — Restore derived state from backup in O(1) time (internal function)
-  - `update_derived_state_for_move(const Move& m, Piece moving, Piece captured)` — Update derived state incrementally in O(1) time (internal function)
+  - `update_derived_state_for_move(const S_MOVE& m, Piece moving, Piece captured)` — Update derived state incrementally in O(1) time (internal function)
   - **Performance**: 24-40x faster than `rebuild_counts()` for make/unmake operations
 - **Material Score Tracking:**
   - `material_score[2]` — Cached material values for both colors for O(1) evaluation (excludes kings)
@@ -324,14 +476,14 @@
   - `add_piece_to_list()`, `remove_piece_from_list()`, `move_piece_in_list()` — Piece list management
 - **Methods:**
   - `reset()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()` (for setup only)
-  - `make_move_with_undo(const Move& m)` — Make move with full undo support using incremental updates (O(1) performance, 24-40x faster than rebuild_counts)
+  - `make_move_with_undo(const S_MOVE& m)` — Make move with full undo support using incremental updates (O(1) performance, 24-40x faster than rebuild_counts)
   - `undo_move()` — Undo last move with perfect state restoration (O(1) performance, 24-40x faster than rebuild_counts)
 - **Move Handling:**
-  - `make_move(Position&, const Move&, State&)` — Simple move making
-  - `unmake_move(Position&, const Move&, const State&)` — Simple move unmaking
-- **Move Encoding:**
-  - `S_UNDO::encode_move(from, to, promo)` — Pack move into integer
-  - `S_UNDO::decode_move(encoded, from, to, promo)` — Unpack move from integer
+  - `make_move(Position&, const Move&, State&)` — Simple move making (legacy interface)
+  - `unmake_move(Position&, const Move&, const State&)` — Simple move unmaking (legacy interface)
+- **Move Encoding (now in S_MOVE structure):**
+  - `S_MOVE::encode_move(from, to, captured, en_passant, pawn_start, promoted, castle)` — Pack move into integer with all flags
+  - `S_MOVE::decode_move(encoded, from, to, promo)` — Unpack basic move information from integer
 - **Performance Optimizations:**
   - **Incremental Updates:** Make/unmake moves use O(1) incremental updates instead of O(120) board scanning
   - **State Backup/Restore:** Perfect derived state restoration in O(1) time using saved backup data

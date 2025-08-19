@@ -22,7 +22,7 @@ struct State {
 
 // Enhanced undo structure for comprehensive move history
 struct S_UNDO {
-    int move;                 // encoded move (from/to/promo packed)
+    S_MOVE move;              // Full move information with encoding
     uint8_t castling_rights;  // previous castling permissions (castlePerm)
     int ep_square;            // previous en passant square (enPas)
     uint16_t halfmove_clock;  // previous fifty move counter (fiftyMove)
@@ -36,12 +36,15 @@ struct S_UNDO {
     std::array<int, 7> piece_counts_backup;   // Previous piece counts
     std::array<int, 2> material_score_backup; // Previous material scores
     
-    // Helper to encode/decode move
-    static int encode_move(int from, int to, PieceType promo = PieceType::None) {
+    // Constructor
+    S_UNDO() : move(), castling_rights(0), ep_square(-1), halfmove_clock(0), zobrist_key(0), captured(Piece::None) {}
+    
+    // Legacy helper for backward compatibility (deprecated, use S_MOVE directly)
+    static int encode_move_legacy(int from, int to, PieceType promo = PieceType::None) {
         return (from & 0x7F) | ((to & 0x7F) << 7) | ((int(promo) & 0x7) << 14);
     }
     
-    static void decode_move(int encoded, int& from, int& to, PieceType& promo) {
+    static void decode_move_legacy(int encoded, int& from, int& to, PieceType& promo) {
         from = encoded & 0x7F;
         to = (encoded >> 7) & 0x7F;
         promo = PieceType((encoded >> 14) & 0x7);
@@ -138,7 +141,7 @@ struct Position {
         
         // Clear all history variables
         for (int i = 0; i < MAXPLY; ++i) {
-            move_history[i].move = 0;  // No move (0 is safe for encoded move)
+            move_history[i].move = S_MOVE();  // Empty move
             move_history[i].castling_rights = 0;
             move_history[i].ep_square = -1;
             move_history[i].halfmove_clock = 0;
@@ -587,7 +590,8 @@ struct Position {
         }
         
         S_UNDO& undo = move_history[ply]; // Direct array access
-        undo.move = S_UNDO::encode_move(m.from, m.to, m.promo);
+        undo.move.move = S_MOVE::encode_move(m.from, m.to, PieceType::None, false, false, m.promo, false);
+        undo.move.score = 0; // Reset score
         undo.castling_rights = castling_rights;
         undo.ep_square = ep_square;
         undo.halfmove_clock = halfmove_clock;
@@ -654,7 +658,7 @@ struct Position {
         // Decode the move
         int from, to;
         PieceType promo;
-        S_UNDO::decode_move(undo.move, from, to, promo);
+        S_MOVE::decode_move(undo.move.move, from, to, promo);
         
         // Undo side to move first
         side_to_move = !side_to_move;

@@ -52,6 +52,7 @@ add_executable(huginn_tests
   test/test_fen_generation.cpp      # <-- FEN generation function tests
   test/test_sq_attacked.cpp         # <-- SqAttacked function tests
   test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
+  test/test_s_move.cpp              # <-- S_MOVE structure tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
