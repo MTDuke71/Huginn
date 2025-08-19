@@ -20,6 +20,7 @@ add_executable(huginn
   src/board.cpp          # <-- board management functions
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
@@ -46,12 +47,16 @@ add_executable(huginn_tests
   test/test_incremental_updates.cpp # <-- incremental update performance tests
   test/test_zobrist_incremental.cpp # <-- zobrist incremental XOR update tests
   test/test_material_tracking.cpp   # <-- material score tracking tests
+  test/test_pawn_bitboard.cpp       # <-- combined pawn bitboard tests
+  test/test_debug_validation.cpp    # <-- debug validation function tests
+  test/test_fen_generation.cpp      # <-- FEN generation function tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
   src/position.cpp       # <-- position implementation with Zobrist updates for tests
   src/zobrist.cpp        # <-- zobrist implementation for tests
+  src/debug.cpp          # <-- debug and validation functions for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -67,3 +72,6 @@ add_custom_target(check
   DEPENDS huginn_tests
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# Include debug demo
+include(debug_demo.cmake)

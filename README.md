@@ -44,14 +44,22 @@ cmake --build build
 
 ### Development Tools
 - **Debug Assertions**: Detailed error reporting with file/line information when DEBUG defined
-- **Comprehensive Testing**: 24+ test cases covering all major components
+- **Comprehensive Testing**: 82+ test cases covering all major components including FEN generation
+- **Position Validation**: Multi-layer integrity checking with castling validation and FEN round-trip verification
 - **Bitboard Visualization**: ASCII board display with rank/file borders
 - **Square Conversion**: Seamless translation between 64-square and 120-square indexing
+- **FEN Support**: Complete bidirectional FEN parsing and generation with validation
 
 ### Performance Optimizations
 - **Zero Copy Operations**: Direct array access and bit manipulation
 - **Fast Piece Location**: O(1) piece finding via piece lists
 - **Efficient Memory Layout**: Compact data structures and minimal indirection
+
+### Demo Applications
+- **huginn.exe**: Main chess engine application
+- **debug_demo.exe**: Comprehensive validation system demonstration with passing/failing scenarios
+- **castling_demo.exe**: Interactive castling validation showing detection of various inconsistency types
+- **fen_demo.exe**: FEN generation demonstration showing round-trip conversion capabilities
 
 ### Running Tests (CTest)
 ```sh

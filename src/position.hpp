@@ -32,6 +32,7 @@ struct S_UNDO {
     // Derived state for incremental updates (performance optimization)
     std::array<int, 2> king_sq_backup;        // Previous king positions
     std::array<uint64_t, 2> pawns_bb_backup;  // Previous pawn bitboards
+    uint64_t all_pawns_bb_backup;             // Previous combined pawn bitboard
     std::array<int, 7> piece_counts_backup;   // Previous piece counts
     std::array<int, 2> material_score_backup; // Previous material scores
     
@@ -56,6 +57,7 @@ struct Position {
     uint16_t fullmove_number{1};
     std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
     std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
+    uint64_t all_pawns_bb{ 0 }; // Combined bitboard of all pawns (White | Black)
     std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
     
@@ -95,6 +97,7 @@ struct Position {
         // Clear pawn bitboards to 0ULL
         pawns_bb[0] = 0ULL;  // White pawns
         pawns_bb[1] = 0ULL;  // Black pawns
+        all_pawns_bb = 0ULL; // Combined pawns
         
         // Clear all pceNum (piece counts per type per color)
         for (int color = 0; color < 2; ++color) {
@@ -257,6 +260,83 @@ struct Position {
         return true;
     }
 
+    // Generate FEN string from current position
+    std::string to_fen() const {
+        std::string fen;
+        
+        // 1. Piece placement (board)
+        for (int rank = 7; rank >= 0; --rank) { // Start from rank 8 (index 7) down to rank 1 (index 0)
+            int empty_count = 0;
+            
+            for (int file = 0; file < 8; ++file) {
+                int sq120 = sq(static_cast<File>(file), static_cast<Rank>(rank));
+                Piece piece = board[sq120];
+                
+                if (is_none(piece)) {
+                    empty_count++;
+                } else {
+                    // Add any accumulated empty squares
+                    if (empty_count > 0) {
+                        fen += std::to_string(empty_count);
+                        empty_count = 0;
+                    }
+                    // Add the piece character
+                    fen += to_char(piece);
+                }
+            }
+            
+            // Add any remaining empty squares at end of rank
+            if (empty_count > 0) {
+                fen += std::to_string(empty_count);
+            }
+            
+            // Add rank separator (except for last rank)
+            if (rank > 0) {
+                fen += '/';
+            }
+        }
+        
+        // 2. Active color (side to move)
+        fen += ' ';
+        fen += (side_to_move == Color::White) ? 'w' : 'b';
+        
+        // 3. Castling availability
+        fen += ' ';
+        std::string castling;
+        if (castling_rights & CASTLE_WK) castling += 'K';
+        if (castling_rights & CASTLE_WQ) castling += 'Q';
+        if (castling_rights & CASTLE_BK) castling += 'k';
+        if (castling_rights & CASTLE_BQ) castling += 'q';
+        
+        if (castling.empty()) {
+            fen += '-';
+        } else {
+            fen += castling;
+        }
+        
+        // 4. En passant target square
+        fen += ' ';
+        if (ep_square == -1) {
+            fen += '-';
+        } else {
+            // Convert 120-square to algebraic notation
+            File file = file_of(ep_square);
+            Rank rank = rank_of(ep_square);
+            fen += char('a' + int(file));
+            fen += char('1' + int(rank));
+        }
+        
+        // 5. Halfmove clock (fifty-move rule)
+        fen += ' ';
+        fen += std::to_string(halfmove_clock);
+        
+        // 6. Fullmove number
+        fen += ' ';
+        fen += std::to_string(fullmove_number);
+        
+        return fen;
+    }
+
     // Put standard start position on 12x10
     void set_startpos() {
         // Use FEN parsing for the standard starting position
@@ -304,6 +384,7 @@ struct Position {
     void rebuild_counts() {
         king_sq = { -1, -1 };
         pawns_bb = { 0, 0 };
+        all_pawns_bb = 0;
         piece_counts.fill(0);
         material_score = { 0, 0 };  // Clear material scores
         
@@ -340,7 +421,10 @@ struct Position {
                 
                 if (pt == PieceType::Pawn) {
                     int s64 = MAILBOX_MAPS.to64[s];
-                    if (s64 >= 0) setBit(pawns_bb[size_t(c)], s64);
+                    if (s64 >= 0) {
+                        setBit(pawns_bb[size_t(c)], s64);
+                        setBit(all_pawns_bb, s64);
+                    }
                 }
                 if (pt == PieceType::King) {
                     king_sq[size_t(c)] = s;
@@ -353,6 +437,7 @@ struct Position {
     void save_derived_state(S_UNDO& undo) {
         undo.king_sq_backup = king_sq;
         undo.pawns_bb_backup = pawns_bb;
+        undo.all_pawns_bb_backup = all_pawns_bb;
         undo.piece_counts_backup = piece_counts;
         undo.material_score_backup = material_score;
     }
@@ -360,6 +445,7 @@ struct Position {
     void restore_derived_state(const S_UNDO& undo) {
         king_sq = undo.king_sq_backup;
         pawns_bb = undo.pawns_bb_backup;
+        all_pawns_bb = undo.all_pawns_bb_backup;
         piece_counts = undo.piece_counts_backup;
         material_score = undo.material_score_backup;
     }
@@ -383,6 +469,7 @@ struct Position {
                 int s64_to = MAILBOX_MAPS.to64[m.to];
                 if (s64_to >= 0) {
                     popBit(pawns_bb[size_t(color_of(captured))], s64_to);
+                    popBit(all_pawns_bb, s64_to);
                 }
             }
         }
@@ -401,6 +488,7 @@ struct Position {
             int s64_to = MAILBOX_MAPS.to64[m.to];
             if (s64_to >= 0) {
                 popBit(pawns_bb[size_t(moving_color)], s64_to);
+                popBit(all_pawns_bb, s64_to);
             }
         } else {
             // Regular move - update piece-specific derived state
@@ -411,6 +499,8 @@ struct Position {
                 if (s64_from >= 0 && s64_to >= 0) {
                     popBit(pawns_bb[size_t(moving_color)], s64_from);
                     setBit(pawns_bb[size_t(moving_color)], s64_to);
+                    popBit(all_pawns_bb, s64_from);
+                    setBit(all_pawns_bb, s64_to);
                 }
             }
             
@@ -605,6 +695,23 @@ struct Position {
     
     int get_total_material() const {
         return material_score[size_t(Color::White)] + material_score[size_t(Color::Black)];
+    }
+    
+    // Pawn bitboard access functions
+    uint64_t get_pawn_bitboard(Color c) const {
+        return pawns_bb[size_t(c)];
+    }
+    
+    uint64_t get_all_pawns_bitboard() const {
+        return all_pawns_bb;
+    }
+    
+    uint64_t get_white_pawns() const {
+        return pawns_bb[size_t(Color::White)];
+    }
+    
+    uint64_t get_black_pawns() const {
+        return pawns_bb[size_t(Color::Black)];
     }
 };
 

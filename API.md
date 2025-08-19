@@ -229,6 +229,7 @@
   - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
   - `set_startpos()` — Set up standard chess starting position using FEN parsing
   - `set_from_fen(const std::string& fen)` — Parse FEN string and set position accordingly
+  - `to_fen() const` — Generate FEN string from current position (perfect round-trip with set_from_fen)
   - `rebuild_counts()` — Recalculate all piece counts from current board state (used for FEN parsing and setup only)
 - **High-Performance Incremental Updates:**
   - `save_derived_state(S_UNDO& undo)` — Save current derived state for O(1) restoration (internal function)
@@ -245,8 +246,16 @@
   - **Performance**: O(1) material evaluation vs O(120) piece scanning
 - **FEN Support:**
   - **Full FEN parsing**: Handles piece placement, side to move, castling rights, en passant, move counters
+  - **FEN generation**: `to_fen()` method converts position back to standard FEN string
+  - **Round-trip compatibility**: Perfect FEN → Position → FEN preservation for all components
   - **Error handling**: Returns `false` for invalid FEN strings, maintains position state on failure
   - **Standard compliance**: Supports all standard FEN notation including KQkq castling and algebraic en passant squares
+- **Pawn Bitboard System:**
+  - `pawns_bb[2]` — Individual pawn bitboards for White and Black
+  - `all_pawns_bb` — Combined bitboard of all pawns (White | Black)
+  - `get_white_pawns()`, `get_black_pawns()`, `get_all_pawns_bitboard()` — Accessor methods
+  - **Incremental Updates**: Pawn bitboards automatically maintained during moves, captures, and promotions
+  - **Performance**: Fast pawn-specific operations without board scanning
 - **Piece List Optimization:**
   - `pList[color][piece_type][index] = square` — Track piece locations for fast iteration
   - `pCount[color][piece_type]` — Count of pieces per type per color
@@ -324,6 +333,63 @@
   reset_board(pos);                // Reset to completely empty state
   // Board is now ready for FEN loading or manual piece placement
   ```
+
+---
+
+## debug.hpp — Debug & Validation API
+
+- **Namespace:** `Debug`
+- **Comprehensive Position Validation:**
+  - `validate_position_consistency(const Position& pos, const std::string& expected_fen)` — Master validation function comparing position against expected FEN
+  - **Component-Specific Validators:**
+    - `validate_bitboards_consistency(const Position& pos)` — Verify bitboards match board array
+    - `validate_piece_counts_consistency(const Position& pos)` — Verify piece counts match actual pieces
+    - `validate_piece_lists_consistency(const Position& pos)` — Verify piece lists contain correct squares
+    - `validate_material_scores_consistency(const Position& pos)` — Verify material scores match pieces
+    - `validate_king_squares_consistency(const Position& pos)` — Verify king positions are tracked correctly
+    - `validate_zobrist_consistency(const Position& pos)` — Verify Zobrist hash matches position
+    - `validate_en_passant_consistency(const Position& pos)` — Verify en passant squares are valid for side to move
+    - `validate_castling_consistency(const Position& pos)` — Verify castling rights match piece positions
+- **Data Integrity Protection:**
+  - **Bitboard Validation**: Ensures pawn bitboards (individual and combined) match board array exactly
+  - **Piece Count Validation**: Verifies stored piece counts match actual pieces on board
+  - **Piece List Validation**: Ensures piece lists contain correct squares for each piece type
+  - **Material Score Validation**: Verifies cached material scores match actual piece values
+  - **King Position Validation**: Ensures king square tracking is accurate for both colors
+  - **Zobrist Hash Validation**: Verifies incremental hash matches full recalculation
+  - **En Passant Validation**: Ensures ep squares are on correct ranks (rank 6 for White to move, rank 3 for Black to move) with required pawn presence
+  - **Castling Validation**: Ensures Kings and Rooks are on starting squares when castling rights are set
+- **Error Detection & Reporting:**
+  - **Detailed Error Messages**: Specific descriptions of what's wrong and expected vs actual values
+  - **Assertion Integration**: Optional assertion failures with file/line information for debugging
+  - **Visual Feedback**: Clear success (✓) and failure indicators with problem descriptions
+  - **FEN Comparison**: Square-by-square comparison with expected position from FEN
+- **Usage Examples:**
+  ```cpp
+  // Comprehensive validation
+  Position pos;
+  pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  bool valid = Debug::validate_position_consistency(pos, expected_fen);
+  
+  // Individual component validation
+  if (!Debug::validate_castling_consistency(pos)) {
+      std::cout << "Castling rights inconsistent with piece positions!" << std::endl;
+  }
+  
+  // After making moves
+  make_move(pos, move);
+  if (!Debug::validate_position_consistency(pos, expected_fen_after_move)) {
+      std::cout << "Position corruption detected after move!" << std::endl;
+  }
+  ```
+- **Demo Applications:**
+  - `debug_demo.exe` — Demonstrates comprehensive validation with passing and failing scenarios
+  - `castling_demo.exe` — Shows castling validation detecting various inconsistency types
+- **Development Benefits:**
+  - **Bug Detection**: Catches position corruption, incremental update errors, and data structure inconsistencies
+  - **Regression Testing**: Validates that changes don't break existing functionality
+  - **Development Confidence**: Ensures data integrity throughout move making/unmaking
+  - **Debugging Support**: Pinpoints exact location and nature of position corruption
 
 ---
 
