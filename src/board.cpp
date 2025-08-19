@@ -68,5 +68,10 @@ void print_position(const Position& pos) {
     std::cout << ", Queens=" << pos.piece_counts[int(PieceType::Queen)];
     std::cout << ", Kings=" << pos.piece_counts[int(PieceType::King)] << "\n";
     
+    // Print material scores
+    std::cout << "Material: White=" << pos.get_material_score(Color::White);
+    std::cout << ", Black=" << pos.get_material_score(Color::Black);
+    std::cout << ", Balance=" << pos.get_material_balance() << "\n";
+    
     std::cout << "Position key: 0x" << std::hex << pos.zobrist_key << std::dec << "\n";
 }

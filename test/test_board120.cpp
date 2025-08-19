@@ -32,6 +32,26 @@ TEST(Board120, FileRankOfRoundTrip) {
       }
 }
 
+TEST(Board120, FileOfRankOfOffboard) {
+    // Test that file_of and rank_of return None for offboard squares
+    EXPECT_EQ(file_of(0), File::None);     // Offboard square
+    EXPECT_EQ(rank_of(0), Rank::None);     // Offboard square
+    EXPECT_EQ(file_of(10), File::None);    // Offboard square  
+    EXPECT_EQ(rank_of(10), Rank::None);    // Offboard square
+    EXPECT_EQ(file_of(20), File::None);    // Offboard square (border)
+    EXPECT_EQ(rank_of(20), Rank::None);    // Offboard square (border)
+    EXPECT_EQ(file_of(29), File::None);    // Offboard square (border)
+    EXPECT_EQ(rank_of(29), Rank::None);    // Offboard square (border)
+    EXPECT_EQ(file_of(119), File::None);   // Offboard square (last index)
+    EXPECT_EQ(rank_of(119), Rank::None);   // Offboard square (last index)
+    
+    // Verify playable squares still work correctly
+    EXPECT_EQ(file_of(sq(File::A, Rank::R1)), File::A);
+    EXPECT_EQ(rank_of(sq(File::A, Rank::R1)), Rank::R1);
+    EXPECT_EQ(file_of(sq(File::H, Rank::R8)), File::H);
+    EXPECT_EQ(rank_of(sq(File::H, Rank::R8)), Rank::R8);
+}
+
 TEST(Board120, DirectionOffsets) {
     const int e2 = sq(File::E, Rank::R2);
     EXPECT_EQ(e2 + NORTH, sq(File::E, Rank::R3));

@@ -45,6 +45,7 @@ add_executable(huginn_tests
   test/test_print_position.cpp      # <-- position printing tests
   test/test_incremental_updates.cpp # <-- incremental update performance tests
   test/test_zobrist_incremental.cpp # <-- zobrist incremental XOR update tests
+  test/test_material_tracking.cpp   # <-- material score tracking tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests

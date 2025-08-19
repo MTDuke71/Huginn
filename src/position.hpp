@@ -33,6 +33,7 @@ struct S_UNDO {
     std::array<int, 2> king_sq_backup;        // Previous king positions
     std::array<uint64_t, 2> pawns_bb_backup;  // Previous pawn bitboards
     std::array<int, 7> piece_counts_backup;   // Previous piece counts
+    std::array<int, 2> material_score_backup; // Previous material scores
     
     // Helper to encode/decode move
     static int encode_move(int from, int to, PieceType promo = PieceType::None) {
@@ -57,6 +58,9 @@ struct Position {
     std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
     std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
+    
+    // Material score tracking for fast evaluation
+    std::array<int, 2> material_score{ 0, 0 }; // [White, Black] material balance
     
     // Piece lists: pList[color][piece_type][index] = square
     // Tracks locations of all pieces for fast iteration
@@ -83,6 +87,10 @@ struct Position {
         
         // Clear piece counters - bigPce, majPce, minPce equivalents
         piece_counts.fill(0);  // Clear all piece type counts
+        
+        // Clear material scores
+        material_score[0] = 0;  // White material
+        material_score[1] = 0;  // Black material
         
         // Clear pawn bitboards to 0ULL
         pawns_bb[0] = 0ULL;  // White pawns
@@ -297,6 +305,7 @@ struct Position {
         king_sq = { -1, -1 };
         pawns_bb = { 0, 0 };
         piece_counts.fill(0);
+        material_score = { 0, 0 };  // Clear material scores
         
         // Clear piece lists and counts
         for (int color = 0; color < 2; ++color) {
@@ -317,6 +326,11 @@ struct Position {
             if (c != Color::None) {
                 int color_idx = int(c);
                 int type_idx = int(pt);
+                
+                // Add to material score (exclude kings - they're always present)
+                if (pt != PieceType::King) {
+                    material_score[color_idx] += value_of(p);
+                }
                 
                 // Add to piece list
                 if (pCount[color_idx][type_idx] < MAX_PIECES_PER_TYPE) {
@@ -340,12 +354,14 @@ struct Position {
         undo.king_sq_backup = king_sq;
         undo.pawns_bb_backup = pawns_bb;
         undo.piece_counts_backup = piece_counts;
+        undo.material_score_backup = material_score;
     }
     
     void restore_derived_state(const S_UNDO& undo) {
         king_sq = undo.king_sq_backup;
         pawns_bb = undo.pawns_bb_backup;
         piece_counts = undo.piece_counts_backup;
+        material_score = undo.material_score_backup;
     }
     
     // Update derived state incrementally for a move (much faster than rebuild_counts)
@@ -356,6 +372,11 @@ struct Position {
         // Handle captured piece
         if (!is_none(captured)) {
             --piece_counts[size_t(type_of(captured))];
+            
+            // Subtract captured piece value from opponent's material (exclude kings)
+            if (type_of(captured) != PieceType::King) {
+                material_score[size_t(color_of(captured))] -= value_of(captured);
+            }
             
             // Remove captured pawn from bitboard
             if (type_of(captured) == PieceType::Pawn) {
@@ -371,6 +392,10 @@ struct Position {
             // Remove pawn, add promoted piece
             --piece_counts[size_t(PieceType::Pawn)];
             ++piece_counts[size_t(m.promo)];
+            
+            // Update material score: remove pawn value, add promoted piece value
+            material_score[size_t(moving_color)] -= value_of(make_piece(moving_color, PieceType::Pawn));
+            material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.promo));
             
             // Remove pawn from bitboard (promoted piece isn't a pawn)
             int s64_to = MAILBOX_MAPS.to64[m.to];
@@ -567,6 +592,19 @@ struct Position {
         restore_derived_state(undo);
         
         return true;
+    }
+    
+    // Material evaluation access functions
+    int get_material_score(Color c) const {
+        return material_score[size_t(c)];
+    }
+    
+    int get_material_balance() const {
+        return material_score[size_t(Color::White)] - material_score[size_t(Color::Black)];
+    }
+    
+    int get_total_material() const {
+        return material_score[size_t(Color::White)] + material_score[size_t(Color::Black)];
     }
 };
 

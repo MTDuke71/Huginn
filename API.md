@@ -223,7 +223,7 @@
   - `MAXPLY 2048` — Maximum search depth / game length
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
-  - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7] }` — Complete undo state with incremental update support
+  - `S_UNDO { move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7], material_score_backup[2] }` — Complete undo state with incremental update support
   - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
 - **Position Management:**
   - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
@@ -235,6 +235,14 @@
   - `restore_derived_state(const S_UNDO& undo)` — Restore derived state from backup in O(1) time (internal function)
   - `update_derived_state_for_move(const Move& m, Piece moving, Piece captured)` — Update derived state incrementally in O(1) time (internal function)
   - **Performance**: 24-40x faster than `rebuild_counts()` for make/unmake operations
+- **Material Score Tracking:**
+  - `material_score[2]` — Cached material values for both colors for O(1) evaluation (excludes kings)
+  - `get_material_score(Color c)` — Get material score for specific color
+  - `get_material_balance()` — Get material advantage (White - Black)
+  - `get_total_material()` — Get total material on board (White + Black)
+  - **King Exclusion**: Kings excluded from material calculations since they must always exist
+  - **Incremental Updates**: Material scores updated automatically during make/unmake operations
+  - **Performance**: O(1) material evaluation vs O(120) piece scanning
 - **FEN Support:**
   - **Full FEN parsing**: Handles piece placement, side to move, castling rights, en passant, move counters
   - **Error handling**: Returns `false` for invalid FEN strings, maintains position state on failure
@@ -273,6 +281,7 @@
     - Displays side to move, castling rights, en passant square
     - Shows halfmove clock and fullmove number
     - Lists piece counts by type
+    - Shows material scores per color and material balance
     - Shows Zobrist position key in hexadecimal format
 - **Reset Operations (via Position::reset()):**
   - **Board State:** Offboard squares set to `Piece::Offboard`, playable squares set to `Piece::None` (empty)

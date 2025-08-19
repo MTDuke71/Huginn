@@ -49,22 +49,47 @@ constexpr inline int sq(File f, Rank r) {
     return 21 + ff + rr * 10;
 }
 
-// Split square120 -> (File, Rank)
-// (Only valid for playable squares; caller should ensure is_playable(sq) first)
+// -------------- Lookup tables for file/rank extraction --------------
+struct FileRankLookups {
+    std::array<File, 120> files{};
+    std::array<Rank, 120> ranks{};
+    std::array<bool, 120> playable{};
+
+    constexpr FileRankLookups() : files{}, ranks{}, playable{} {
+        // Initialize all squares to None/false (offboard)
+        for (int i = 0; i < 120; ++i) {
+            files[i] = File::None;
+            ranks[i] = Rank::None;
+            playable[i] = false;
+        }
+        // Fill playable squares
+        for (int r = 0; r < 8; ++r) {
+            for (int f = 0; f < 8; ++f) {
+                const int sq120 = 21 + f + r * 10;
+                files[size_t(sq120)] = File(f);
+                ranks[size_t(sq120)] = Rank(r);
+                playable[size_t(sq120)] = true;
+            }
+        }
+    }
+};
+constexpr inline FileRankLookups FILE_RANK_LOOKUPS{};
+
+// Split square120 -> (File, Rank) using lookup tables
+// Returns File::None/Rank::None for offboard squares
 constexpr inline File file_of(int sq120) {
-    // 1..8 -> 0..7
-    return File((sq120 % 10) - 1);
+    if (sq120 == int(Square::Offboard) || sq120 < 0 || sq120 >= 120) return File::None;
+    return FILE_RANK_LOOKUPS.files[sq120];
 }
 constexpr inline Rank rank_of(int sq120) {
-    // 2..9 -> 0..7
-    return Rank((sq120 / 10) - 2);
+    if (sq120 == int(Square::Offboard) || sq120 < 0 || sq120 >= 120) return Rank::None;
+    return FILE_RANK_LOOKUPS.ranks[sq120];
 }
 
-// Checks
+// Checks using lookup table - no calculations needed
 constexpr inline bool is_playable(int sq120) {
-    const int f = sq120 % 10;   // 0..9
-    const int r = sq120 / 10;   // 0..11
-    return in_range(f, 1, 8) && in_range(r, 2, 9);
+    if (sq120 == int(Square::Offboard) || sq120 < 0 || sq120 >= 120) return false;
+    return FILE_RANK_LOOKUPS.playable[sq120];
 }
 constexpr inline bool is_offboard(int sq120) { return !is_playable(sq120); }
 
