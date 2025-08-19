@@ -36,6 +36,10 @@ struct S_UNDO {
     std::array<int, 7> piece_counts_backup;   // Previous piece counts
     std::array<int, 2> material_score_backup; // Previous material scores
     
+    // Piece list backup for undo support
+    std::array<PieceList, 2> pList_backup;    // Previous piece lists [color][type][index]
+    std::array<std::array<int, int(PieceType::_Count)>, 2> pCount_backup; // Previous piece counts [color][type]
+    
     // Constructor
     S_UNDO() : move(), castling_rights(0), ep_square(-1), halfmove_clock(0), zobrist_key(0), captured(Piece::None) {}
     
@@ -443,6 +447,8 @@ struct Position {
         undo.all_pawns_bb_backup = all_pawns_bb;
         undo.piece_counts_backup = piece_counts;
         undo.material_score_backup = material_score;
+        undo.pList_backup = pList;
+        undo.pCount_backup = pCount;
     }
     
     void restore_derived_state(const S_UNDO& undo) {
@@ -451,6 +457,8 @@ struct Position {
         all_pawns_bb = undo.all_pawns_bb_backup;
         piece_counts = undo.piece_counts_backup;
         material_score = undo.material_score_backup;
+        pList = undo.pList_backup;
+        pCount = undo.pCount_backup;
     }
     
     // Update derived state incrementally for a move (much faster than rebuild_counts)
