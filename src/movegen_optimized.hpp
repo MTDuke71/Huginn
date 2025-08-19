@@ -4,6 +4,108 @@
 #include "move.hpp"
 #include "board120.hpp"
 
+// Original SqAttacked function (for comparison and fallback)
+inline bool SqAttacked_Original(int sq, const Position& pos, Color attacking_color) {
+    if (!is_playable(sq)) return false;
+    
+    // Check pawn attacks
+    if (attacking_color == Color::White) {
+        // White pawns attack diagonally "upward" (from lower ranks)
+        // So check squares below the target square for white pawns
+        int pawn_sq1 = sq + pawn_capt_left_black();  // SE from target = where white pawn would be
+        int pawn_sq2 = sq + pawn_capt_right_black(); // SW from target = where white pawn would be
+        
+        if (is_playable(pawn_sq1)) {
+            Piece p1 = pos.at(pawn_sq1);
+            if (p1 == Piece::WhitePawn) return true;
+        }
+        if (is_playable(pawn_sq2)) {
+            Piece p2 = pos.at(pawn_sq2);
+            if (p2 == Piece::WhitePawn) return true;
+        }
+    } else {
+        // Black pawns attack diagonally "downward" (from higher ranks)
+        // So check squares above the target square for black pawns
+        int pawn_sq1 = sq + pawn_capt_left_white();  // NW from target = where black pawn would be
+        int pawn_sq2 = sq + pawn_capt_right_white(); // NE from target = where black pawn would be
+        
+        if (is_playable(pawn_sq1)) {
+            Piece p1 = pos.at(pawn_sq1);
+            if (p1 == Piece::BlackPawn) return true;
+        }
+        if (is_playable(pawn_sq2)) {
+            Piece p2 = pos.at(pawn_sq2);
+            if (p2 == Piece::BlackPawn) return true;
+        }
+    }
+    
+    // Check knight attacks
+    for (int delta : KNIGHT_DELTAS) {
+        int knight_sq = sq + delta;
+        if (is_playable(knight_sq)) {
+            Piece p = pos.at(knight_sq);
+            if (type_of(p) == PieceType::Knight && color_of(p) == attacking_color) {
+                return true;
+            }
+        }
+    }
+    
+    // Check king attacks
+    for (int delta : KING_DELTAS) {
+        int king_sq = sq + delta;
+        if (is_playable(king_sq)) {
+            Piece p = pos.at(king_sq);
+            if (type_of(p) == PieceType::King && color_of(p) == attacking_color) {
+                return true;
+            }
+        }
+    }
+    
+    // Check ranks and files for rook/queen attacks
+    constexpr int rank_file_dirs[4] = { NORTH, SOUTH, EAST, WEST };
+    for (int dir : rank_file_dirs) {
+        for (int i = 1; i < 8; ++i) { // Max 7 squares in any direction
+            int target_sq = sq + i * dir;
+            if (!is_playable(target_sq)) break; // Hit edge of board
+            
+            Piece p = pos.at(target_sq);
+            if (!is_none(p)) {
+                // Found a piece - check if it's an attacking rook or queen
+                if (color_of(p) == attacking_color) {
+                    PieceType pt = type_of(p);
+                    if (pt == PieceType::Rook || pt == PieceType::Queen) {
+                        return true;
+                    }
+                }
+                break; // Stop looking in this direction (piece blocks further attacks)
+            }
+        }
+    }
+    
+    // Check diagonals for bishop/queen attacks
+    constexpr int diagonal_dirs[4] = { NE, NW, SE, SW };
+    for (int dir : diagonal_dirs) {
+        for (int i = 1; i < 8; ++i) { // Max 7 squares in any direction
+            int target_sq = sq + i * dir;
+            if (!is_playable(target_sq)) break; // Hit edge of board
+            
+            Piece p = pos.at(target_sq);
+            if (!is_none(p)) {
+                // Found a piece - check if it's an attacking bishop or queen
+                if (color_of(p) == attacking_color) {
+                    PieceType pt = type_of(p);
+                    if (pt == PieceType::Bishop || pt == PieceType::Queen) {
+                        return true;
+                    }
+                }
+                break; // Stop looking in this direction (piece blocks further attacks)
+            }
+        }
+    }
+    
+    return false; // No attacks found
+}
+
 // Helper function to check if a pawn on pawn_sq attacks target_sq
 inline bool pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color) {
     if (pawn_color == Color::White) {
@@ -103,145 +205,11 @@ inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position
     return current_sq == target_sq;
 }
 
-// Optimized SqAttacked using piece lists for much better performance
-// sq: square to check (120-square index)
-// pos: current position  
-// attacking_color: which color's pieces we're checking for attacks
+// Optimized SqAttacked using piece lists
 inline bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     if (!is_playable(sq)) return false;
     
     int color_idx = int(attacking_color);
-    
-    // Quick check: if we have any pieces in the lists for this color, assume lists are maintained
-    // This is much faster than scanning the entire board for consistency
-    bool has_pieces_in_lists = false;
-    for (int type = 0; type < int(PieceType::_Count); ++type) {
-        if (pos.pCount[color_idx][type] > 0) {
-            has_pieces_in_lists = true;
-            break;
-        }
-    }
-    
-    // If no pieces in lists but we should have pieces (like when using pos.set() directly),
-    // fall back to board scanning
-    if (!has_pieces_in_lists) {
-        // Quick scan to see if there are actually pieces of this color on the board
-        bool has_pieces_on_board = false;
-        for (int i = 0; i < 120 && !has_pieces_on_board; ++i) {
-            if (is_playable(i)) {
-                Piece p = pos.at(i);
-                if (!is_none(p) && color_of(p) == attacking_color) {
-                    has_pieces_on_board = true;
-                }
-            }
-        }
-        
-        // If we have pieces on board but not in lists, use fallback
-        if (has_pieces_on_board) {
-            // Fallback: Original board-scanning implementation
-            // Check pawn attacks
-            if (attacking_color == Color::White) {
-                // White pawns attack diagonally "upward" (from lower ranks)
-                // So check squares below the target square for white pawns
-                int pawn_sq1 = sq + pawn_capt_left_black();  // SE from target = where white pawn would be
-                int pawn_sq2 = sq + pawn_capt_right_black(); // SW from target = where white pawn would be
-                
-                if (is_playable(pawn_sq1)) {
-                    Piece p1 = pos.at(pawn_sq1);
-                    if (p1 == Piece::WhitePawn) return true;
-                }
-                if (is_playable(pawn_sq2)) {
-                    Piece p2 = pos.at(pawn_sq2);
-                    if (p2 == Piece::WhitePawn) return true;
-                }
-            } else {
-                // Black pawns attack diagonally "downward" (from higher ranks)
-                // So check squares above the target square for black pawns
-                int pawn_sq1 = sq + pawn_capt_left_white();  // NW from target = where black pawn would be
-                int pawn_sq2 = sq + pawn_capt_right_white(); // NE from target = where black pawn would be
-                
-                if (is_playable(pawn_sq1)) {
-                    Piece p1 = pos.at(pawn_sq1);
-                    if (p1 == Piece::BlackPawn) return true;
-                }
-                if (is_playable(pawn_sq2)) {
-                    Piece p2 = pos.at(pawn_sq2);
-                    if (p2 == Piece::BlackPawn) return true;
-                }
-            }
-            
-            // Check knight attacks
-            for (int delta : KNIGHT_DELTAS) {
-                int knight_sq = sq + delta;
-                if (is_playable(knight_sq)) {
-                    Piece p = pos.at(knight_sq);
-                    if (type_of(p) == PieceType::Knight && color_of(p) == attacking_color) {
-                        return true;
-                    }
-                }
-            }
-            
-            // Check king attacks
-            for (int delta : KING_DELTAS) {
-                int king_sq = sq + delta;
-                if (is_playable(king_sq)) {
-                    Piece p = pos.at(king_sq);
-                    if (type_of(p) == PieceType::King && color_of(p) == attacking_color) {
-                        return true;
-                    }
-                }
-            }
-            
-            // Check ranks and files for rook/queen attacks
-            constexpr int rank_file_dirs[4] = { NORTH, SOUTH, EAST, WEST };
-            for (int dir : rank_file_dirs) {
-                for (int i = 1; i < 8; ++i) { // Max 7 squares in any direction
-                    int target_sq = sq + i * dir;
-                    if (!is_playable(target_sq)) break; // Hit edge of board
-                    
-                    Piece p = pos.at(target_sq);
-                    if (!is_none(p)) {
-                        // Found a piece - check if it's an attacking rook or queen
-                        if (color_of(p) == attacking_color) {
-                            PieceType pt = type_of(p);
-                            if (pt == PieceType::Rook || pt == PieceType::Queen) {
-                                return true;
-                            }
-                        }
-                        break; // Stop looking in this direction (piece blocks further attacks)
-                    }
-                }
-            }
-            
-            // Check diagonals for bishop/queen attacks
-            constexpr int diagonal_dirs[4] = { NE, NW, SE, SW };
-            for (int dir : diagonal_dirs) {
-                for (int i = 1; i < 8; ++i) { // Max 7 squares in any direction
-                    int target_sq = sq + i * dir;
-                    if (!is_playable(target_sq)) break; // Hit edge of board
-                    
-                    Piece p = pos.at(target_sq);
-                    if (!is_none(p)) {
-                        // Found a piece - check if it's an attacking bishop or queen
-                        if (color_of(p) == attacking_color) {
-                            PieceType pt = type_of(p);
-                            if (pt == PieceType::Bishop || pt == PieceType::Queen) {
-                                return true;
-                            }
-                        }
-                        break; // Stop looking in this direction (piece blocks further attacks)
-                    }
-                }
-            }
-            
-            return false; // No attacks found in fallback mode
-        }
-        
-        // No pieces of this color, so no attacks
-        return false;
-    }
-    
-    // Optimized path: piece lists are maintained, use them for better performance
     
     // 1. Check pawns using piece list (most common attackers)
     int pawn_count = pos.pCount[color_idx][int(PieceType::Pawn)];

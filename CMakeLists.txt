@@ -50,6 +50,8 @@ add_executable(huginn_tests
   test/test_pawn_bitboard.cpp       # <-- combined pawn bitboard tests
   test/test_debug_validation.cpp    # <-- debug validation function tests
   test/test_fen_generation.cpp      # <-- FEN generation function tests
+  test/test_sq_attacked.cpp         # <-- SqAttacked function tests
+  test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
   src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests

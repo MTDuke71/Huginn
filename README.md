@@ -39,6 +39,7 @@ cmake --build build
 ### Move System
 - **Array-Based Undo**: Fixed-size move history (MAXPLY=2048) for zero allocation overhead
 - **Comprehensive Move Encoding**: From/to/promotion packed into single integer
+- **Attack Detection**: Fast square attack detection for all piece types with proper blocking
 - **Castling Rights**: Centralized constants and utility functions
 - **Position Hashing**: Zobrist hashing for transposition tables
 
@@ -60,6 +61,7 @@ cmake --build build
 - **debug_demo.exe**: Comprehensive validation system demonstration with passing/failing scenarios
 - **castling_demo.exe**: Interactive castling validation showing detection of various inconsistency types
 - **fen_demo.exe**: FEN generation demonstration showing round-trip conversion capabilities
+- **sq_attacked_demo.exe**: Attack detection visualization showing piece attack patterns and blocking
 
 ### Running Tests (CTest)
 ```sh

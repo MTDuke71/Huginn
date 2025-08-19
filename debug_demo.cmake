@@ -41,3 +41,17 @@ add_executable(fen_demo
 )
 target_include_directories(fen_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(fen_demo PRIVATE cxx_std_17)
+
+# Create a separate SqAttacked demo executable
+add_executable(sq_attacked_demo
+  src/sq_attacked_demo.cpp
+  src/move_do.cpp
+  src/bitboard.cpp
+  src/init.cpp
+  src/board.cpp
+  src/position.cpp
+  src/zobrist.cpp
+  src/debug.cpp
+)
+target_include_directories(sq_attacked_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(sq_attacked_demo PRIVATE cxx_std_17)

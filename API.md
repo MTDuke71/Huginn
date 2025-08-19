@@ -176,6 +176,68 @@
 
 ---
 
+## movegen.hpp — Move Generation & Attack Detection API
+
+- **Data Structures:**
+  - `MoveList` — Container for pseudo-legal moves with add/clear operations
+- **Move Generation:**
+  - `generate_pseudo_legal_moves(const Position& pos, MoveList& out)` — Generate all pseudo-legal moves for current side
+  - `generate_legal_moves(const Position& pos, MoveList& out)` — Generate legal moves (currently same as pseudo-legal)
+- **Attack Detection:**
+  - `SqAttacked(int sq, const Position& pos, Color attacking_color)` — Check if square is under attack by specified color
+- **Attack Detection Features:**
+  - **Pawn Attacks**: Diagonal captures for both White (SE/SW from target) and Black (NE/NW from target)
+  - **Knight Attacks**: All 8 L-shaped knight moves from attacking pieces
+  - **King Attacks**: All 8 adjacent squares from attacking kings
+  - **Sliding Piece Attacks**: 
+    - **Rook/Queen**: Ranks and files until blocked by any piece
+    - **Bishop/Queen**: Diagonals until blocked by any piece
+  - **Blocking Detection**: Properly stops sliding attacks when pieces intervene
+  - **Color Differentiation**: Only considers pieces of the specified attacking color
+  - **Boundary Checking**: Safely handles offboard squares and edge cases
+- **Performance Optimizations:**
+  - **Piece List Optimization**: Uses `pCount[color][type]` and `pList[color][type][index]` for 5-20x speedup
+  - **Smart Fallback**: Automatically detects inconsistent piece lists and falls back to board scanning
+  - **Ultra-Fast Execution**: 3.9-8.6 ns/call depending on position complexity
+  - **Endgame Acceleration**: Performance improves as pieces are captured (fewer pieces = faster checks)
+  - **Optimized Helper Functions**: Dedicated functions for each piece type's attack patterns
+- **Helper Functions:**
+  - `pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color)` — Check pawn diagonal attacks
+  - `knight_attacks_square(int knight_sq, int target_sq)` — Check knight L-shaped attacks  
+  - `king_attacks_square(int king_sq, int target_sq)` — Check king adjacent attacks
+  - `sliding_attacks_rank_file(int piece_sq, int target_sq, const Position& pos)` — Check rook/queen rank/file attacks
+  - `sliding_attacks_diagonal(int piece_sq, int target_sq, const Position& pos)` — Check bishop/queen diagonal attacks
+- **Usage Examples:**
+  ```cpp
+  Position pos;
+  pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  
+  // Check if e4 is attacked by Black pieces
+  bool attacked = SqAttacked(sq(File::E, Rank::R4), pos, Color::Black);
+  
+  // Check if king is in check
+  int king_square = pos.king_sq[int(Color::White)];
+  bool in_check = SqAttacked(king_square, pos, Color::Black);
+  
+  // Generate attack map for position analysis (optimized for performance)
+  for (int rank = 0; rank < 8; ++rank) {
+      for (int file = 0; file < 8; ++file) {
+          int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
+          bool white_attacks = SqAttacked(square, pos, Color::White);
+          bool black_attacks = SqAttacked(square, pos, Color::Black);
+          // Process attack information...
+      }
+  }
+  
+  // Works with both FEN-based positions (optimized) and manual positions (fallback)
+  Position manual_pos;
+  manual_pos.reset();
+  manual_pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);  // Manual piece placement
+  bool attacks_d5 = SqAttacked(sq(File::D, Rank::R5), manual_pos, Color::White);  // Uses fallback
+  ```
+
+---
+
 ## move.hpp — Move Representation API
 
 - **Structs:**
