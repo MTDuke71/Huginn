@@ -119,16 +119,55 @@ bool is_set(Bitboard bb, int square); // Check if specific square is set
 
 // Square conversion (0-63 standard bitboard indexing)
 // a1=0, b1=1, ..., h1=7, a2=8, ..., h8=63
+
+// Pre-computed lookup table for square_from_file_rank
+constexpr int SQUARE_FROM_FILE_RANK[8][8] = {
+    // File 0 (A-file)  1 (B-file)  2 (C-file)  3 (D-file)  4 (E-file)  5 (F-file)  6 (G-file)  7 (H-file)
+    {  0,  1,  2,  3,  4,  5,  6,  7 },  // Rank 0
+    {  8,  9, 10, 11, 12, 13, 14, 15 },  // Rank 1
+    { 16, 17, 18, 19, 20, 21, 22, 23 },  // Rank 2
+    { 24, 25, 26, 27, 28, 29, 30, 31 },  // Rank 3
+    { 32, 33, 34, 35, 36, 37, 38, 39 },  // Rank 4
+    { 40, 41, 42, 43, 44, 45, 46, 47 },  // Rank 5
+    { 48, 49, 50, 51, 52, 53, 54, 55 },  // Rank 6
+    { 56, 57, 58, 59, 60, 61, 62, 63 }   // Rank 7
+};
+
+// Pre-computed lookup table for file_of_square
+constexpr int FILE_OF_SQUARE[64] = {
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 0-7 (rank 0)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 8-15 (rank 1)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 16-23 (rank 2)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 24-31 (rank 3)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 32-39 (rank 4)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 40-47 (rank 5)
+    0, 1, 2, 3, 4, 5, 6, 7,  // Squares 48-55 (rank 6)
+    0, 1, 2, 3, 4, 5, 6, 7   // Squares 56-63 (rank 7)
+};
+
+// Pre-computed lookup table for rank_of_square
+constexpr int RANK_OF_SQUARE[64] = {
+    0, 0, 0, 0, 0, 0, 0, 0,  // Squares 0-7 (rank 0)
+    1, 1, 1, 1, 1, 1, 1, 1,  // Squares 8-15 (rank 1)
+    2, 2, 2, 2, 2, 2, 2, 2,  // Squares 16-23 (rank 2)
+    3, 3, 3, 3, 3, 3, 3, 3,  // Squares 24-31 (rank 3)
+    4, 4, 4, 4, 4, 4, 4, 4,  // Squares 32-39 (rank 4)
+    5, 5, 5, 5, 5, 5, 5, 5,  // Squares 40-47 (rank 5)
+    6, 6, 6, 6, 6, 6, 6, 6,  // Squares 48-55 (rank 6)
+    7, 7, 7, 7, 7, 7, 7, 7   // Squares 56-63 (rank 7)
+};
+
+// Lookup functions (now using pre-computed arrays)
 constexpr int square_from_file_rank(int file, int rank) {
-    return rank * 8 + file;
+    return SQUARE_FROM_FILE_RANK[rank][file];
 }
 
 constexpr int file_of_square(int square) {
-    return square & 7;
+    return FILE_OF_SQUARE[square];
 }
 
 constexpr int rank_of_square(int square) {
-    return square >> 3;
+    return RANK_OF_SQUARE[square];
 }
 
 // Convert between different square representations
