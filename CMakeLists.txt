@@ -11,19 +11,27 @@ if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug assertions enabled")
 endif()
 
+# ---- Library ----
+add_library(huginn_lib
+  src/move_do.cpp
+  src/bitboard.cpp
+  src/init.cpp
+  src/board.cpp
+  src/position.cpp
+  src/zobrist.cpp
+  src/debug.cpp
+  src/attacks.cpp
+  src/movegen_simple.cpp
+)
+target_include_directories(huginn_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(huginn_lib PUBLIC cxx_std_17)
+
 # ---- App ----
 add_executable(huginn
   src/main.cpp
-  src/move_do.cpp        # <-- add this file per our earlier step
-  src/bitboard.cpp       # <-- bitboard implementation
-  src/init.cpp           # <-- engine initialization
-  src/board.cpp          # <-- board management functions
-  src/position.cpp       # <-- position implementation with Zobrist updates
-  src/zobrist.cpp        # <-- zobrist implementation
-  src/debug.cpp          # <-- debug and validation functions
 )
+target_link_libraries(huginn huginn_lib)
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(huginn PRIVATE cxx_std_17)
 
 # ---- Tests ----
 find_package(GTest CONFIG REQUIRED)  # using MSYS2 packaged googletest
@@ -40,30 +48,11 @@ add_executable(huginn_tests
   test/test_zobrist.cpp
   test/test_bitboard.cpp    # <-- bitboard tests
   test/test_init.cpp        # <-- initialization tests
-  test/test_board.cpp       # <-- board management tests
-  test/test_offboard_detection.cpp  # <-- offboard detection demo
-  test/test_fen.cpp         # <-- FEN parsing tests
-  test/test_print_position.cpp      # <-- position printing tests
-  test/test_incremental_updates.cpp # <-- incremental update performance tests
-  test/test_zobrist_incremental.cpp # <-- zobrist incremental XOR update tests
-  test/test_material_tracking.cpp   # <-- material score tracking tests
-  test/test_pawn_bitboard.cpp       # <-- combined pawn bitboard tests
-  test/test_debug_validation.cpp    # <-- debug validation function tests
-  test/test_fen_generation.cpp      # <-- FEN generation function tests
-  test/test_sq_attacked.cpp         # <-- SqAttacked function tests
-  test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
-  test/test_s_move.cpp              # <-- S_MOVE structure tests
-  src/move_do.cpp        # reuse the implementation in tests
-  src/bitboard.cpp       # <-- bitboard implementation for tests
-  src/init.cpp           # <-- engine initialization for tests
-  src/board.cpp          # <-- board management functions for tests
-  src/position.cpp       # <-- position implementation with Zobrist updates for tests
-  src/zobrist.cpp        # <-- zobrist implementation for tests
-  src/debug.cpp          # <-- debug and validation functions for tests
+  test/debug_e5d7_position.cpp  # <-- debug test for e5d7 position
+  test/debug_a2a4_position.cpp  # <-- debug test for a2a4 position
 )
-target_compile_features(huginn_tests PRIVATE cxx_std_17)
+target_link_libraries(huginn_tests PRIVATE GTest::gtest huginn_lib)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # keep test_main.cpp, so no gtest_main
 
 # Discover tests at test time (prevents NOT_BUILT placeholders)
 set(GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)

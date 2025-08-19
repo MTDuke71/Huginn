@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <vector>
+#include <algorithm>
 #include "board120.hpp"
 #include "chess_types.hpp"
 
@@ -178,3 +180,23 @@ inline S_MOVE make_castle(int from, int to) {
     return S_MOVE(from, to, PieceType::None, false, false, PieceType::None, true);
 }
 
+struct MoveList {
+    std::vector<S_MOVE> v;
+    void clear() { v.clear(); }
+    void add(const S_MOVE& m) { v.push_back(m); }
+    void add(int from, int to, PieceType captured = PieceType::None, 
+             bool en_passant = false, bool pawn_start = false, 
+             PieceType promoted = PieceType::None, bool castle = false) {
+        v.emplace_back(from, to, captured, en_passant, pawn_start, promoted, castle);
+    }
+    size_t size() const { return v.size(); }
+    S_MOVE& operator[](size_t i) { return v[i]; }
+    const S_MOVE& operator[](size_t i) const { return v[i]; }
+    
+    // Move ordering functions
+    void sort_by_score() {
+        std::sort(v.begin(), v.end(), [](const S_MOVE& a, const S_MOVE& b) {
+            return a.score > b.score; // Higher scores first
+        });
+    }
+};

@@ -4,6 +4,7 @@
 #include "../src/board120.hpp"
 #include "../src/chess_types.hpp"
 #include "../src/squares120.hpp"
+#include <iostream>
 
 class SqAttackedTest : public ::testing::Test {
 protected:
@@ -17,9 +18,12 @@ protected:
 TEST_F(SqAttackedTest, PawnAttacks) {
     // Test white pawn attacks
     pos.set(sq(File::E, Rank::R4), Piece::WhitePawn);
+    pos.rebuild_counts();
     
     // White pawn on e4 should attack d5 and f5
+    std::cout << "White pawn on e4 attacks d5: " << SqAttacked(sq(File::D, Rank::R5), pos, Color::White) << std::endl;
     EXPECT_TRUE(SqAttacked(sq(File::D, Rank::R5), pos, Color::White));
+    std::cout << "White pawn on e4 attacks f5: " << SqAttacked(sq(File::F, Rank::R5), pos, Color::White) << std::endl;
     EXPECT_TRUE(SqAttacked(sq(File::F, Rank::R5), pos, Color::White));
     
     // Should not attack other squares
@@ -30,6 +34,7 @@ TEST_F(SqAttackedTest, PawnAttacks) {
     // Test black pawn attacks
     pos.reset();
     pos.set(sq(File::D, Rank::R5), Piece::BlackPawn);
+    pos.rebuild_counts();
     
     // Black pawn on d5 should attack c4 and e4
     EXPECT_TRUE(SqAttacked(sq(File::C, Rank::R4), pos, Color::Black));
@@ -44,6 +49,7 @@ TEST_F(SqAttackedTest, PawnAttacks) {
 TEST_F(SqAttackedTest, KnightAttacks) {
     // Place white knight on e4
     pos.set(sq(File::E, Rank::R4), Piece::WhiteKnight);
+    pos.rebuild_counts();
     
     // Knight should attack all 8 knight squares from e4
     EXPECT_TRUE(SqAttacked(sq(File::D, Rank::R6), pos, Color::White)); // d6
@@ -64,6 +70,7 @@ TEST_F(SqAttackedTest, KnightAttacks) {
 TEST_F(SqAttackedTest, KingAttacks) {
     // Place white king on e4
     pos.set(sq(File::E, Rank::R4), Piece::WhiteKing);
+    pos.rebuild_counts();
     
     // King should attack all 8 adjacent squares
     EXPECT_TRUE(SqAttacked(sq(File::D, Rank::R5), pos, Color::White)); // d5
@@ -83,6 +90,7 @@ TEST_F(SqAttackedTest, KingAttacks) {
 TEST_F(SqAttackedTest, RookAttacks) {
     // Place white rook on e4
     pos.set(sq(File::E, Rank::R4), Piece::WhiteRook);
+    pos.rebuild_counts();
     
     // Rook should attack entire rank and file
     // File attacks
@@ -107,6 +115,7 @@ TEST_F(SqAttackedTest, RookAttacks) {
 TEST_F(SqAttackedTest, BishopAttacks) {
     // Place white bishop on e4
     pos.set(sq(File::E, Rank::R4), Piece::WhiteBishop);
+    pos.rebuild_counts();
     
     // Bishop should attack diagonals
     // NE diagonal
@@ -138,6 +147,7 @@ TEST_F(SqAttackedTest, BishopAttacks) {
 TEST_F(SqAttackedTest, QueenAttacks) {
     // Place white queen on e4
     pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);
+    pos.rebuild_counts();
     
     // Queen should attack like both rook and bishop
     // Test a few key squares in each direction
@@ -158,7 +168,8 @@ TEST_F(SqAttackedTest, QueenAttacks) {
 TEST_F(SqAttackedTest, BlockedAttacks) {
     // Test that pieces block sliding piece attacks
     pos.set(sq(File::E, Rank::R4), Piece::WhiteRook);
-    pos.set(sq(File::E, Rank::R6), Piece::BlackPawn); // Blocking piece
+    pos.set(sq(File::E, Rank::R6), Piece::BlackPawn);
+    pos.rebuild_counts();
     
     // Rook should attack e5 (before blocking piece)
     EXPECT_TRUE(SqAttacked(sq(File::E, Rank::R5), pos, Color::White));
@@ -170,7 +181,8 @@ TEST_F(SqAttackedTest, BlockedAttacks) {
     // Test diagonal blocking
     pos.reset();
     pos.set(sq(File::E, Rank::R4), Piece::WhiteBishop);
-    pos.set(sq(File::F, Rank::R5), Piece::BlackPawn); // Blocking piece
+    pos.set(sq(File::F, Rank::R5), Piece::BlackPawn);
+    pos.rebuild_counts();
     
     // Bishop should not attack g6 or h7 (blocked by pawn on f5)
     EXPECT_FALSE(SqAttacked(sq(File::G, Rank::R6), pos, Color::White));
@@ -180,6 +192,7 @@ TEST_F(SqAttackedTest, BlockedAttacks) {
 TEST_F(SqAttackedTest, OwnPiecesDoNotAttack) {
     // Test that pieces don't attack squares controlled by their own color
     pos.set(sq(File::E, Rank::R4), Piece::WhiteRook);
+    pos.rebuild_counts();
     
     // Should not be attacked by white pieces
     EXPECT_FALSE(SqAttacked(sq(File::E, Rank::R5), pos, Color::Black));
@@ -193,6 +206,7 @@ TEST_F(SqAttackedTest, OwnPiecesDoNotAttack) {
 TEST_F(SqAttackedTest, OffboardSquares) {
     // Test that offboard squares are never attacked
     pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);
+    pos.rebuild_counts();
     
     // These should return false for offboard squares
     EXPECT_FALSE(SqAttacked(-1, pos, Color::White));

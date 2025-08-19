@@ -38,6 +38,17 @@ constexpr inline  std::array<int, 8> KING_DELTAS = {
     NE, NW, SE, SW
 };
 
+// Piece deltas
+constexpr inline int PIECE_DELTAS[7][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0}, // None
+    {0, 0, 0, 0, 0, 0, 0, 0}, // Pawn
+    {+21, +19, +12, +8, -8, -12, -19, -21}, // Knight
+    {+11, +9, -9, -11, 0, 0, 0, 0}, // Bishop
+    {+10, -10, +1, -1, 0, 0, 0, 0}, // Rook
+    {+10, -10, +1, -1, +11, +9, -9, -11}, // Queen
+    {+10, -10, +1, -1, +11, +9, -9, -11}  // King
+};
+
 // For convenience
 constexpr inline bool in_range(int v, int lo, int hi) { return v >= lo && v <= hi; }
 

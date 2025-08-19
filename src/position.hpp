@@ -61,6 +61,8 @@ struct Position {
     std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
     std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
     uint64_t all_pawns_bb{ 0 }; // Combined bitboard of all pawns (White | Black)
+    std::array<Bitboard, 2> piece_bb{}; // [White, Black] bitboards for each color
+    std::array<Bitboard, 7> piece_type_bb{}; // bitboards for each piece type
     std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
     
@@ -75,6 +77,10 @@ struct Position {
     // Move history for undo functionality - fixed array for performance
     std::array<S_UNDO, MAXPLY> move_history{};
     int ply{0};                      // current search/game ply
+
+    Bitboard get_piece_bb(PieceType piece_type, Color color) const {
+        return piece_bb[static_cast<int>(color)] & piece_type_bb[static_cast<int>(piece_type)];
+    }
 
     void reset() {
         // Set all squares to offboard first
@@ -101,6 +107,11 @@ struct Position {
         pawns_bb[0] = 0ULL;  // White pawns
         pawns_bb[1] = 0ULL;  // Black pawns
         all_pawns_bb = 0ULL; // Combined pawns
+        piece_bb[0] = 0ULL;
+        piece_bb[1] = 0ULL;
+        for (int i = 0; i < 7; i++) {
+            piece_type_bb[i] = 0ULL;
+        }
         
         // Clear all pceNum (piece counts per type per color)
         for (int color = 0; color < 2; ++color) {
@@ -388,6 +399,11 @@ struct Position {
         king_sq = { -1, -1 };
         pawns_bb = { 0, 0 };
         all_pawns_bb = 0;
+        piece_bb[0] = 0ULL;
+        piece_bb[1] = 0ULL;
+        for (int i = 0; i < 7; i++) {
+            piece_type_bb[i] = 0ULL;
+        }
         piece_counts.fill(0);
         material_score = { 0, 0 };  // Clear material scores
         
@@ -422,9 +438,11 @@ struct Position {
                     ++pCount[color_idx][type_idx];
                 }
                 
-                if (pt == PieceType::Pawn) {
-                    int s64 = MAILBOX_MAPS.to64[s];
-                    if (s64 >= 0) {
+                int s64 = MAILBOX_MAPS.to64[s];
+                if (s64 >= 0) {
+                    setBit(piece_bb[size_t(c)], s64);
+                    setBit(piece_type_bb[size_t(pt)], s64);
+                    if (pt == PieceType::Pawn) {
                         setBit(pawns_bb[size_t(c)], s64);
                         setBit(all_pawns_bb, s64);
                     }
@@ -524,7 +542,10 @@ struct Position {
     inline Piece at(int s) const { 
         return (s >= 0 && s < 120) ? board[size_t(s)] : Piece::Offboard; 
     }
-    inline void set(int s, Piece p) { if (is_playable(s)) board[size_t(s)] = p; }
+    inline void set(int s, Piece p) { 
+        if (is_playable(s)) board[size_t(s)] = p; 
+        rebuild_counts();
+    }
     
     // Piece list management helpers
     void add_piece_to_list(Color c, PieceType pt, int square) {
@@ -626,14 +647,14 @@ struct Position {
         if (m.is_promotion()) {
             remove_piece_from_list(moving_color, PieceType::Pawn, m.get_from());
             add_piece_to_list(moving_color, m.get_promoted(), m.get_to());
-            set(m.get_to(), make_piece(moving_color, m.get_promoted()));
+            board[m.get_to()] = make_piece(moving_color, m.get_promoted());
         } else {
             // Regular move - update piece location in list
             move_piece_in_list(moving_color, moving_type, m.get_from(), m.get_to());
-            set(m.get_to(), moving);
+            board[m.get_to()] = moving;
         }
         
-        set(m.get_from(), Piece::None);
+        board[m.get_from()] = Piece::None;
         
         ep_square = -1; // Reset, update with double pawn push logic later
         side_to_move = !side_to_move;
@@ -672,8 +693,8 @@ struct Position {
         }
         
         // Move piece back
-        set(from, moved);
-        set(to, undo.captured); // Restore captured piece (or Piece::None)
+        board[from] = moved;
+        board[to] = undo.captured; // Restore captured piece (or Piece::None)
         
         // Restore position state
         castling_rights = undo.castling_rights;
@@ -737,7 +758,22 @@ inline void make_move(Position& pos, const S_MOVE& m, State& st) {
     if (m.is_promotion()) {
         pos.set(m.get_to(), make_piece(color_of(moving), m.get_promoted()));
     }
-    pos.ep_square = -1; // set by double push logic once you add it
+    
+    // Handle en passant square for double pawn pushes
+    pos.ep_square = -1; // Default: no en passant
+    if (type_of(moving) == PieceType::Pawn) {
+        int from_rank = static_cast<int>(rank_of(m.get_from()));
+        int to_rank = static_cast<int>(rank_of(m.get_to()));
+        
+        // Check if this is a double pawn push
+        if (abs(to_rank - from_rank) == 2) {
+            // Set en passant square to the square the pawn "jumped over"
+            int ep_rank = (from_rank + to_rank) / 2;
+            File file = file_of(m.get_from());
+            pos.ep_square = sq(file, Rank(ep_rank));
+        }
+    }
+    
     pos.side_to_move = !pos.side_to_move;
     if (pos.side_to_move == Color::White) ++pos.fullmove_number; // black just moved
 }
