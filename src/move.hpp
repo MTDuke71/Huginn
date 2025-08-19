@@ -127,19 +127,7 @@ struct S_MOVE {
         to = (encoded & MOVE_TO_MASK) >> MOVE_TO_SHIFT;
         promo = PieceType((encoded & MOVE_PROMOTED_MASK) >> MOVE_PROMOTED_SHIFT);
     }
-    
-    // Convert to legacy Move struct for compatibility
-    // COMMENTED OUT FOR TESTING - should not be needed anymore
-    /*
-    Move to_move() const {
-        Move m;
-        m.from = get_from();
-        m.to = get_to();
-        m.promo = get_promoted();
-        return m;
-    }
-    */
-    
+  
     // Allow assignment from int for test compatibility (assigns to move field)
     S_MOVE& operator=(int value) {
         move = value;
