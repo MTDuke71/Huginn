@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.24)
 # Create a separate debug demo executable
 add_executable(debug_demo
   src/debug_demo.cpp
-  src/move_do.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -17,7 +16,6 @@ target_compile_features(debug_demo PRIVATE cxx_std_17)
 # Create a separate castling validation demo executable
 add_executable(castling_demo
   src/castling_demo.cpp
-  src/move_do.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -31,7 +29,6 @@ target_compile_features(castling_demo PRIVATE cxx_std_17)
 # Create a separate FEN generation demo executable
 add_executable(fen_demo
   src/fen_demo.cpp
-  src/move_do.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -45,7 +42,6 @@ target_compile_features(fen_demo PRIVATE cxx_std_17)
 # Create a separate SqAttacked demo executable
 add_executable(sq_attacked_demo
   src/sq_attacked_demo.cpp
-  src/move_do.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp

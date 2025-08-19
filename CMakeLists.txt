@@ -14,7 +14,6 @@ endif()
 # ---- App ----
 add_executable(huginn
   src/main.cpp
-  src/move_do.cpp        # <-- add this file per our earlier step
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -53,7 +52,6 @@ add_executable(huginn_tests
   test/test_sq_attacked.cpp         # <-- SqAttacked function tests
   test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
   test/test_s_move.cpp              # <-- S_MOVE structure tests
-  src/move_do.cpp        # reuse the implementation in tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
