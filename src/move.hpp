@@ -33,19 +33,6 @@ constexpr int MOVE_CASTLE_SHIFT   = 24;
 // Forward declaration
 struct S_MOVE;
 
-// Legacy Move struct for backward compatibility (defined first to avoid circular deps)
-struct Move {
-    int from;          // mailbox-120 index
-    int to;            // mailbox-120 index
-    PieceType promo;   // PieceType::None if not a promotion
-    
-    // Convert to S_MOVE (will be defined after S_MOVE)
-    S_MOVE to_s_move() const;
-    
-    // Convert from S_MOVE (will be defined after S_MOVE)
-    static Move from_s_move(const S_MOVE& s_move);
-};
-
 // Enhanced move structure with packed encoding and score for move ordering
 struct S_MOVE {
     int move;   // Packed move data (25 bits used)
@@ -142,6 +129,8 @@ struct S_MOVE {
     }
     
     // Convert to legacy Move struct for compatibility
+    // COMMENTED OUT FOR TESTING - should not be needed anymore
+    /*
     Move to_move() const {
         Move m;
         m.from = get_from();
@@ -149,6 +138,7 @@ struct S_MOVE {
         m.promo = get_promoted();
         return m;
     }
+    */
     
     // Allow assignment from int for test compatibility (assigns to move field)
     S_MOVE& operator=(int value) {
@@ -162,15 +152,6 @@ struct S_MOVE {
         return move == value;
     }
 };
-
-// Move struct implementations (defined after S_MOVE)
-inline S_MOVE Move::to_s_move() const {
-    return S_MOVE(from, to, PieceType::None, false, false, promo, false);
-}
-
-inline Move Move::from_s_move(const S_MOVE& s_move) {
-    return Move{s_move.get_from(), s_move.get_to(), s_move.get_promoted()};
-}
 
 // Convenience functions for creating moves
 inline S_MOVE make_move(int from, int to) {
@@ -197,11 +178,3 @@ inline S_MOVE make_castle(int from, int to) {
     return S_MOVE(from, to, PieceType::None, false, false, PieceType::None, true);
 }
 
-// Legacy function for backward compatibility
-inline constexpr Move make_move_legacy(int from, int to, PieceType promo = PieceType::None) {
-    return Move{from, to, promo};
-}
-
-inline constexpr bool operator==(const Move& a, const Move& b) {
-    return a.from == b.from && a.to == b.to && a.promo == b.promo;
-}

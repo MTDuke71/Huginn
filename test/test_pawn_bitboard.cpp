@@ -41,26 +41,18 @@ TEST_F(PawnBitboardTest, StartingPositionPawnBitboards) {
 
 TEST_F(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     // Make some moves to set up a capture: e2-e4, d7-d5, exd5
-    Move move;
     
     // e2-e4 (White pawn move)
-    move.from = sq(File::E, Rank::R2);
-    move.to = sq(File::E, Rank::R4);
-    move.promo = PieceType::None;
-    
-    pos.make_move_with_undo(move);
+    S_MOVE move1 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
+    pos.make_move_with_undo(move1);
     
     // d7-d5 (Black pawn move)  
-    move.from = sq(File::D, Rank::R7);
-    move.to = sq(File::D, Rank::R5);
-    
-    pos.make_move_with_undo(move);
+    S_MOVE move2 = make_move(sq(File::D, Rank::R7), sq(File::D, Rank::R5));
+    pos.make_move_with_undo(move2);
     
     // exd5 (White pawn captures black pawn)
-    move.from = sq(File::E, Rank::R4);
-    move.to = sq(File::D, Rank::R5);
-    
-    pos.make_move_with_undo(move);
+    S_MOVE move3 = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
+    pos.make_move_with_undo(move3);
     
     // Verify the capture updated all bitboards correctly
     uint64_t white_pawns = pos.get_white_pawns();
@@ -106,11 +98,7 @@ TEST_F(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
     EXPECT_EQ(popcount(initial_all_pawns), 2);
     
     // White captures black: exd5
-    Move move;
-    move.from = sq(File::E, Rank::R4);
-    move.to = sq(File::D, Rank::R5);
-    move.promo = PieceType::None;
-    
+    S_MOVE move = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
     pos.make_move_with_undo(move);
     
     // After capture, should have 1 pawn (white) and 0 black pawns
@@ -139,12 +127,7 @@ TEST_F(PawnBitboardTest, MakeUnmakePawnMoveConsistency) {
     uint64_t initial_all = pos.get_all_pawns_bitboard();
     
     // Make a pawn move: e2-e4
-    Move move;
-    
-    move.from = sq(File::E, Rank::R2);
-    move.to = sq(File::E, Rank::R4);
-    move.promo = PieceType::None;
-    
+    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     pos.make_move_with_undo(move);
     
     // Verify the move changed the bitboards
@@ -179,11 +162,11 @@ TEST_F(PawnBitboardTest, AllPawnBitboardConsistency) {
     // Test that all_pawns_bb is always the union of white and black pawns
     
     // Test multiple moves to ensure consistency is maintained
-    std::vector<Move> moves = {
-        {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None},  // e2-e4
-        {sq(File::E, Rank::R7), sq(File::E, Rank::R5), PieceType::None},  // e7-e5
-        {sq(File::D, Rank::R2), sq(File::D, Rank::R4), PieceType::None},  // d2-d4
-        {sq(File::E, Rank::R5), sq(File::D, Rank::R4), PieceType::None},  // exd4 (capture)
+    std::vector<S_MOVE> moves = {
+        make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4)),                    // e2-e4
+        make_move(sq(File::E, Rank::R7), sq(File::E, Rank::R5)),                    // e7-e5
+        make_move(sq(File::D, Rank::R2), sq(File::D, Rank::R4)),                    // d2-d4
+        make_capture(sq(File::E, Rank::R5), sq(File::D, Rank::R4), PieceType::Pawn), // exd4 (capture)
     };
     
     for (const auto& move : moves) {

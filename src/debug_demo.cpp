@@ -42,16 +42,16 @@ int main() {
     moved_pos.set_startpos();
     
     // Make the moves: 1.e4 e5 2.Nf3 Nc6
-    Move e2e4 = {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
+    S_MOVE e2e4 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     moved_pos.make_move_with_undo(e2e4);
     
-    Move e7e5 = {sq(File::E, Rank::R7), sq(File::E, Rank::R5), PieceType::None};
+    S_MOVE e7e5 = make_move(sq(File::E, Rank::R7), sq(File::E, Rank::R5));
     moved_pos.make_move_with_undo(e7e5);
     
-    Move g1f3 = {sq(File::G, Rank::R1), sq(File::F, Rank::R3), PieceType::None};
+    S_MOVE g1f3 = make_move(sq(File::G, Rank::R1), sq(File::F, Rank::R3));
     moved_pos.make_move_with_undo(g1f3);
     
-    Move b8c6 = {sq(File::B, Rank::R8), sq(File::C, Rank::R6), PieceType::None};
+    S_MOVE b8c6 = make_move(sq(File::B, Rank::R8), sq(File::C, Rank::R6));
     moved_pos.make_move_with_undo(b8c6);
     
     std::string expected_fen_after_moves = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";

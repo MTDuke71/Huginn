@@ -1,5 +1,14 @@
 # Huginn Chess Engine API Guide
 
+## Recent Changes
+
+### Legacy Move Structure Removal (Latest Version)
+- **Complete elimination** of legacy `Move` struct and all compatibility functions
+- **Pure S_MOVE architecture** - all move operations now use the high-performance S_MOVE structure
+- **Simplified codebase** - no more dual interfaces or conversion functions
+- **Performance improvement** - elimination of legacy adapter overhead
+- **API cleaning** - `make_move_with_undo(const Move&)`, `to_s_move()`, `from_s_move()`, and legacy test functions removed
+
 ---
 
 ## init.hpp — Engine Initialization
@@ -240,16 +249,18 @@
 
 ## move.hpp — Enhanced Move Representation API
 
+> **Note**: As of the latest version, all legacy Move structures and compatibility functions have been completely removed. The engine now uses only the S_MOVE architecture for optimal performance and simplicity.
+
 ### **Key Improvements in S_MOVE Architecture**
 
-The new `S_MOVE` structure represents a significant advancement over the previous move representation:
+The `S_MOVE` structure represents a modern, high-performance move representation that has completely replaced the legacy Move system:
 
 - **Memory Efficiency**: 8 bytes total vs 12+ bytes for separate fields (33% reduction)
 - **Cache Performance**: Compact 25-bit encoding improves memory bandwidth utilization
 - **Integrated Scoring**: Built-in move ordering without separate data structures
 - **Bit-Packed Design**: All move information encoded in a single 32-bit integer
 - **Fast Operations**: Single integer comparisons and efficient bit manipulation
-- **Legacy Compatibility**: Seamless conversion to/from legacy Move structure
+- **Pure Architecture**: No legacy compatibility layer - S_MOVE is the only move representation
 
 ### **S_MOVE Structure - High-Performance Packed Move Representation**
 
@@ -342,23 +353,12 @@ S_MOVE make_promotion(int from, int to, PieceType promoted,     // Promotion mov
 S_MOVE make_castle(int from, int to)                            // Castle move
 ```
 
-### **Legacy Compatibility:**
-- **Legacy Move struct maintained for backward compatibility:**
-  ```cpp
-  struct Move {
-      int from, to;
-      PieceType promo;
-      
-      S_MOVE to_s_move() const;                    // Convert to S_MOVE
-      static Move from_s_move(const S_MOVE& s);    // Convert from S_MOVE
-  };
-  ```
-
 ### **Performance Benefits:**
 - **Memory Efficiency:** 8 bytes total (4 bytes move + 4 bytes score) vs 12+ bytes for separate fields
 - **Cache Performance:** Compact representation reduces memory bandwidth
 - **Fast Operations:** Single integer comparisons and bit manipulation
 - **Integrated Scoring:** Built-in move ordering without separate data structures
+- **Pure Architecture:** No legacy compatibility overhead or conversion costs
 
 ### **Usage Examples:**
 ```cpp
@@ -380,9 +380,10 @@ std::sort(moves.begin(), moves.end(), [](const S_MOVE& a, const S_MOVE& b) {
     return a.score > b.score;  // Higher scores first
 });
 
-// Legacy compatibility
-Move legacy = {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
-S_MOVE enhanced = legacy.to_s_move();
+// Access move information
+int from_square = move.get_from();
+int to_square = move.get_to();
+bool is_promotion = move.is_promotion();
 ```
 
 ---
@@ -478,10 +479,7 @@ S_MOVE enhanced = legacy.to_s_move();
   - `reset()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()` (for setup only)
   - `make_move_with_undo(const S_MOVE& m)` — Make move with full undo support using incremental updates (O(1) performance, 24-40x faster than rebuild_counts)
   - `undo_move()` — Undo last move with perfect state restoration (O(1) performance, 24-40x faster than rebuild_counts)
-- **Move Handling:**
-  - `make_move(Position&, const Move&, State&)` — Simple move making (legacy interface)
-  - `unmake_move(Position&, const Move&, const State&)` — Simple move unmaking (legacy interface)
-- **Move Encoding (now in S_MOVE structure):**
+- **Move Encoding (integrated in S_MOVE structure):**
   - `S_MOVE::encode_move(from, to, captured, en_passant, pawn_start, promoted, castle)` — Pack move into integer with all flags
   - `S_MOVE::decode_move(encoded, from, to, promo)` — Unpack basic move information from integer
 - **Performance Optimizations:**

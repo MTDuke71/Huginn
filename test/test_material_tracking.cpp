@@ -50,10 +50,7 @@ TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     int black_material_before = pos.get_material_score(Color::Black);
     
     // Make a capture move: d2 pawn captures e4 pawn
-    Move move;
-    move.from = sq(File::D, Rank::R2);  // d2
-    move.to = sq(File::E, Rank::R4);    // e4 (capture black pawn)
-    move.promo = PieceType::None;
+    S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
     
     // Make the move
     pos.make_move_with_undo(move);
@@ -93,10 +90,7 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
     int initial_black_material = pos.get_material_score(Color::Black);
     
     // Make a promotion move: e7-e8=Q
-    Move move;
-    move.from = sq(File::E, Rank::R7);  // e7
-    move.to = sq(File::E, Rank::R8);    // e8
-    move.promo = PieceType::Queen;      // Promote to queen
+    S_MOVE move = make_promotion(sq(File::E, Rank::R7), sq(File::E, Rank::R8), PieceType::Queen);
     
     // Make the move
     pos.make_move_with_undo(move);
@@ -122,10 +116,10 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
 
 TEST_F(MaterialTrackingTest, MaterialConsistencyWithRebuildCounts) {
     // Make several moves and verify incremental material matches rebuild_counts
-    std::vector<Move> moves = {
-        {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None}, // e2-e4
-        {sq(File::D, Rank::R7), sq(File::D, Rank::R5), PieceType::None}, // d7-d5
-        {sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::None}, // exd5 (capture)
+    std::vector<S_MOVE> moves = {
+        make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4)),                    // e2-e4
+        make_move(sq(File::D, Rank::R7), sq(File::D, Rank::R5)),                    // d7-d5
+        make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn), // exd5 (capture)
     };
     
     for (const auto& move : moves) {

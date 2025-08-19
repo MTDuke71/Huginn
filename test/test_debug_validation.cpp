@@ -41,16 +41,16 @@ TEST_F(DebugValidationTest, ValidateAfterMovesConsistency) {
     pos.set_startpos();
     
     // Make some moves: e2-e4, e7-e5, Nf3, Nc6
-    Move move1 = {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
+    S_MOVE move1 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     pos.make_move_with_undo(move1);
     
-    Move move2 = {sq(File::E, Rank::R7), sq(File::E, Rank::R5), PieceType::None};
+    S_MOVE move2 = make_move(sq(File::E, Rank::R7), sq(File::E, Rank::R5));
     pos.make_move_with_undo(move2);
     
-    Move move3 = {sq(File::G, Rank::R1), sq(File::F, Rank::R3), PieceType::None};
+    S_MOVE move3 = make_move(sq(File::G, Rank::R1), sq(File::F, Rank::R3));
     pos.make_move_with_undo(move3);
     
-    Move move4 = {sq(File::B, Rank::R8), sq(File::C, Rank::R6), PieceType::None};
+    S_MOVE move4 = make_move(sq(File::B, Rank::R8), sq(File::C, Rank::R6));
     pos.make_move_with_undo(move4);
     
     // Expected FEN after these moves
@@ -99,7 +99,7 @@ TEST_F(DebugValidationTest, ValidateAfterCaptureMove) {
     pos.rebuild_counts();
     
     // Make a capture move: exd5
-    Move capture_move = {sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::None};
+    S_MOVE capture_move = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
     pos.make_move_with_undo(capture_move);
     
     // Validate all components after capture

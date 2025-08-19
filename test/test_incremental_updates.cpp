@@ -18,10 +18,7 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     auto initial_piece_counts = pos.piece_counts;
     
     // Make a simple pawn move: e2-e4
-    Move move;
-    move.from = sq(File::E, Rank::R2);  // e2
-    move.to = sq(File::E, Rank::R4);    // e4
-    move.promo = PieceType::None;
+    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
     // Make the move
     pos.make_move_with_undo(move);
@@ -52,9 +49,9 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     EXPECT_EQ(pos.piece_counts, initial_piece_counts) << "Piece counts should be restored";
     
     // Verify the actual board position
-    EXPECT_EQ(pos.at(move.from), make_piece(Color::White, PieceType::Pawn)) 
+    EXPECT_EQ(pos.at(move.get_from()), make_piece(Color::White, PieceType::Pawn)) 
         << "White pawn should be back on e2";
-    EXPECT_EQ(pos.at(move.to), Piece::None) 
+    EXPECT_EQ(pos.at(move.get_to()), Piece::None) 
         << "e4 should be empty again";
 }
 
@@ -69,10 +66,7 @@ TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     auto initial_pawns_bb = pos.pawns_bb;
     
     // Make a capture move: d2xd4 (assuming we move the d2 pawn to capture on e4)
-    Move move;
-    move.from = sq(File::D, Rank::R2);  // d2
-    move.to = sq(File::E, Rank::R4);    // e4 (capture black pawn)
-    move.promo = PieceType::None;
+    S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
     
     // Make the move
     pos.make_move_with_undo(move);
@@ -110,10 +104,7 @@ TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
     auto initial_king_sq = pos.king_sq;
     
     // Make a king move: Ke1-Ke2
-    Move move;
-    move.from = sq(File::E, Rank::R1);  // e1
-    move.to = sq(File::E, Rank::R2);    // e2
-    move.promo = PieceType::None;
+    S_MOVE move = make_move(sq(File::E, Rank::R1), sq(File::E, Rank::R2));
     
     // Make the move
     pos.make_move_with_undo(move);

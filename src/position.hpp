@@ -454,7 +454,7 @@ struct Position {
     }
     
     // Update derived state incrementally for a move (much faster than rebuild_counts)
-    void update_derived_state_for_move(const Move& m, Piece moving, Piece captured) {
+    void update_derived_state_for_move(const S_MOVE& m, Piece moving, Piece captured) {
         Color moving_color = color_of(moving);
         PieceType moving_type = type_of(moving);
         
@@ -469,7 +469,7 @@ struct Position {
             
             // Remove captured pawn from bitboard
             if (type_of(captured) == PieceType::Pawn) {
-                int s64_to = MAILBOX_MAPS.to64[m.to];
+                int s64_to = MAILBOX_MAPS.to64[m.get_to()];
                 if (s64_to >= 0) {
                     popBit(pawns_bb[size_t(color_of(captured))], s64_to);
                     popBit(all_pawns_bb, s64_to);
@@ -478,17 +478,17 @@ struct Position {
         }
         
         // Handle promotion
-        if (m.promo != PieceType::None) {
+        if (m.is_promotion()) {
             // Remove pawn, add promoted piece
             --piece_counts[size_t(PieceType::Pawn)];
-            ++piece_counts[size_t(m.promo)];
+            ++piece_counts[size_t(m.get_promoted())];
             
             // Update material score: remove pawn value, add promoted piece value
             material_score[size_t(moving_color)] -= value_of(make_piece(moving_color, PieceType::Pawn));
-            material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.promo));
+            material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.get_promoted()));
             
             // Remove pawn from bitboard (promoted piece isn't a pawn)
-            int s64_to = MAILBOX_MAPS.to64[m.to];
+            int s64_to = MAILBOX_MAPS.to64[m.get_to()];
             if (s64_to >= 0) {
                 popBit(pawns_bb[size_t(moving_color)], s64_to);
                 popBit(all_pawns_bb, s64_to);
@@ -497,8 +497,8 @@ struct Position {
             // Regular move - update piece-specific derived state
             if (moving_type == PieceType::Pawn) {
                 // Update pawn bitboard
-                int s64_from = MAILBOX_MAPS.to64[m.from];
-                int s64_to = MAILBOX_MAPS.to64[m.to];
+                int s64_from = MAILBOX_MAPS.to64[m.get_from()];
+                int s64_to = MAILBOX_MAPS.to64[m.get_to()];
                 if (s64_from >= 0 && s64_to >= 0) {
                     popBit(pawns_bb[size_t(moving_color)], s64_from);
                     setBit(pawns_bb[size_t(moving_color)], s64_to);
@@ -509,13 +509,13 @@ struct Position {
             
             if (moving_type == PieceType::King) {
                 // Update king square
-                king_sq[size_t(moving_color)] = m.to;
+                king_sq[size_t(moving_color)] = m.get_to();
             }
         }
     }
     
     // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
-    void update_zobrist_for_move(const Move& m, Piece moving, Piece captured);
+    void update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured);
     
     // Compute and set the Zobrist key from current position
     void update_zobrist_key();
@@ -577,11 +577,11 @@ struct Position {
     }
     
     // Enhanced move making with full undo support
-    void make_move_with_undo(const Move& m) {
+    void make_move_with_undo(const S_MOVE& m) {
         // Debug assertions for move validity
-        DEBUG_ASSERT(is_playable(m.from), "Move source square must be playable");
-        DEBUG_ASSERT(is_playable(m.to), "Move destination square must be playable");
-        DEBUG_ASSERT(!is_none(at(m.from)), "Cannot move from empty square");
+        DEBUG_ASSERT(is_playable(m.get_from()), "Move source square must be playable");
+        DEBUG_ASSERT(is_playable(m.get_to()), "Move destination square must be playable");
+        DEBUG_ASSERT(!is_none(at(m.get_from())), "Cannot move from empty square");
         
         // Check for ply overflow
         if (ply >= MAXPLY) {
@@ -590,13 +590,12 @@ struct Position {
         }
         
         S_UNDO& undo = move_history[ply]; // Direct array access
-        undo.move.move = S_MOVE::encode_move(m.from, m.to, PieceType::None, false, false, m.promo, false);
-        undo.move.score = 0; // Reset score
+        undo.move = m; // Store the complete S_MOVE
         undo.castling_rights = castling_rights;
         undo.ep_square = ep_square;
         undo.halfmove_clock = halfmove_clock;
         undo.zobrist_key = zobrist_key;
-        undo.captured = at(m.to);
+        undo.captured = at(m.get_to());
         
         // Save derived state for efficient undo (performance optimization)
         save_derived_state(undo);
@@ -605,7 +604,7 @@ struct Position {
         ++ply;
         
         // Make the move
-        Piece moving = at(m.from);
+        Piece moving = at(m.get_from());
         Piece captured = undo.captured;
         
         if (type_of(moving) == PieceType::Pawn || !is_none(captured)) {
@@ -620,21 +619,21 @@ struct Position {
         
         // Remove captured piece from piece list
         if (!is_none(captured)) {
-            remove_piece_from_list(color_of(captured), type_of(captured), m.to);
+            remove_piece_from_list(color_of(captured), type_of(captured), m.get_to());
         }
         
         // Handle promotion - remove pawn and add promoted piece
-        if (m.promo != PieceType::None) {
-            remove_piece_from_list(moving_color, PieceType::Pawn, m.from);
-            add_piece_to_list(moving_color, m.promo, m.to);
-            set(m.to, make_piece(moving_color, m.promo));
+        if (m.is_promotion()) {
+            remove_piece_from_list(moving_color, PieceType::Pawn, m.get_from());
+            add_piece_to_list(moving_color, m.get_promoted(), m.get_to());
+            set(m.get_to(), make_piece(moving_color, m.get_promoted()));
         } else {
             // Regular move - update piece location in list
-            move_piece_in_list(moving_color, moving_type, m.from, m.to);
-            set(m.to, moving);
+            move_piece_in_list(moving_color, moving_type, m.get_from(), m.get_to());
+            set(m.get_to(), moving);
         }
         
-        set(m.from, Piece::None);
+        set(m.get_from(), Piece::None);
         
         ep_square = -1; // Reset, update with double pawn push logic later
         side_to_move = !side_to_move;
@@ -721,38 +720,38 @@ struct Position {
 
 // Minimal make/unmake stubs (quiet moves + captures only for now)
 // Flesh these out as you implement move legality, en-passant, castling, promotions.
-inline void make_move(Position& pos, const Move& m, State& st) {
+inline void make_move(Position& pos, const S_MOVE& m, State& st) {
     st.ep_square = pos.ep_square;
     st.castling_rights = pos.castling_rights;
     st.halfmove_clock = pos.halfmove_clock;
-    st.captured = pos.at(m.to);
+    st.captured = pos.at(m.get_to());
 
-    Piece moving = pos.at(m.from);
+    Piece moving = pos.at(m.get_from());
     // update halfmove clock
     if (type_of(moving) == PieceType::Pawn || !is_none(st.captured)) pos.halfmove_clock = 0;
     else ++pos.halfmove_clock;
 
-    pos.set(m.to, moving);
-    pos.set(m.from, Piece::None);
+    pos.set(m.get_to(), moving);
+    pos.set(m.get_from(), Piece::None);
     // promotions (simple)
-    if (m.promo != PieceType::None) {
-        pos.set(m.to, make_piece(color_of(moving), m.promo));
+    if (m.is_promotion()) {
+        pos.set(m.get_to(), make_piece(color_of(moving), m.get_promoted()));
     }
     pos.ep_square = -1; // set by double push logic once you add it
     pos.side_to_move = !pos.side_to_move;
     if (pos.side_to_move == Color::White) ++pos.fullmove_number; // black just moved
 }
 
-inline void unmake_move(Position& pos, const Move& m, const State& st) {
+inline void unmake_move(Position& pos, const S_MOVE& m, const State& st) {
     pos.side_to_move = !pos.side_to_move;
     if (pos.side_to_move == Color::Black) --pos.fullmove_number; // undo the increment
-    Piece moved = pos.at(m.to);
+    Piece moved = pos.at(m.get_to());
     // If promo, restore pawn
-    if (m.promo != PieceType::None) {
+    if (m.is_promotion()) {
         moved = make_piece(color_of(moved), PieceType::Pawn);
     }
-    pos.set(m.from, moved);
-    pos.set(m.to, st.captured);
+    pos.set(m.get_from(), moved);
+    pos.set(m.get_to(), st.captured);
     pos.ep_square = st.ep_square;
     pos.castling_rights = st.castling_rights;
     pos.halfmove_clock = st.halfmove_clock;

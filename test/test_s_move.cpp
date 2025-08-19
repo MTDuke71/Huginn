@@ -120,22 +120,6 @@ TEST_F(S_MoveTest, MoveScoring) {
     EXPECT_FALSE(move1 == move2);
 }
 
-TEST_F(S_MoveTest, LegacyCompatibility) {
-    // Test legacy Move conversion
-    Move legacy_move{sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
-    S_MOVE s_move = legacy_move.to_s_move();
-    
-    EXPECT_EQ(s_move.get_from(), legacy_move.from);
-    EXPECT_EQ(s_move.get_to(), legacy_move.to);
-    EXPECT_EQ(s_move.get_promoted(), legacy_move.promo);
-    
-    // Convert back
-    Move converted_back = Move::from_s_move(s_move);
-    EXPECT_EQ(converted_back.from, legacy_move.from);
-    EXPECT_EQ(converted_back.to, legacy_move.to);
-    EXPECT_EQ(converted_back.promo, legacy_move.promo);
-}
-
 TEST_F(S_MoveTest, BitMaskValidation) {
     // Test that all bit fields work correctly with extreme values
     

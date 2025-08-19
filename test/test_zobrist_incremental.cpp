@@ -20,10 +20,7 @@ TEST_F(ZobristIncrementalTest, IncrementalXORMatchesFullComputation) {
     EXPECT_EQ(pos.zobrist_key, full_key_before) << "Position zobrist_key should match computed key";
     
     // Make a simple pawn move: e2-e4
-    Move move;
-    move.from = sq(File::E, Rank::R2);  // e2
-    move.to = sq(File::E, Rank::R4);    // e4
-    move.promo = PieceType::None;
+    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
     // Make the move (this uses incremental XOR updates)
     pos.make_move_with_undo(move);
@@ -56,10 +53,7 @@ TEST_F(ZobristIncrementalTest, CaptureMovesUpdateCorrectly) {
     pos.zobrist_key = full_key_before; // Sync the position's key
     
     // Make a capture move: d2xe4
-    Move move;
-    move.from = sq(File::D, Rank::R2);  // d2
-    move.to = sq(File::E, Rank::R4);    // e4 (capture black pawn)
-    move.promo = PieceType::None;
+    S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
     
     // Make the move (this uses incremental XOR updates)
     pos.make_move_with_undo(move);
@@ -84,10 +78,10 @@ TEST_F(ZobristIncrementalTest, MultipleMovesInSequence) {
     pos.zobrist_key = original_key;
     
     // Make several moves in sequence
-    std::vector<Move> moves = {
-        {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None},  // e2-e4
-        {sq(File::D, Rank::R2), sq(File::D, Rank::R3), PieceType::None},  // d2-d3
-        {sq(File::F, Rank::R1), sq(File::E, Rank::R2), PieceType::None}   // Bf1-e2
+    std::vector<S_MOVE> moves = {
+        make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4)),  // e2-e4
+        make_move(sq(File::D, Rank::R2), sq(File::D, Rank::R3)),  // d2-d3
+        make_move(sq(File::F, Rank::R1), sq(File::E, Rank::R2))   // Bf1-e2
     };
     
     for (const auto& move : moves) {
@@ -121,7 +115,7 @@ TEST_F(ZobristIncrementalTest, XORPropertyWorks) {
     uint64_t original_key = Zobrist::compute(pos);
     pos.zobrist_key = original_key;
     
-    Move move = {sq(File::E, Rank::R2), sq(File::E, Rank::R4), PieceType::None};
+    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
     // Apply the same move 1000 times (even number)
     for (int i = 0; i < 1000; ++i) {

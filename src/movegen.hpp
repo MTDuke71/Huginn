@@ -320,11 +320,6 @@ struct MoveList {
             return a.score > b.score; // Higher scores first
         });
     }
-    
-    // Legacy compatibility - add Move objects
-    void add_legacy(const Move& m) {
-        v.push_back(m.to_s_move());
-    }
 };
 
 inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
