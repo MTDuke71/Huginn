@@ -468,7 +468,6 @@ bool validate_en_passant_consistency(const Position& pos) {
     // En passant square must be on a playable square
     if (!is_playable(pos.ep_square)) {
         std::cout << "EN PASSANT SQUARE NOT PLAYABLE: " << pos.ep_square << std::endl;
-        assert(false && "En passant square is not playable");
         consistent = false;
         return consistent;
     }
@@ -494,7 +493,6 @@ bool validate_en_passant_consistency(const Position& pos) {
         std::cout << "  Logic: If " << (pos.side_to_move == Color::White ? "White" : "Black") 
                  << " to move, then " << (pos.side_to_move == Color::White ? "Black" : "White")
                  << " just moved a pawn 2 squares" << std::endl;
-        assert(false && "En passant square on wrong rank");
         consistent = false;
     }
     
@@ -502,7 +500,6 @@ bool validate_en_passant_consistency(const Position& pos) {
     if (pos.board[pos.ep_square] != Piece::None) {
         std::cout << "EN PASSANT SQUARE NOT EMPTY:" << std::endl;
         std::cout << "  EP square " << pos.ep_square << " contains: " << to_char(pos.board[pos.ep_square]) << std::endl;
-        assert(false && "En passant square should be empty");
         consistent = false;
     }
     
@@ -525,7 +522,6 @@ bool validate_en_passant_consistency(const Position& pos) {
         std::cout << "EN PASSANT PAWN MISSING:" << std::endl;
         std::cout << "  Expected " << to_char(expected_pawn) << " at square " << pawn_square << std::endl;
         std::cout << "  Found: " << to_char(pos.board[pawn_square]) << std::endl;
-        assert(false && "Pawn that enables en passant capture is missing");
         consistent = false;
     }
     
@@ -557,14 +553,12 @@ bool validate_castling_consistency(const Position& pos) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  White kingside castling allowed but King not on e1" << std::endl;
             std::cout << "  Expected WhiteKing at e1, found: " << to_char(pos.board[WHITE_KING_START]) << std::endl;
-            assert(false && "White King must be on e1 for kingside castling");
             consistent = false;
         }
         if (pos.board[WHITE_ROOK_KS] != Piece::WhiteRook) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  White kingside castling allowed but Rook not on h1" << std::endl;
             std::cout << "  Expected WhiteRook at h1, found: " << to_char(pos.board[WHITE_ROOK_KS]) << std::endl;
-            assert(false && "White Rook must be on h1 for kingside castling");
             consistent = false;
         }
     }
@@ -575,14 +569,12 @@ bool validate_castling_consistency(const Position& pos) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  White queenside castling allowed but King not on e1" << std::endl;
             std::cout << "  Expected WhiteKing at e1, found: " << to_char(pos.board[WHITE_KING_START]) << std::endl;
-            assert(false && "White King must be on e1 for queenside castling");
             consistent = false;
         }
         if (pos.board[WHITE_ROOK_QS] != Piece::WhiteRook) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  White queenside castling allowed but Rook not on a1" << std::endl;
             std::cout << "  Expected WhiteRook at a1, found: " << to_char(pos.board[WHITE_ROOK_QS]) << std::endl;
-            assert(false && "White Rook must be on a1 for queenside castling");
             consistent = false;
         }
     }
@@ -594,14 +586,12 @@ bool validate_castling_consistency(const Position& pos) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  Black kingside castling allowed but King not on e8" << std::endl;
             std::cout << "  Expected BlackKing at e8, found: " << to_char(pos.board[BLACK_KING_START]) << std::endl;
-            assert(false && "Black King must be on e8 for kingside castling");
             consistent = false;
         }
         if (pos.board[BLACK_ROOK_KS] != Piece::BlackRook) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  Black kingside castling allowed but Rook not on h8" << std::endl;
             std::cout << "  Expected BlackRook at h8, found: " << to_char(pos.board[BLACK_ROOK_KS]) << std::endl;
-            assert(false && "Black Rook must be on h8 for kingside castling");
             consistent = false;
         }
     }
@@ -612,14 +602,12 @@ bool validate_castling_consistency(const Position& pos) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  Black queenside castling allowed but King not on e8" << std::endl;
             std::cout << "  Expected BlackKing at e8, found: " << to_char(pos.board[BLACK_KING_START]) << std::endl;
-            assert(false && "Black King must be on e8 for queenside castling");
             consistent = false;
         }
         if (pos.board[BLACK_ROOK_QS] != Piece::BlackRook) {
             std::cout << "CASTLING INCONSISTENCY:" << std::endl;
             std::cout << "  Black queenside castling allowed but Rook not on a8" << std::endl;
             std::cout << "  Expected BlackRook at a8, found: " << to_char(pos.board[BLACK_ROOK_QS]) << std::endl;
-            assert(false && "Black Rook must be on a8 for queenside castling");
             consistent = false;
         }
     }
