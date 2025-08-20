@@ -76,9 +76,14 @@ struct Position {
     std::array<PieceList, 2> pList; // [White, Black]
     std::array<std::array<int, int(PieceType::_Count)>, 2> pCount; // Number of pieces [color][type]
     
-    // Move history for undo functionality - fixed array for performance
-    std::array<S_UNDO, MAXPLY> move_history{};
+    // Move history for undo functionality - use vector for dynamic sizing
+    std::vector<S_UNDO> move_history;
     int ply{0};                      // current search/game ply
+
+    // Constructor
+    Position() : move_history() {
+        move_history.reserve(64);  // Reserve reasonable initial capacity
+    }
 
     void reset() {
         // Set all squares to offboard first
@@ -143,15 +148,8 @@ struct Position {
         // Clear poskey (Zobrist position key)
         zobrist_key = 0ULL;
         
-        // Clear all history variables
-        for (int i = 0; i < MAXPLY; ++i) {
-            move_history[i].move = S_MOVE();  // Empty move
-            move_history[i].castling_rights = 0;
-            move_history[i].ep_square = -1;
-            move_history[i].halfmove_clock = 0;
-            move_history[i].zobrist_key = 0ULL;
-            move_history[i].captured = Piece::None;
-        }
+        // Clear move history
+        move_history.clear();
     }
 
     // Parse FEN string and set position accordingly
@@ -591,13 +589,12 @@ struct Position {
         DEBUG_ASSERT(is_playable(m.get_to()), "Move destination square must be playable");
         DEBUG_ASSERT(!is_none(at(m.get_from())), "Cannot move from empty square");
         
-        // Check for ply overflow
-        if (ply >= MAXPLY) {
-            DEBUG_ASSERT(false, "Move history overflow - too many moves in game/search");
-            return; // For now, just return without making the move
+        // Ensure move_history has enough capacity
+        if (ply >= static_cast<int>(move_history.size())) {
+            move_history.resize(ply + 1);
         }
         
-        S_UNDO& undo = move_history[ply]; // Direct array access
+        S_UNDO& undo = move_history[ply]; // Vector access
         undo.move = m; // Store the complete S_MOVE
         undo.castling_rights = castling_rights;
         undo.ep_square = ep_square;
@@ -660,7 +657,7 @@ struct Position {
         
         // Decrement ply first to get the correct index
         --ply;
-        S_UNDO& undo = move_history[ply]; // Direct array access
+        S_UNDO& undo = move_history[ply]; // Vector access
         
         // Decode the move
         int from, to;

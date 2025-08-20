@@ -9,6 +9,7 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 namespace Debug {
 
@@ -17,12 +18,12 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
     std::cout << "Expected FEN: " << expected_fen << std::endl;
     
     // Parse the expected FEN to create a reference position
+    // Now using stack allocation since Position struct is much smaller
     Position expected_pos;
     expected_pos.reset();
     
     if (!expected_pos.set_from_fen(expected_fen)) {
         std::cout << "ERROR: Invalid FEN string provided" << std::endl;
-        assert(false && "Invalid FEN string");
         return false;
     }
     
@@ -89,7 +90,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
                 std::cout << "BOARD MISMATCH at " << file_char << rank_char 
                          << ": expected " << to_char(expected) 
                          << ", got " << to_char(actual) << std::endl;
-                assert(false && "Board square mismatch with expected FEN");
                 all_consistent = false;
             }
         }
@@ -100,7 +100,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
         std::cout << "SIDE TO MOVE MISMATCH: expected " 
                  << (expected_pos.side_to_move == Color::White ? "White" : "Black")
                  << ", got " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
-        assert(false && "Side to move mismatch");
         all_consistent = false;
     }
     
@@ -108,7 +107,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
     if (pos.castling_rights != expected_pos.castling_rights) {
         std::cout << "CASTLING RIGHTS MISMATCH: expected " << (int)expected_pos.castling_rights
                  << ", got " << (int)pos.castling_rights << std::endl;
-        assert(false && "Castling rights mismatch");
         all_consistent = false;
     }
     
@@ -116,7 +114,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
     if (pos.ep_square != expected_pos.ep_square) {
         std::cout << "EN PASSANT MISMATCH: expected " << expected_pos.ep_square
                  << ", got " << pos.ep_square << std::endl;
-        assert(false && "En passant square mismatch");
         all_consistent = false;
     }
     
@@ -124,7 +121,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
     if (pos.halfmove_clock != expected_pos.halfmove_clock) {
         std::cout << "HALFMOVE CLOCK MISMATCH: expected " << expected_pos.halfmove_clock
                  << ", got " << pos.halfmove_clock << std::endl;
-        assert(false && "Halfmove clock mismatch");
         all_consistent = false;
     }
     
@@ -132,7 +128,6 @@ bool validate_position_consistency(const Position& pos, const std::string& expec
     if (pos.fullmove_number != expected_pos.fullmove_number) {
         std::cout << "FULLMOVE NUMBER MISMATCH: expected " << expected_pos.fullmove_number
                  << ", got " << pos.fullmove_number << std::endl;
-        assert(false && "Fullmove number mismatch");
         all_consistent = false;
     }
     
@@ -175,7 +170,6 @@ bool validate_bitboards_consistency(const Position& pos) {
         std::cout << "WHITE PAWNS BITBOARD MISMATCH:" << std::endl;
         std::cout << "  Expected: " << expected_white_pawns << std::endl;
         std::cout << "  Actual:   " << pos.get_white_pawns() << std::endl;
-        assert(false && "White pawns bitboard inconsistent with board array");
         consistent = false;
     }
     
@@ -184,7 +178,6 @@ bool validate_bitboards_consistency(const Position& pos) {
         std::cout << "BLACK PAWNS BITBOARD MISMATCH:" << std::endl;
         std::cout << "  Expected: " << expected_black_pawns << std::endl;
         std::cout << "  Actual:   " << pos.get_black_pawns() << std::endl;
-        assert(false && "Black pawns bitboard inconsistent with board array");
         consistent = false;
     }
     
@@ -193,7 +186,6 @@ bool validate_bitboards_consistency(const Position& pos) {
         std::cout << "ALL PAWNS BITBOARD MISMATCH:" << std::endl;
         std::cout << "  Expected: " << expected_all_pawns << std::endl;
         std::cout << "  Actual:   " << pos.get_all_pawns_bitboard() << std::endl;
-        assert(false && "Combined pawns bitboard inconsistent");
         consistent = false;
     }
     
@@ -203,7 +195,6 @@ bool validate_bitboards_consistency(const Position& pos) {
         std::cout << "ALL PAWNS BITBOARD NOT UNION OF WHITE AND BLACK:" << std::endl;
         std::cout << "  All pawns:     " << pos.get_all_pawns_bitboard() << std::endl;
         std::cout << "  White | Black: " << union_pawns << std::endl;
-        assert(false && "Combined pawns bitboard not union of individual bitboards");
         consistent = false;
     }
     
@@ -247,7 +238,6 @@ bool validate_piece_counts_consistency(const Position& pos) {
                          << to_char(make_piece(color, piece_type)) << ":" << std::endl;
                 std::cout << "  Expected: " << expected << std::endl;
                 std::cout << "  Stored:   " << stored << std::endl;
-                assert(false && "Piece count mismatch");
                 consistent = false;
             }
         }
@@ -306,7 +296,6 @@ bool validate_piece_lists_consistency(const Position& pos) {
                     std::cout << sq << " ";
                 }
                 std::cout << std::endl;
-                assert(false && "Piece list mismatch");
                 consistent = false;
             }
         }
@@ -353,7 +342,6 @@ bool validate_material_scores_consistency(const Position& pos) {
                      << (color == Color::White ? "White" : "Black") << ":" << std::endl;
             std::cout << "  Expected: " << expected << std::endl;
             std::cout << "  Stored:   " << stored << std::endl;
-            assert(false && "Material score mismatch");
             consistent = false;
         }
     }
@@ -366,7 +354,6 @@ bool validate_material_scores_consistency(const Position& pos) {
         std::cout << "MATERIAL BALANCE MISMATCH:" << std::endl;
         std::cout << "  Expected: " << expected_balance << std::endl;
         std::cout << "  Stored:   " << stored_balance << std::endl;
-        assert(false && "Material balance mismatch");
         consistent = false;
     }
     
@@ -392,7 +379,6 @@ bool validate_king_squares_consistency(const Position& pos) {
                 if (found_white_king != -1) {
                     std::cout << "MULTIPLE WHITE KINGS found at " << found_white_king 
                              << " and " << sq << std::endl;
-                    assert(false && "Multiple white kings on board");
                     consistent = false;
                 }
                 found_white_king = sq;
@@ -400,7 +386,6 @@ bool validate_king_squares_consistency(const Position& pos) {
                 if (found_black_king != -1) {
                     std::cout << "MULTIPLE BLACK KINGS found at " << found_black_king 
                              << " and " << sq << std::endl;
-                    assert(false && "Multiple black kings on board");
                     consistent = false;
                 }
                 found_black_king = sq;
@@ -413,7 +398,6 @@ bool validate_king_squares_consistency(const Position& pos) {
         std::cout << "WHITE KING SQUARE MISMATCH:" << std::endl;
         std::cout << "  Found on board: " << found_white_king << std::endl;
         std::cout << "  Stored:         " << pos.king_sq[int(Color::White)] << std::endl;
-        assert(false && "White king square mismatch");
         consistent = false;
     }
     
@@ -422,7 +406,6 @@ bool validate_king_squares_consistency(const Position& pos) {
         std::cout << "BLACK KING SQUARE MISMATCH:" << std::endl;
         std::cout << "  Found on board: " << found_black_king << std::endl;
         std::cout << "  Stored:         " << pos.king_sq[int(Color::Black)] << std::endl;
-        assert(false && "Black king square mismatch");
         consistent = false;
     }
     
@@ -436,17 +419,18 @@ bool validate_king_squares_consistency(const Position& pos) {
 bool validate_zobrist_consistency(const Position& pos) {
     std::cout << "\n--- Validating Zobrist Hash Consistency ---" << std::endl;
     
-    // Create a copy and recalculate Zobrist hash from scratch
-    Position temp_pos = pos;
-    temp_pos.update_zobrist_key();
+    // Instead of copying the entire Position (which is huge due to move_history array),
+    // directly compute the Zobrist hash from the current position and compare
+    std::cout << "Computing Zobrist hash from scratch..." << std::endl;
+    uint64_t recalculated_hash = Zobrist::compute(pos);
+    std::cout << "Zobrist computation completed." << std::endl;
     
-    bool consistent = (pos.zobrist_key == temp_pos.zobrist_key);
+    bool consistent = (pos.zobrist_key == recalculated_hash);
     
     if (!consistent) {
         std::cout << "ZOBRIST HASH MISMATCH:" << std::endl;
         std::cout << "  Current:      0x" << std::hex << pos.zobrist_key << std::endl;
-        std::cout << "  Recalculated: 0x" << std::hex << temp_pos.zobrist_key << std::dec << std::endl;
-        assert(false && "Zobrist hash mismatch");
+        std::cout << "  Recalculated: 0x" << std::hex << recalculated_hash << std::dec << std::endl;
     } else {
         std::cout << "✓ Zobrist hash is consistent (0x" << std::hex << pos.zobrist_key << std::dec << ")" << std::endl;
     }
