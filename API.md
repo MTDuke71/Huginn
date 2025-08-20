@@ -435,11 +435,11 @@ bool is_promotion = move.is_promotion();
 ## position.hpp — Position & State API
 
 - **Constants:**
-  - `MAXPLY 2048` — Maximum search depth / game length
+  - `MAXPLY 2048` — Legacy maximum search depth constant (now unused with dynamic move history)
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
   - `S_UNDO { S_MOVE move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7], material_score_backup[2] }` — Complete undo state with incremental update support using S_MOVE structure
-  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history[MAXPLY], ply }`
+  - `Position { board[120], side_to_move, ep_square, castling_rights, halfmove_clock, fullmove_number, king_sq[2], pawns_bb[2], piece_counts[7], zobrist_key, pList[2], pCount[2], move_history (dynamic vector), ply }`
 - **Position Management:**
   - `reset()` — Complete reset to empty state (all squares offboard/empty, all counters cleared)
   - `set_startpos()` — Set up standard chess starting position using FEN parsing
@@ -486,8 +486,8 @@ bool is_promotion = move.is_promotion();
   - **Incremental Updates:** Make/unmake moves use O(1) incremental updates instead of O(120) board scanning
   - **State Backup/Restore:** Perfect derived state restoration in O(1) time using saved backup data
   - **Search Performance:** 24-40x faster move making/unmaking enables deep search algorithms
-  - **Memory Efficiency:** Fixed-size array storage for zero allocation overhead
-  - **Direct Access:** Array indexing for maximum speed with overflow protection at MAXPLY limit
+  - **Memory Efficiency:** Dynamic vector storage with automatic resizing and minimal memory footprint
+  - **Direct Access:** Vector indexing for maximum speed with automatic bounds management
   - **Selective Rebuilding:** `rebuild_counts()` only used for setup operations (FEN parsing), not during search
 
 ---

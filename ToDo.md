@@ -52,7 +52,7 @@
   - `make_move_with_undo(const S_MOVE& m)` - O(1) incremental updates
   - `undo_move()` - O(1) perfect state restoration
   - `save_derived_state()` / `restore_derived_state()` - O(1) backup/restore
-- **Optimized Storage**: Fixed-size array `std::array<S_UNDO, MAXPLY>` for zero allocation
+- **Optimized Storage**: Dynamic vector `std::vector<S_UNDO>` with automatic resizing and minimal memory footprint
 - **Complete State Management**: All derived state tracked and restored incrementally
 
 ### **Material Tracking System (Complete)**

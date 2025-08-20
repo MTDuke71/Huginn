@@ -9,7 +9,7 @@
 #include "chess_types.hpp"
 #include "move.hpp"
 
-// Maximum search depth / game length
+// Maximum search depth / game length (legacy constant - move_history now uses dynamic vector)
 #define MAXPLY 2048
 
 struct State {

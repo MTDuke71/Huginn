@@ -37,7 +37,7 @@ cmake --build build
 - **Piece List Optimization**: Fast piece iteration without board scanning (up to 10 pieces per type)
 
 ### Move System
-- **Array-Based Undo**: Fixed-size move history (MAXPLY=2048) for zero allocation overhead
+- **Dynamic Move History**: Vector-based move history with automatic resizing and minimal memory overhead
 - **Comprehensive Move Encoding**: From/to/promotion packed into single integer
 - **Attack Detection**: Fast square attack detection for all piece types with proper blocking
 - **Castling Rights**: Centralized constants and utility functions
