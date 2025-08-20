@@ -324,8 +324,7 @@ struct MoveList {
 
 inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
     out.clear();
-    // --- STARTER: knights only (example, white only) ---
-    // Expand piece by piece using TDD.
+    // Knights
     for (int r=0; r<8; ++r) {
         for (int f=0; f<8; ++f) {
             int s = sq(static_cast<File>(f), static_cast<Rank>(r));
@@ -340,13 +339,95 @@ inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
                     if (!is_playable(to)) continue;
                     Piece q = pos.at(to);
                     if (!is_none(q) && color_of(q) == pos.side_to_move) continue; // own piece
-                    
-                    // Check if this is a capture
                     PieceType captured = is_none(q) ? PieceType::None : type_of(q);
                     out.add(s, to, captured);
                 }
             }
-            // TODO: add other pieces via tests
+        }
+    }
+
+    // Rooks
+    int color_idx = int(pos.side_to_move);
+    int rook_count = pos.pCount[color_idx][int(PieceType::Rook)];
+    for (int i = 0; i < rook_count; ++i) {
+        int s = pos.pList[color_idx][int(PieceType::Rook)][i];
+        // Four directions: NORTH, SOUTH, EAST, WEST
+        constexpr int rook_dirs[4] = { NORTH, SOUTH, EAST, WEST };
+        for (int dir : rook_dirs) {
+            for (int step = 1; step < 8; ++step) {
+                int to = s + dir * step;
+                if (!is_playable(to)) break;
+                Piece q = pos.at(to);
+                if (!is_none(q)) {
+                    if (color_of(q) == pos.side_to_move) break; // own piece blocks
+                    // Capture
+                    out.add(s, to, type_of(q));
+                    break; // stop after capture
+                }
+                // Quiet move
+                out.add(s, to, PieceType::None);
+            }
+        }
+    }
+    
+    // Bishops
+    int bishop_count = pos.pCount[color_idx][int(PieceType::Bishop)];
+    for (int i = 0; i < bishop_count; ++i) {
+        int s = pos.pList[color_idx][int(PieceType::Bishop)][i];
+        // Four diagonal directions: NE, NW, SE, SW
+        constexpr int bishop_dirs[4] = { NE, NW, SE, SW };
+        for (int dir : bishop_dirs) {
+            for (int step = 1; step < 8; ++step) {
+                int to = s + dir * step;
+                if (!is_playable(to)) break;
+                Piece q = pos.at(to);
+                if (!is_none(q)) {
+                    if (color_of(q) == pos.side_to_move) break; // own piece blocks
+                    // Capture
+                    out.add(s, to, type_of(q));
+                    break; // stop after capture
+                }
+                // Quiet move
+                out.add(s, to, PieceType::None);
+            }
+        }
+    }
+    
+    // Queens (combine rook and bishop moves)
+    int queen_count = pos.pCount[color_idx][int(PieceType::Queen)];
+    for (int i = 0; i < queen_count; ++i) {
+        int s = pos.pList[color_idx][int(PieceType::Queen)][i];
+        // Eight directions: NORTH, SOUTH, EAST, WEST, NE, NW, SE, SW
+        constexpr int queen_dirs[8] = { NORTH, SOUTH, EAST, WEST, NE, NW, SE, SW };
+        for (int dir : queen_dirs) {
+            for (int step = 1; step < 8; ++step) {
+                int to = s + dir * step;
+                if (!is_playable(to)) break;
+                Piece q = pos.at(to);
+                if (!is_none(q)) {
+                    if (color_of(q) == pos.side_to_move) break; // own piece blocks
+                    // Capture
+                    out.add(s, to, type_of(q));
+                    break; // stop after capture
+                }
+                // Quiet move
+                out.add(s, to, PieceType::None);
+            }
+        }
+    }
+    
+    // Kings
+    int king_count = pos.pCount[color_idx][int(PieceType::King)];
+    for (int i = 0; i < king_count; ++i) {
+        int s = pos.pList[color_idx][int(PieceType::King)][i];
+        // King moves one step in any of the eight directions
+        for (int dir : KING_DELTAS) {
+            int to = s + dir;
+            if (!is_playable(to)) continue;
+            Piece q = pos.at(to);
+            if (!is_none(q) && color_of(q) == pos.side_to_move) continue; // own piece blocks
+            PieceType captured = is_none(q) ? PieceType::None : type_of(q);
+            out.add(s, to, captured);
         }
     }
 }

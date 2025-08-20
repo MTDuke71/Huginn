@@ -52,6 +52,10 @@ add_executable(huginn_tests
   test/test_sq_attacked.cpp         # <-- SqAttacked function tests
   test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
   test/test_s_move.cpp              # <-- S_MOVE structure tests
+  test/test_rook_movegen.cpp        # <-- rook move generation tests
+  test/test_bishop_queen_movegen.cpp # <-- bishop and queen move generation tests
+  test/test_king_movegen.cpp        # <-- king move generation tests
+  test/test_all_piece_movegen.cpp   # <-- all piece move generation integration tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
