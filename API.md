@@ -9,6 +9,19 @@
 - **Performance improvement** - elimination of legacy adapter overhead
 - **API cleaning** - `make_move_with_undo(const Move&)`, `to_s_move()`, `from_s_move()`, and legacy test functions removed
 
+### Enhanced Legal Move Generation
+- **True legal move filtering** - `generate_legal_moves()` now properly filters moves that would leave king in check
+- **King safety validation** - comprehensive check detection prevents illegal king moves
+- **Castling validation** - proper validation of castling legality including through-check prevention
+- **Pin detection** - moves by pinned pieces are correctly handled and filtered
+- **Perft validation** - extensive testing suite validates move generation correctness against standard positions
+
+### Advanced Debugging & Validation Suite
+- **Comprehensive perft testing** - supports standard chess engine validation positions
+- **Performance benchmarking** - timing analysis for move generation optimization
+- **Position integrity validation** - multi-layered consistency checking for all data structures
+- **Error detection & reporting** - detailed diagnostics for debugging engine development
+
 ---
 
 ## init.hpp — Engine Initialization
@@ -191,7 +204,7 @@
   - `MoveList` — Container for pseudo-legal moves with add/clear operations
 - **Move Generation:**
   - `generate_pseudo_legal_moves(const Position& pos, MoveList& out)` — Generate all pseudo-legal moves for current side
-  - `generate_legal_moves(const Position& pos, MoveList& out)` — Generate legal moves (currently same as pseudo-legal)
+  - `generate_legal_moves(const Position& pos, MoveList& out)` — Generate legal moves by filtering pseudo-legal moves based on king safety
 - **Attack Detection:**
   - `SqAttacked(int sq, const Position& pos, Color attacking_color)` — Check if square is under attack by specified color
 - **Attack Detection Features:**
@@ -243,6 +256,9 @@
   manual_pos.reset();
   manual_pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);  // Manual piece placement
   bool attacks_d5 = SqAttacked(sq(File::D, Rank::R5), manual_pos, Color::White);  // Uses fallback
+  
+  // Check if position is legal (king not in check for side not to move)
+  bool position_legal = !SqAttacked(pos.king_sq[1 - int(pos.side_to_move)], pos, pos.side_to_move);
   ```
 
 ---
@@ -404,12 +420,45 @@ bool is_promotion = move.is_promotion();
   - `operator[](size_t i)` — Access move by index
   - `sort_by_score()` — Sort moves by score (higher scores first) for move ordering
 - **Functions:**
-  - `generate_pseudo_legal_moves(const Position&, MoveList&)` — Generate all pseudo-legal S_MOVE objects
-  - `generate_legal_moves(const Position&, MoveList&)` — Generate legal S_MOVE objects
+  - `generate_pseudo_legal_moves(const Position&, MoveList&)` — Generate all pseudo-legal S_MOVE objects (does not check king safety)
+  - `generate_legal_moves(const Position&, MoveList&)` — Generate legal S_MOVE objects (filters out moves that leave king in check)
+- **Legal Move Generation Details:**
+  - **Pseudo-Legal vs Legal**: Pseudo-legal moves include all moves that follow piece movement rules but may leave king in check
+  - **King Safety Filtering**: Legal move generation tests each pseudo-legal move to ensure king safety
+  - **Performance Considerations**: Use pseudo-legal for move ordering, legal for actual play
+  - **Check Detection Integration**: Uses `SqAttacked()` function for efficient king safety validation
 - **Integration:**
   - Seamlessly works with S_MOVE structure and scoring
   - Supports efficient move ordering with built-in sort functionality
   - Optimized for performance-critical move generation scenarios
+  - Legal move generation suitable for game play and search algorithms
+- **Usage Examples:**
+  ```cpp
+  Position pos;
+  pos.set_startpos();
+  
+  // Generate all legal moves for current position
+  MoveList legal_moves;
+  generate_legal_moves(pos, legal_moves);
+  
+  // Generate pseudo-legal moves for move ordering (faster)
+  MoveList pseudo_moves;
+  generate_pseudo_legal_moves(pos, pseudo_moves);
+  
+  // Check if position has any legal moves (detect checkmate/stalemate)
+  bool has_moves = legal_moves.size() > 0;
+  bool in_check = SqAttacked(pos.king_sq[int(pos.side_to_move)], pos, !pos.side_to_move);
+  if (!has_moves) {
+      if (in_check) {
+          std::cout << "Checkmate!" << std::endl;
+      } else {
+          std::cout << "Stalemate!" << std::endl;
+      }
+  }
+  
+  // Sort moves by score for search optimization
+  legal_moves.sort_by_score();
+  ```
 
 ---
 
@@ -478,7 +527,13 @@ bool is_promotion = move.is_promotion();
 - **Methods:**
   - `reset()`, `set_startpos()`, `at(int s)`, `set(int s, Piece p)`, `rebuild_counts()` (for setup only)
   - `make_move_with_undo(const S_MOVE& m)` — Make move with full undo support using incremental updates (O(1) performance, 24-40x faster than rebuild_counts)
+  - `make_move_with_undo(const S_MOVE& m, S_UNDO& undo)` — Make move with explicit undo object for advanced use cases
   - `undo_move()` — Undo last move with perfect state restoration (O(1) performance, 24-40x faster than rebuild_counts)
+- **Legal Move Validation:**
+  - **King Safety**: All move validation ensures king is not left in check after move
+  - **Castling Rules**: Proper validation of castling legality including path clearance and through-check prevention
+  - **En Passant**: Correct en passant capture validation with king safety checks
+  - **Pin Handling**: Moves by pinned pieces are properly validated to prevent exposing king to check
 - **Move Encoding (integrated in S_MOVE structure):**
   - `S_MOVE::encode_move(from, to, captured, en_passant, pawn_start, promoted, castle)` — Pack move into integer with all flags
   - `S_MOVE::decode_move(encoded, from, to, promo)` — Unpack basic move information from integer
@@ -631,3 +686,160 @@ bool is_promotion = move.is_promotion();
     Function: add_piece_to_list
     Condition: pCount[color][type] < MAX_PIECES_PER_TYPE
   ```
+
+---
+
+## perft.hpp — Performance Testing & Move Generation Validation
+
+- **Perft Function:**
+  - `perft(Position& pos, int depth)` — Count all possible positions at given depth using legal move generation
+  - **Recursive Implementation**: Explores game tree to specified depth, counting leaf nodes
+  - **Legal Move Filtering**: Uses `generate_legal_moves()` to ensure only valid moves are counted
+  - **Standard Chess Validation**: Implements industry-standard perft testing for engine verification
+- **Performance Validation:**
+  - **Known Test Positions**: Supports standard perft test suite including Kiwipete position
+  - **Depth Testing**: Validates move generation correctness at depths 1-6
+  - **Debugging Support**: Detailed move-by-move breakdown for perft analysis
+- **Test Suite Integration:**
+  - **Automated Testing**: Comprehensive test cases in `test_perft.cpp`
+  - **Performance Benchmarks**: Timing measurements for optimization validation
+  - **Regression Testing**: Ensures move generation changes don't break correctness
+- **Standard Perft Positions:**
+  - **Starting Position**: Depth 1: 20 moves, Depth 2: 400 nodes, Depth 3: 8,902 nodes
+  - **Kiwipete Position**: `r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1`
+    - Depth 1: 48 moves, Depth 2: 2,039 nodes, Depth 3: 97,862 nodes
+  - **Complex Positions**: Tests castling, en passant, promotions, pins, and checks
+- **Usage Examples:**
+  ```cpp
+  Position pos;
+  pos.set_startpos();
+  
+  // Test starting position perft
+  uint64_t depth3 = perft(pos, 3);  // Should be 8,902
+  
+  // Test Kiwipete position
+  pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+  uint64_t kiwipete_d1 = perft(pos, 1);  // Should be 48
+  uint64_t kiwipete_d2 = perft(pos, 2);  // Should be 2,039
+  
+  // Per-move breakdown for debugging
+  MoveList moves;
+  generate_legal_moves(pos, moves);
+  for (const auto& move : moves.v) {
+      pos.make_move_with_undo(move);
+      uint64_t count = perft(pos, depth - 1);
+      pos.undo_move();
+      std::cout << "Move: " << move_to_algebraic(move) << " -> " << count << std::endl;
+  }
+  ```
+- **Demo Applications:**
+  - `perft_suite_demo.exe` — Comprehensive perft testing against EPD test suite
+  - `debug_kiwipete_perft.exe` — Detailed Kiwipete position analysis
+  - `debug_perft.exe` — General perft debugging and validation
+
+---
+
+## Build System & Demo Applications
+
+### **CMake Build Configuration**
+- **Build Types:**
+  - `Release` — Optimized production build with maximum performance
+  - `Debug` — Development build with debug assertions and debugging symbols
+  - `RelWithDebInfo` — Release optimization with debugging information
+- **Build Commands:**
+  ```powershell
+  # Configure and build (PowerShell)
+  cmake -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build --config Release
+  
+  # Enable debug assertions
+  cmake -B build_debug -DCMAKE_BUILD_TYPE=Debug -DENABLE_DEBUG_ASSERTIONS=ON
+  cmake --build build_debug --config Debug
+  ```
+- **Build Targets:**
+  - `huginn.exe` — Main engine executable
+  - `huginn_tests.exe` — Comprehensive test suite
+  - Demo executables: `debug_demo.exe`, `fen_demo.exe`, `sq_attacked_demo.exe`, `castling_demo.exe`
+  - Perft executables: `perft_suite_demo.exe`, `debug_kiwipete_perft.exe`, `debug_perft.exe`
+
+### **Demo Applications**
+- **Position & Board Demos:**
+  - `huginn.exe` — Main position display and basic functionality demo
+  - `fen_demo.exe` — FEN parsing, generation, and position setup demonstration
+  - `debug_demo.exe` — Comprehensive position validation and debugging features
+- **Move Generation & Attack Demos:**
+  - `sq_attacked_demo.exe` — Square attack detection performance and accuracy demonstration
+  - `castling_demo.exe` — Castling validation and edge case handling
+- **Performance & Validation Demos:**
+  - `perft_suite_demo.exe` — Comprehensive perft testing against standard test positions
+  - `debug_kiwipete_perft.exe` — Detailed analysis of the famous Kiwipete position
+  - `debug_perft.exe` — General perft debugging with move-by-move breakdown
+  - `debug_kiwipete_perft_compare.exe` — Compare perft results against expected values
+- **Testing & Validation:**
+  - `huginn_tests.exe` — Complete test suite with Google Test framework
+  - Covers all major functionality: move generation, position management, attack detection, perft validation
+
+### **Development Workflow**
+- **Initial Setup:**
+  ```powershell
+  # Clone and build
+  git clone <repository-url>
+  cd Huginn
+  cmake -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build --config Release
+  ```
+- **Testing:**
+  ```powershell
+  # Run comprehensive test suite
+  .\build\huginn_tests.exe
+  
+  # Run specific demos
+  .\build\debug_demo.exe
+  .\build\perft_suite_demo.exe
+  ```
+- **Performance Validation:**
+  ```powershell
+  # Validate move generation correctness
+  .\build\debug_kiwipete_perft.exe
+  
+  # Test attack detection performance
+  .\build\sq_attacked_demo.exe
+  ```
+
+---
+
+## Engine Status & Development Roadmap
+
+### **Current Engine Status**
+The Huginn chess engine represents a **solid foundation** for high-performance chess engine development:
+
+- **Core Architecture Complete**: Pure S_MOVE system with optimal performance characteristics
+- **Position Management**: Full FEN support, incremental updates, comprehensive state tracking
+- **Move Generation**: Complete pseudo-legal and legal move generation with comprehensive validation
+- **Attack Detection**: Ultra-fast square attack detection with piece list optimization
+- **Data Integrity**: Comprehensive validation suite ensuring position consistency
+- **Performance Optimized**: 24-40x faster move making/unmaking through incremental updates
+
+### **Ready for Advanced Development**
+The engine is now positioned for **search algorithm implementation**:
+
+- **S_MOVE Integration**: Built-in move scoring ready for search optimization
+- **Performance Foundation**: O(1) make/unmake operations enable deep search
+- **Validation Suite**: Comprehensive testing ensures reliability during development
+- **Clean Architecture**: Modern C++ design facilitates feature additions
+
+### **Planned Enhancements**
+- **Search Engine**: Minimax with alpha-beta pruning, iterative deepening, transposition tables
+- **Evaluation Function**: Material balance, piece-square tables, pawn structure, king safety
+- **Move Ordering**: Killer moves, history heuristic, MVV-LVA, principal variation moves
+- **UCI Protocol**: Standard chess engine communication protocol for GUI integration
+- **Advanced Search**: Null move pruning, late move reductions, futility pruning, quiescence search
+
+### **Architecture Highlights**
+- **Memory Efficiency**: 8-byte S_MOVE structure vs 12+ bytes for traditional representations (33% reduction)
+- **Cache Performance**: Compact bitboard operations and piece list optimization
+- **Zero Legacy Overhead**: Pure modern architecture without compatibility layers
+- **Incremental Updates**: Complete derived state maintained with O(1) operations
+- **Comprehensive Testing**: Industry-standard perft validation and extensive unit testing
+
+The Huginn engine demonstrates **professional-grade chess engine architecture** with performance characteristics suitable for competitive play once search and evaluation components are implemented.
