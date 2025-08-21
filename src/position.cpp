@@ -57,6 +57,8 @@ void Position::update_zobrist_key() {
 }
 
 void Position::make_move_with_undo(const S_MOVE& m, S_UNDO& undo) {
+    // std::cout << "[DEBUG] make_move_with_undo called. m.is_castle(): " << m.is_castle() << std::endl;
+    
     // Debug assertions for move validity
     DEBUG_ASSERT(is_playable(m.get_from()), "Move source square must be playable");
     DEBUG_ASSERT(is_playable(m.get_to()), "Move destination square must be playable");
@@ -82,6 +84,54 @@ void Position::make_move_with_undo(const S_MOVE& m, S_UNDO& undo) {
     undo.material_score_backup = material_score;
     undo.pList_backup = pList;
     undo.pCount_backup = pCount;
+
+    // Handle castling moves explicitly and return early
+    if (m.is_castle()) {
+        // std::cout << "[DEBUG] CASTLING MOVE DETECTED: " << m.get_from() << "->" << m.get_to() << std::endl;
+        
+        // Update castling rights - clear for moving color
+        if (color_of(at(m.get_from())) == Color::White) {
+            castling_rights &= ~(CASTLE_WK | CASTLE_WQ);
+        } else {
+            castling_rights &= ~(CASTLE_BK | CASTLE_BQ);
+        }
+        
+        // Update board for castling
+        if (color_of(at(m.get_from())) == Color::White) {
+            if (m.get_to() == sq(File::G, Rank::R1)) { // White kingside e1g1
+                board[sq(File::E, Rank::R1)] = Piece::None;
+                board[sq(File::H, Rank::R1)] = Piece::None;
+                board[sq(File::G, Rank::R1)] = Piece::WhiteKing;
+                board[sq(File::F, Rank::R1)] = Piece::WhiteRook;
+            } else if (m.get_to() == sq(File::C, Rank::R1)) { // White queenside e1c1
+                board[sq(File::E, Rank::R1)] = Piece::None;
+                board[sq(File::A, Rank::R1)] = Piece::None;
+                board[sq(File::C, Rank::R1)] = Piece::WhiteKing;
+                board[sq(File::D, Rank::R1)] = Piece::WhiteRook;
+            }
+        } else {
+            if (m.get_to() == sq(File::G, Rank::R8)) { // Black kingside e8g8
+                board[sq(File::E, Rank::R8)] = Piece::None;
+                board[sq(File::H, Rank::R8)] = Piece::None;
+                board[sq(File::G, Rank::R8)] = Piece::BlackKing;
+                board[sq(File::F, Rank::R8)] = Piece::BlackRook;
+            } else if (m.get_to() == sq(File::C, Rank::R8)) { // Black queenside e8c8
+                board[sq(File::E, Rank::R8)] = Piece::None;
+                board[sq(File::A, Rank::R8)] = Piece::None;
+                board[sq(File::C, Rank::R8)] = Piece::BlackKing;
+                board[sq(File::D, Rank::R8)] = Piece::BlackRook;
+            }
+        }
+        
+        // Update game state
+        ++ply;
+        ++halfmove_clock; // Castling is not a pawn move or capture
+        side_to_move = !side_to_move;
+        if (side_to_move == Color::White) ++fullmove_number;
+        ep_square = -1; // Clear en passant
+        
+        return;
+    }
 
 #ifdef DEBUG_CASTLING
     std::cout << "[DEBUG] Before move: " << m.get_from() << "->" << m.get_to() << " castle? " << m.is_castle() << " rights: " << int(castling_rights) << std::endl;

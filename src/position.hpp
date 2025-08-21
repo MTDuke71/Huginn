@@ -416,6 +416,36 @@ struct Position {
 
         set(m.get_from(), Piece::None);
 
+        // Handle castling move - place rook correctly
+        if (m.is_castle()) {
+            Color king_color = color_of(moving);
+            int rook_from, rook_to;
+            
+            if (king_color == Color::White) {
+                if (m.get_to() == sq(File::G, Rank::R1)) { // Kingside
+                    rook_from = sq(File::H, Rank::R1);
+                    rook_to = sq(File::F, Rank::R1);
+                } else { // Queenside
+                    rook_from = sq(File::A, Rank::R1);
+                    rook_to = sq(File::D, Rank::R1);
+                }
+            } else {
+                if (m.get_to() == sq(File::G, Rank::R8)) { // Kingside
+                    rook_from = sq(File::H, Rank::R8);
+                    rook_to = sq(File::F, Rank::R8);
+                } else { // Queenside
+                    rook_from = sq(File::A, Rank::R8);
+                    rook_to = sq(File::D, Rank::R8);
+                }
+            }
+            
+            // Move the rook
+            Piece rook = at(rook_from);
+            set(rook_to, rook);
+            set(rook_from, Piece::None);
+            move_piece_in_list(king_color, PieceType::Rook, rook_from, rook_to);
+        }
+
         ep_square = -1; // Reset, then check for pawn double moves
 
         // Set en passant square for pawn double moves
@@ -487,6 +517,36 @@ struct Position {
         // Move piece back
         set(from, moved);
         
+        // Handle castling undo - restore rook position
+        if (undo.move.is_castle()) {
+            Color king_color = color_of(moved);
+            int rook_from, rook_to;
+            
+            if (king_color == Color::White) {
+                if (to == sq(File::G, Rank::R1)) { // Kingside
+                    rook_from = sq(File::H, Rank::R1);
+                    rook_to = sq(File::F, Rank::R1);
+                } else { // Queenside
+                    rook_from = sq(File::A, Rank::R1);
+                    rook_to = sq(File::D, Rank::R1);
+                }
+            } else {
+                if (to == sq(File::G, Rank::R8)) { // Kingside
+                    rook_from = sq(File::H, Rank::R8);
+                    rook_to = sq(File::F, Rank::R8);
+                } else { // Queenside
+                    rook_from = sq(File::A, Rank::R8);
+                    rook_to = sq(File::D, Rank::R8);
+                }
+            }
+            
+            // Move the rook back to its original position
+            Piece rook = at(rook_to);
+            set(rook_from, rook);
+            set(rook_to, Piece::None);
+            move_piece_in_list(king_color, PieceType::Rook, rook_to, rook_from);
+        }
+
         // Handle en passant undo
         if (undo.move.is_en_passant()) {
             // Restore the captured pawn to its original square

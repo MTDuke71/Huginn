@@ -1,51 +1,71 @@
 #include "src/position.hpp"
+#include "src/board.hpp"
+#include "src/debug.hpp"
+#include "src/init.hpp"
+#include "src/move.hpp"
 #include "src/movegen.hpp"
 #include <iostream>
+#include <vector>
 
-std::string square_to_string(int square) {
-    if (square < 0 || square >= 120) return "??";
-    int file = square % 10;
-    int rank = square / 10;
-    if (file < 1 || file > 8 || rank < 2 || rank > 9) return "??";
-    char file_char = 'a' + (file - 1);
-    char rank_char = '1' + (rank - 2);
-    return std::string(1, file_char) + std::string(1, rank_char);
-}
+using namespace std;
+using namespace Huginn;
 
-std::string move_to_string(const S_MOVE& move) {
-    std::string result = square_to_string(move.get_from()) + square_to_string(move.get_to());
-    if (move.is_promotion()) {
-        char promo_char = '?';
-        switch (move.get_promoted()) {
-            case PieceType::Queen: promo_char = 'q'; break;
-            case PieceType::Rook: promo_char = 'r'; break;
-            case PieceType::Bishop: promo_char = 'b'; break;
-            case PieceType::Knight: promo_char = 'n'; break;
-            default: break;
-        }
-        result += promo_char;
+uint64_t perft(Position& pos, int depth) {
+    if (depth == 0) return 1;
+    MoveList list; 
+    generate_legal_moves(pos, list);
+    uint64_t nodes = 0;
+    for (const auto& m : list.v) {
+        pos.make_move_with_undo(m);
+        nodes += perft(pos, depth - 1);
+        pos.undo_move();
     }
-    return result;
+    return nodes;
 }
 
 int main() {
+    init();
+    
+    cout << "=== Debugging Kiwipete Position ===\n";
     Position pos;
-    std::string kiwipete_fen = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    string fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    pos.set_from_fen(fen);
     
-    // Manual FEN parsing for debug - just test a simpler position first
-    pos.reset();
-    pos.set_startpos();
+    cout << "FEN: " << fen << "\n";
     
-    std::cout << "Testing with start position first:" << std::endl;
-    std::cout << "Side to move: " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
+    // Test depth 1 first
+    cout << "\n=== Depth 1 Test ===\n";
+    MoveList moves;
+    generate_legal_moves(pos, moves);
+    cout << "Generated " << moves.size() << " moves\n";
     
-    MoveList list;
-    generate_legal_moves(pos, list);
+    uint64_t depth1_result = perft(pos, 1);
+    cout << "Depth 1 result: " << depth1_result << "\n";
+    cout << "Expected depth 1: 48\n";
     
-    std::cout << "\nGenerated " << list.v.size() << " legal moves:" << std::endl;
-    for (size_t i = 0; i < list.v.size() && i < 10; ++i) {
-        const auto& move = list.v[i];
-        std::cout << i+1 << ". " << move_to_string(move) << std::endl;
+    if (depth1_result == 48) {
+        cout << "Depth 1 PASSED!\n";
+        
+        // Now test depth 2
+        cout << "\n=== Depth 2 Test ===\n";
+        uint64_t depth2_result = perft(pos, 2);
+        cout << "Depth 2 result: " << depth2_result << "\n";
+        cout << "Expected depth 2: 2039\n";
+        
+        if (depth2_result == 2039) {
+            cout << "Depth 2 PASSED!\n";
+            
+            // Now test depth 3
+            cout << "\n=== Depth 3 Test ===\n";
+            uint64_t depth3_result = perft(pos, 3);
+            cout << "Depth 3 result: " << depth3_result << "\n";
+            cout << "Expected depth 3: 97862\n";
+            cout << "Difference: " << (int64_t)depth3_result - 97862 << "\n";
+        } else {
+            cout << "Depth 2 FAILED! Difference: " << (int64_t)depth2_result - 2039 << "\n";
+        }
+    } else {
+        cout << "Depth 1 FAILED! Difference: " << (int64_t)depth1_result - 48 << "\n";
     }
     
     return 0;
