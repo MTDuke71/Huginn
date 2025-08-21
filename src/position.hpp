@@ -1,6 +1,8 @@
+//#define DEBUG_CASTLING
 #pragma once
 #include <array>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -85,369 +87,13 @@ struct Position {
         move_history.reserve(64);  // Reserve reasonable initial capacity
     }
 
-    void reset() {
-        // Set all squares to offboard first
-        for (auto& square : board) {
-            square = Piece::Offboard;
-        }
-        
-        // Set all real (playable) squares to empty
-        for (int rank = 0; rank < 8; ++rank) {
-            for (int file = 0; file < 8; ++file) {
-                int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-                board[square] = Piece::None;
-            }
-        }
-        
-        // Clear piece counters - bigPce, majPce, minPce equivalents
-        piece_counts.fill(0);  // Clear all piece type counts
-        
-        // Clear material scores
-        material_score[0] = 0;  // White material
-        material_score[1] = 0;  // Black material
-        
-        // Clear pawn bitboards to 0ULL
-        pawns_bb[0] = 0ULL;  // White pawns
-        pawns_bb[1] = 0ULL;  // Black pawns
-        all_pawns_bb = 0ULL; // Combined pawns
-        
-        // Clear all pceNum (piece counts per type per color)
-        for (int color = 0; color < 2; ++color) {
-            for (int type = 0; type < int(PieceType::_Count); ++type) {
-                pCount[color][type] = 0;
-                
-                // Clear piece lists
-                for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                    pList[color][type][i] = -1;  // -1 indicates no piece
-                }
-            }
-        }
-        
-        // Clear kingSq for both colors
-        king_sq[0] = -1;  // White king
-        king_sq[1] = -1;  // Black king
-        
-        // Clear side to Both (represented as None since there's no Both enum value)
-        side_to_move = Color::None;  // Neither side to move
-        
-        // Clear enPas (en passant square)
-        ep_square = -1;
-        
-        // Clear fiftyMove (halfmove clock)
-        halfmove_clock = 0;
-        
-        // Clear ply and hiPly equivalent
-        ply = 0;
-        
-        // Reset fullmove number to 1
-        fullmove_number = 1;
-        
-        // Clear castlePerm (castling rights)
-        castling_rights = 0;  // No castling rights
-        
-        // Clear poskey (Zobrist position key)
-        zobrist_key = 0ULL;
-        
-        // Clear move history
-        move_history.clear();
-    }
-
-    // Parse FEN string and set position accordingly
-    bool set_from_fen(const std::string& fen) {
-        reset(); // Start with clean slate
-        
-        // Split FEN into components
-        std::vector<std::string> tokens;
-        std::istringstream iss(fen);
-        std::string token;
-        while (iss >> token) {
-            tokens.push_back(token);
-        }
-        
-        if (tokens.size() != 6) {
-            return false; // Invalid FEN format
-        }
-        
-        // 1. Parse piece placement (board)
-        const std::string& placement = tokens[0];
-        int rank = 7; // Start from rank 8 (index 7)
-        int file = 0;
-        
-        for (char ch : placement) {
-            if (ch == '/') {
-                rank--;
-                file = 0;
-                if (rank < 0) return false; // Too many ranks
-            } else if (ch >= '1' && ch <= '8') {
-                // Empty squares
-                int empty_count = ch - '0';
-                file += empty_count;
-                if (file > 8) return false; // Too many files
-            } else {
-                // Piece character
-                Piece piece = from_char(ch);
-                if (is_none(piece) && ch != '.' && ch != '#') {
-                    return false; // Invalid piece character
-                }
-                if (file >= 8) return false; // Too many files
-                
-                int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-                board[square] = piece;
-                file++;
-            }
-        }
-        
-        if (rank != 0 || file != 8) {
-            return false; // Incomplete board
-        }
-        
-        // 2. Parse side to move
-        const std::string& side = tokens[1];
-        if (side == "w") {
-            side_to_move = Color::White;
-        } else if (side == "b") {
-            side_to_move = Color::Black;
-        } else {
-            return false; // Invalid side to move
-        }
-        
-        // 3. Parse castling rights
-        const std::string& castling = tokens[2];
-        castling_rights = CASTLE_NONE;
-        if (castling != "-") {
-            for (char ch : castling) {
-                switch (ch) {
-                    case 'K': castling_rights |= CASTLE_WK; break;
-                    case 'Q': castling_rights |= CASTLE_WQ; break;
-                    case 'k': castling_rights |= CASTLE_BK; break;
-                    case 'q': castling_rights |= CASTLE_BQ; break;
-                    default: return false; // Invalid castling character
-                }
-            }
-        }
-        
-        // 4. Parse en passant square
-        const std::string& ep = tokens[3];
-        if (ep == "-") {
-            ep_square = -1;
-        } else {
-            if (ep.length() != 2) return false;
-            char file_char = ep[0];
-            char rank_char = ep[1];
-            if (file_char < 'a' || file_char > 'h' || rank_char < '1' || rank_char > '8') {
-                return false;
-            }
-            File ep_file = static_cast<File>(file_char - 'a');
-            Rank ep_rank = static_cast<Rank>(rank_char - '1');
-            ep_square = sq(ep_file, ep_rank);
-        }
-        
-        // 5. Parse halfmove clock
-        try {
-            halfmove_clock = static_cast<uint16_t>(std::stoi(tokens[4]));
-        } catch (...) {
-            return false; // Invalid halfmove clock
-        }
-        
-        // 6. Parse fullmove number
-        try {
-            fullmove_number = static_cast<uint16_t>(std::stoi(tokens[5]));
-            if (fullmove_number == 0) fullmove_number = 1; // Ensure it's at least 1
-        } catch (...) {
-            return false; // Invalid fullmove number
-        }
-        
-        // Rebuild derived state
-        rebuild_counts();
-        
-        // Initialize Zobrist key from the parsed position
-        update_zobrist_key();
-        return true;
-    }
-
-    // Generate FEN string from current position
-    std::string to_fen() const {
-        std::string fen;
-        
-        // 1. Piece placement (board)
-        for (int rank = 7; rank >= 0; --rank) { // Start from rank 8 (index 7) down to rank 1 (index 0)
-            int empty_count = 0;
-            
-            for (int file = 0; file < 8; ++file) {
-                int sq120 = sq(static_cast<File>(file), static_cast<Rank>(rank));
-                Piece piece = board[sq120];
-                
-                if (is_none(piece)) {
-                    empty_count++;
-                } else {
-                    // Add any accumulated empty squares
-                    if (empty_count > 0) {
-                        fen += std::to_string(empty_count);
-                        empty_count = 0;
-                    }
-                    // Add the piece character
-                    fen += to_char(piece);
-                }
-            }
-            
-            // Add any remaining empty squares at end of rank
-            if (empty_count > 0) {
-                fen += std::to_string(empty_count);
-            }
-            
-            // Add rank separator (except for last rank)
-            if (rank > 0) {
-                fen += '/';
-            }
-        }
-        
-        // 2. Active color (side to move)
-        fen += ' ';
-        fen += (side_to_move == Color::White) ? 'w' : 'b';
-        
-        // 3. Castling availability
-        fen += ' ';
-        std::string castling;
-        if (castling_rights & CASTLE_WK) castling += 'K';
-        if (castling_rights & CASTLE_WQ) castling += 'Q';
-        if (castling_rights & CASTLE_BK) castling += 'k';
-        if (castling_rights & CASTLE_BQ) castling += 'q';
-        
-        if (castling.empty()) {
-            fen += '-';
-        } else {
-            fen += castling;
-        }
-        
-        // 4. En passant target square
-        fen += ' ';
-        if (ep_square == -1) {
-            fen += '-';
-        } else {
-            // Convert 120-square to algebraic notation
-            File file = file_of(ep_square);
-            Rank rank = rank_of(ep_square);
-            fen += char('a' + int(file));
-            fen += char('1' + int(rank));
-        }
-        
-        // 5. Halfmove clock (fifty-move rule)
-        fen += ' ';
-        fen += std::to_string(halfmove_clock);
-        
-        // 6. Fullmove number
-        fen += ' ';
-        fen += std::to_string(fullmove_number);
-        
-        return fen;
-    }
-
-    // Put standard start position on 12x10
-    void set_startpos() {
-        // Use FEN parsing for the standard starting position
-        const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        if (!set_from_fen(start_fen)) {
-            // Fallback to manual setup if FEN parsing fails (shouldn't happen)
-            reset();
-            side_to_move = Color::White;
-            // White pieces
-            board[sq(File::A, Rank::R1)] = Piece::WhiteRook;
-            board[sq(File::B, Rank::R1)] = Piece::WhiteKnight;
-            board[sq(File::C, Rank::R1)] = Piece::WhiteBishop;
-            board[sq(File::D, Rank::R1)] = Piece::WhiteQueen;
-            board[sq(File::E, Rank::R1)] = Piece::WhiteKing;
-            board[sq(File::F, Rank::R1)] = Piece::WhiteBishop;
-            board[sq(File::G, Rank::R1)] = Piece::WhiteKnight;
-            board[sq(File::H, Rank::R1)] = Piece::WhiteRook;
-            for (int f = 0; f < 8; ++f)
-                board[sq(static_cast<File>(f), Rank::R2)] = Piece::WhitePawn;
-
-            // Black pieces
-            board[sq(File::A, Rank::R8)] = Piece::BlackRook;
-            board[sq(File::B, Rank::R8)] = Piece::BlackKnight;
-            board[sq(File::C, Rank::R8)] = Piece::BlackBishop;
-            board[sq(File::D, Rank::R8)] = Piece::BlackQueen;
-            board[sq(File::E, Rank::R8)] = Piece::BlackKing;
-            board[sq(File::F, Rank::R8)] = Piece::BlackBishop;
-            board[sq(File::G, Rank::R8)] = Piece::BlackKnight;
-            board[sq(File::H, Rank::R8)] = Piece::BlackRook;
-            for (int f = 0; f < 8; ++f)
-                board[sq(static_cast<File>(f), Rank::R7)] = Piece::BlackPawn;
-
-            castling_rights = CASTLE_ALL; // KQkq
-            ep_square = -1;
-            halfmove_clock = 0;
-            fullmove_number = 1;
-            rebuild_counts();
-            
-            // Initialize Zobrist key for the starting position
-            update_zobrist_key();
-        }
-    }
-
-    // Update piece counts, king squares, pawn bitboards, and piece lists
-    void rebuild_counts() {
-        king_sq = { -1, -1 };
-        pawns_bb = { 0, 0 };
-        all_pawns_bb = 0;
-        piece_counts.fill(0);
-        material_score = { 0, 0 };  // Clear material scores
-        
-        // Clear piece lists and counts
-        for (int color = 0; color < 2; ++color) {
-            for (int type = 0; type < int(PieceType::_Count); ++type) {
-                pCount[color][type] = 0;
-                for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                    pList[color][type][i] = -1; // -1 indicates no piece
-                }
-            }
-        }
-        
-        for (int s = 0; s < 120; ++s) {
-            Piece p = board[s];
-            if (is_none(p)) continue;
-            PieceType pt = type_of(p);
-            ++piece_counts[size_t(pt)];
-            Color c = color_of(p);
-            if (c != Color::None) {
-                int color_idx = int(c);
-                int type_idx = int(pt);
-                
-                // Add to material score (exclude kings - they're always present)
-                if (pt != PieceType::King) {
-                    material_score[color_idx] += value_of(p);
-                }
-                
-                // Add to piece list
-                if (pCount[color_idx][type_idx] < MAX_PIECES_PER_TYPE) {
-                    pList[color_idx][type_idx][pCount[color_idx][type_idx]] = s;
-                    ++pCount[color_idx][type_idx];
-                }
-                
-                if (pt == PieceType::Pawn) {
-                    int s64 = MAILBOX_MAPS.to64[s];
-                    if (s64 >= 0) {
-                        setBit(pawns_bb[size_t(c)], s64);
-                        setBit(all_pawns_bb, s64);
-                    }
-                }
-                if (pt == PieceType::King) {
-                    king_sq[size_t(c)] = s;
-                }
-            }
-        }
-    }
-
-    // Incremental update functions for make/unmake move performance
-    void save_derived_state(S_UNDO& undo) {
-        undo.king_sq_backup = king_sq;
-        undo.pawns_bb_backup = pawns_bb;
-        undo.all_pawns_bb_backup = all_pawns_bb;
-        undo.piece_counts_backup = piece_counts;
-        undo.material_score_backup = material_score;
-        undo.pList_backup = pList;
-        undo.pCount_backup = pCount;
-    }
+    void make_move_with_undo(const S_MOVE& m, S_UNDO& undo);
+    void reset();
+    bool set_from_fen(const std::string& fen);
+    std::string to_fen() const;
+    void save_derived_state(S_UNDO& undo);
+    void rebuild_counts();
+    void set_startpos();
     
     void restore_derived_state(const S_UNDO& undo) {
         king_sq = undo.king_sq_backup;
@@ -521,7 +167,7 @@ struct Position {
     }
     
     // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
-    void update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured);
+    void update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square);
     
     // Compute and set the Zobrist key from current position
     void update_zobrist_key();
@@ -604,29 +250,159 @@ struct Position {
         
         // Save derived state for efficient undo (performance optimization)
         save_derived_state(undo);
-        
+
+#ifdef DEBUG_CASTLING
+    std::cout << "[DEBUG] Before move: " << m.get_from() << "->" << m.get_to() << " castle? " << m.is_castle() << " rights: " << int(castling_rights) << std::endl;
+    std::cout << "[DEBUG] White King list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)][i] << " ";
+    std::cout << " | White Rook list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
+    std::cout << std::endl;
+#endif
+    // --- Castling rights update logic (robust) ---
+    // Clear castling rights if king or rook moves, rook is captured, or castling is performed
+    // King moves (including castling)
+    if (type_of(at(m.get_from())) == PieceType::King) {
+        if (color_of(at(m.get_from())) == Color::White) {
+#ifdef DEBUG_CASTLING
+            std::cout << "[DEBUG] White king moves. Clearing WK/WQ rights." << std::endl;
+#endif
+            castling_rights &= ~(CASTLE_WK | CASTLE_WQ);
+        } else {
+#ifdef DEBUG_CASTLING
+            std::cout << "[DEBUG] Black king moves. Clearing BK/BQ rights." << std::endl;
+#endif
+            castling_rights &= ~(CASTLE_BK | CASTLE_BQ);
+        }
+    }
+    // Rook moves
+    if (type_of(at(m.get_from())) == PieceType::Rook) {
+        if (color_of(at(m.get_from())) == Color::White) {
+            if (m.get_from() == sq(File::A, Rank::R1)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] White rook moves from a1. Clearing WQ right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_WQ;
+            }
+            if (m.get_from() == sq(File::H, Rank::R1)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] White rook moves from h1. Clearing WK right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_WK;
+            }
+        } else {
+            if (m.get_from() == sq(File::A, Rank::R8)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] Black rook moves from a8. Clearing BQ right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_BQ;
+            }
+            if (m.get_from() == sq(File::H, Rank::R8)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] Black rook moves from h8. Clearing BK right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_BK;
+            }
+        }
+    }
+    // Rook captured
+    if (type_of(undo.captured) == PieceType::Rook) {
+        if (color_of(undo.captured) == Color::White) {
+            if (m.get_to() == sq(File::A, Rank::R1)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] White rook captured on a1. Clearing WQ right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_WQ;
+            }
+            if (m.get_to() == sq(File::H, Rank::R1)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] White rook captured on h1. Clearing WK right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_WK;
+            }
+        } else {
+            if (m.get_to() == sq(File::A, Rank::R8)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] Black rook captured on a8. Clearing BQ right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_BQ;
+            }
+            if (m.get_to() == sq(File::H, Rank::R8)) {
+#ifdef DEBUG_CASTLING
+                std::cout << "[DEBUG] Black rook captured on h8. Clearing BK right." << std::endl;
+#endif
+                castling_rights &= ~CASTLE_BK;
+            }
+        }
+    }
+    // Explicit castling move: clear both king and rook rights for the moving color
+    if (m.is_castle()) {
+#ifdef DEBUG_CASTLING
+        std::cout << "[DEBUG] Castling move performed. Clearing rights for " << (color_of(at(m.get_from())) == Color::White ? "White" : "Black") << std::endl;
+#endif
+    // ...existing code...
+
+    // Move making with undo, including castling rook placement
+    void make_move_with_undo(const S_MOVE& m, S_UNDO& undo);
+    }
+#ifdef DEBUG_CASTLING
+    std::cout << "[DEBUG] After move: " << m.get_from() << "->" << m.get_to() << " rights: " << int(castling_rights) << std::endl;
+    std::cout << "[DEBUG] White King list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)][i] << " ";
+    std::cout << " | White Rook list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
+    std::cout << std::endl;
+#endif
+
         // Increment ply after saving undo info
         ++ply;
-        
+
         // Make the move
         Piece moving = at(m.get_from());
         Piece captured = undo.captured;
-        
+
         if (type_of(moving) == PieceType::Pawn || !is_none(captured)) {
             halfmove_clock = 0;
         } else {
             ++halfmove_clock;
         }
-        
+
         // Update piece lists before changing the board
         Color moving_color = color_of(moving);
         PieceType moving_type = type_of(moving);
-        
+
         // Remove captured piece from piece list
         if (!is_none(captured)) {
             remove_piece_from_list(color_of(captured), type_of(captured), m.get_to());
         }
-        
+
+        // Handle en passant captures
+        if (m.is_en_passant()) {
+            // The captured pawn is not on the destination square, but adjacent to it
+            int captured_pawn_sq;
+            if (moving_color == Color::White) {
+                // White captures en passant - captured black pawn is south of target square
+                captured_pawn_sq = m.get_to() + SOUTH;
+            } else {
+                // Black captures en passant - captured white pawn is north of target square
+                captured_pawn_sq = m.get_to() + NORTH;
+            }
+
+            Piece captured_pawn = at(captured_pawn_sq);
+            if (!is_none(captured_pawn)) {
+                // Remove the captured pawn from board and piece lists
+                remove_piece_from_list(color_of(captured_pawn), PieceType::Pawn, captured_pawn_sq);
+                set(captured_pawn_sq, Piece::None);
+
+                // Update undo information to remember the captured pawn
+                undo.captured = captured_pawn;
+            }
+        }
+
         // Handle promotion - remove pawn and add promoted piece
         if (m.is_promotion()) {
             remove_piece_from_list(moving_color, PieceType::Pawn, m.get_from());
@@ -637,22 +413,48 @@ struct Position {
             move_piece_in_list(moving_color, moving_type, m.get_from(), m.get_to());
             set(m.get_to(), moving);
         }
-        
+
         set(m.get_from(), Piece::None);
-        
-        ep_square = -1; // Reset, update with double pawn push logic later
+
+        ep_square = -1; // Reset, then check for pawn double moves
+
+        // Set en passant square for pawn double moves
+        if (type_of(moving) == PieceType::Pawn) {
+            int from_rank = int(rank_of(m.get_from()));
+            int to_rank = int(rank_of(m.get_to()));
+            int rank_diff = abs(to_rank - from_rank);
+
+            // Check if pawn moved two squares
+            if (rank_diff == 2) {
+                // Set en passant square to the square "behind" the pawn
+                int ep_rank = (from_rank + to_rank) / 2; // Square between from and to
+                File file = file_of(m.get_to());
+                ep_square = sq(file, Rank(ep_rank));
+            }
+        }
+
         side_to_move = !side_to_move;
         if (side_to_move == Color::White) ++fullmove_number;
-        
+
         // Update derived state incrementally (much faster than rebuild_counts)
         update_derived_state_for_move(m, moving, captured);
-        
+
         // Update zobrist_key incrementally using XOR (much faster than recomputing)
-        update_zobrist_for_move(m, moving, captured);
+    update_zobrist_for_move(m, moving, captured, undo.castling_rights, undo.ep_square);
     }
     
     // Undo the last move
     bool undo_move() {
+    #ifdef DEBUG_CASTLING
+    std::cout << "[DEBUG] After undo move rights: " << int(castling_rights) << std::endl;
+    std::cout << "[DEBUG] White King list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::King)][i] << " ";
+    std::cout << " | White Rook list: ";
+    for (int i = 0; i < pCount[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)]; ++i)
+        std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
+    std::cout << std::endl;
+    #endif
         if (ply == 0) return false; // No moves to undo
         
         // Decrement ply first to get the correct index
@@ -671,14 +473,49 @@ struct Position {
         // Get the piece that moved
         Piece moved = at(to);
         
-        // If it was a promotion, restore to pawn
+        // Handle promotion undo - restore piece lists
         if (promo != PieceType::None) {
+            // Remove promoted piece from lists and add pawn back
+            remove_piece_from_list(color_of(moved), type_of(moved), to);
             moved = make_piece(color_of(moved), PieceType::Pawn);
+            add_piece_to_list(color_of(moved), PieceType::Pawn, from);
+        } else {
+            // Regular move - update piece location in lists
+            move_piece_in_list(color_of(moved), type_of(moved), to, from);
         }
         
         // Move piece back
         set(from, moved);
-        set(to, undo.captured); // Restore captured piece (or Piece::None)
+        
+        // Handle en passant undo
+        if (undo.move.is_en_passant()) {
+            // Restore the captured pawn to its original square
+            Color moving_color = color_of(moved);
+            int captured_pawn_sq;
+            if (moving_color == Color::White) {
+                // White captured en passant - restore black pawn south of destination
+                captured_pawn_sq = to + SOUTH;
+            } else {
+                // Black captured en passant - restore white pawn north of destination
+                captured_pawn_sq = to + NORTH;
+            }
+            
+            // Restore the captured pawn and update piece lists
+            set(captured_pawn_sq, undo.captured);
+            set(to, Piece::None); // Clear the destination square
+            
+            // Restore the captured pawn to piece lists
+            if (!is_none(undo.captured)) {
+                add_piece_to_list(color_of(undo.captured), PieceType::Pawn, captured_pawn_sq);
+            }
+        } else {
+            set(to, undo.captured); // Restore captured piece (or Piece::None)
+            
+            // Restore captured piece to piece lists
+            if (!is_none(undo.captured)) {
+                add_piece_to_list(color_of(undo.captured), type_of(undo.captured), to);
+            }
+        }
         
         // Restore position state
         castling_rights = undo.castling_rights;

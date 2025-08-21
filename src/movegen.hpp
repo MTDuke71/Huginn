@@ -300,6 +300,112 @@ inline bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     return false; // No attacks found
 }
 
+// Check if the current side to move is in check
+inline bool in_check(const Position& pos) {
+    Color current_color = pos.side_to_move;
+    int king_sq = pos.king_sq[int(current_color)];
+    if (king_sq < 0) return false; // No king (shouldn't happen in valid position)
+    
+    // Check if the king is attacked by the opponent
+    Color opponent_color = (current_color == Color::White) ? Color::Black : Color::White;
+    return SqAttacked(king_sq, pos, opponent_color);
+}
+
+// Check if a move is legal (doesn't leave own king in check)
+inline bool is_legal_move(const Position& pos, const S_MOVE& move) {
+    // Special handling for castling
+    if (move.is_castle()) {
+        int from = move.get_from();
+        int to = move.get_to();
+        Color current_side = pos.side_to_move;
+        Color opponent_side = (current_side == Color::White) ? Color::Black : Color::White;
+        
+        // King cannot be in check before castling
+        if (SqAttacked(from, pos, opponent_side)) {
+            return false;
+        }
+        
+        // Check that king doesn't pass through attacked squares during castling
+        int step = (to > from) ? 1 : -1;
+        for (int sq = from + step; sq != to + step; sq += step) {
+            if (SqAttacked(sq, pos, opponent_side)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // For all other moves, use the proper move/undo system
+    Position temp_pos = pos;
+    Color current_side = pos.side_to_move;
+    Color opponent_side = (current_side == Color::White) ? Color::Black : Color::White;
+    
+    // Apply the move using the proper system
+    temp_pos.make_move_with_undo(move);
+    
+    // Get the king position after the move (for the side that just moved)
+    int king_sq = temp_pos.king_sq[int(current_side)];
+    
+    // Check if our king would be in check after the move
+    // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
+    bool legal = !SqAttacked(king_sq, temp_pos, opponent_side);
+    
+    // Undo the move
+    temp_pos.undo_move();
+    
+    return legal;
+}
+
+
+
+// Additional check for castling legality (squares king passes through must not be attacked)
+inline bool is_legal_castle(const Position& pos, const S_MOVE& move) {
+    if (!move.is_castle()) return true; // Not a castling move
+    
+    int from = move.get_from();
+    int to = move.get_to();
+    Color current_color = pos.side_to_move;
+    Color opponent_color = (current_color == Color::White) ? Color::Black : Color::White;
+    
+    // King cannot be in check before castling
+    if (SqAttacked(from, pos, opponent_color)) {
+        return false;
+    }
+    
+    // Check squares the king passes through
+    if (current_color == Color::White) {
+        if (to == sq(File::G, Rank::R1)) { // Kingside
+            // King passes through f1 and g1
+            if (SqAttacked(sq(File::F, Rank::R1), pos, opponent_color) ||
+                SqAttacked(sq(File::G, Rank::R1), pos, opponent_color)) {
+                return false;
+            }
+        } else if (to == sq(File::C, Rank::R1)) { // Queenside
+            // King passes through d1 and c1
+            if (SqAttacked(sq(File::D, Rank::R1), pos, opponent_color) ||
+                SqAttacked(sq(File::C, Rank::R1), pos, opponent_color)) {
+                return false;
+            }
+        }
+    } else {
+        if (to == sq(File::G, Rank::R8)) { // Kingside
+            // King passes through f8 and g8
+            if (SqAttacked(sq(File::F, Rank::R8), pos, opponent_color) ||
+                SqAttacked(sq(File::G, Rank::R8), pos, opponent_color)) {
+                return false;
+            }
+        } else if (to == sq(File::C, Rank::R8)) { // Queenside
+            // King passes through d8 and c8
+            if (SqAttacked(sq(File::D, Rank::R8), pos, opponent_color) ||
+                SqAttacked(sq(File::C, Rank::R8), pos, opponent_color)) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
 // Move list using enhanced S_MOVE structure with scoring
 struct MoveList {
     std::vector<S_MOVE> v;
@@ -429,10 +535,196 @@ inline void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
             PieceType captured = is_none(q) ? PieceType::None : type_of(q);
             out.add(s, to, captured);
         }
+        
+        // Castling moves
+        if (pos.side_to_move == Color::White) {
+            // White kingside castling (e1-g1)
+            if ((pos.castling_rights & CASTLE_WK) && 
+                s == sq(File::E, Rank::R1)) { // King on e1
+                // Check that f1 and g1 are empty
+                if (is_none(pos.at(sq(File::F, Rank::R1))) && 
+                    is_none(pos.at(sq(File::G, Rank::R1)))) {
+                    // Check that rook is on h1
+                    Piece rook_piece = pos.at(sq(File::H, Rank::R1));
+                    if (rook_piece == Piece::WhiteRook) {
+                        out.add(s, sq(File::G, Rank::R1), PieceType::None, false, false, PieceType::None, true);
+                    }
+                }
+            }
+            
+            // White queenside castling (e1-c1)
+            if ((pos.castling_rights & CASTLE_WQ) && 
+                s == sq(File::E, Rank::R1)) { // King on e1
+                // Check that d1, c1, and b1 are empty
+                if (is_none(pos.at(sq(File::D, Rank::R1))) && 
+                    is_none(pos.at(sq(File::C, Rank::R1))) && 
+                    is_none(pos.at(sq(File::B, Rank::R1)))) {
+                    // Check that rook is on a1
+                    Piece rook_piece = pos.at(sq(File::A, Rank::R1));
+                    if (rook_piece == Piece::WhiteRook) {
+                        out.add(s, sq(File::C, Rank::R1), PieceType::None, false, false, PieceType::None, true);
+                    }
+                }
+            }
+        } else {
+            // Black kingside castling (e8-g8)
+            if ((pos.castling_rights & CASTLE_BK) && 
+                s == sq(File::E, Rank::R8)) { // King on e8
+                // Check that f8 and g8 are empty
+                if (is_none(pos.at(sq(File::F, Rank::R8))) && 
+                    is_none(pos.at(sq(File::G, Rank::R8)))) {
+                    // Check that rook is on h8
+                    Piece rook_piece = pos.at(sq(File::H, Rank::R8));
+                    if (rook_piece == Piece::BlackRook) {
+                        out.add(s, sq(File::G, Rank::R8), PieceType::None, false, false, PieceType::None, true);
+                    }
+                }
+            }
+            
+            // Black queenside castling (e8-c8)
+            if ((pos.castling_rights & CASTLE_BQ) && 
+                s == sq(File::E, Rank::R8)) { // King on e8
+                // Check that d8, c8, and b8 are empty
+                if (is_none(pos.at(sq(File::D, Rank::R8))) && 
+                    is_none(pos.at(sq(File::C, Rank::R8))) && 
+                    is_none(pos.at(sq(File::B, Rank::R8)))) {
+                    // Check that rook is on a8
+                    Piece rook_piece = pos.at(sq(File::A, Rank::R8));
+                    if (rook_piece == Piece::BlackRook) {
+                        out.add(s, sq(File::C, Rank::R8), PieceType::None, false, false, PieceType::None, true);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Pawns
+    int pawn_count = pos.pCount[color_idx][int(PieceType::Pawn)];
+    for (int i = 0; i < pawn_count; ++i) {
+        int s = pos.pList[color_idx][int(PieceType::Pawn)][i];
+        
+        if (pos.side_to_move == Color::White) {
+            // White pawn moves
+            int forward = s + NORTH;
+            
+            // Forward move (one square)
+            if (is_playable(forward) && is_none(pos.at(forward))) {
+                if (rank_of(forward) == Rank::R8) {
+                    // Promotion
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Queen);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Rook);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Bishop);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Knight);
+                } else {
+                    out.add(s, forward, PieceType::None);
+                }
+                
+                // Double move from starting rank
+                if (rank_of(s) == Rank::R2) {
+                    int double_forward = s + 2 * NORTH;
+                    if (is_playable(double_forward) && is_none(pos.at(double_forward))) {
+                        out.add(s, double_forward, PieceType::None, false, true); // pawn_start = true
+                    }
+                }
+            }
+            
+            // Captures (diagonal)
+            for (int capture_dir : {NE, NW}) {
+                int capture_to = s + capture_dir;
+                if (!is_playable(capture_to)) continue;
+                
+                Piece target = pos.at(capture_to);
+                if (!is_none(target) && color_of(target) == Color::Black) {
+                    // Regular capture
+                    if (rank_of(capture_to) == Rank::R8) {
+                        // Capture with promotion
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Queen);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Rook);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Bishop);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Knight);
+                    } else {
+                        out.add(s, capture_to, type_of(target));
+                    }
+                }
+                
+                // En passant capture
+                if (pos.ep_square != -1 && capture_to == pos.ep_square) {
+                    out.add(s, capture_to, PieceType::Pawn, true); // en_passant = true
+                }
+            }
+        } else {
+            // Black pawn moves
+            int forward = s + SOUTH;
+            
+            // Forward move (one square)
+            if (is_playable(forward) && is_none(pos.at(forward))) {
+                if (rank_of(forward) == Rank::R1) {
+                    // Promotion
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Queen);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Rook);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Bishop);
+                    out.add(s, forward, PieceType::None, false, false, PieceType::Knight);
+                } else {
+                    out.add(s, forward, PieceType::None);
+                }
+                
+                // Double move from starting rank
+                if (rank_of(s) == Rank::R7) {
+                    int double_forward = s + 2 * SOUTH;
+                    if (is_playable(double_forward) && is_none(pos.at(double_forward))) {
+                        out.add(s, double_forward, PieceType::None, false, true); // pawn_start = true
+                    }
+                }
+            }
+            
+            // Captures (diagonal)
+            for (int capture_dir : {SE, SW}) {
+                int capture_to = s + capture_dir;
+                if (!is_playable(capture_to)) continue;
+                
+                Piece target = pos.at(capture_to);
+                if (!is_none(target) && color_of(target) == Color::White) {
+                    // Regular capture
+                    if (rank_of(capture_to) == Rank::R1) {
+                        // Capture with promotion
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Queen);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Rook);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Bishop);
+                        out.add(s, capture_to, type_of(target), false, false, PieceType::Knight);
+                    } else {
+                        out.add(s, capture_to, type_of(target));
+                    }
+                }
+                
+                // En passant capture
+                if (pos.ep_square != -1 && capture_to == pos.ep_square) {
+                    out.add(s, capture_to, PieceType::Pawn, true); // en_passant = true
+                }
+            }
+        }
     }
 }
 
-// For now, treat pseudo-legal==legal until check logic is added.
+// Generate only legal moves (filters out moves that leave king in check)
 inline void generate_legal_moves(const Position& pos, MoveList& out) {
-    generate_pseudo_legal_moves(pos, out);
+    MoveList pseudo_legal;
+    generate_pseudo_legal_moves(pos, pseudo_legal);
+    
+    out.clear();
+    
+    for (size_t i = 0; i < pseudo_legal.size(); ++i) {
+        const S_MOVE& move = pseudo_legal[i];
+        
+        // Special check for castling moves
+        if (move.is_castle()) {
+            if (is_legal_castle(pos, move) && is_legal_move(pos, move)) {
+                out.add(move);
+            }
+        } else {
+            // Regular move legality check
+            if (is_legal_move(pos, move)) {
+                out.add(move);
+            }
+        }
+    }
 }
