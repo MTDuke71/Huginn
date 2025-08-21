@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
+#include "../src/position.hpp"
+#include "../src/movegen.hpp"
+#include "../src/init.hpp"
 
 uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;

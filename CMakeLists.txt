@@ -85,7 +85,7 @@ add_custom_target(check
 
 # ---- Perft Suite Demo ----
 add_executable(perft_suite_demo
-  perft_suite_demo.cpp
+  debug/perft_suite_demo.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -98,7 +98,7 @@ target_compile_features(perft_suite_demo PRIVATE cxx_std_17)
 
 # ---- Kiwipete Debug Tool ----
 add_executable(debug_kiwipete
-  debug_kiwipete.cpp
+  debug/debug_kiwipete.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -111,7 +111,7 @@ target_compile_features(debug_kiwipete PRIVATE cxx_std_17)
 
 # ---- Move Comparison Tool ----
 add_executable(compare_moves
-  compare_moves.cpp
+  debug/compare_moves.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -124,7 +124,7 @@ target_compile_features(compare_moves PRIVATE cxx_std_17)
 
 # ---- Debug a2a4 Tool ----
 add_executable(debug_a2a4
-  debug_a2a4.cpp
+  debug/debug_a2a4.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -137,7 +137,7 @@ target_compile_features(debug_a2a4 PRIVATE cxx_std_17)
 
 # ---- Debug Opening Tool ----
 add_executable(debug_opening
-  debug_opening.cpp
+  debug/debug_opening.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -150,7 +150,7 @@ target_compile_features(debug_opening PRIVATE cxx_std_17)
 
 # ---- Kiwipete Perft Compare Tool ----
 add_executable(kiwipete_perft_compare
-  kiwipete_perft_compare.cpp
+  debug/kiwipete_perft_compare.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -163,7 +163,7 @@ target_compile_features(kiwipete_perft_compare PRIVATE cxx_std_17)
 
 # ---- Debug En Passant Tool ----
 add_executable(debug_en_passant
-  debug_en_passant.cpp
+  debug/debug_en_passant.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -176,7 +176,7 @@ target_compile_features(debug_en_passant PRIVATE cxx_std_17)
 
 # ---- Test En Passant Tool ----
 add_executable(test_en_passant
-  test_en_passant.cpp
+  debug/test_en_passant.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -189,7 +189,7 @@ target_compile_features(test_en_passant PRIVATE cxx_std_17)
 
 # ---- Debug Kiwipete a2a4 Perft Tool ----
 add_executable(debug_kiwipete_a2a4_perft
-  debug_kiwipete_a2a4_perft.cpp
+  debug/debug_kiwipete_a2a4_perft.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -202,7 +202,7 @@ target_compile_features(debug_kiwipete_a2a4_perft PRIVATE cxx_std_17)
 
 # ---- Debug Kiwipete Perft Tool ----
 add_executable(debug_kiwipete_perft
-  debug_kiwipete_perft.cpp
+  debug/debug_kiwipete_perft.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -215,7 +215,7 @@ target_compile_features(debug_kiwipete_perft PRIVATE cxx_std_17)
 
 # ---- Debug Kiwipete Perft Compare Tool ----
 add_executable(debug_kiwipete_perft_compare
-  debug_kiwipete_perft_compare.cpp
+  debug/debug_kiwipete_perft_compare.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp
@@ -228,7 +228,7 @@ target_compile_features(debug_kiwipete_perft_compare PRIVATE cxx_std_17)
 
 # ---- Debug Kiwipete Castle Tool ----
 add_executable(debug_kiwipete_castle
-  debug_kiwipete_castle.cpp
+  debug/debug_kiwipete_castle.cpp
   src/bitboard.cpp
   src/init.cpp
   src/board.cpp

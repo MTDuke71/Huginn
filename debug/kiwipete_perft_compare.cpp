@@ -2,9 +2,10 @@
 #include <map>
 #include <string>
 #include <iomanip>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/move.hpp"
+#include "../src/position.hpp"
+#include "../src/movegen.hpp"
+#include "../src/move.hpp"
+#include "../src/board120.hpp"
 
 // Reference breakdown for Kiwipete after White castles queenside, Black to move, depth 2
 std::map<std::string, int> reference = {
@@ -19,7 +20,7 @@ std::map<std::string, int> reference = {
 };
 
 
-#include "src/board120.hpp"
+
 std::string move_to_alg(const S_MOVE& m) {
 	char from[3], to[3];
 	to_algebraic(m.get_from(), from);

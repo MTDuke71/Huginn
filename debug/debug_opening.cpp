@@ -3,9 +3,9 @@
 #include <string>
 #include <map>
 #include <iomanip>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
+#include "../src/position.hpp"
+#include "../src/movegen.hpp"
+#include "../src/init.hpp"
 
 // Perft function that counts nodes at each depth
 static uint64_t perft(Position& pos, int depth) {

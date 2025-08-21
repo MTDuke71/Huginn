@@ -3,10 +3,10 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
-#include "src/move.hpp"
+#include "../src/position.hpp"
+#include "../src/movegen.hpp"
+#include "../src/init.hpp"
+#include "../src/move.hpp"
 
 // Helper: Convert square to algebraic notation
 std::string sq_to_algebraic(int square) {

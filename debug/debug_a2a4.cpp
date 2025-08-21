@@ -2,11 +2,11 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/board120.hpp"
-#include "src/init.hpp"
-#include "src/move.hpp"
+#include "../src/position.hpp"
+#include "../src/movegen.hpp"
+#include "../src/board120.hpp"
+#include "../src/init.hpp"
+#include "../src/move.hpp"
 
 // Convert algebraic notation to from/to squares
 std::pair<int, int> parse_algebraic(const std::string& move_str) {
