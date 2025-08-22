@@ -5,10 +5,11 @@
 // Tiny perft harness (uses legal moves; grow as you add rules)
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list; generate_legal_moves(pos, list);
+    S_MOVELIST list; 
+    generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
-    for (const auto& m : list.v) {
-        pos.make_move_with_undo(m);
+    for (int i = 0; i < list.count; i++) {
+        pos.make_move_with_undo(list.moves[i]);
         nodes += perft(pos, depth-1);
         pos.undo_move();
     }
@@ -72,16 +73,16 @@ TEST(Perft, Debug_Startpos_Legal_Check) {
     std::cout << "Testing legality check with start position:" << std::endl;
     std::cout << "King in check: " << (in_check(pos) ? "YES" : "NO") << std::endl;
     
-    MoveList pseudo_moves;
-    generate_pseudo_legal_moves(pos, pseudo_moves);
+    S_MOVELIST pseudo_moves;
+    generate_all_moves(pos, pseudo_moves);
     
-    MoveList legal_moves;
-    generate_legal_moves(pos, legal_moves);
+    S_MOVELIST legal_moves;
+    generate_legal_moves_enhanced(pos, legal_moves);
     
-    std::cout << "Pseudo-legal: " << pseudo_moves.v.size() << ", Legal: " << legal_moves.v.size() << std::endl;
+    std::cout << "Pseudo-legal: " << pseudo_moves.count << ", Legal: " << legal_moves.count << std::endl;
     
     // In start position, all pseudo-legal moves should be legal
-    EXPECT_EQ(pseudo_moves.v.size(), legal_moves.v.size());
+    EXPECT_EQ(pseudo_moves.count, legal_moves.count);
 }
 
 // Debug what's attacking the king in Kiwipete
@@ -125,14 +126,14 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
     std::cout << "King positions: White=" << pos.king_sq[0] << ", Black=" << pos.king_sq[1] << std::endl;
     
     // Generate pseudo-legal moves first
-    MoveList pseudo_moves;
-    generate_pseudo_legal_moves(pos, pseudo_moves);
-    std::cout << "Generated " << pseudo_moves.v.size() << " pseudo-legal moves" << std::endl;
+    S_MOVELIST pseudo_moves;
+    generate_all_moves(pos, pseudo_moves);
+    std::cout << "Generated " << pseudo_moves.count << " pseudo-legal moves" << std::endl;
     
     // Check which moves are being rejected
     std::cout << "\nFirst 10 pseudo-legal moves and their legality:" << std::endl;
-    for (size_t i = 0; i < std::min(size_t(10), pseudo_moves.v.size()); ++i) {
-        const auto& move = pseudo_moves.v[i];
+    for (size_t i = 0; i < std::min(size_t(10), size_t(pseudo_moves.count)); ++i) {
+        const auto& move = pseudo_moves.moves[i];
         
         // Test if king is currently in check
         bool currently_in_check = in_check(pos);
@@ -158,18 +159,18 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
     
     // Let's test with a simple perft that ignores legality checks temporarily  
     std::cout << "\nTesting with pseudo-legal moves only (no legality check):" << std::endl;
-    uint64_t pseudo_perft1 = pseudo_moves.v.size();  // Just count pseudo-legal moves
+    uint64_t pseudo_perft1 = pseudo_moves.count;  // Just count pseudo-legal moves
     std::cout << "Pseudo-perft(1) = " << pseudo_perft1 << " (generated pseudo-legal moves)" << std::endl;
     
     // Generate legal moves
-    MoveList legal_moves;
-    generate_legal_moves(pos, legal_moves);
-    std::cout << "Generated " << legal_moves.v.size() << " legal moves" << std::endl;
+    S_MOVELIST legal_moves;
+    generate_legal_moves_enhanced(pos, legal_moves);
+    std::cout << "Generated " << legal_moves.count << " legal moves" << std::endl;
     
     // Show all legal moves for verification
     std::cout << "\nAll legal moves found:" << std::endl;
-    for (size_t i = 0; i < legal_moves.v.size(); ++i) {
-        const auto& move = legal_moves.v[i];
+    for (size_t i = 0; i < legal_moves.count; ++i) {
+        const auto& move = legal_moves.moves[i];
         std::cout << (i+1) << ". from=" << move.get_from() << " to=" << move.get_to();
         if (move.is_castle()) std::cout << " (castle)";
         if (move.is_promotion()) std::cout << " (promotion)";

@@ -131,11 +131,7 @@ struct MoveList {
     }
 };
 
-// Legacy compatibility functions that use enhanced move generation internally
-void generate_pseudo_legal_moves(const Position& pos, MoveList& out);
-void generate_legal_moves(const Position& pos, MoveList& out);
-
-// Legacy helper functions for backward compatibility
+// Helper functions
 inline bool in_check(const Position& pos) {
     Color current_color = pos.side_to_move;
     int king_sq = pos.king_sq[int(current_color)];
@@ -183,7 +179,8 @@ inline bool is_legal_move(const Position& pos, const S_MOVE& move) {
     // Check if our king would be in check after the move
     // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
     bool legal = !SqAttacked(king_sq, temp_pos, !current_side);
-    temp_pos.undo_move();
+    
+    // No need to undo - temp_pos will be destroyed automatically
     return legal;
 }
 

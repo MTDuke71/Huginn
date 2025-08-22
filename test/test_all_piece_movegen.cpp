@@ -21,14 +21,14 @@ TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count moves by piece type
     int king_moves = 0, queen_moves = 0, rook_moves = 0, bishop_moves = 0, knight_moves = 0;
     
-    for (const auto& move : moves.v) {
-        Piece piece = pos.at(move.get_from());
+    for (int i = 0; i < moves.count; i++) {
+        Piece piece = pos.at(moves.moves[i].get_from());
         PieceType type = type_of(piece);
         
         switch (type) {
@@ -69,8 +69,8 @@ TEST(AllPieceMoveGen, KingMoveCountCorrect) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // King on d4 should have exactly 8 moves
     EXPECT_EQ(moves.size(), 8);

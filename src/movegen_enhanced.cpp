@@ -228,8 +228,7 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
     // Filter out illegal moves (those that leave king in check)
     for (int i = 0; i < pseudo_moves.count; ++i) {
         Position temp_pos = pos;  // Copy position
-        S_UNDO undo;
-        temp_pos.make_move_with_undo(pseudo_moves[i], undo);
+        temp_pos.make_move_with_undo(pseudo_moves[i]);
         
         // Check if our king is still in check after the move
         Color us = pos.side_to_move;
@@ -244,31 +243,3 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
 // =============================================================================
 // BACKWARD COMPATIBILITY IMPLEMENTATIONS
 // =============================================================================
-
-// Legacy pseudo-legal move generation using enhanced system
-void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
-    out.clear();
-    
-    // Use enhanced move generation system
-    S_MOVELIST enhanced_moves;
-    generate_all_moves(pos, enhanced_moves);
-    
-    // Convert to legacy format
-    for (int i = 0; i < enhanced_moves.size(); ++i) {
-        out.add(enhanced_moves[i]);
-    }
-}
-
-// Legacy legal move generation using enhanced system
-void generate_legal_moves(const Position& pos, MoveList& out) {
-    out.clear();
-    
-    // Use enhanced legal move generation system
-    S_MOVELIST enhanced_moves;
-    generate_legal_moves_enhanced(pos, enhanced_moves);
-    
-    // Convert to legacy format
-    for (int i = 0; i < enhanced_moves.size(); ++i) {
-        out.add(enhanced_moves[i]);
-    }
-}

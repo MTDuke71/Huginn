@@ -87,7 +87,6 @@ struct Position {
         move_history.reserve(64);  // Reserve reasonable initial capacity
     }
 
-    void make_move_with_undo(const S_MOVE& m, S_UNDO& undo);
     void reset();
     bool set_from_fen(const std::string& fen);
     std::string to_fen() const;
@@ -342,11 +341,13 @@ struct Position {
 #ifdef DEBUG_CASTLING
         std::cout << "[DEBUG] Castling move performed. Clearing rights for " << (color_of(at(m.get_from())) == Color::White ? "White" : "Black") << std::endl;
 #endif
-    // ...existing code...
-
-    // Move making with undo, including castling rook placement
-    void make_move_with_undo(const S_MOVE& m, S_UNDO& undo);
+        if (color_of(at(m.get_from())) == Color::White) {
+            castling_rights &= ~(CASTLE_WK | CASTLE_WQ);
+        } else {
+            castling_rights &= ~(CASTLE_BK | CASTLE_BQ);
+        }
     }
+
 #ifdef DEBUG_CASTLING
     std::cout << "[DEBUG] After move: " << m.get_from() << "->" << m.get_to() << " rights: " << int(castling_rights) << std::endl;
     std::cout << "[DEBUG] White King list: ";
@@ -357,9 +358,6 @@ struct Position {
         std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
     std::cout << std::endl;
 #endif
-
-        // Increment ply after saving undo info
-        ++ply;
 
         // Make the move
         Piece moving = at(m.get_from());
@@ -470,7 +468,10 @@ struct Position {
         update_derived_state_for_move(m, moving, captured);
 
         // Update zobrist_key incrementally using XOR (much faster than recomputing)
-    update_zobrist_for_move(m, moving, captured, undo.castling_rights, undo.ep_square);
+        update_zobrist_for_move(m, moving, captured, undo.castling_rights, undo.ep_square);
+        
+        // Increment ply after successful move
+        ++ply;
     }
     
     // Undo the last move
@@ -619,42 +620,3 @@ struct Position {
         return pawns_bb[size_t(Color::Black)];
     }
 };
-
-// Minimal make/unmake stubs (quiet moves + captures only for now)
-// Flesh these out as you implement move legality, en-passant, castling, promotions.
-inline void make_move(Position& pos, const S_MOVE& m, State& st) {
-    st.ep_square = pos.ep_square;
-    st.castling_rights = pos.castling_rights;
-    st.halfmove_clock = pos.halfmove_clock;
-    st.captured = pos.at(m.get_to());
-
-    Piece moving = pos.at(m.get_from());
-    // update halfmove clock
-    if (type_of(moving) == PieceType::Pawn || !is_none(st.captured)) pos.halfmove_clock = 0;
-    else ++pos.halfmove_clock;
-
-    pos.set(m.get_to(), moving);
-    pos.set(m.get_from(), Piece::None);
-    // promotions (simple)
-    if (m.is_promotion()) {
-        pos.set(m.get_to(), make_piece(color_of(moving), m.get_promoted()));
-    }
-    pos.ep_square = -1; // set by double push logic once you add it
-    pos.side_to_move = !pos.side_to_move;
-    if (pos.side_to_move == Color::White) ++pos.fullmove_number; // black just moved
-}
-
-inline void unmake_move(Position& pos, const S_MOVE& m, const State& st) {
-    pos.side_to_move = !pos.side_to_move;
-    if (pos.side_to_move == Color::Black) --pos.fullmove_number; // undo the increment
-    Piece moved = pos.at(m.get_to());
-    // If promo, restore pawn
-    if (m.is_promotion()) {
-        moved = make_piece(color_of(moved), PieceType::Pawn);
-    }
-    pos.set(m.get_from(), moved);
-    pos.set(m.get_to(), st.captured);
-    pos.ep_square = st.ep_square;
-    pos.castling_rights = st.castling_rights;
-    pos.halfmove_clock = st.halfmove_clock;
-}

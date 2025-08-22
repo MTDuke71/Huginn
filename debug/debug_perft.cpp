@@ -19,11 +19,10 @@ static uint64_t perft_debug(Position& pos, int depth, int level = 0) {
         const auto& m = list.v[i];
         std::cout << indent << "Making move " << (i+1) << "/" << list.v.size() << std::endl;
         
-        State st{};
         try {
-            make_move(pos, m, st);
+            pos.make_move_with_undo(m);
             nodes += perft_debug(pos, depth-1, level + 1);
-            unmake_move(pos, m, st);
+            pos.undo_move();
         } catch (const std::exception& e) {
             std::cout << indent << "ERROR on move " << (i+1) << ": " << e.what() << std::endl;
             throw;

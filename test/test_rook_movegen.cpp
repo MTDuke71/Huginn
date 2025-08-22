@@ -13,10 +13,11 @@ TEST(RookMoveGen, SingleRookCenter) {
     ASSERT_EQ(pos.pCount[int(Color::White)][int(PieceType::Rook)], 1);
     ASSERT_EQ(pos.pList[int(Color::White)][int(PieceType::Rook)][0], sq(File::D, Rank::R4));
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; 
+    generate_all_moves(pos, moves);
     int rook_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteRook)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook)
             ++rook_moves;
     }
     // Should be 14 (7 in each direction, minus the square itself)
@@ -30,10 +31,11 @@ TEST(RookMoveGen, RookBlockedByOwnPiece) {
     pos.set(sq(File::F, Rank::R4), Piece::WhitePawn); // Block east
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; 
+    generate_all_moves(pos, moves);
     int rook_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteRook)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook)
             ++rook_moves;
     }
     // Should be less than 14 due to blocking
@@ -47,12 +49,13 @@ TEST(RookMoveGen, RookCapturesOpponent) {
     pos.set(sq(File::F, Rank::R4), Piece::BlackKnight); // Capture east
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; 
+    generate_all_moves(pos, moves);
     int capture_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteRook && m.get_to() == sq(File::D, Rank::R6))
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook && moves.moves[i].get_to() == sq(File::D, Rank::R6))
             ++capture_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteRook && m.get_to() == sq(File::F, Rank::R4))
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook && moves.moves[i].get_to() == sq(File::F, Rank::R4))
             ++capture_moves;
     }
     EXPECT_EQ(capture_moves, 2);

@@ -7,7 +7,9 @@
 - **Pure S_MOVE architecture** - all move operations now use the high-performance S_MOVE structure
 - **Simplified codebase** - no more dual interfaces or conversion functions
 - **Performance improvement** - elimination of legacy adapter overhead
-- **API cleaning** - `make_move_with_undo(const Move&)`, `to_s_move()`, `from_s_move()`, and legacy test functions removed
+- **API cleaning** - `make_move_with_undo(const Move&)`, `to_s_move()`, `from_s_move()`, `generate_pseudo_legal_moves()`, `generate_legal_moves()` with MoveList, and legacy test functions removed
+
+> **Important**: As of the latest version, all legacy Move structures and MoveList compatibility functions have been completely removed. The engine now uses only the S_MOVE and S_MOVELIST architecture for optimal performance and simplicity.
 
 ### Enhanced Legal Move Generation
 - **True legal move filtering** - `generate_legal_moves()` now properly filters moves that would leave king in check
@@ -401,31 +403,35 @@ bool is_promotion = move.is_promotion();
 
 ## movegen_enhanced.hpp — Unified Move Generation API
 
-**Note**: The enhanced move generation system now provides both high-performance S_MOVELIST containers and backward-compatible MoveList containers for legacy code.
+**Note**: The enhanced move generation system uses the high-performance S_MOVELIST container for optimal performance and cache efficiency.
 
-- **Primary Interface - S_MOVELIST (Recommended):**
+- **Primary Interface - S_MOVELIST:**
   ```cpp
   S_MOVELIST moves;
   generate_all_moves(pos, moves);              // Fast pseudo-legal generation
   generate_legal_moves_enhanced(pos, moves);   // Legal move generation
   ```
 
-- **Legacy Compatibility - MoveList:**
+- **S_MOVELIST Structure:**
   ```cpp
-  struct MoveList {
-      std::vector<S_MOVE> v;  // Uses S_MOVE instead of legacy Move
+  struct S_MOVELIST {
+      S_MOVE moves[MAX_POSITION_MOVES];  // 256 move capacity
+      int count;
   };
   ```
-- **Legacy Methods:**
+- **S_MOVELIST Methods:**
   - `clear()` — Clear all moves from list
-  - `add(const S_MOVE& m)` — Add existing S_MOVE to list
-  - `add(int from, int to, PieceType captured, bool en_passant, bool pawn_start, PieceType promoted, bool castle)` — Create and add move directly
+  - `add_quiet_move(const S_MOVE& move)` — Add quiet move (score: 0)
+  - `add_capture_move(const S_MOVE& move, const Position& pos)` — Add capture with MVV-LVA scoring
+  - `add_en_passant_move(const S_MOVE& move)` — Add en passant capture (score: 1,000,105)
+  - `add_promotion_move(const S_MOVE& move)` — Add promotion (score: 2,000,000+)
+  - `add_castle_move(const S_MOVE& move)` — Add castling move (score: 50,000)
   - `size() const` — Get number of moves in list
   - `operator[](size_t i)` — Access move by index
-  - `sort_by_score()` — Sort moves by score (higher scores first) for move ordering
-- **Legacy Functions (for backward compatibility):**
-  - `generate_pseudo_legal_moves(const Position&, MoveList&)` — Generate all pseudo-legal S_MOVE objects (does not check king safety)
-  - `generate_legal_moves(const Position&, MoveList&)` — Generate legal S_MOVE objects (filters out moves that leave king in check)
+  - `sort_by_score()` — Sort moves by score (highest scores first) for move ordering
+- **Core Functions:**
+  - `generate_all_moves(const Position&, S_MOVELIST&)` — Generate all pseudo-legal moves (does not check king safety)
+  - `generate_legal_moves_enhanced(const Position&, S_MOVELIST&)` — Generate legal moves (filters out moves that leave king in check)
 - **Helper Functions:**
   - `in_check(const Position& pos)` — Check if current side to move is in check
   - `is_legal_move(const Position& pos, const S_MOVE& move)` — Test if a specific move is legal
@@ -439,19 +445,18 @@ bool is_promotion = move.is_promotion();
   - Supports efficient move ordering with built-in sort functionality
   - Optimized for performance-critical move generation scenarios
   - Legal move generation suitable for game play and search algorithms
-  - **Recommended**: Use S_MOVELIST for new code, MoveList only for legacy compatibility
 - **Usage Examples:**
   ```cpp
   Position pos;
   pos.set_startpos();
   
   // Generate all legal moves for current position
-  MoveList legal_moves;
-  generate_legal_moves(pos, legal_moves);
+  S_MOVELIST legal_moves;
+  generate_legal_moves_enhanced(pos, legal_moves);
   
   // Generate pseudo-legal moves for move ordering (faster)
-  MoveList pseudo_moves;
-  generate_pseudo_legal_moves(pos, pseudo_moves);
+  S_MOVELIST pseudo_moves;
+  generate_all_moves(pos, pseudo_moves);
   
   // Check if position has any legal moves (detect checkmate/stalemate)
   bool has_moves = legal_moves.size() > 0;
@@ -492,7 +497,7 @@ bool is_promotion = move.is_promotion();
 ## position.hpp — Position & State API
 
 - **Constants:**
-  - `MAXPLY 2048` — Legacy maximum search depth constant (now unused with dynamic move history)
+  - `MAX_POSITION_MOVES 256` — Maximum moves per position for S_MOVELIST capacity
 - **Structs:**
   - `State { ep_square, castling_rights, halfmove_clock, captured }`
   - `S_UNDO { S_MOVE move, castling_rights, ep_square, halfmove_clock, zobrist_key, captured, king_sq_backup[2], pawns_bb_backup[2], piece_counts_backup[7], material_score_backup[2] }` — Complete undo state with incremental update support using S_MOVE structure

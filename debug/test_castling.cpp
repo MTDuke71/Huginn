@@ -58,8 +58,7 @@ int main() {
     std::cout << "About to call make_move_with_undo. Move value: " << std::hex << e1c1.move << std::dec << std::endl;
     std::cout << "is_castle() before call: " << e1c1.is_castle() << std::endl;
     
-    S_UNDO undo;
-    pos.make_move_with_undo(e1c1, undo);
+    pos.make_move_with_undo(e1c1);
     std::cout << "After e1c1 FEN: " << pos.to_fen() << std::endl;
     std::cout << "After e1c1 castling rights: " << int(pos.castling_rights) << std::endl;
     // Check rook position

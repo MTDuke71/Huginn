@@ -11,7 +11,6 @@ static uint64_t perft_with_debug(Position& pos, int depth) {
     
     uint64_t nodes = 0;
     for (const auto& m : list.v) {
-        State st{};
         
         // Check the piece we're moving
         Piece moving_piece = pos.board[m.get_from()];
@@ -40,9 +39,9 @@ static uint64_t perft_with_debug(Position& pos, int depth) {
             }
         }
         
-        make_move(pos, m, st);
+        pos.make_move_with_undo(m);
         nodes += perft_with_debug(pos, depth-1);
-        unmake_move(pos, m, st);
+        pos.undo_move();
     }
     return nodes;
 }

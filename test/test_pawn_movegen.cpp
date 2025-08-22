@@ -12,20 +12,20 @@ TEST(PawnMoveGen, PawnForwardMoves) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count pawn moves
     int pawn_moves = 0;
     bool found_single_move = false, found_double_move = false;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            if (move.get_to() == sq(File::E, Rank::R3)) {
+            if (moves.moves[i].get_to() == sq(File::E, Rank::R3)) {
                 found_single_move = true;
             }
-            if (move.get_to() == sq(File::E, Rank::R4) && move.is_pawn_start()) {
+            if (moves.moves[i].get_to() == sq(File::E, Rank::R4) && moves.moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -50,17 +50,17 @@ TEST(PawnMoveGen, PawnCaptures) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count pawn moves
     int pawn_moves = 0;
     int pawn_captures = 0;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            if (move.get_captured() != PieceType::None) {
+            if (moves.moves[i].get_captured() != PieceType::None) {
                 pawn_captures++;
             }
         }
@@ -80,17 +80,17 @@ TEST(PawnMoveGen, PawnPromotions) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count promotion moves
     int promotion_moves = 0;
     std::vector<PieceType> promoted_pieces;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn && move.is_promotion()) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn && moves.moves[i].is_promotion()) {
             promotion_moves++;
-            promoted_pieces.push_back(move.get_promoted());
+            promoted_pieces.push_back(moves.moves[i].get_promoted());
         }
     }
     
@@ -115,16 +115,16 @@ TEST(PawnMoveGen, PawnCapturePromotions) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count capture promotion moves
     int capture_promotions = 0;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn && 
-            move.is_promotion() && 
-            move.get_captured() == PieceType::Queen) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn && 
+            moves.moves[i].is_promotion() && 
+            moves.moves[i].get_captured() == PieceType::Queen) {
             capture_promotions++;
         }
     }
@@ -147,17 +147,17 @@ TEST(PawnMoveGen, EnPassantCaptures) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count en passant moves
     int en_passant_moves = 0;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn && move.is_en_passant()) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn && moves.moves[i].is_en_passant()) {
             en_passant_moves++;
-            EXPECT_EQ(move.get_to(), sq(File::D, Rank::R6));
-            EXPECT_EQ(move.get_captured(), PieceType::Pawn);
+            EXPECT_EQ(moves.moves[i].get_to(), sq(File::D, Rank::R6));
+            EXPECT_EQ(moves.moves[i].get_captured(), PieceType::Pawn);
         }
     }
     
@@ -174,20 +174,20 @@ TEST(PawnMoveGen, BlackPawnMoves) {
     pos.rebuild_counts();
     pos.side_to_move = Color::Black;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count black pawn moves
     int pawn_moves = 0;
     bool found_single_move = false, found_double_move = false;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::BlackPawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::BlackPawn) {
             pawn_moves++;
-            if (move.get_to() == sq(File::E, Rank::R6)) {
+            if (moves.moves[i].get_to() == sq(File::E, Rank::R6)) {
                 found_single_move = true;
             }
-            if (move.get_to() == sq(File::E, Rank::R5) && move.is_pawn_start()) {
+            if (moves.moves[i].get_to() == sq(File::E, Rank::R5) && moves.moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -208,14 +208,14 @@ TEST(PawnMoveGen, BlackPawnPromotions) {
     pos.rebuild_counts();
     pos.side_to_move = Color::Black;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count promotion moves
     int promotion_moves = 0;
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::BlackPawn && move.is_promotion()) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::BlackPawn && moves.moves[i].is_promotion()) {
             promotion_moves++;
         }
     }
@@ -235,13 +235,13 @@ TEST(PawnMoveGen, PawnBlockedByOwnPiece) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count pawn moves (should be 0)
     int pawn_moves = 0;
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
         }
     }
@@ -262,15 +262,15 @@ TEST(PawnMoveGen, PawnCantCaptureOwnPieces) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count pawn moves (should only be forward move)
     int pawn_moves = 0;
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            EXPECT_EQ(move.get_to(), sq(File::E, Rank::R5)); // Only forward move
+            EXPECT_EQ(moves.moves[i].get_to(), sq(File::E, Rank::R5)); // Only forward move
         }
     }
     

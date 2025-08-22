@@ -13,8 +13,8 @@ TEST(KingMoveGen, KingMovesFromCenter) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // King on e4 should have 8 moves (all directions clear)
     EXPECT_EQ(moves.size(), 8);
@@ -32,8 +32,8 @@ TEST(KingMoveGen, KingMovesFromCenter) {
     };
     
     std::vector<int> actual_targets;
-    for (const auto& move : moves.v) {
-        actual_targets.push_back(move.get_to());
+    for (int i = 0; i < moves.count; i++) {
+        actual_targets.push_back(moves.moves[i].get_to());
     }
     
     std::sort(expected_targets.begin(), expected_targets.end());
@@ -53,8 +53,8 @@ TEST(KingMoveGen, KingMovesFromCorner) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // King on a1 should have 3 moves (N, E, NE)
     EXPECT_EQ(moves.size(), 3);
@@ -66,8 +66,8 @@ TEST(KingMoveGen, KingMovesFromCorner) {
     };
     
     std::vector<int> actual_targets;
-    for (const auto& move : moves.v) {
-        actual_targets.push_back(move.get_to());
+    for (int i = 0; i < moves.count; i++) {
+        actual_targets.push_back(moves.moves[i].get_to());
     }
     
     std::sort(expected_targets.begin(), expected_targets.end());
@@ -93,13 +93,13 @@ TEST(KingMoveGen, KingMovesBlockedByOwnPieces) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count only king moves
     int king_moves = 0;
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -114,9 +114,9 @@ TEST(KingMoveGen, KingMovesBlockedByOwnPieces) {
         sq(File::F, Rank::R3)  // SE - blocked by bishop
     };
     
-    for (const auto& move : moves.v) {
-        if (pos.at(move.get_from()) == Piece::WhiteKing) {
-            EXPECT_TRUE(std::find(blocked_squares.begin(), blocked_squares.end(), move.get_to()) == blocked_squares.end())
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+            EXPECT_TRUE(std::find(blocked_squares.begin(), blocked_squares.end(), moves.moves[i].get_to()) == blocked_squares.end())
                 << "King move to blocked square should not be generated";
         }
     }
@@ -139,16 +139,16 @@ TEST(KingMoveGen, KingCapturesEnemyPieces) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Should have 8 moves (including 3 captures)
     EXPECT_EQ(moves.size(), 8);
     
     // Check for capture moves
     int capture_count = 0;
-    for (const auto& move : moves.v) {
-        if (move.get_captured() != PieceType::None) {
+    for (int i = 0; i < moves.count; i++) {
+        if (moves.moves[i].get_captured() != PieceType::None) {
             capture_count++;
         }
     }
@@ -156,14 +156,14 @@ TEST(KingMoveGen, KingCapturesEnemyPieces) {
     
     // Verify specific captures
     bool found_pawn_capture = false, found_rook_capture = false, found_bishop_capture = false;
-    for (const auto& move : moves.v) {
-        if (move.get_to() == sq(File::D, Rank::R4) && move.get_captured() == PieceType::Pawn) {
+    for (int i = 0; i < moves.count; i++) {
+        if (moves.moves[i].get_to() == sq(File::D, Rank::R4) && moves.moves[i].get_captured() == PieceType::Pawn) {
             found_pawn_capture = true;
         }
-        if (move.get_to() == sq(File::E, Rank::R5) && move.get_captured() == PieceType::Rook) {
+        if (moves.moves[i].get_to() == sq(File::E, Rank::R5) && moves.moves[i].get_captured() == PieceType::Rook) {
             found_rook_capture = true;
         }
-        if (move.get_to() == sq(File::F, Rank::R3) && move.get_captured() == PieceType::Bishop) {
+        if (moves.moves[i].get_to() == sq(File::F, Rank::R3) && moves.moves[i].get_captured() == PieceType::Bishop) {
             found_bishop_capture = true;
         }
     }
@@ -184,8 +184,8 @@ TEST(KingMoveGen, KingMovesFromEdge) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // King on e1 should have 5 moves (can't move south)
     EXPECT_EQ(moves.size(), 5);
@@ -199,8 +199,8 @@ TEST(KingMoveGen, KingMovesFromEdge) {
     };
     
     std::vector<int> actual_targets;
-    for (const auto& move : moves.v) {
-        actual_targets.push_back(move.get_to());
+    for (int i = 0; i < moves.count; i++) {
+        actual_targets.push_back(moves.moves[i].get_to());
     }
     
     std::sort(expected_targets.begin(), expected_targets.end());
@@ -220,8 +220,8 @@ TEST(KingMoveGen, BothKingsOnBoard) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // White king should have 8 moves (black king far enough away)
     EXPECT_EQ(moves.size(), 8);
@@ -229,7 +229,7 @@ TEST(KingMoveGen, BothKingsOnBoard) {
     // Test black's turn
     pos.side_to_move = Color::Black;
     moves.clear();
-    generate_pseudo_legal_moves(pos, moves);
+    generate_all_moves(pos, moves);
     
     // Black king should also have 8 moves
     EXPECT_EQ(moves.size(), 8);

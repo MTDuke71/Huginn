@@ -36,8 +36,8 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // Count different types of pawn moves
     int normal_moves = 0;
@@ -46,16 +46,16 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     int promotions = 0;
     int en_passant_moves = 0;
     
-    for (const auto& move : moves.v) {
-        Piece piece = pos.at(move.get_from());
+    for (int i = 0; i < moves.count; i++) {
+        Piece piece = pos.at(moves.moves[i].get_from());
         if (type_of(piece) == PieceType::Pawn && color_of(piece) == Color::White) {
-            if (move.is_en_passant()) {
+            if (moves.moves[i].is_en_passant()) {
                 en_passant_moves++;
-            } else if (move.is_promotion()) {
+            } else if (moves.moves[i].is_promotion()) {
                 promotions++;
-            } else if (move.is_pawn_start()) {
+            } else if (moves.moves[i].is_pawn_start()) {
                 double_moves++;
-            } else if (move.get_captured() != PieceType::None) {
+            } else if (moves.moves[i].get_captured() != PieceType::None) {
                 captures++;
             } else {
                 normal_moves++;
@@ -89,8 +89,8 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     // Set up starting position
     pos.set_startpos();
     
-    MoveList moves;
-    generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_all_moves(pos, moves);
     
     // In starting position, we should have exactly 20 moves
     EXPECT_EQ(moves.size(), 20);
@@ -98,8 +98,8 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     // Count moves by piece type
     int pawn_moves = 0, knight_moves = 0;
     
-    for (const auto& move : moves.v) {
-        PieceType type = type_of(pos.at(move.get_from()));
+    for (int i = 0; i < moves.count; i++) {
+        PieceType type = type_of(pos.at(moves.moves[i].get_from()));
         if (type == PieceType::Pawn) pawn_moves++;
         else if (type == PieceType::Knight) knight_moves++;
     }

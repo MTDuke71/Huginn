@@ -16,11 +16,10 @@ static uint64_t perft_debug_simple(Position& pos, int depth, int max_moves = 5) 
         const auto& m = list.v[i];
         std::cout << "Move " << (i+1) << "/" << move_count << " at depth " << depth << std::endl;
         
-        State st{};
         try {
-            make_move(pos, m, st);
+            pos.make_move_with_undo(m);
             nodes += perft_debug_simple(pos, depth-1, max_moves);
-            unmake_move(pos, m, st);
+            pos.undo_move();
         } catch (const std::exception& e) {
             std::cout << "ERROR on move " << (i+1) << ": " << e.what() << std::endl;
             // Let's debug the position state

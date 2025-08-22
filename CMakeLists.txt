@@ -94,6 +94,7 @@ add_executable(perft_suite_demo
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
 )
 target_include_directories(perft_suite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(perft_suite_demo PRIVATE cxx_std_17)

@@ -11,11 +11,11 @@
 // Perft function that counts nodes at each depth
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list; 
+    MoveList list;
     generate_legal_moves(pos, list);
     uint64_t nodes = 0;
-    for (const auto& m : list.v) {
-        pos.make_move_with_undo(m);
+    for (int i = 0; i < list.count; i++) {
+        pos.make_move_with_undo(list.moves[i]);
         nodes += perft(pos, depth-1);
         pos.undo_move();
     }

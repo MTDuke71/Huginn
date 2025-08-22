@@ -13,10 +13,11 @@ TEST(BishopMoveGen, SingleBishopCenter) {
     ASSERT_EQ(pos.pCount[int(Color::White)][int(PieceType::Bishop)], 1);
     ASSERT_EQ(pos.pList[int(Color::White)][int(PieceType::Bishop)][0], sq(File::D, Rank::R4));
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; 
+    generate_all_moves(pos, moves);
     int bishop_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteBishop)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop)
             ++bishop_moves;
     }
     // Should be 13 (bishop on d4 can move to 13 diagonal squares)
@@ -31,10 +32,11 @@ TEST(BishopMoveGen, BishopBlockedByOwnPiece) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; 
+    generate_all_moves(pos, moves);
     int bishop_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteBishop)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop)
             ++bishop_moves;
     }
     // Should be less than 13 due to blocking
@@ -49,12 +51,12 @@ TEST(BishopMoveGen, BishopCapturesOpponent) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; generate_all_moves(pos, moves);
     int capture_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteBishop && m.get_to() == sq(File::F, Rank::R6))
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop && moves.moves[i].get_to() == sq(File::F, Rank::R6))
             ++capture_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteBishop && m.get_to() == sq(File::B, Rank::R2))
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop && moves.moves[i].get_to() == sq(File::B, Rank::R2))
             ++capture_moves;
     }
     EXPECT_EQ(capture_moves, 2);
@@ -71,10 +73,10 @@ TEST(QueenMoveGen, SingleQueenCenter) {
     ASSERT_EQ(pos.pCount[int(Color::White)][int(PieceType::Queen)], 1);
     ASSERT_EQ(pos.pList[int(Color::White)][int(PieceType::Queen)][0], sq(File::D, Rank::R4));
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; generate_all_moves(pos, moves);
     int queen_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteQueen)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen)
             ++queen_moves;
     }
     // Should be 27 (14 rook moves + 13 bishop moves)
@@ -90,10 +92,10 @@ TEST(QueenMoveGen, QueenBlockedByOwnPiece) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; generate_all_moves(pos, moves);
     int queen_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteQueen)
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen)
             ++queen_moves;
     }
     // Should be less than 27 due to blocking
@@ -109,14 +111,14 @@ TEST(QueenMoveGen, QueenCapturesOpponent) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; generate_all_moves(pos, moves);
     int capture_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteQueen && m.get_to() == sq(File::D, Rank::R6))
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen && moves.moves[i].get_to() == sq(File::D, Rank::R6))
             ++capture_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteQueen && m.get_to() == sq(File::F, Rank::R4))
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen && moves.moves[i].get_to() == sq(File::F, Rank::R4))
             ++capture_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteQueen && m.get_to() == sq(File::F, Rank::R6))
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen && moves.moves[i].get_to() == sq(File::F, Rank::R6))
             ++capture_moves;
     }
     EXPECT_EQ(capture_moves, 3);
@@ -131,12 +133,12 @@ TEST(SlidingPieceMoveGen, AllSlidingPiecesTogether) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    MoveList moves; generate_pseudo_legal_moves(pos, moves);
+    S_MOVELIST moves; generate_all_moves(pos, moves);
     int rook_moves = 0, bishop_moves = 0, queen_moves = 0;
-    for (const auto& m : moves.v) {
-        if (pos.at(m.get_from()) == Piece::WhiteRook) ++rook_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteBishop) ++bishop_moves;
-        if (pos.at(m.get_from()) == Piece::WhiteQueen) ++queen_moves;
+    for (int i = 0; i < moves.count; i++) {
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook) ++rook_moves;
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop) ++bishop_moves;
+        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen) ++queen_moves;
     }
     
     // Verify each piece type generates expected moves
