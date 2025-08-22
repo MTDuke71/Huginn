@@ -5,7 +5,9 @@
 #include "move.hpp"
 #include "chess_types.hpp"
 #include "board120.hpp"
+#include "attack_detection.hpp"  // For SqAttacked function
 #include <algorithm>
+#include <vector>
 
 // Enhanced move generation with performance optimizations
 #define MAX_POSITION_MOVES 256
@@ -102,5 +104,87 @@ void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, Pie
 
 // Enhanced legal move generation with better performance
 void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list);
+
+// =============================================================================
+// BACKWARD COMPATIBILITY LAYER - Legacy MoveList interface
+// =============================================================================
+
+// Legacy MoveList structure for backward compatibility
+struct MoveList {
+    std::vector<S_MOVE> v;
+    void clear() { v.clear(); }
+    void add(const S_MOVE& m) { v.push_back(m); }
+    void add(int from, int to, PieceType captured = PieceType::None, 
+             bool en_passant = false, bool pawn_start = false, 
+             PieceType promoted = PieceType::None, bool castle = false) {
+        v.emplace_back(from, to, captured, en_passant, pawn_start, promoted, castle);
+    }
+    size_t size() const { return v.size(); }
+    S_MOVE& operator[](size_t i) { return v[i]; }
+    const S_MOVE& operator[](size_t i) const { return v[i]; }
+    
+    // Move ordering functions
+    void sort_by_score() {
+        std::sort(v.begin(), v.end(), [](const S_MOVE& a, const S_MOVE& b) {
+            return a.score > b.score; // Higher scores first
+        });
+    }
+};
+
+// Legacy compatibility functions that use enhanced move generation internally
+void generate_pseudo_legal_moves(const Position& pos, MoveList& out);
+void generate_legal_moves(const Position& pos, MoveList& out);
+
+// Legacy helper functions for backward compatibility
+inline bool in_check(const Position& pos) {
+    Color current_color = pos.side_to_move;
+    int king_sq = pos.king_sq[int(current_color)];
+    if (king_sq < 0) return false; // No king (shouldn't happen in valid position)
+    
+    // Check if the king is attacked by the opponent
+    Color opponent_color = (current_color == Color::White) ? Color::Black : Color::White;
+    return SqAttacked(king_sq, pos, opponent_color);
+}
+
+// Check if a move is legal (doesn't leave own king in check)
+inline bool is_legal_move(const Position& pos, const S_MOVE& move) {
+    // Special handling for castling
+    if (move.is_castle()) {
+        int from = move.get_from();
+        int to = move.get_to();
+        Color current_side = pos.side_to_move;
+        Color opponent_side = (current_side == Color::White) ? Color::Black : Color::White;
+        
+        // King cannot be in check before castling
+        if (SqAttacked(from, pos, opponent_side)) {
+            return false;
+        }
+        
+        // Check that king doesn't pass through attacked squares during castling
+        int step = (to > from) ? 1 : -1;
+        for (int sq = from + step; sq != to + step; sq += step) {
+            if (SqAttacked(sq, pos, opponent_side)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // For all other moves, use the proper move/undo system
+    Position temp_pos = pos;
+    Color current_side = pos.side_to_move;
+    
+    // Apply the move using the proper system
+    temp_pos.make_move_with_undo(move);
+    
+    // Get the king position after the move (for the side that just moved)
+    int king_sq = temp_pos.king_sq[int(current_side)];
+    
+    // Check if our king would be in check after the move
+    // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
+    bool legal = !SqAttacked(king_sq, temp_pos, !current_side);
+    temp_pos.undo_move();
+    return legal;
+}
 
 #endif // MOVEGEN_ENHANCED_HPP

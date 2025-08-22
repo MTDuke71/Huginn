@@ -5,8 +5,8 @@
 #include <sstream>
 #include <chrono>
 #include <iomanip>
-#include "../src/position.hpp"
-#include "../src/movegen.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
 
 // Perft function - counts all legal move paths to a given depth
 static uint64_t perft(Position& pos, int depth) {

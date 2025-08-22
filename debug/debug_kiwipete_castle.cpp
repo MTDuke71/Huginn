@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include "../src/position.hpp"
-#include "../src/movegen.hpp"
+#include "movegen_enhanced.hpp"
 #include "../src/init.hpp"
 #include "../src/move.hpp"
 

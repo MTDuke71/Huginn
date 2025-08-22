@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include "src/position.hpp"
-#include "src/movegen.hpp"
+#include "src/movegen_enhanced.hpp"
 #include "src/init.hpp"
 
 std::string move_to_str(const S_MOVE& move) {

@@ -1,7 +1,7 @@
 #include "movegen_enhanced.hpp"
 #include "position.hpp"
 #include "move.hpp"
-#include "movegen.hpp"  // For SqAttacked function
+#include "attack_detection.hpp"  // For SqAttacked function
 #include "board120.hpp"
 #include "chess_types.hpp"
 
@@ -162,48 +162,58 @@ void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us) {
         }
     }
     
-    // Castling moves
+    // Castling moves - only if king is on starting square
     if (us == Color::White) {
-        // White kingside castling
-        if ((pos.castling_rights & CASTLE_WK) && 
-            pos.at(sq(File::F, Rank::R1)) == Piece::None &&
-            pos.at(sq(File::G, Rank::R1)) == Piece::None &&
-            !SqAttacked(sq(File::E, Rank::R1), pos, Color::Black) &&
-            !SqAttacked(sq(File::F, Rank::R1), pos, Color::Black) &&
-            !SqAttacked(sq(File::G, Rank::R1), pos, Color::Black)) {
-            list.add_castle_move(make_castle(sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
-        }
-        
-        // White queenside castling
-        if ((pos.castling_rights & CASTLE_WQ) &&
-            pos.at(sq(File::D, Rank::R1)) == Piece::None &&
-            pos.at(sq(File::C, Rank::R1)) == Piece::None &&
-            pos.at(sq(File::B, Rank::R1)) == Piece::None &&
-            !SqAttacked(sq(File::E, Rank::R1), pos, Color::Black) &&
-            !SqAttacked(sq(File::D, Rank::R1), pos, Color::Black) &&
-            !SqAttacked(sq(File::C, Rank::R1), pos, Color::Black)) {
-            list.add_castle_move(make_castle(sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+        // White castling - king must be on e1
+        if (king_sq == sq(File::E, Rank::R1)) {
+            // White kingside castling - rook must be on h1
+            if ((pos.castling_rights & CASTLE_WK) && 
+                pos.at(sq(File::H, Rank::R1)) == Piece::WhiteRook &&
+                pos.at(sq(File::F, Rank::R1)) == Piece::None &&
+                pos.at(sq(File::G, Rank::R1)) == Piece::None &&
+                !SqAttacked(sq(File::E, Rank::R1), pos, Color::Black) &&
+                !SqAttacked(sq(File::F, Rank::R1), pos, Color::Black) &&
+                !SqAttacked(sq(File::G, Rank::R1), pos, Color::Black)) {
+                list.add_castle_move(make_castle(sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
+            }
+            
+            // White queenside castling - rook must be on a1
+            if ((pos.castling_rights & CASTLE_WQ) &&
+                pos.at(sq(File::A, Rank::R1)) == Piece::WhiteRook &&
+                pos.at(sq(File::D, Rank::R1)) == Piece::None &&
+                pos.at(sq(File::C, Rank::R1)) == Piece::None &&
+                pos.at(sq(File::B, Rank::R1)) == Piece::None &&
+                !SqAttacked(sq(File::E, Rank::R1), pos, Color::Black) &&
+                !SqAttacked(sq(File::D, Rank::R1), pos, Color::Black) &&
+                !SqAttacked(sq(File::C, Rank::R1), pos, Color::Black)) {
+                list.add_castle_move(make_castle(sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+            }
         }
     } else {
-        // Black kingside castling
-        if ((pos.castling_rights & CASTLE_BK) &&
-            pos.at(sq(File::F, Rank::R8)) == Piece::None &&
-            pos.at(sq(File::G, Rank::R8)) == Piece::None &&
-            !SqAttacked(sq(File::E, Rank::R8), pos, Color::White) &&
-            !SqAttacked(sq(File::F, Rank::R8), pos, Color::White) &&
-            !SqAttacked(sq(File::G, Rank::R8), pos, Color::White)) {
-            list.add_castle_move(make_castle(sq(File::E, Rank::R8), sq(File::G, Rank::R8)));
-        }
-        
-        // Black queenside castling
-        if ((pos.castling_rights & CASTLE_BQ) &&
-            pos.at(sq(File::D, Rank::R8)) == Piece::None &&
-            pos.at(sq(File::C, Rank::R8)) == Piece::None &&
-            pos.at(sq(File::B, Rank::R8)) == Piece::None &&
-            !SqAttacked(sq(File::E, Rank::R8), pos, Color::White) &&
-            !SqAttacked(sq(File::D, Rank::R8), pos, Color::White) &&
-            !SqAttacked(sq(File::C, Rank::R8), pos, Color::White)) {
-            list.add_castle_move(make_castle(sq(File::E, Rank::R8), sq(File::C, Rank::R8)));
+        // Black castling - king must be on e8
+        if (king_sq == sq(File::E, Rank::R8)) {
+            // Black kingside castling - rook must be on h8
+            if ((pos.castling_rights & CASTLE_BK) &&
+                pos.at(sq(File::H, Rank::R8)) == Piece::BlackRook &&
+                pos.at(sq(File::F, Rank::R8)) == Piece::None &&
+                pos.at(sq(File::G, Rank::R8)) == Piece::None &&
+                !SqAttacked(sq(File::E, Rank::R8), pos, Color::White) &&
+                !SqAttacked(sq(File::F, Rank::R8), pos, Color::White) &&
+                !SqAttacked(sq(File::G, Rank::R8), pos, Color::White)) {
+                list.add_castle_move(make_castle(sq(File::E, Rank::R8), sq(File::G, Rank::R8)));
+            }
+            
+            // Black queenside castling - rook must be on a8
+            if ((pos.castling_rights & CASTLE_BQ) &&
+                pos.at(sq(File::A, Rank::R8)) == Piece::BlackRook &&
+                pos.at(sq(File::D, Rank::R8)) == Piece::None &&
+                pos.at(sq(File::C, Rank::R8)) == Piece::None &&
+                pos.at(sq(File::B, Rank::R8)) == Piece::None &&
+                !SqAttacked(sq(File::E, Rank::R8), pos, Color::White) &&
+                !SqAttacked(sq(File::D, Rank::R8), pos, Color::White) &&
+                !SqAttacked(sq(File::C, Rank::R8), pos, Color::White)) {
+                list.add_castle_move(make_castle(sq(File::E, Rank::R8), sq(File::C, Rank::R8)));
+            }
         }
     }
 }
@@ -228,5 +238,37 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
             list.count++;
         }
         temp_pos.undo_move();
+    }
+}
+
+// =============================================================================
+// BACKWARD COMPATIBILITY IMPLEMENTATIONS
+// =============================================================================
+
+// Legacy pseudo-legal move generation using enhanced system
+void generate_pseudo_legal_moves(const Position& pos, MoveList& out) {
+    out.clear();
+    
+    // Use enhanced move generation system
+    S_MOVELIST enhanced_moves;
+    generate_all_moves(pos, enhanced_moves);
+    
+    // Convert to legacy format
+    for (int i = 0; i < enhanced_moves.size(); ++i) {
+        out.add(enhanced_moves[i]);
+    }
+}
+
+// Legacy legal move generation using enhanced system
+void generate_legal_moves(const Position& pos, MoveList& out) {
+    out.clear();
+    
+    // Use enhanced legal move generation system
+    S_MOVELIST enhanced_moves;
+    generate_legal_moves_enhanced(pos, enhanced_moves);
+    
+    // Convert to legacy format
+    for (int i = 0; i < enhanced_moves.size(); ++i) {
+        out.add(enhanced_moves[i]);
     }
 }

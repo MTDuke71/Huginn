@@ -4,7 +4,7 @@
 #include <map>
 #include <iomanip>
 #include "../src/position.hpp"
-#include "../src/movegen.hpp"
+#include "movegen_enhanced.hpp"
 #include "../src/init.hpp"
 
 // Perft function that counts nodes at each depth

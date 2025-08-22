@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 
 // Test basic pawn forward moves
 TEST(PawnMoveGen, PawnForwardMoves) {

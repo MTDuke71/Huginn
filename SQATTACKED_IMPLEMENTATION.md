@@ -82,7 +82,7 @@ if (!has_pieces_in_lists) {
 ## Files Modified/Created
 
 ### Core Implementation
-- `src/movegen.hpp`: Main SqAttacked function with optimization and fallback
+- `src/attack_detection.hpp`: Main SqAttacked function with optimization and fallback
 - `src/movegen_optimized.hpp`: *(removed)* Separate optimization attempt
 
 ### Testing

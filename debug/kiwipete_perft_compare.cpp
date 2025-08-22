@@ -2,10 +2,10 @@
 #include <map>
 #include <string>
 #include <iomanip>
-#include "../src/position.hpp"
-#include "../src/movegen.hpp"
-#include "../src/move.hpp"
-#include "../src/board120.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "move.hpp"
+#include "board120.hpp"
 
 // Reference breakdown for Kiwipete after White castles queenside, Black to move, depth 2
 std::map<std::string, int> reference = {

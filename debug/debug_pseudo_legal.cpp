@@ -1,7 +1,7 @@
 #include <iostream>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "init.hpp"
 
 // Forward declarations for accessing internal functions
 void generate_pseudo_legal_moves(const Position& pos, MoveList& out);

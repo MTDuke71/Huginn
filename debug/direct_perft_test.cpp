@@ -1,7 +1,7 @@
 #include <iostream>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "init.hpp"
 
 // Perft function
 static uint64_t perft(Position& pos, int depth) {

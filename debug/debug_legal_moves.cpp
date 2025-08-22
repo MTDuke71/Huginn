@@ -1,8 +1,8 @@
-#include "src/chess_types.hpp"
-#include "src/board120.hpp"
-#include "src/position.hpp"
-#include "src/init.hpp"
-#include "src/movegen.hpp"
+#include "chess_types.hpp"
+#include "board120.hpp"
+#include "position.hpp"
+#include "init.hpp"
+#include "movegen_enhanced.hpp"
 #include <iostream>
 
 int main() {

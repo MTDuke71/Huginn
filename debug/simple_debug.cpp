@@ -1,10 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "src/chess_types.hpp"
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-
-using namespace Huginn;
+#include "chess_types.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
 
 int main() {
     // Minimal test - just check the specific test case

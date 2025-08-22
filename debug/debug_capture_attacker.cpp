@@ -2,8 +2,8 @@
 #include <vector>
 #include <string>
 
-#include "src/chess_types.hpp"
-#include "src/movegen.hpp"
+#include "chess_types.hpp"
+#include "movegen_enhanced.hpp"
 
 int main() {
     // Test the CaptureAttacker position: "8/8/8/8/4K3/8/3N4/3q4 w - - 0 1"

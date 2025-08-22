@@ -1,6 +1,6 @@
 #include <iostream>
-#include "src/chess_types.hpp" 
-#include "src/movegen.hpp"
+#include "chess_types.hpp" 
+#include "movegen_enhanced.hpp"
 
 int main() {
     // Test the pinned piece capture scenario

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 
 // Comprehensive test showing all pawn move types in one test
 TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {

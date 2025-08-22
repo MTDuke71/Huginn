@@ -2,10 +2,10 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "../src/position.hpp"
-#include "../src/movegen.hpp"
-#include "../src/board120.hpp"
-#include "../src/init.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "board120.hpp"
+#include "init.hpp"
 #include "../src/move.hpp"
 
 // Convert algebraic notation to from/to squares

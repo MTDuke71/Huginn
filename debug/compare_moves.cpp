@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 #include "init.hpp"
 
 // Perft function that counts nodes at each depth

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "position.hpp"
-#include "movegen.hpp" 
+#include "movegen_enhanced.hpp" 
 #include "init.hpp"
 
 static uint64_t perft_with_debug(Position& pos, int depth) {

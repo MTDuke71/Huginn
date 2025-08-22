@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include "src/position.hpp"
-#include "src/movegen.hpp"
+#include "src/attack_detection.hpp"
 #include "src/init.hpp"
 
 uint64_t perft_single_arg(Position& pos, int depth) {

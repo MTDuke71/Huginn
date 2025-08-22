@@ -1,9 +1,9 @@
-#include "src/position.hpp"
-#include "src/board.hpp"
-#include "src/debug.hpp"
-#include "src/init.hpp"
-#include "src/move.hpp"
-#include "src/movegen.hpp"
+#include "position.hpp"
+#include "board.hpp"
+#include "debug.hpp"
+#include "init.hpp"
+#include "move.hpp"
+#include "movegen_enhanced.hpp"
 #include <iostream>
 #include <vector>
 

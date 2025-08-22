@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 
 // Test that all implemented piece types work together
 TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {

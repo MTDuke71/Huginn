@@ -1,6 +1,6 @@
 #include <iostream>
-#include "src/chess_types.hpp"
-#include "src/movegen.hpp"
+#include "chess_types.hpp"
+#include "movegen_enhanced.hpp"
 
 int main() {
     // Test if queen on D1 attacks king on E4 in position "8/8/8/8/4K3/8/3N4/3q4 w - - 0 1"

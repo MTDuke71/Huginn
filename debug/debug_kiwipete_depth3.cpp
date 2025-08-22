@@ -3,9 +3,9 @@
 #include <string>
 #include <iomanip>
 #include <chrono>
-#include "src/position.hpp"
-#include "src/movegen.hpp"
-#include "src/init.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "init.hpp"
 
 // High-performance manual position restore for two-argument system
 void restore_position(Position& pos, const S_MOVE& move, const S_UNDO& undo) {

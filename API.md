@@ -198,14 +198,9 @@
 
 ---
 
-## movegen.hpp — Move Generation & Attack Detection API
+## attack_detection.hpp — Attack Detection API
 
-- **Data Structures:**
-  - `MoveList` — Container for pseudo-legal moves with add/clear operations
-- **Move Generation:**
-  - `generate_pseudo_legal_moves(const Position& pos, MoveList& out)` — Generate all pseudo-legal moves for current side
-  - `generate_legal_moves(const Position& pos, MoveList& out)` — Generate legal moves by filtering pseudo-legal moves based on king safety
-- **Attack Detection:**
+- **Core Function:**
   - `SqAttacked(int sq, const Position& pos, Color attacking_color)` — Check if square is under attack by specified color
 - **Attack Detection Features:**
   - **Pawn Attacks**: Diagonal captures for both White (SE/SW from target) and Black (NE/NW from target)
@@ -404,24 +399,36 @@ bool is_promotion = move.is_promotion();
 
 ---
 
-## movegen.hpp — Move Generation API
+## movegen_enhanced.hpp — Unified Move Generation API
 
-- **Enhanced MoveList Structure:**
+**Note**: The enhanced move generation system now provides both high-performance S_MOVELIST containers and backward-compatible MoveList containers for legacy code.
+
+- **Primary Interface - S_MOVELIST (Recommended):**
+  ```cpp
+  S_MOVELIST moves;
+  generate_all_moves(pos, moves);              // Fast pseudo-legal generation
+  generate_legal_moves_enhanced(pos, moves);   // Legal move generation
+  ```
+
+- **Legacy Compatibility - MoveList:**
   ```cpp
   struct MoveList {
       std::vector<S_MOVE> v;  // Uses S_MOVE instead of legacy Move
   };
   ```
-- **Methods:**
+- **Legacy Methods:**
   - `clear()` — Clear all moves from list
   - `add(const S_MOVE& m)` — Add existing S_MOVE to list
   - `add(int from, int to, PieceType captured, bool en_passant, bool pawn_start, PieceType promoted, bool castle)` — Create and add move directly
   - `size() const` — Get number of moves in list
   - `operator[](size_t i)` — Access move by index
   - `sort_by_score()` — Sort moves by score (higher scores first) for move ordering
-- **Functions:**
+- **Legacy Functions (for backward compatibility):**
   - `generate_pseudo_legal_moves(const Position&, MoveList&)` — Generate all pseudo-legal S_MOVE objects (does not check king safety)
   - `generate_legal_moves(const Position&, MoveList&)` — Generate legal S_MOVE objects (filters out moves that leave king in check)
+- **Helper Functions:**
+  - `in_check(const Position& pos)` — Check if current side to move is in check
+  - `is_legal_move(const Position& pos, const S_MOVE& move)` — Test if a specific move is legal
 - **Legal Move Generation Details:**
   - **Pseudo-Legal vs Legal**: Pseudo-legal moves include all moves that follow piece movement rules but may leave king in check
   - **King Safety Filtering**: Legal move generation tests each pseudo-legal move to ensure king safety
@@ -432,6 +439,7 @@ bool is_promotion = move.is_promotion();
   - Supports efficient move ordering with built-in sort functionality
   - Optimized for performance-critical move generation scenarios
   - Legal move generation suitable for game play and search algorithms
+  - **Recommended**: Use S_MOVELIST for new code, MoveList only for legacy compatibility
 - **Usage Examples:**
   ```cpp
   Position pos;

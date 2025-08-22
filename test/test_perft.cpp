@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 
 // Tiny perft harness (uses legal moves; grow as you add rules)
 static uint64_t perft(Position& pos, int depth) {

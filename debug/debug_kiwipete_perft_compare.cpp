@@ -3,10 +3,10 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "../src/position.hpp"
-#include "../src/movegen.hpp"
-#include "../src/init.hpp"
-#include "../src/move.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "init.hpp"
+#include "move.hpp"
 
 // Perft function
 uint64_t perft(Position& pos, int depth) {

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "movegen_enhanced.hpp"
 
 TEST(RookMoveGen, SingleRookCenter) {
     Position pos; pos.reset();

@@ -3,7 +3,6 @@
 #include "zobrist.hpp"
 // Add other includes here as more subsystems are added
 // #include "bitboard.hpp"  // if bitboard needs initialization
-// #include "movegen.hpp"   // if move generation tables need initialization
 
 namespace Huginn {
     

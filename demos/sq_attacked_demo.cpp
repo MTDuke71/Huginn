@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include "position.hpp"
-#include "movegen.hpp"
+#include "attack_detection.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "squares120.hpp"

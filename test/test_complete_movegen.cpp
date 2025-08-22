@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "../src/position.hpp"
-#include "../src/movegen.hpp"
+#include "../src/movegen_enhanced.hpp"
 #include "../src/board120.hpp"
 
 class CompleteMoveGenTest : public ::testing::Test {

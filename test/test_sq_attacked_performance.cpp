@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include "../src/position.hpp"
-#include "../src/movegen.hpp"
+#include "../src/attack_detection.hpp"
 #include "../src/board120.hpp"
 #include "../src/chess_types.hpp"
 #include "../src/squares120.hpp"
