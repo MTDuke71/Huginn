@@ -11,8 +11,8 @@
 // Perft function that counts nodes at each depth
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list;
-    generate_legal_moves(pos, list);
+    S_MOVELIST list;
+    generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
     for (int i = 0; i < list.count; i++) {
         pos.make_move_with_undo(list.moves[i]);
@@ -41,16 +41,17 @@ std::string square_to_algebraic(int square) {
 static void perft_divide(Position& pos, int depth) {
     if (depth <= 0) return;
     
-    MoveList list;
-    generate_legal_moves(pos, list);
+    S_MOVELIST list;
+    generate_legal_moves_enhanced(pos, list);
     
     std::cout << "Generating moves for position: " << pos.to_fen() << std::endl;
-    std::cout << "Found " << list.v.size() << " legal moves:" << std::endl;
+    std::cout << "Found " << list.count << " legal moves:" << std::endl;
     
     std::map<std::string, uint64_t> move_counts;
     uint64_t total = 0;
     
-    for (const auto& move : list.v) {
+    for (int i = 0; i < list.count; i++) {
+        const auto& move = list.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         
         pos.make_move_with_undo(move);
@@ -114,13 +115,14 @@ int main(int argc, char* argv[]) {
     std::cout << "\n=== Detailed Analysis of a2a4 Move ===" << std::endl;
     
     // Find the a2a4 move
-    MoveList legal_moves;
-    generate_legal_moves(pos, legal_moves);
+    S_MOVELIST legal_moves;
+    generate_legal_moves_enhanced(pos, legal_moves);
     
     S_MOVE a2a4_move;
     bool found_a2a4 = false;
     
-    for (const auto& move : legal_moves.v) {
+    for (int i = 0; i < legal_moves.count; i++) {
+        const auto& move = legal_moves.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         if (move_str == "a2a4") {
             a2a4_move = move;
@@ -134,13 +136,13 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Position after a2a4: " << pos.to_fen() << std::endl;
         
-        MoveList moves_after_a2a4;
-        generate_legal_moves(pos, moves_after_a2a4);
+        S_MOVELIST moves_after_a2a4;
+        generate_legal_moves_enhanced(pos, moves_after_a2a4);
         
-        std::cout << "Moves after a2a4 (" << moves_after_a2a4.v.size() << " total):" << std::endl;
+        std::cout << "Moves after a2a4 (" << moves_after_a2a4.count << " total):" << std::endl;
         
-        for (size_t i = 0; i < moves_after_a2a4.v.size(); ++i) {
-            const auto& move = moves_after_a2a4.v[i];
+        for (int i = 0; i < moves_after_a2a4.count; ++i) {
+            const auto& move = moves_after_a2a4.moves[i];
             std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
             std::cout << (i+1) << ". " << move_str;
             

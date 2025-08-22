@@ -30,10 +30,11 @@ std::string move_to_alg(const S_MOVE& m) {
 
 uint64_t perft(Position& pos, int depth) {
 	if (depth == 0) return 1;
-	MoveList moves;
-	generate_legal_moves(pos, moves);
+	S_MOVELIST moves;
+	generate_legal_moves_enhanced(pos, moves);
 	uint64_t nodes = 0;
-	for (const auto& m : moves.v) {
+	for (int i = 0; i < moves.count; i++) {
+		const auto& m = moves.moves[i];
 		pos.make_move_with_undo(m);
 		nodes += perft(pos, depth - 1);
 		pos.undo_move();
@@ -48,13 +49,14 @@ int main() {
 		std::cerr << "Failed to parse FEN" << std::endl;
 		return 1;
 	}
-	MoveList moves;
-	generate_legal_moves(pos, moves);
+	S_MOVELIST moves;
+	generate_legal_moves_enhanced(pos, moves);
 	uint64_t total = 0;
 	std::map<std::string, uint64_t> breakdown;
 	S_MOVE e1c1_move;
 	bool found_e1c1 = false;
-	for (const auto& m : moves.v) {
+	for (int i = 0; i < moves.count; i++) {
+		const auto& m = moves.moves[i];
 		std::string alg = move_to_alg(m);
 		pos.make_move_with_undo(m);
 		uint64_t count = perft(pos, 2);

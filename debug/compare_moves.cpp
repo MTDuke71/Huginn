@@ -11,10 +11,11 @@
 // Perft function that counts nodes at each depth
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list; 
-    generate_legal_moves(pos, list);
+    S_MOVELIST list; 
+    generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
-    for (const auto& m : list.v) {
+    for (int i = 0; i < list.count; i++) {
+        const auto& m = list.moves[i];
         pos.make_move_with_undo(m);
         nodes += perft(pos, depth-1);
         pos.undo_move();
@@ -67,13 +68,14 @@ int main(int argc, char* argv[]) {
     
     std::cout << "Generating our moves and comparing..." << std::endl;
     
-    MoveList list;
-    generate_legal_moves(pos, list);
+    S_MOVELIST list;
+    generate_legal_moves_enhanced(pos, list);
     
     std::map<std::string, uint64_t> actual;
     uint64_t total_actual = 0;
     
-    for (const auto& move : list.v) {
+    for (int i = 0; i < list.count; i++) {
+        const auto& move = list.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         
         pos.make_move_with_undo(move);

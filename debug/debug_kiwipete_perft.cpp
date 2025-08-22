@@ -11,10 +11,11 @@
 // Perft function
 uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     uint64_t nodes = 0;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) {
+        const auto& move = moves.moves[i];
         pos.make_move_with_undo(move);
         nodes += perft(pos, depth - 1);
         pos.undo_move();
@@ -44,12 +45,12 @@ int main() {
         std::cout << "Failed to parse Kiwipete FEN" << std::endl;
         return 1;
     }
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     uint64_t total_actual = 0;
     std::cout << std::left << std::setw(8) << "Move" << std::setw(12) << "Actual" << std::endl;
     std::cout << "-------------------------" << std::endl;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) { const auto& move = moves.moves[i];
         std::string alg = move_to_algebraic(move);
         pos.make_move_with_undo(move);
         uint64_t actual = perft(pos, 2); // depth 3 = 1 + 2

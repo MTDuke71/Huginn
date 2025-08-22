@@ -8,12 +8,12 @@
 uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
     
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     
     uint64_t nodes = 0;
-    for (const auto& move : moves.v) {
-        pos.make_move_with_undo(move);
+    for (int i = 0; i < moves.count; i++) {
+        pos.make_move_with_undo(moves.moves[i]);
         nodes += perft(pos, depth - 1);
         pos.undo_move();
     }
@@ -46,13 +46,14 @@ int main() {
     // Test the problematic e2e4 move
     std::cout << "\n=== Testing e2e4 move ===" << std::endl;
     
-    MoveList initial_moves;
-    generate_legal_moves(pos, initial_moves);
+    S_MOVELIST initial_moves;
+    generate_legal_moves_enhanced(pos, initial_moves);
     
     S_MOVE e2e4_move;
     bool found_e2e4 = false;
     
-    for (const auto& move : initial_moves.v) {
+    for (int i = 0; i < initial_moves.count; i++) {
+        const auto& move = initial_moves.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         if (move_str == "e2e4") {
             e2e4_move = move;
@@ -72,15 +73,16 @@ int main() {
     std::cout << "En passant square: " << pos.ep_square << std::endl;
     
     // Generate moves after e2e4 and look for en passant moves
-    MoveList moves_after_e2e4;
-    generate_legal_moves(pos, moves_after_e2e4);
+    S_MOVELIST moves_after_e2e4;
+    generate_legal_moves_enhanced(pos, moves_after_e2e4);
     
-    std::cout << "Found " << moves_after_e2e4.v.size() << " moves after e2e4" << std::endl;
+    std::cout << "Found " << moves_after_e2e4.count << " moves after e2e4" << std::endl;
     
     // Look for en passant moves specifically
     std::cout << "\nEn passant moves found:" << std::endl;
     int ep_count = 0;
-    for (const auto& move : moves_after_e2e4.v) {
+    for (size_t i = 0; i < moves_after_e2e4.count; ++i) {
+        const auto& move = moves_after_e2e4.moves[i];
         if (move.is_en_passant()) {
             std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
             std::cout << "EN PASSANT: " << move_str << std::endl;
@@ -96,7 +98,8 @@ int main() {
     S_MOVE a7a6_move;
     bool found_a7a6 = false;
     
-    for (const auto& move : moves_after_e2e4.v) {
+    for (size_t i = 0; i < moves_after_e2e4.count; ++i) {
+        const auto& move = moves_after_e2e4.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         if (move_str == "a7a6") {
             a7a6_move = move;
@@ -111,11 +114,12 @@ int main() {
         std::cout << "En passant square: " << pos.ep_square << std::endl;
         
         // Check for remaining en passant moves (should be none)
-        MoveList moves_after_a7a6;
-        generate_legal_moves(pos, moves_after_a7a6);
+        S_MOVELIST moves_after_a7a6;
+        generate_legal_moves_enhanced(pos, moves_after_a7a6);
         
         int ep_count_after = 0;
-        for (const auto& move : moves_after_a7a6.v) {
+        for (size_t i = 0; i < moves_after_a7a6.count; ++i) {
+            const auto& move = moves_after_a7a6.moves[i];
             if (move.is_en_passant()) {
                 ep_count_after++;
             }

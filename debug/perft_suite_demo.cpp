@@ -11,10 +11,11 @@
 // Perft function - counts all legal move paths to a given depth
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list; 
-    generate_legal_moves(pos, list);
+    S_MOVELIST list; 
+    generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
-    for (const auto& m : list.v) {
+    for (int i = 0; i < list.count; i++) {
+        const auto& m = list.moves[i];
         pos.make_move_with_undo(m);
         nodes += perft(pos, depth - 1);
         pos.undo_move();

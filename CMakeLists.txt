@@ -108,6 +108,7 @@ add_executable(debug_kiwipete
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(debug_kiwipete PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_kiwipete PRIVATE cxx_std_17)
@@ -121,6 +122,7 @@ add_executable(compare_moves
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(compare_moves PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(compare_moves PRIVATE cxx_std_17)
@@ -134,6 +136,7 @@ add_executable(debug_a2a4
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(debug_a2a4 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_a2a4 PRIVATE cxx_std_17)
@@ -147,6 +150,7 @@ add_executable(debug_opening
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(debug_opening PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_opening PRIVATE cxx_std_17)
@@ -160,6 +164,7 @@ add_executable(kiwipete_perft_compare
   src/position.cpp
   src/zobrist.cpp
   src/debug.cpp
+  src/movegen_enhanced.cpp
 )
 target_include_directories(kiwipete_perft_compare PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(kiwipete_perft_compare PRIVATE cxx_std_17)
@@ -173,6 +178,7 @@ add_executable(debug_en_passant
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(debug_en_passant PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_en_passant PRIVATE cxx_std_17)
@@ -186,6 +192,7 @@ add_executable(test_en_passant
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
 )
 target_include_directories(test_en_passant PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(test_en_passant PRIVATE cxx_std_17)
@@ -199,6 +206,7 @@ add_executable(debug_kiwipete_a2a4_perft
   src/position.cpp
   src/zobrist.cpp
   src/debug.cpp
+  src/movegen_enhanced.cpp
 )
 target_include_directories(debug_kiwipete_a2a4_perft PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_kiwipete_a2a4_perft PRIVATE cxx_std_17)
@@ -212,6 +220,7 @@ add_executable(debug_kiwipete_perft
   src/position.cpp
   src/zobrist.cpp
   src/debug.cpp
+  src/movegen_enhanced.cpp
 )
 target_include_directories(debug_kiwipete_perft PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_kiwipete_perft PRIVATE cxx_std_17)
@@ -225,6 +234,7 @@ add_executable(debug_kiwipete_perft_compare
   src/position.cpp
   src/zobrist.cpp
   src/debug.cpp
+  src/movegen_enhanced.cpp
 )
 target_include_directories(debug_kiwipete_perft_compare PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_kiwipete_perft_compare PRIVATE cxx_std_17)
@@ -238,6 +248,7 @@ add_executable(debug_kiwipete_castle
   src/position.cpp
   src/zobrist.cpp
   src/debug.cpp
+  src/movegen_enhanced.cpp
 )
 target_include_directories(debug_kiwipete_castle PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(debug_kiwipete_castle PRIVATE cxx_std_17)

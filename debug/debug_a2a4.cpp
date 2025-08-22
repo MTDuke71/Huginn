@@ -60,12 +60,13 @@ int main() {
     }
 
     // Find the e1g1 move in the legal moves
-    MoveList legal_moves;
-    generate_legal_moves(pos, legal_moves);
+    S_MOVELIST legal_moves;
+    generate_legal_moves_enhanced(pos, legal_moves);
 
     S_MOVE e1g1_move;
     bool found_move = false;
-    for (const auto& move : legal_moves.v) {
+    for (int i = 0; i < legal_moves.count; i++) {
+        const auto& move = legal_moves.moves[i];
         if (move.get_from() == e1g1_coords.first && move.get_to() == e1g1_coords.second && move.is_castle()) {
             e1g1_move = move;
             found_move = true;
@@ -82,15 +83,15 @@ int main() {
     std::cout << "Side to move: " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
 
     // Generate moves in the new position
-    MoveList moves_after_castle;
-    generate_legal_moves(pos, moves_after_castle);
+    S_MOVELIST moves_after_castle;
+    generate_legal_moves_enhanced(pos, moves_after_castle);
 
-    std::cout << "Our engine found " << moves_after_castle.v.size() << " moves after castling" << std::endl;
+    std::cout << "Our engine found " << moves_after_castle.count << " moves after castling" << std::endl;
 
     // Print all moves after castling
     std::cout << "\nMoves after castling:" << std::endl;
-    for (size_t i = 0; i < moves_after_castle.v.size(); ++i) {
-        const auto& move = moves_after_castle.v[i];
+    for (size_t i = 0; i < moves_after_castle.count; ++i) {
+        const auto& move = moves_after_castle.moves[i];
         std::string move_str = sq_to_algebraic(move.get_from()) + sq_to_algebraic(move.get_to());
         std::cout << (i+1) << ". " << move_str;
         if (move.is_castle()) std::cout << " (castle)";

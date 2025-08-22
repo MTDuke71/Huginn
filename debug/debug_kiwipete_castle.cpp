@@ -21,10 +21,11 @@ std::string sq_to_algebraic(int square) {
 // Perft function
 uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     uint64_t nodes = 0;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) {
+        const auto& move = moves.moves[i];
         std::string move_alg = sq_to_algebraic(move.get_from()) + sq_to_algebraic(move.get_to());
         if (move_alg == "h1d1" || move_alg == "c1d1") {
             #ifdef DEBUG_CASTLING
@@ -99,12 +100,12 @@ int main() {
     std::cout << "Side to move: " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
 
     // Generate all legal moves in the position
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
 
     std::map<std::string, uint64_t> move_counts;
     uint64_t total_nodes = 0;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) { const auto& move = moves.moves[i];
         std::string move_alg = sq_to_algebraic(move.get_from()) + sq_to_algebraic(move.get_to());
         pos.make_move_with_undo(move);
         uint64_t count = perft(pos, 2); // depth 3: root move + 2 more
@@ -125,11 +126,12 @@ int main() {
     std::cout << "FEN: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/2KR3R b kq - 1 1" << std::endl;
     std::cout << "Castling rights: " << ((after_e1c1.castling_rights & CASTLE_BK) ? "k" : "") << ((after_e1c1.castling_rights & CASTLE_BQ) ? "q" : "") << std::endl;
 
-    MoveList black_moves;
-    generate_legal_moves(after_e1c1, black_moves);
+    S_MOVELIST black_moves;
+    generate_legal_moves_enhanced(after_e1c1, black_moves);
     std::cout << "\nDepth 2 breakdown for Black after e1c1:" << std::endl;
     int total_black_nodes = 0;
-    for (const auto& move : black_moves.v) {
+    for (int i = 0; i < black_moves.count; i++) {
+        const auto& move = black_moves.moves[i];
         // Print castling rights before move
         std::cout << "\nMove: " << sq_to_algebraic(move.get_from()) << sq_to_algebraic(move.get_to());
         std::cout << " | Before rights: " << ((after_e1c1.castling_rights & CASTLE_BK) ? "k" : "") << ((after_e1c1.castling_rights & CASTLE_BQ) ? "q" : "");
@@ -159,10 +161,10 @@ int main() {
         std::cout << " | After rights: " << ((after_e1c1.castling_rights & CASTLE_BK) ? "k" : "") << ((after_e1c1.castling_rights & CASTLE_BQ) ? "q" : "");
 
         // Perft at depth 1 (number of replies)
-        MoveList reply_moves;
-        generate_legal_moves(after_e1c1, reply_moves);
-        std::cout << " | Replies: " << reply_moves.v.size() << std::endl;
-        total_black_nodes += reply_moves.v.size();
+        S_MOVELIST reply_moves;
+        generate_legal_moves_enhanced(after_e1c1, reply_moves);
+        std::cout << " | Replies: " << reply_moves.count << std::endl;
+        total_black_nodes += reply_moves.count;
 
         after_e1c1.undo_move();
     }

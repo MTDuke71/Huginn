@@ -10,10 +10,11 @@
 // Perft function that counts nodes at each depth
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList list; 
-    generate_legal_moves(pos, list);
+    S_MOVELIST list; 
+    generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
-    for (const auto& m : list.v) {
+    for (int i = 0; i < list.count; i++) {
+        const auto& m = list.moves[i];
         pos.make_move_with_undo(m);
         nodes += perft(pos, depth - 1);
         pos.undo_move();
@@ -64,10 +65,10 @@ int main() {
     uint64_t expected_total = 119060324;
     
     // Generate legal moves from starting position
-    MoveList legal_moves;
-    generate_legal_moves(pos, legal_moves);
+    S_MOVELIST legal_moves;
+    generate_legal_moves_enhanced(pos, legal_moves);
     
-    std::cout << "Found " << legal_moves.v.size() << " legal moves at depth 1" << std::endl;
+    std::cout << "Found " << legal_moves.count << " legal moves at depth 1" << std::endl;
     
     // Calculate perft for each first move
     std::cout << "\n=== Perft Breakdown (Depth 5) ===" << std::endl;
@@ -78,7 +79,7 @@ int main() {
     uint64_t total_actual = 0;
     uint64_t total_difference = 0;
     
-    for (const auto& move : legal_moves.v) {
+    for (int i = 0; i < legal_moves.count; i++) { const auto& move = legal_moves.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         
         // Make the move and calculate perft(5)
@@ -116,7 +117,7 @@ int main() {
     std::cout << "\n=== Moves with Largest Differences ===" << std::endl;
     std::vector<std::pair<std::string, int64_t>> differences;
     
-    for (const auto& move : legal_moves.v) {
+    for (int i = 0; i < legal_moves.count; i++) { const auto& move = legal_moves.moves[i];
         std::string move_str = square_to_algebraic(move.get_from()) + square_to_algebraic(move.get_to());
         
         pos.make_move_with_undo(move);

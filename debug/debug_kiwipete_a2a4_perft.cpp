@@ -11,10 +11,11 @@
 // Perft function
 uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     uint64_t nodes = 0;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) {
+        const auto& move = moves.moves[i];
         pos.make_move_with_undo(move);
         nodes += perft(pos, depth - 1);
         pos.undo_move();
@@ -45,11 +46,11 @@ int main() {
         return 1;
     }
     // Make a2a4
-    MoveList moves;
-    generate_legal_moves(pos, moves);
+    S_MOVELIST moves;
+    generate_legal_moves_enhanced(pos, moves);
     S_MOVE a2a4_move;
     bool found = false;
-    for (const auto& move : moves.v) {
+    for (int i = 0; i < moves.count; i++) { const auto& move = moves.moves[i];
         if (move_to_algebraic(move) == "a2a4") {
             a2a4_move = move;
             found = true;
@@ -62,8 +63,8 @@ int main() {
     }
     pos.make_move_with_undo(a2a4_move);
     // Generate all moves after a2a4
-    MoveList moves_after;
-    generate_legal_moves(pos, moves_after);
+    S_MOVELIST moves_after;
+    generate_legal_moves_enhanced(pos, moves_after);
     // Expected per-move counts
     std::map<std::string, uint64_t> expected = {
         {"a1b1", 1969}, {"a1c1", 1968}, {"a1d1", 1885}, {"a2a3", 2186}, {"a2a4", 2149},
@@ -80,7 +81,8 @@ int main() {
     uint64_t total_actual = 0, total_expected = 0;
     std::cout << std::left << std::setw(8) << "Move" << std::setw(12) << "Expected" << std::setw(12) << "Actual" << std::setw(12) << "Diff" << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;
-    for (const auto& move : moves_after.v) {
+    for (int i = 0; i < moves_after.count; i++) {
+        const auto& move = moves_after.moves[i];
         std::string alg = move_to_algebraic(move);
         pos.make_move_with_undo(move);
         uint64_t actual = perft(pos, 4); // depth 5 = 1 + 4
