@@ -61,12 +61,14 @@ add_executable(huginn_tests
   test/test_castling.cpp            # <-- castling move generation tests
   test/test_legal_moves.cpp         # <-- legal move validation tests
   test/test_complete_movegen.cpp    # <-- complete move generation system demo
+  test/test_enhanced_movegen.cpp    # <-- enhanced move generation system tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
   src/position.cpp       # <-- position implementation with Zobrist updates for tests
   src/zobrist.cpp        # <-- zobrist implementation for tests
   src/debug.cpp          # <-- debug and validation functions for tests
+  src/movegen_enhanced.cpp # <-- enhanced move generation for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -241,3 +243,31 @@ target_compile_features(debug_kiwipete_castle PRIVATE cxx_std_17)
 
 # Include debug demo
 include(debug_demo.cmake)
+
+# ---- Enhanced Move Generation Demo ----
+add_executable(enhanced_movegen_demo
+  demos/enhanced_movegen_demo.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
+)
+target_include_directories(enhanced_movegen_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(enhanced_movegen_demo PRIVATE cxx_std_17)
+
+# ---- Enhanced Move Generation Advanced Test ----
+add_executable(enhanced_movegen_advanced_test
+  demos/enhanced_movegen_advanced_test.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation
+)
+target_include_directories(enhanced_movegen_advanced_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(enhanced_movegen_advanced_test PRIVATE cxx_std_17)
