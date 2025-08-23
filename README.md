@@ -45,9 +45,24 @@ cmake --build build
 
 ### Development Tools
 - **Debug Assertions**: Detailed error reporting with file/line information when DEBUG defined
-- **Comprehensive Testing**: 82+ test cases covering all major components including FEN generation
+- **Comprehensive Testing**: 183+ test cases covering all major components including FEN generation
 - **Position Validation**: Multi-layer integrity checking with castling validation and FEN round-trip verification
 - **Bitboard Visualization**: ASCII board display with rank/file borders
+
+## Documentation
+
+Complete documentation is available in the [`docs/`](docs/) directory:
+
+- **[📚 Documentation Index](docs/README.md)** - Complete guide to all documentation
+- **[🔧 API Reference](docs/API.md)** - Complete API and usage guide  
+- **[🏗️ Architecture](docs/POSITION_AND_MOVEGEN_ARCHITECTURE.md)** - Core system design
+- **[📊 Performance Tracking](docs/PERFORMANCE_TRACKING.md)** - Optimization results and tracking
+- **[✅ Validation Systems](docs/DEBUG_VALIDATION.md)** - Testing and validation documentation
+
+### Quick Links
+- [Performance Analysis](docs/DECODE_MOVE_ANALYSIS.md) - Why micro-optimizations translate to real performance
+- [Optimization History](docs/DECODE_MOVE_REMOVAL.md) - Recent modernization improvements  
+- [Implementation Details](docs/BITBOARD_IMPLEMENTATION.md) - Technical implementation guides
 - **Square Conversion**: Seamless translation between 64-square and 120-square indexing
 - **FEN Support**: Complete bidirectional FEN parsing and generation with validation
 
