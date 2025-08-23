@@ -25,10 +25,21 @@ cmake --build build
 
 ### Run the program
 ```sh
+# UCI Chess Engine (for chess GUIs)
 ./build/huginn.exe
+
+# Position Display Demo
+./build/huginn_demo.exe
 ```
 
 ## Features
+
+### UCI Chess Engine
+- **Complete UCI Protocol**: Compatible with Arena, Fritz, ChessBase, and all UCI chess GUIs
+- **Random Move Selection**: Returns valid legal moves until evaluation is implemented
+- **Position Management**: Supports startpos, FEN strings, and move sequences
+- **Search Simulation**: Progressive depth reporting with realistic search statistics
+- **Debug Mode**: Detailed logging for development and troubleshooting
 
 ### Chess Engine Architecture
 - **Mailbox-120 Board Representation**: 10x12 board with off-board sentinels for efficient boundary checking

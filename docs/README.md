@@ -6,6 +6,7 @@ This directory contains all documentation for the Huginn chess engine project.
 
 ### 📚 Core Documentation
 - [`API.md`](API.md) - Complete API reference and usage guide
+- [`UCI_IMPLEMENTATION.md`](UCI_IMPLEMENTATION.md) - UCI interface implementation and usage
 - [`README.md`](../README.md) - Main project overview (in root directory)
 
 ### 🏗️ Architecture & Design
@@ -37,6 +38,7 @@ This directory contains all documentation for the Huginn chess engine project.
 
 ### For Developers
 - Start with [`API.md`](API.md) for the public interface
+- Check [`UCI_IMPLEMENTATION.md`](UCI_IMPLEMENTATION.md) for chess GUI integration
 - Review [`POSITION_AND_MOVEGEN_ARCHITECTURE.md`](POSITION_AND_MOVEGEN_ARCHITECTURE.md) for core concepts
 - Check [`PERFORMANCE_TRACKING.md`](PERFORMANCE_TRACKING.md) for optimization results
 

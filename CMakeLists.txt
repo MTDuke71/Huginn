@@ -14,12 +14,14 @@ endif()
 # ---- App ----
 add_executable(huginn
   src/main.cpp
+  src/uci.cpp            # <-- UCI interface implementation
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
   src/attack_detection.cpp # <-- attack detection implementation
   src/move.cpp           # <-- move structure implementation
   src/board120.cpp       # <-- coordinate utilities implementation
@@ -46,6 +48,23 @@ add_executable(huginn_uci
 )
 target_include_directories(huginn_uci PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn_uci PRIVATE cxx_std_17)
+
+# ---- Position Display Demo ----
+add_executable(huginn_demo
+  src/demo_main.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+)
+target_include_directories(huginn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(huginn_demo PRIVATE cxx_std_17)
 
 # ---- Tests ----
 find_package(GTest CONFIG REQUIRED)  # using MSYS2 packaged googletest

@@ -31,7 +31,17 @@ The Huginn chess engine now includes a complete UCI (Universal Chess Interface) 
 ### Building
 ```bash
 cd build
-ninja huginn_uci
+ninja huginn        # Main UCI engine
+ninja huginn_demo   # Position display demo (optional)
+```
+
+### Running as UCI Engine
+```bash
+# Direct UCI usage
+.\build\huginn.exe
+
+# Or test with commands
+Get-Content test_uci_commands.txt | .\build\huginn.exe
 ```
 
 ### Testing with File Input
@@ -39,8 +49,8 @@ ninja huginn_uci
 # Create command file
 echo -e "uci\nisready\nposition startpos\ngo movetime 1000\nquit" > test.txt
 
-# Run engine
-Get-Content test.txt | .\build\huginn_uci.exe
+# Run main engine
+Get-Content test.txt | .\build\huginn.exe
 ```
 
 ### Expected Output
@@ -148,11 +158,11 @@ The UCI interface is compatible with popular chess GUIs:
 ### Arena Chess GUI
 1. Download Arena from [arena-chess.com](http://www.arena-chess.com/)
 2. Install the engine: `Engines` → `Install New Engine`
-3. Browse to `huginn_uci.exe`
+3. Browse to `huginn.exe` (main executable)
 4. Engine will appear in the engine list
 
 ### Fritz/ChessBase
-1. Copy `huginn_uci.exe` to ChessBase engines folder
+1. Copy `huginn.exe` to ChessBase engines folder
 2. Engine will be automatically detected
 3. Select from engine dropdown menu
 
