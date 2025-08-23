@@ -20,6 +20,8 @@ add_executable(huginn
   src/position.cpp       # <-- position implementation with Zobrist updates
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
@@ -64,6 +66,8 @@ add_executable(huginn_tests
   src/zobrist.cpp        # <-- zobrist implementation for tests
   src/debug.cpp          # <-- debug and validation functions for tests
   src/movegen_enhanced.cpp # <-- enhanced move generation for tests
+  src/attack_detection.cpp # <-- attack detection implementation for tests
+  src/move.cpp           # <-- move structure implementation for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -90,6 +94,8 @@ add_executable(perft_suite_demo
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
   src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
 )
 target_include_directories(perft_suite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(perft_suite_demo PRIVATE cxx_std_17)

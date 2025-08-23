@@ -49,18 +49,10 @@ struct S_MOVE {
         move = encode_move(from, to, captured, en_passant, pawn_start, promoted, castle);
     }
     
-    // Static move encoding function
+    // Static move encoding function - declaration only
     static int encode_move(int from, int to, PieceType captured = PieceType::None,
                           bool en_passant = false, bool pawn_start = false,
-                          PieceType promoted = PieceType::None, bool castle = false) {
-        return (from & 0x7F) |
-               ((to & 0x7F) << MOVE_TO_SHIFT) |
-               ((int(captured) & 0xF) << MOVE_CAPTURED_SHIFT) |
-               (en_passant ? MOVE_ENPASSANT : 0) |
-               (pawn_start ? MOVE_PAWNSTART : 0) |
-               ((int(promoted) & 0xF) << MOVE_PROMOTED_SHIFT) |
-               (castle ? MOVE_CASTLE : 0);
-    }
+                          PieceType promoted = PieceType::None, bool castle = false);
     
     // Decoding functions using bitmasks and bit shifts
     int get_from() const {
@@ -121,12 +113,8 @@ struct S_MOVE {
         return move != other.move;
     }
     
-    // Static decoding function for compatibility
-    static void decode_move(int encoded, int& from, int& to, PieceType& promo) {
-        from = (encoded & MOVE_FROM_MASK) >> MOVE_FROM_SHIFT;
-        to = (encoded & MOVE_TO_MASK) >> MOVE_TO_SHIFT;
-        promo = PieceType((encoded & MOVE_PROMOTED_MASK) >> MOVE_PROMOTED_SHIFT);
-    }
+    // Static decoding function for compatibility - declaration only
+    static void decode_move(int encoded, int& from, int& to, PieceType& promo);
   
     // Allow assignment from int for test compatibility (assigns to move field)
     S_MOVE& operator=(int value) {
