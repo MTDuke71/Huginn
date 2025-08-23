@@ -66,4 +66,8 @@ All documentation in this project follows these standards:
 
 ## Recent Updates
 
-All documentation is actively maintained and reflects the current state of the chess engine implementation. Check git history for detailed change tracking.
+All documentation is actively maintained and reflects the current state of the chess engine implementation. 
+
+**Latest**: The main `huginn.exe` executable is now a complete UCI chess engine, ready for immediate use with chess GUIs like Arena, Fritz, and ChessBase.
+
+Check git history for detailed change tracking.
