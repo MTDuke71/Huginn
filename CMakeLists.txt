@@ -46,18 +46,13 @@ add_executable(huginn_tests
   test/test_incremental_updates.cpp # <-- incremental update performance tests
   test/test_zobrist_incremental.cpp # <-- zobrist incremental XOR update tests
   test/test_material_tracking.cpp   # <-- material score tracking tests
-  test/test_pawn_bitboard.cpp       # <-- combined pawn bitboard tests
   test/test_debug_validation.cpp    # <-- debug validation function tests
   test/test_fen_generation.cpp      # <-- FEN generation function tests
   test/test_sq_attacked.cpp         # <-- SqAttacked function tests
   test/test_sq_attacked_performance.cpp  # <-- SqAttacked performance tests
   test/test_s_move.cpp              # <-- S_MOVE structure tests
-  test/test_rook_movegen.cpp        # <-- rook move generation tests
-  test/test_bishop_queen_movegen.cpp # <-- bishop and queen move generation tests
-  test/test_king_movegen.cpp        # <-- king move generation tests
-  test/test_pawn_movegen.cpp        # <-- pawn move generation tests
-  test/test_comprehensive_pawn.cpp  # <-- comprehensive pawn functionality demo
-  test/test_all_piece_movegen.cpp   # <-- all piece move generation integration tests
+  test/test_piece_movegen.cpp       # <-- consolidated piece move generation tests
+  test/test_pawn_consolidated.cpp   # <-- consolidated pawn functionality tests
   test/test_castling.cpp            # <-- castling move generation tests
   test/test_legal_moves.cpp         # <-- legal move validation tests
   test/test_complete_movegen.cpp    # <-- complete move generation system demo
