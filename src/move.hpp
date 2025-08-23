@@ -112,9 +112,6 @@ struct S_MOVE {
     bool operator!=(const S_MOVE& other) const {
         return move != other.move;
     }
-    
-    // Static decoding function for compatibility - declaration only
-    static void decode_move(int encoded, int& from, int& to, PieceType& promo);
   
     // Allow assignment from int for test compatibility (assigns to move field)
     S_MOVE& operator=(int value) {
