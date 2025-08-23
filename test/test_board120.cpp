@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "board120.hpp"    // core: File, Rank, sq(), is_playable, file_of, rank_of, deltas, MAILBOX_MAPS
-#include "squares120.hpp"  // extras: Square120::E4, Playable120 (no redefs)
+#include "squares120.hpp"  // extras: Square120::E4 (no redefs)
 #include "position.hpp"
 
 TEST(Board120, SqCalculation) {
@@ -103,15 +103,6 @@ TEST(Board120, MailboxMapsRoundTrip64) {
     // check a couple offboard cells
     EXPECT_EQ(MAILBOX_MAPS.to64[0], -1);
     EXPECT_EQ(MAILBOX_MAPS.to64[119], -1);
-}
-
-TEST(Board120, IteratePlayable120) {
-    int count = 0;
-    for (int s : Playable120{}) {
-        ASSERT_TRUE(is_playable(s));
-        ++count;
-    }
-    EXPECT_EQ(count, 64);
 }
 
 // Helper for mailbox-120 raw indexing:

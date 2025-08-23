@@ -55,12 +55,3 @@ constexpr inline std::array<int,64> ALL120 = []{
             a[size_t(k++)] = sq(static_cast<File>(f), static_cast<Rank>(r));
     return a;
 }();
-
-// Optional: iterate all playable 120 squares
-struct Playable120 {
-    struct It { int i; int operator*() const { return ALL120[size_t(i)]; }
-                bool operator!=(const It& o) const { return i!=o.i; }
-                void operator++(){ ++i; } };
-    It begin() const { return {0}; }
-    It end()   const { return {64}; }
-};

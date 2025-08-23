@@ -167,7 +167,7 @@
 - **Square Operations:**  
   - Use `sq(File, Rank)`, algebraic conversion, FEN char printing
 - **Iteration:**  
-  - Iterate playable squares: `for (int s : Playable120{})`
+  - Iterate playable squares: `for (int sq = 21; sq <= 98; ++sq) if (is_playable(sq))`
   - Iterate pieces by type: `for (int i = 0; i < pos.pCount[color][type]; ++i)`
 - **Mapping:**  
   - 64↔120 translation: `MAILBOX_MAPS.to120`, `MAILBOX_MAPS.to64`
@@ -194,9 +194,10 @@
 - **Named Constants:**  
   - `Square120::A1`, `Square120::E4`, etc. (all 64 squares)
 - **Arrays:**  
-  - `ALL120[64]` — all playable 120 indices
+  - `ALL120[64]` — all playable 120 indices (prefer piece lists for performance)
 - **Iteration:**  
-  - `Playable120` — range-based for over all playable squares
+  - Use piece lists: `pos.pList[color][type][i]` for performance-critical code
+  - Use direct loops: `for (int sq = 21; sq <= 98; ++sq) if (is_playable(sq))` for full-board operations
 
 ---
 
