@@ -87,7 +87,7 @@ add_custom_target(check
 
 # ---- Perft Suite Demo ----
 add_executable(perft_suite_demo
-  debug/perft_suite_demo.cpp
+  perft/perft_suite_demo.cpp
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions

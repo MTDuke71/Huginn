@@ -164,6 +164,8 @@ int main(int argc, char* argv[]) {
     // Default parameters
     int max_depth = 6;
     std::string epd_file = "test/perftsuite.epd";
+    bool quick_test = false;
+    bool interactive_mode = true;
     
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -172,19 +174,51 @@ int main(int argc, char* argv[]) {
             max_depth = std::stoi(argv[++i]);
         } else if (arg == "--file" && i + 1 < argc) {
             epd_file = argv[++i];
+        } else if (arg == "--quick") {
+            quick_test = true;
+            interactive_mode = false;
+        } else if (arg == "--full") {
+            quick_test = false;
+            interactive_mode = false;
         } else if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
             std::cout << "Options:" << std::endl;
             std::cout << "  --depth <n>     Maximum depth to test (default: 6)" << std::endl;
             std::cout << "  --file <path>   Path to EPD file (default: test/perftsuite.epd)" << std::endl;
+            std::cout << "  --quick         Run quick test (first 2 positions only)" << std::endl;
+            std::cout << "  --full          Run full test suite (all positions)" << std::endl;
             std::cout << "  --help, -h      Show this help message" << std::endl;
             return 0;
         }
     }
     
+    // Interactive mode: ask user what they want to run
+    if (interactive_mode) {
+        std::cout << "Choose test mode:" << std::endl;
+        std::cout << "1. Quick Test (first 2 positions - fast verification)" << std::endl;
+        std::cout << "2. Full Test Suite (all positions - comprehensive)" << std::endl;
+        std::cout << "Enter your choice (1 or 2): ";
+        
+        int choice;
+        std::cin >> choice;
+        
+        if (choice == 1) {
+            quick_test = true;
+            std::cout << "\n🚀 Running Quick Test (first 2 positions)..." << std::endl;
+        } else if (choice == 2) {
+            quick_test = false;
+            std::cout << "\n🔍 Running Full Test Suite (all positions)..." << std::endl;
+        } else {
+            std::cout << "\nInvalid choice. Defaulting to Quick Test." << std::endl;
+            quick_test = true;
+        }
+        std::cout << std::endl;
+    }
+    
     std::cout << "Configuration:" << std::endl;
     std::cout << "  EPD file: " << epd_file << std::endl;
     std::cout << "  Max depth: " << max_depth << std::endl;
+    std::cout << "  Test mode: " << (quick_test ? "Quick (first 2 positions)" : "Full (all positions)") << std::endl;
     std::cout << std::endl;
     
     // Load test cases
@@ -196,11 +230,19 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "Loaded " << test_cases.size() << " test positions" << std::endl;
+    
+    // Determine how many positions to test
+    size_t positions_to_test = quick_test ? std::min(size_t(2), test_cases.size()) : test_cases.size();
+    
+    if (quick_test && test_cases.size() > 2) {
+        std::cout << "Quick mode: Testing only the first " << positions_to_test << " positions" << std::endl;
+    }
     std::cout << std::endl;
     
-    // Count total expected tests
+    // Count total expected tests for the positions we'll actually test
     int total_expected_tests = 0;
-    for (const auto& test_case : test_cases) {
+    for (size_t i = 0; i < positions_to_test; i++) {
+        const auto& test_case = test_cases[i];
         for (const auto& expected : test_case.expected_results) {
             if (expected.first <= max_depth) {
                 total_expected_tests++;
@@ -217,9 +259,9 @@ int main(int argc, char* argv[]) {
     int total_tests = 0;
     int failed_tests = 0;
     
-    // Test each position
-    for (size_t i = 0; i < test_cases.size(); i++) {
-        std::cout << "[" << (i + 1) << "/" << test_cases.size() << "] ";
+    // Test each position (limited by quick_test mode)
+    for (size_t i = 0; i < positions_to_test; i++) {
+        std::cout << "[" << (i + 1) << "/" << positions_to_test << "] ";
         bool should_stop = test_position(test_cases[i], max_depth, total_tests, failed_tests);
         if (should_stop) {
             std::cout << "\nStopped testing at position " << (i + 1) << " due to failure." << std::endl;
@@ -233,6 +275,8 @@ int main(int argc, char* argv[]) {
     // Summary
     std::cout << "========================================" << std::endl;
     std::cout << "=== FINAL RESULTS ===" << std::endl;
+    std::cout << "Test mode: " << (quick_test ? "Quick (first 2 positions)" : "Full (all positions)") << std::endl;
+    std::cout << "Positions tested: " << positions_to_test << " of " << test_cases.size() << std::endl;
     std::cout << "Total tests run: " << total_tests << std::endl;
     std::cout << "Tests passed: " << (total_tests - failed_tests) << std::endl;
     std::cout << "Tests failed: " << failed_tests << std::endl;
