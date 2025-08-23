@@ -22,6 +22,8 @@ add_executable(huginn
   src/debug.cpp          # <-- debug and validation functions
   src/attack_detection.cpp # <-- attack detection implementation
   src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
@@ -68,6 +70,8 @@ add_executable(huginn_tests
   src/movegen_enhanced.cpp # <-- enhanced move generation for tests
   src/attack_detection.cpp # <-- attack detection implementation for tests
   src/move.cpp           # <-- move structure implementation for tests
+  src/board120.cpp       # <-- coordinate utilities implementation for tests
+  src/chess_types.cpp    # <-- piece type utilities implementation for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -96,6 +100,8 @@ add_executable(perft_suite_demo
   src/movegen_enhanced.cpp # <-- enhanced move generation system
   src/attack_detection.cpp # <-- attack detection implementation
   src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
 )
 target_include_directories(perft_suite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(perft_suite_demo PRIVATE cxx_std_17)
