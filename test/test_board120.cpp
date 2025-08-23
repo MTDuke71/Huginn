@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "board120.hpp"    // core: File, Rank, sq(), is_playable, file_of, rank_of, deltas, MAILBOX_MAPS
-#include "squares120.hpp"  // extras file (now mostly empty after cleanup)
 #include "position.hpp"
 
 TEST(Board120, SqCalculation) {
