@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include "../src/move.hpp"
-#include "../src/board120.hpp"
-#include "../src/chess_types.hpp"
+#include "move.hpp"
+#include "board120.hpp"
+#include "chess_types.hpp"
 
 class S_MoveTest : public ::testing::Test {
 protected:

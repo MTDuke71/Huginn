@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "../src/position.hpp"
-#include "../src/zobrist.hpp"
-#include "../src/chess_types.hpp"
-#include "../src/init.hpp"
+#include "position.hpp"
+#include "zobrist.hpp"
+#include "chess_types.hpp"
+#include "init.hpp"
 
 class ZobristIncrementalTest : public ::testing::Test {
 protected:

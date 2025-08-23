@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include "../src/position.hpp"
-#include "../src/movegen_enhanced.hpp"
-#include "../src/board120.hpp"
+#include "position.hpp"
+#include "movegen_enhanced.hpp"
+#include "board120.hpp"
 
 class CastlingTest : public ::testing::Test {
 protected:

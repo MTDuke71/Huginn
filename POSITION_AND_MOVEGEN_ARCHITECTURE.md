@@ -345,26 +345,24 @@ void generate_sliding_moves(const Position& pos, S_MOVELIST& moves,
 #### 4. Legal Move Filtering
 
 ```cpp
-S_MOVELIST generate_legal_moves_enhanced(const Position& pos) {
+void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& legal_moves) {
     S_MOVELIST pseudo_legal;
-    S_MOVELIST legal_moves;
-    
     generate_all_moves(pos, pseudo_legal);
     
-    for (int i = 0; i < pseudo_legal.count; ++i) {
+    legal_moves.clear();
+    
+    for (int i = 0; i < pseudo_legal.size(); ++i) {
         Position temp_pos = pos;
         
-        if (temp_pos.make_move_with_undo(pseudo_legal.moves[i])) {
+        if (temp_pos.make_move_with_undo(pseudo_legal[i])) {
             // Move is legal if king is not in check after move
             if (!SqAttacked(temp_pos.king_sq[int(pos.side_to_move)], 
-                           !pos.side_to_move, temp_pos)) {
-                legal_moves.moves[legal_moves.count++] = pseudo_legal.moves[i];
+                           temp_pos, !pos.side_to_move)) {
+                legal_moves.add_quiet_move(pseudo_legal[i]);
             }
             temp_pos.undo_move();
         }
     }
-    
-    return legal_moves;
 }
 ```
 
@@ -522,16 +520,17 @@ void analyze_position() {
     S_MOVELIST moves;
     generate_all_moves(pos, moves);
     
-    std::cout << "Pseudo-legal moves: " << moves.count << std::endl;
+    std::cout << "Pseudo-legal moves: " << moves.size() << std::endl;
     
     // Generate only legal moves
-    S_MOVELIST legal = generate_legal_moves_enhanced(pos);
-    std::cout << "Legal moves: " << legal.count << std::endl;
+    S_MOVELIST legal;
+    generate_legal_moves_enhanced(pos, legal);
+    std::cout << "Legal moves: " << legal.size() << std::endl;
     
     // Analyze move types
     int quiet = 0, captures = 0, promotions = 0, castles = 0;
-    for (int i = 0; i < legal.count; ++i) {
-        const S_MOVE& move = legal.moves[i];
+    for (int i = 0; i < legal.size(); ++i) {
+        const S_MOVE& move = legal[i];
         if (move.is_castle()) castles++;
         else if (move.is_promotion()) promotions++;
         else if (move.is_capture()) captures++;

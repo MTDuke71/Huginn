@@ -3,11 +3,11 @@
 #include <random>
 #include <iostream>
 #include <iomanip>
-#include "../src/position.hpp"
-#include "../src/attack_detection.hpp"
-#include "../src/board120.hpp"
-#include "../src/chess_types.hpp"
-#include "../src/squares120.hpp"
+#include "position.hpp"
+#include "attack_detection.hpp"
+#include "board120.hpp"
+#include "chess_types.hpp"
+#include "squares120.hpp"
 
 class SqAttackedPerformanceTest : public ::testing::Test {
 protected:

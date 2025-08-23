@@ -226,15 +226,14 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
     list.clear();
     
     // Filter out illegal moves (those that leave king in check)
-    for (int i = 0; i < pseudo_moves.count; ++i) {
+    for (int i = 0; i < pseudo_moves.size(); ++i) {
         Position temp_pos = pos;  // Copy position
         temp_pos.make_move_with_undo(pseudo_moves[i]);
         
         // Check if our king is still in check after the move
         Color us = pos.side_to_move;
         if (!SqAttacked(temp_pos.king_sq[int(us)], temp_pos, !us)) {
-            list.moves[list.count] = pseudo_moves[i];
-            list.count++;
+            list.add_quiet_move(pseudo_moves[i]);  // Use proper API
         }
         temp_pos.undo_move();
     }

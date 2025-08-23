@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include "../src/position.hpp"
-#include "../src/attack_detection.hpp"
-#include "../src/board120.hpp"
-#include "../src/chess_types.hpp"
-#include "../src/squares120.hpp"
+#include "position.hpp"
+#include "attack_detection.hpp"
+#include "board120.hpp"
+#include "chess_types.hpp"
+#include "squares120.hpp"
 
 class SqAttackedTest : public ::testing::Test {
 protected:

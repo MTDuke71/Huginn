@@ -22,13 +22,13 @@ TEST(PawnMovegen, PawnForwardMoves) {
     int pawn_moves = 0;
     bool found_single_move = false, found_double_move = false;
     
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            if (moves.moves[i].get_to() == sq(File::E, Rank::R3)) {
+            if (moves[i].get_to() == sq(File::E, Rank::R3)) {
                 found_single_move = true;
             }
-            if (moves.moves[i].get_to() == sq(File::E, Rank::R4) && moves.moves[i].is_pawn_start()) {
+            if (moves[i].get_to() == sq(File::E, Rank::R4) && moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -59,13 +59,13 @@ TEST(PawnMovegen, PawnCaptures) {
     int capture_moves = 0;
     bool found_left_capture = false, found_right_capture = false, found_forward = false;
     
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
-            if (moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+            if (moves[i].is_capture()) {
                 capture_moves++;
-                if (moves.moves[i].get_to() == sq(File::D, Rank::R5)) found_left_capture = true;
-                if (moves.moves[i].get_to() == sq(File::F, Rank::R5)) found_right_capture = true;
-            } else if (moves.moves[i].get_to() == sq(File::E, Rank::R5)) {
+                if (moves[i].get_to() == sq(File::D, Rank::R5)) found_left_capture = true;
+                if (moves[i].get_to() == sq(File::F, Rank::R5)) found_right_capture = true;
+            } else if (moves[i].get_to() == sq(File::E, Rank::R5)) {
                 found_forward = true;
             }
         }
@@ -91,8 +91,8 @@ TEST(PawnMovegen, PawnPromotions) {
     
     // Count promotion moves (should be 4: Queen, Rook, Bishop, Knight)
     int promotion_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn && moves.moves[i].is_promotion()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn && moves[i].is_promotion()) {
             promotion_moves++;
         }
     }
@@ -117,9 +117,9 @@ TEST(PawnMovegen, PawnCapturePromotions) {
     
     // Count capture-promotion moves
     int capture_promotions = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn && 
-            moves.moves[i].is_promotion() && moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn && 
+            moves[i].is_promotion() && moves[i].is_capture()) {
             capture_promotions++;
         }
     }
@@ -144,11 +144,11 @@ TEST(PawnMovegen, EnPassantCaptures) {
     
     // Look for en passant move
     bool found_en_passant = false;
-    for (int i = 0; i < moves.count; i++) {
-        if (moves.moves[i].is_en_passant()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (moves[i].is_en_passant()) {
             found_en_passant = true;
-            EXPECT_EQ(moves.moves[i].get_from(), sq(File::E, Rank::R5));
-            EXPECT_EQ(moves.moves[i].get_to(), sq(File::D, Rank::R6));
+            EXPECT_EQ(moves[i].get_from(), sq(File::E, Rank::R5));
+            EXPECT_EQ(moves[i].get_to(), sq(File::D, Rank::R6));
             break;
         }
     }
@@ -172,13 +172,13 @@ TEST(PawnMovegen, BlackPawnMoves) {
     int pawn_moves = 0;
     bool found_single_move = false, found_double_move = false;
     
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::BlackPawn) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::BlackPawn) {
             pawn_moves++;
-            if (moves.moves[i].get_to() == sq(File::E, Rank::R6)) {
+            if (moves[i].get_to() == sq(File::E, Rank::R6)) {
                 found_single_move = true;
             }
-            if (moves.moves[i].get_to() == sq(File::E, Rank::R5) && moves.moves[i].is_pawn_start()) {
+            if (moves[i].get_to() == sq(File::E, Rank::R5) && moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -203,8 +203,8 @@ TEST(PawnMovegen, BlackPawnPromotions) {
     
     // Count promotion moves
     int promotion_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::BlackPawn && moves.moves[i].is_promotion()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::BlackPawn && moves[i].is_promotion()) {
             promotion_moves++;
         }
     }
@@ -228,8 +228,8 @@ TEST(PawnMovegen, PawnBlockedByOwnPiece) {
     
     // Pawn should have no moves (blocked)
     int pawn_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
         }
     }
@@ -255,10 +255,10 @@ TEST(PawnMovegen, PawnCantCaptureOwnPieces) {
     // Pawn should only have forward move, no captures
     int pawn_moves = 0;
     int pawn_captures = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            if (moves.moves[i].is_capture()) {
+            if (moves[i].is_capture()) {
                 pawn_captures++;
             }
         }
@@ -417,15 +417,15 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     
     int normal_moves = 0, double_moves = 0, captures = 0, promotions = 0, en_passant = 0;
     
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhitePawn) {
-            if (moves.moves[i].is_en_passant()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+            if (moves[i].is_en_passant()) {
                 en_passant++;
-            } else if (moves.moves[i].is_promotion()) {
+            } else if (moves[i].is_promotion()) {
                 promotions++;
-            } else if (moves.moves[i].is_capture()) {
+            } else if (moves[i].is_capture()) {
                 captures++;
-            } else if (moves.moves[i].is_pawn_start()) {
+            } else if (moves[i].is_pawn_start()) {
                 double_moves++;
             } else {
                 normal_moves++;
@@ -456,8 +456,8 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     // In starting position, only pawns and knights can move
     int pawn_moves = 0, knight_moves = 0;
     
-    for (int i = 0; i < moves.count; i++) {
-        Piece piece = pos.at(moves.moves[i].get_from());
+    for (int i = 0; i < moves.size(); i++) {
+        Piece piece = pos.at(moves[i].get_from());
         if (piece == Piece::WhitePawn) {
             pawn_moves++;
         } else if (piece == Piece::WhiteKnight) {
@@ -467,5 +467,5 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     
     EXPECT_EQ(pawn_moves, 16);  // 8 pawns × 2 moves each
     EXPECT_EQ(knight_moves, 4); // 2 knights × 2 moves each
-    EXPECT_EQ(moves.count, 20); // Total legal moves in starting position
+    EXPECT_EQ(moves.size(), 20); // Total legal moves in starting position
 }

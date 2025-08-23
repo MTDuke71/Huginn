@@ -2,9 +2,9 @@
 #include <sstream>
 #include <iostream>
 #include <functional>
-#include "../src/position.hpp"
-#include "../src/board.hpp"
-#include "../src/chess_types.hpp"
+#include "position.hpp"
+#include "board.hpp"
+#include "chess_types.hpp"
 
 class PrintPositionTest : public ::testing::Test {
 protected:

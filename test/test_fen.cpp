@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/position.hpp"
-#include "../src/chess_types.hpp"
+#include "position.hpp"
+#include "chess_types.hpp"
 
 class FENTest : public ::testing::Test {
 protected:

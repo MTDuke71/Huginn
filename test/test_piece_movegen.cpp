@@ -20,8 +20,8 @@ TEST(RookMoveGen, SingleRookCenter) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int rook_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteRook)
             ++rook_moves;
     }
     // Should be 14 (7 in each direction, minus the square itself)
@@ -39,8 +39,8 @@ TEST(RookMoveGen, RookBlockedByOwnPiece) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int rook_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteRook)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteRook)
             ++rook_moves;
     }
     // Should be reduced due to blocking pieces
@@ -59,10 +59,10 @@ TEST(RookMoveGen, RookCapturesOpponent) {
     
     // Look for capture move
     bool found_capture = false;
-    for (int i = 0; i < moves.count; i++) {
-        if (moves.moves[i].get_from() == sq(File::D, Rank::R4) && 
-            moves.moves[i].get_to() == sq(File::D, Rank::R7) &&
-            moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (moves[i].get_from() == sq(File::D, Rank::R4) && 
+            moves[i].get_to() == sq(File::D, Rank::R7) &&
+            moves[i].is_capture()) {
             found_capture = true;
             break;
         }
@@ -88,8 +88,8 @@ TEST(BishopMoveGen, SingleBishopCenter) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int bishop_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteBishop)
             ++bishop_moves;
     }
     // Should be 13 (bishop on d4 can move to 13 diagonal squares)
@@ -106,8 +106,8 @@ TEST(BishopMoveGen, BishopBlockedByOwnPiece) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int bishop_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteBishop)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteBishop)
             ++bishop_moves;
     }
     EXPECT_LT(bishop_moves, 13);
@@ -124,10 +124,10 @@ TEST(BishopMoveGen, BishopCapturesOpponent) {
     generate_all_moves(pos, moves);
     
     bool found_capture = false;
-    for (int i = 0; i < moves.count; i++) {
-        if (moves.moves[i].get_from() == sq(File::D, Rank::R4) && 
-            moves.moves[i].get_to() == sq(File::F, Rank::R6) &&
-            moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (moves[i].get_from() == sq(File::D, Rank::R4) && 
+            moves[i].get_to() == sq(File::F, Rank::R6) &&
+            moves[i].is_capture()) {
             found_capture = true;
             break;
         }
@@ -149,8 +149,8 @@ TEST(QueenMoveGen, SingleQueenCenter) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int queen_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteQueen)
             ++queen_moves;
     }
     // Should be 27 (rook moves + bishop moves)
@@ -168,8 +168,8 @@ TEST(QueenMoveGen, QueenBlockedByOwnPiece) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     int queen_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteQueen)
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteQueen)
             ++queen_moves;
     }
     EXPECT_LT(queen_moves, 27);
@@ -187,9 +187,9 @@ TEST(QueenMoveGen, QueenCapturesOpponent) {
     generate_all_moves(pos, moves);
     
     int capture_count = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (moves.moves[i].get_from() == sq(File::D, Rank::R4) && 
-            moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (moves[i].get_from() == sq(File::D, Rank::R4) && 
+            moves[i].is_capture()) {
             capture_count++;
         }
     }
@@ -211,8 +211,8 @@ TEST(KingMoveGen, KingMovesFromCenter) {
     generate_all_moves(pos, moves);
     
     int king_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -232,8 +232,8 @@ TEST(KingMoveGen, KingMovesFromCorner) {
     generate_all_moves(pos, moves);
     
     int king_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -255,8 +255,8 @@ TEST(KingMoveGen, KingMovesBlockedByOwnPieces) {
     generate_all_moves(pos, moves);
     
     int king_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -278,9 +278,9 @@ TEST(KingMoveGen, KingCapturesEnemyPieces) {
     generate_all_moves(pos, moves);
     
     int king_captures = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing && 
-            moves.moves[i].is_capture()) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing && 
+            moves[i].is_capture()) {
             king_captures++;
         }
     }
@@ -299,8 +299,8 @@ TEST(KingMoveGen, KingMovesFromEdge) {
     generate_all_moves(pos, moves);
     
     int king_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -322,8 +322,8 @@ TEST(KingMoveGen, BothKingsOnBoard) {
     generate_all_moves(pos, moves);
     
     int king_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        if (pos.at(moves.moves[i].get_from()) == Piece::WhiteKing) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (pos.at(moves[i].get_from()) == Piece::WhiteKing) {
             king_moves++;
         }
     }
@@ -350,8 +350,8 @@ TEST(SlidingPieceMoveGen, AllSlidingPiecesTogether) {
     generate_all_moves(pos, moves);
     
     int sliding_moves = 0;
-    for (int i = 0; i < moves.count; i++) {
-        Piece piece = pos.at(moves.moves[i].get_from());
+    for (int i = 0; i < moves.size(); i++) {
+        Piece piece = pos.at(moves[i].get_from());
         if (piece == Piece::WhiteQueen || piece == Piece::WhiteRook || piece == Piece::WhiteBishop) {
             sliding_moves++;
         }
@@ -384,8 +384,8 @@ TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {
     // Count moves for each piece type
     int king_moves = 0, queen_moves = 0, rook_moves = 0, bishop_moves = 0, knight_moves = 0;
     
-    for (int i = 0; i < moves.count; i++) {
-        Piece piece = pos.at(moves.moves[i].get_from());
+    for (int i = 0; i < moves.size(); i++) {
+        Piece piece = pos.at(moves[i].get_from());
         switch (piece) {
             case Piece::WhiteKing: king_moves++; break;
             case Piece::WhiteQueen: queen_moves++; break;
@@ -401,7 +401,7 @@ TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {
               << ", Rook: " << rook_moves
               << ", Bishop: " << bishop_moves 
               << ", Knight: " << knight_moves 
-              << ", Total: " << moves.count << std::endl;
+              << ", Total: " << moves.size() << std::endl;
     
     EXPECT_GT(king_moves, 0);
     EXPECT_GT(queen_moves, 0);
@@ -420,5 +420,5 @@ TEST(AllPieceMoveGen, KingMoveCountCorrect) {
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
     
-    EXPECT_EQ(moves.count, 8);
+    EXPECT_EQ(moves.size(), 8);
 }
