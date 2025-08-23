@@ -60,6 +60,8 @@ All documentation in this project follows these standards:
 - **Cross-references** between related documents
 - **Update tracking** with dates and versions
 
+**📝 Note for Contributors**: All new .md documentation files should be created in the `docs/` directory to maintain project organization.
+
 ## Recent Updates
 
 All documentation is actively maintained and reflects the current state of the chess engine implementation. Check git history for detailed change tracking.
