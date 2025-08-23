@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "board120.hpp"    // core: File, Rank, sq(), is_playable, file_of, rank_of, deltas, MAILBOX_MAPS
-#include "squares120.hpp"  // extras: Square120::E4 (no redefs)
+#include "squares120.hpp"  // extras file (now mostly empty after cleanup)
 #include "position.hpp"
 
 TEST(Board120, SqCalculation) {
@@ -8,7 +8,7 @@ TEST(Board120, SqCalculation) {
     EXPECT_EQ(sq(File::H, Rank::R1), 28);
     EXPECT_EQ(sq(File::A, Rank::R8), 91);
     EXPECT_EQ(sq(File::H, Rank::R8), 98);
-    EXPECT_EQ(Square120::E4, sq(File::E, Rank::R4));  // named constant aligns
+    EXPECT_EQ(sq(File::E, Rank::R4), 55);  // E4 calculation test
 }
 
 TEST(Board120, PlayableAndOffboardFrames) {

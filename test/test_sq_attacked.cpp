@@ -3,7 +3,6 @@
 #include "attack_detection.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
-#include "squares120.hpp"
 
 class SqAttackedTest : public ::testing::Test {
 protected:

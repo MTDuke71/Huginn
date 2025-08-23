@@ -6,7 +6,6 @@
 
 #include "chess_types.hpp"  // Piece, Color, PieceType, helpers
 #include "board120.hpp"     // File, Rank, sq(), is_playable, etc.
-#include "squares120.hpp" // MailboxMaps, ALL64, ALL120, etc.
 #include "position.hpp"
 #include "zobrist.hpp"
 #include "init.hpp"         // Engine initialization

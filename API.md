@@ -189,12 +189,10 @@
 
 ---
 
-## squares120.hpp — Square Constants & Iteration
+## squares120.hpp — Deprecated Header
 
-- **Named Constants:**  
-  - `Square120::A1`, `Square120::E4`, etc. (all 64 squares)
-- **Arrays:**  
-  - `ALL120[64]` — all playable 120 indices (prefer piece lists for performance)
+- **Status:** This header was cleaned up and most contents removed as unused code
+- **Recommendation:** Use `sq(File, Rank)` directly instead of named constants
 - **Iteration:**  
   - Use piece lists: `pos.pList[color][type][i]` for performance-critical code
   - Use direct loops: `for (int sq = 21; sq <= 98; ++sq) if (is_playable(sq))` for full-board operations
