@@ -91,6 +91,12 @@ constexpr inline bool is_playable(int sq120) {
     if (sq120 == int(Square::Offboard) || sq120 < 0 || sq120 >= 120) return false;
     return FILE_RANK_LOOKUPS.playable[sq120];
 }
+
+// Macro version for performance-critical code (eliminates function call overhead)
+// Use this in tight loops like move generation for sliding pieces
+#define IS_PLAYABLE(sq120) \
+    ((sq120) != int(Square::Offboard) && (sq120) >= 0 && (sq120) < 120 && FILE_RANK_LOOKUPS.playable[sq120])
+
 constexpr inline bool is_offboard(int sq120) { return !is_playable(sq120); }
 
 // Algebraic <-> square (e.g., "e4") - declarations moved to .cpp for non-critical functions

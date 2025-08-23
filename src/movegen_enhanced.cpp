@@ -35,7 +35,7 @@ void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us) {
         
         // Single push
         int to = from + direction;
-        if (is_playable(to) && pos.at(to) == Piece::None) {
+        if (IS_PLAYABLE(to) && pos.at(to) == Piece::None) {
             if (rank_of(to) == promo_rank) {
                 // Promotions
                 list.add_promotion_move(make_promotion(from, to, PieceType::Queen));
@@ -48,7 +48,7 @@ void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us) {
                 // Double push from starting position
                 if (rank_of(from) == start_rank) {
                     int double_to = to + direction;
-                    if (is_playable(double_to) && pos.at(double_to) == Piece::None) {
+                    if (IS_PLAYABLE(double_to) && pos.at(double_to) == Piece::None) {
                         list.add_quiet_move(make_pawn_start(from, double_to));
                     }
                 }
@@ -58,7 +58,7 @@ void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us) {
         // Captures (diagonals)
         for (int capture_dir : {direction + WEST, direction + EAST}) {
             int capture_to = from + capture_dir;
-            if (is_playable(capture_to)) {
+            if (IS_PLAYABLE(capture_to)) {
                 Piece target = pos.at(capture_to);
                 
                 if (target != Piece::None && color_of(target) == !us) {
@@ -90,7 +90,7 @@ void generate_knight_moves(const Position& pos, S_MOVELIST& list, Color us) {
         
         for (int delta : KNIGHT_DELTAS) {
             int to = from + delta;
-            if (is_playable(to)) {
+            if (IS_PLAYABLE(to)) {
                 Piece target = pos.at(to);
                 
                 if (target == Piece::None) {
@@ -113,7 +113,7 @@ void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, Pie
         for (int d = 0; d < num_directions; ++d) {
             int direction = directions[d];
             
-            for (int to = from + direction; is_playable(to); to += direction) {
+            for (int to = from + direction; IS_PLAYABLE(to); to += direction) {
                 Piece target = pos.at(to);
                 
                 if (target == Piece::None) {
@@ -151,7 +151,7 @@ void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us) {
     // Regular king moves
     for (int delta : KING_DELTAS) {
         int to = king_sq + delta;
-        if (is_playable(to)) {
+        if (IS_PLAYABLE(to)) {
             Piece target = pos.at(to);
             
             if (target == Piece::None) {
