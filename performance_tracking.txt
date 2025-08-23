@@ -3,3 +3,4 @@
 
 2025-08-23, 486b47b, IS_PLAYABLE macro optimization in move generation, 71695
 2025-08-23, 486b47b, IS_PLAYABLE macro baseline test, 71610
+2025-08-23, b69c34a, Verification run after tracking system setup, 72013
