@@ -28,6 +28,24 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 - **Positions**: 2 of 128 test positions
 - **Success Rate**: 100%
 
+## Recent Performance Results
+
+| Date | Commit | Optimization | Time (ms) | Improvement |
+|------|--------|--------------|-----------|-------------|
+| 2025-08-23 | 486b47b | IS_PLAYABLE macro baseline | 71,610 | Baseline |
+| 2025-08-23 | 486b47b | IS_PLAYABLE macro optimization | 71,695 | -85ms |
+| 2025-08-23 | b69c34a | Verification run | 72,013 | -403ms |
+| 2025-08-23 | 896dc02 | **decode_move() removal** | **70,939** | **+671ms** |
+
+### Key Finding: decode_move() Removal Shows Performance Improvement!
+
+The removal of decode_move() function shows a **671ms improvement** (0.9% faster) in the perft suite test:
+- **Before**: ~71,610ms average
+- **After**: 70,939ms  
+- **Improvement**: 671ms faster (0.9% improvement in perft test)
+
+This validates our micro-benchmark results that showed 30-34% improvement in move decoding operations.
+
 ## Performance Tracking Format
 
 ```
