@@ -22,6 +22,7 @@ add_executable(huginn
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
   src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/parallel_movegen.cpp # <-- parallel move generation implementation
   src/attack_detection.cpp # <-- attack detection implementation
   src/move.cpp           # <-- move structure implementation
   src/board120.cpp       # <-- coordinate utilities implementation
@@ -29,6 +30,8 @@ add_executable(huginn
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
+find_package(Threads REQUIRED)
+target_link_libraries(huginn PRIVATE Threads::Threads)
 
 # ---- UCI Interface ----
 add_executable(huginn_uci
@@ -41,6 +44,7 @@ add_executable(huginn_uci
   src/zobrist.cpp        # <-- zobrist implementation
   src/debug.cpp          # <-- debug and validation functions
   src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/parallel_movegen.cpp # <-- parallel move generation implementation
   src/attack_detection.cpp # <-- attack detection implementation
   src/move.cpp           # <-- move structure implementation
   src/board120.cpp       # <-- coordinate utilities implementation
@@ -48,10 +52,33 @@ add_executable(huginn_uci
 )
 target_include_directories(huginn_uci PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn_uci PRIVATE cxx_std_17)
+target_link_libraries(huginn_uci PRIVATE Threads::Threads)
 
 # ---- Position Display Demo ----
 add_executable(huginn_demo
   src/demo_main.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/parallel_movegen.cpp # <-- parallel move generation implementation
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+)
+target_include_directories(huginn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(huginn_demo PRIVATE cxx_std_17)
+target_link_libraries(huginn_demo PRIVATE Threads::Threads)
+
+# ---- Parallel Move Generation Benchmark ----
+add_executable(parallel_benchmark
+  src/parallel_movegen_benchmark.cpp
+  src/parallel_movegen.cpp # <-- parallel move generation implementation
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
   src/bitboard.cpp       # <-- bitboard implementation
   src/init.cpp           # <-- engine initialization
   src/board.cpp          # <-- board management functions
@@ -63,8 +90,9 @@ add_executable(huginn_demo
   src/board120.cpp       # <-- coordinate utilities implementation
   src/chess_types.cpp    # <-- piece type utilities implementation
 )
-target_include_directories(huginn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(huginn_demo PRIVATE cxx_std_17)
+target_include_directories(parallel_benchmark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(parallel_benchmark PRIVATE cxx_std_17)
+target_link_libraries(parallel_benchmark PRIVATE Threads::Threads)
 
 # ---- Tests ----
 find_package(GTest CONFIG REQUIRED)  # using MSYS2 packaged googletest
@@ -99,6 +127,7 @@ add_executable(huginn_tests
   test/test_legal_moves.cpp         # <-- legal move validation tests
   test/test_complete_movegen.cpp    # <-- complete move generation system demo
   test/test_enhanced_movegen.cpp    # <-- enhanced move generation system tests
+  test/test_parallel_movegen.cpp    # <-- parallel move generation tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
@@ -106,6 +135,7 @@ add_executable(huginn_tests
   src/zobrist.cpp        # <-- zobrist implementation for tests
   src/debug.cpp          # <-- debug and validation functions for tests
   src/movegen_enhanced.cpp # <-- enhanced move generation for tests
+  src/parallel_movegen.cpp # <-- parallel move generation for tests
   src/attack_detection.cpp # <-- attack detection implementation for tests
   src/move.cpp           # <-- move structure implementation for tests
   src/board120.cpp       # <-- coordinate utilities implementation for tests
@@ -113,7 +143,7 @@ add_executable(huginn_tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # keep test_main.cpp, so no gtest_main
+target_link_libraries(huginn_tests PRIVATE GTest::gtest Threads::Threads)  # keep test_main.cpp, so no gtest_main
 
 # Discover tests at test time (prevents NOT_BUILT placeholders)
 set(GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
