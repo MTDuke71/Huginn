@@ -10,7 +10,7 @@ protected:
     
     void SetUp() override {
         pos.reset();
-        moves.clear();
+        moves.count = 0;  // Direct clear - faster than function call
     }
     
     // Helper to count castling moves in move list

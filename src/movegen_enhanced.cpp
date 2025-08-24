@@ -7,7 +7,7 @@
 
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
-    list.clear();
+    list.count = 0;  // Direct clear - faster than function call
     
     Color us = pos.side_to_move;
     
@@ -223,7 +223,7 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
     S_MOVELIST pseudo_moves;
     generate_all_moves(pos, pseudo_moves);
     
-    list.clear();
+    list.count = 0;  // Direct clear - faster than function call
     
     // Filter out illegal moves (those that leave king in check)
     for (int i = 0; i < pseudo_moves.size(); ++i) {

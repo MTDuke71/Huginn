@@ -10,8 +10,8 @@ protected:
     
     void SetUp() override {
         pos.reset();
-        pseudo_moves.clear();
-        legal_moves.clear();
+        pseudo_moves.count = 0;  // Direct clear - faster than function call
+        legal_moves.count = 0;   // Direct clear - faster than function call
     }
     
     // Helper to count moves of a specific piece type

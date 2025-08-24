@@ -24,7 +24,7 @@ private:
         bool completed;
         
         PieceThreadData() : pos(nullptr), us(Color::White), completed(false) {
-            moves.clear();
+            moves.count = 0;  // Direct clear - faster than function call
         }
     };
     

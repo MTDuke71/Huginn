@@ -12,10 +12,10 @@ protected:
     
     void SetUp() override {
         pos.reset();
-        sequential_pseudo.clear();
-        parallel_pseudo.clear();
-        sequential_legal.clear();
-        parallel_legal.clear();
+        sequential_pseudo.count = 0;  // Direct clear - faster than function call
+        parallel_pseudo.count = 0;    // Direct clear - faster than function call
+        sequential_legal.count = 0;   // Direct clear - faster than function call
+        parallel_legal.count = 0;     // Direct clear - faster than function call
         
         // Configure parallel move generation for testing
         ParallelConfig::auto_configure();

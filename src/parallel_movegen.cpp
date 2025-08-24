@@ -37,7 +37,7 @@ int ParallelMoveGenerator::get_optimal_thread_count() {
 }
 
 void ParallelMoveGenerator::generate_all_moves_parallel(const Position& pos, S_MOVELIST& list) {
-    list.clear();
+    list.count = 0;  // Direct clear - faster than function call
     
     // Check if parallel generation is beneficial
     if (!ParallelConfig::use_parallel_generation || get_optimal_thread_count() < 2) {
@@ -94,7 +94,7 @@ void ParallelMoveGenerator::generate_legal_moves_parallel(const Position& pos, S
         generate_all_moves(pos, pseudo_moves);
     }
     
-    list.clear();
+    list.count = 0;  // Direct clear - faster than function call
     
     // Check if parallel legal checking is beneficial
     if (!ParallelConfig::use_parallel_legal || 
@@ -224,7 +224,7 @@ void ParallelMoveGenerator::check_legality_worker(LegalityThreadData* data) {
 }
 
 void ParallelMoveGenerator::merge_move_lists(S_MOVELIST& target, const std::vector<S_MOVELIST>& sources) {
-    target.clear();
+    target.count = 0;  // Direct clear - faster than function call
     
     for (const auto& source : sources) {
         for (int i = 0; i < source.count; ++i) {
