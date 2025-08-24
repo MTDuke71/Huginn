@@ -19,6 +19,7 @@ This directory contains all documentation for the Huginn chess engine project.
 - [`SQATTACKED_PERFORMANCE.md`](SQATTACKED_PERFORMANCE.md) - Square attack performance analysis
 - [`MOVE_DECODING_ANALYSIS.md`](MOVE_DECODING_ANALYSIS.md) - Move decoding performance comparison
 - [`DECODE_MOVE_ANALYSIS.md`](DECODE_MOVE_ANALYSIS.md) - Analysis of decode_move() removal impact
+- [`MULTITHREADING_ANALYSIS.md`](MULTITHREADING_ANALYSIS.md) - **Comprehensive multithreading research and benchmarking**
 
 ### 🔧 Optimization Documentation
 - [`DECODE_MOVE_REMOVAL.md`](DECODE_MOVE_REMOVAL.md) - Complete modernization: decode_move() function removal
@@ -46,6 +47,7 @@ This directory contains all documentation for the Huginn chess engine project.
 - [`PERFORMANCE_TRACKING.md`](PERFORMANCE_TRACKING.md) - Overall performance tracking system
 - [`DECODE_MOVE_ANALYSIS.md`](DECODE_MOVE_ANALYSIS.md) - Why micro-optimizations show different results in real tests
 - [`SQATTACKED_PERFORMANCE.md`](SQATTACKED_PERFORMANCE.md) - Attack detection performance
+- [`MULTITHREADING_ANALYSIS.md`](MULTITHREADING_ANALYSIS.md) - **Why parallel move generation fails and what to parallelize instead**
 
 ### For Implementation Details
 - [`BITBOARD_IMPLEMENTATION.md`](BITBOARD_IMPLEMENTATION.md) - Bitboard system
