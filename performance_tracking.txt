@@ -5,5 +5,6 @@
 2025-08-23, 486b47b, IS_PLAYABLE macro baseline test, 71610
 2025-08-23, b69c34a, Verification run after tracking system setup, 72013
 2025-08-23, 896dc02, decode_move() removal optimization, 70939
+2025-08-24, 896dc02, Baseline retest - decode_move() removal state, 71841
 2025-08-24, e3ee1a6, list.clear() to list.count = 0 micro-optimization, 71902
 2025-08-24, e3ee1a6, list.clear() optimization - verification run, 71921
