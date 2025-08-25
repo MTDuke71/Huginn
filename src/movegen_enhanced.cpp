@@ -5,6 +5,7 @@
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "pawn_optimizations.hpp"
+#include "king_optimizations.hpp"
 
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
@@ -19,7 +20,7 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     generate_bishop_moves(pos, list, us);
     generate_rook_moves(pos, list, us);
     generate_queen_moves(pos, list, us);
-    generate_king_moves(pos, list, us);
+    KingOptimizations::generate_king_moves_optimized(pos, list, us);
 }
 
 // Specialized move generation functions for each piece type

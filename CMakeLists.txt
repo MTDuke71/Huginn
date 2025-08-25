@@ -185,6 +185,7 @@ add_executable(huginn_tests
   test/test_enhanced_movegen.cpp    # <-- enhanced move generation system tests
   test/test_parallel_movegen.cpp    # <-- parallel move generation tests
   test/test_pawn_optimization.cpp   # <-- pawn promotion optimization tests
+  test/test_king_optimization.cpp   # <-- king move generation optimization tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests
