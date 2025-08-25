@@ -6,6 +6,7 @@
 #include "chess_types.hpp"
 #include "pawn_optimizations.hpp"
 #include "king_optimizations.hpp"
+#include "knight_optimizations.hpp"
 
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
@@ -16,7 +17,7 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     // Generate moves for each piece type using piece lists (fastest approach)
     // Use optimized pawn generation (addresses 20.3% of generation time)
     PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
-    generate_knight_moves(pos, list, us);
+    KnightOptimizations::generate_knight_moves_template(pos, list, us);
     generate_bishop_moves(pos, list, us);
     generate_rook_moves(pos, list, us);
     generate_queen_moves(pos, list, us);
