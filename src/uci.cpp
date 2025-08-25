@@ -8,6 +8,9 @@ UCIInterface::UCIInterface() {
     
     // Set starting position
     position.set_startpos();
+    
+    // Initialize search engine
+    search_engine = std::make_unique<Search::Engine>();
 }
 
 void UCIInterface::run() {
@@ -38,10 +41,7 @@ void UCIInterface::run() {
             std::cout << "readyok" << std::endl;
         }
         else if (command == "setoption") {
-            // For now, just acknowledge all options
-            if (debug_mode) {
-                std::cout << "info string Option set: " << line << std::endl;
-            }
+            handle_setoption(tokens);
         }
         else if (command == "register") {
             // No registration needed for this engine
@@ -52,6 +52,7 @@ void UCIInterface::run() {
         else if (command == "ucinewgame") {
             // Reset for new game
             position.set_startpos();
+            search_engine->clear_hash(); // Clear transposition table
             if (debug_mode) {
                 std::cout << "info string New game started" << std::endl;
             }
@@ -64,6 +65,7 @@ void UCIInterface::run() {
         }
         else if (command == "stop") {
             should_stop = true;
+            search_engine->stop();
         }
         else if (command == "ponderhit") {
             // Continue search without pondering
@@ -150,72 +152,119 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
 }
 
 void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
-    // For now, ignore all time controls and search parameters
-    // Just start searching
-    
     if (debug_mode) {
         std::cout << "info string Starting search" << std::endl;
     }
     
     should_stop = false;
     
-    // Search directly instead of using threading for now
-    search_best_move();
-}
-
-void UCIInterface::search_best_move() {
-    is_searching = true;
-    auto start_time = std::chrono::steady_clock::now();
+    // Parse search limits from go command
+    Search::SearchLimits limits;
+    limits.infinite = false;
+    limits.max_depth = 6; // Default depth
+    limits.max_time = std::chrono::milliseconds(5000); // Default 5 seconds
     
-    // Generate all legal moves
-    S_MOVELIST move_list;
-    generate_legal_moves_enhanced(position, move_list);
-    
-    if (move_list.count == 0) {
-        // No legal moves (checkmate or stalemate)
-        std::cout << "bestmove 0000" << std::endl;
-        is_searching = false;
-        return;
-    }
-    
-    // For now, just pick a random legal move
-    std::uniform_int_distribution<int> dist(0, move_list.count - 1);
-    int random_index = dist(rng);
-    S_MOVE best_move = move_list.moves[random_index];
-    
-    // Simulate some thinking time and send info
-    for (int depth = 1; depth <= 6 && !should_stop; ++depth) {
-        auto current_time = std::chrono::steady_clock::now();
-        int elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            current_time - start_time).count();
-        
-        // Send search info
-        send_search_info(depth, depth * 1000, elapsed_ms, best_move);
-        
-        // Sleep to simulate thinking
-        if (!should_stop) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Parse go parameters
+    for (size_t i = 1; i < tokens.size(); i++) {
+        if (tokens[i] == "depth" && i + 1 < tokens.size()) {
+            limits.max_depth = std::stoi(tokens[i + 1]);
+            i++;
+        }
+        else if (tokens[i] == "movetime" && i + 1 < tokens.size()) {
+            limits.max_time = std::chrono::milliseconds(std::stoi(tokens[i + 1]));
+            i++;
+        }
+        else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
+            int wtime = std::stoi(tokens[i + 1]);
+            if (position.side_to_move == Color::White) {
+                limits.max_time = std::chrono::milliseconds(std::max(100, wtime / 30)); // Use 1/30th of remaining time
+            }
+            i++;
+        }
+        else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
+            int btime = std::stoi(tokens[i + 1]);
+            if (position.side_to_move == Color::Black) {
+                limits.max_time = std::chrono::milliseconds(std::max(100, btime / 30)); // Use 1/30th of remaining time
+            }
+            i++;
+        }
+        else if (tokens[i] == "infinite") {
+            limits.infinite = true;
+            limits.max_time = std::chrono::milliseconds(0); // No time limit
         }
     }
     
-    // Send final move
-    std::string uci_move = move_to_uci(best_move);
-    std::cout << "bestmove " << uci_move << std::endl;
-    
-    is_searching = false;
+    // Start search in separate thread
+    std::thread search_thread(&UCIInterface::search_best_move, this, limits);
+    search_thread.detach();
 }
 
-void UCIInterface::send_search_info(int depth, int nodes, int time_ms, const S_MOVE& best_move) {
-    std::string pv = move_to_uci(best_move);
+void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 4) return; // Need at least "setoption name X value Y"
     
-    // Send info with basic search statistics
-    std::cout << "info depth " << depth 
-              << " nodes " << nodes
-              << " time " << time_ms
-              << " nps " << (time_ms > 0 ? (nodes * 1000) / time_ms : 0)
-              << " score cp " << (50 - (rng() % 100)) // Random score between -50 and +50
-              << " pv " << pv
-              << std::endl;
+    if (tokens[1] != "name") return;
+    
+    std::string option_name = tokens[2];
+    
+    if (tokens.size() >= 5 && tokens[3] == "value") {
+        std::string option_value = tokens[4];
+        
+        if (option_name == "Hash") {
+            int hash_size = std::stoi(option_value);
+            search_engine->set_hash_size(hash_size);
+            if (debug_mode) {
+                std::cout << "info string Hash size set to " << hash_size << " MB" << std::endl;
+            }
+        }
+        else if (option_name == "Threads") {
+            int threads = std::stoi(option_value);
+            // For now, we don't support multiple threads, so just acknowledge
+            if (debug_mode) {
+                std::cout << "info string Threads set to " << threads << " (single-threaded engine)" << std::endl;
+            }
+        }
+        else if (option_name == "Ponder") {
+            bool ponder = (option_value == "true");
+            // For now, we don't support pondering, so just acknowledge
+            if (debug_mode) {
+                std::cout << "info string Ponder set to " << (ponder ? "true" : "false") << " (not supported)" << std::endl;
+            }
+        }
+    }
+}
+
+void UCIInterface::search_best_move(const Search::SearchLimits& limits) {
+    is_searching = true;
+    
+    // Set up search info callback to send UCI info
+    search_engine->set_info_callback([this](const Search::SearchInfo& info) {
+        std::cout << "info depth " << info.depth
+                  << " nodes " << info.nodes
+                  << " time " << info.time_ms
+                  << " nps " << (info.time_ms > 0 ? (info.nodes * 1000) / info.time_ms : 0)
+                  << " score cp " << info.score;
+        
+        if (!info.pv.empty()) {
+            std::cout << " pv";
+            for (const auto& move : info.pv) {
+                std::cout << " " << move_to_uci(move);
+            }
+        }
+        std::cout << std::endl;
+    });
+    
+    // Perform the search
+    S_MOVE best_move = search_engine->search(position, limits);
+    
+    // Send the best move
+    if (best_move.move != 0) {
+        std::string uci_move = move_to_uci(best_move);
+        std::cout << "bestmove " << uci_move << std::endl;
+    } else {
+        std::cout << "bestmove 0000" << std::endl;
+    }
+    
+    is_searching = false;
 }
 
 S_MOVE UCIInterface::parse_uci_move(const std::string& uci_move) {

@@ -37,6 +37,8 @@ add_executable(huginn
   src/move.cpp           # <-- move structure implementation
   src/board120.cpp       # <-- coordinate utilities implementation
   src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- position evaluation implementation
+  src/search.cpp         # <-- search engine implementation
 )
 target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn PRIVATE cxx_std_17)
@@ -58,6 +60,8 @@ add_executable(huginn_uci
   src/move.cpp           # <-- move structure implementation
   src/board120.cpp       # <-- coordinate utilities implementation
   src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- position evaluation implementation
+  src/search.cpp         # <-- search engine implementation
 )
 target_include_directories(huginn_uci PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(huginn_uci PRIVATE cxx_std_17)
@@ -175,6 +179,8 @@ add_executable(huginn_tests
   src/move.cpp           # <-- move structure implementation for tests
   src/board120.cpp       # <-- coordinate utilities implementation for tests
   src/chess_types.cpp    # <-- piece type utilities implementation for tests
+  src/evaluation.cpp     # <-- position evaluation implementation for tests
+  src/search.cpp         # <-- search engine implementation for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
 target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

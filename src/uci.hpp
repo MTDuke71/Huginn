@@ -7,18 +7,19 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include <random>
+#include <memory>
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
+#include "search.hpp"
 
 // UCI (Universal Chess Interface) implementation for Huginn chess engine
 class UCIInterface {
 private:
     Position position;
+    std::unique_ptr<Search::Engine> search_engine;
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
-    std::mt19937 rng{std::random_device{}()};
     
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
     S_MOVE parse_uci_move(const std::string& uci_move);
@@ -35,11 +36,11 @@ private:
     // Handle go command
     void handle_go(const std::vector<std::string>& tokens);
     
-    // Search for best move (currently returns random valid move)
-    void search_best_move();
+    // Handle setoption command
+    void handle_setoption(const std::vector<std::string>& tokens);
     
-    // Send info during search
-    void send_search_info(int depth, int nodes, int time_ms, const S_MOVE& best_move);
+    // Search for best move using the search engine
+    void search_best_move(const Search::SearchLimits& limits);
 
 public:
     UCIInterface();
