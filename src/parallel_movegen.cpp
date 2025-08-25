@@ -84,7 +84,7 @@ void ParallelMoveGenerator::generate_all_moves_parallel(const Position& pos, S_M
     merge_move_lists(list, move_lists);
 }
 
-void ParallelMoveGenerator::generate_legal_moves_parallel(const Position& pos, S_MOVELIST& list) {
+void ParallelMoveGenerator::generate_legal_moves_parallel(Position& pos, S_MOVELIST& list) {
     // First generate all pseudo-legal moves
     S_MOVELIST pseudo_moves;
     

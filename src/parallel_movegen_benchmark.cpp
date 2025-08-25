@@ -111,7 +111,7 @@ private:
         return {moves.count, duration.count() / (1000.0 * iterations)};
     }
     
-    static std::pair<int, double> benchmark_legal_sequential(const Position& pos) {
+    static std::pair<int, double> benchmark_legal_sequential(Position& pos) {
         const int iterations = 100;  // Fewer iterations since legal move generation is slower
         S_MOVELIST moves;
         
@@ -127,7 +127,7 @@ private:
         return {moves.count, duration.count() / (1000.0 * iterations)};
     }
     
-    static std::pair<int, double> benchmark_legal_parallel(const Position& pos) {
+    static std::pair<int, double> benchmark_legal_parallel(Position& pos) {
         const int iterations = 100;
         S_MOVELIST moves;
         
