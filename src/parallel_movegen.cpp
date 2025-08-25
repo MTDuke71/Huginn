@@ -1,6 +1,7 @@
 #include "parallel_movegen.hpp"
 #include "movegen_enhanced.hpp"
 #include "attack_detection.hpp"
+#include "pawn_optimizations.hpp"
 #include <algorithm>
 #include <chrono>
 
@@ -152,7 +153,8 @@ void ParallelMoveGenerator::generate_legal_moves_parallel(Position& pos, S_MOVEL
 // Worker functions for each piece type
 void ParallelMoveGenerator::generate_pawn_worker(PieceThreadData* data) {
     try {
-        generate_pawn_moves(*data->pos, data->moves, data->us);
+        // Use optimized pawn generation (20.3% optimization target)
+        PawnOptimizations::generate_pawn_moves_optimized(*data->pos, data->moves, data->us);
         data->completed = true;
     } catch (...) {
         data->completed = false;

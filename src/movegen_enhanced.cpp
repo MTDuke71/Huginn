@@ -4,6 +4,7 @@
 #include "attack_detection.hpp"  // For SqAttacked function
 #include "board120.hpp"
 #include "chess_types.hpp"
+#include "pawn_optimizations.hpp"
 
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
@@ -12,7 +13,8 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     Color us = pos.side_to_move;
     
     // Generate moves for each piece type using piece lists (fastest approach)
-    generate_pawn_moves(pos, list, us);
+    // Use optimized pawn generation (addresses 20.3% of generation time)
+    PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
     generate_knight_moves(pos, list, us);
     generate_bishop_moves(pos, list, us);
     generate_rook_moves(pos, list, us);

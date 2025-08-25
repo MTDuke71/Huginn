@@ -8,3 +8,5 @@
 2025-08-24, 896dc02, Baseline retest - decode_move() removal state, 71841
 2025-08-24, e3ee1a6, list.clear() to list.count = 0 micro-optimization, 71902
 2025-08-24, e3ee1a6, list.clear() optimization - verification run, 71921
+2025-08-25, 6c16149, Pawn promotion optimizations - batch generation and pre-computed squares, 22689
+2025-08-25, 6c16149, Verification run - pawn optimization effect measurement, 21991
