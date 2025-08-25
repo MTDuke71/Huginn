@@ -99,4 +99,4 @@ The micro-optimization investigation revealed that modern compilers already opti
 - `assembly_comparison_test.cpp` - Test code for assembly analysis
 - `assembly_comparison_test.s` - Generated assembly output
 - `performance_tracking.txt` - Performance measurement log
-- `perf_test.ps1` - Automated performance testing script
+- `perft/perf_test.ps1` - Automated performance testing script

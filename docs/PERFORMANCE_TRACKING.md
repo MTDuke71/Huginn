@@ -5,13 +5,13 @@ This system tracks performance improvements in the Huginn chess engine over time
 ## Files
 
 - `performance_tracking.txt` - Log of all performance test results
-- `perf_test.ps1` - PowerShell script to run automated performance tests
+- `perft/perf_test.ps1` - PowerShell script to run automated performance tests
 
 ## Usage
 
 Run a performance test:
 ```powershell
-.\perf_test.ps1 -Description "Your optimization description"
+.\perft\perf_test.ps1 -Description "Your optimization description"
 ```
 
 ## Test Details
