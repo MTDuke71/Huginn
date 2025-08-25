@@ -219,7 +219,7 @@ void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us) {
 }
 
 // Enhanced legal move generation with better performance
-void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
+void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list) {
     S_MOVELIST pseudo_moves;
     generate_all_moves(pos, pseudo_moves);
     
@@ -227,15 +227,14 @@ void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list) {
     
     // Filter out illegal moves (those that leave king in check)
     for (int i = 0; i < pseudo_moves.size(); ++i) {
-        Position temp_pos = pos;  // Copy position
-        temp_pos.make_move_with_undo(pseudo_moves[i]);
+        pos.make_move_with_undo(pseudo_moves[i]);
         
         // Check if our king is still in check after the move
-        Color us = pos.side_to_move;
-        if (!SqAttacked(temp_pos.king_sq[int(us)], temp_pos, !us)) {
+        Color us = !pos.side_to_move; // Side to move is now the opponent
+        if (!SqAttacked(pos.king_sq[int(us)], pos, !us)) {
             list.add_quiet_move(pseudo_moves[i]);  // Use proper API
         }
-        temp_pos.undo_move();
+        pos.undo_move();
     }
 }
 
