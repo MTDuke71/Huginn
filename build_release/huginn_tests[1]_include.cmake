@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/Huginn/Huginn/build_release/huginn_tests[1]_tests.cmake")
+  include("/home/runner/work/Huginn/Huginn/build_release/huginn_tests[1]_tests.cmake")
+else()
+  add_test(huginn_tests_NOT_BUILT huginn_tests_NOT_BUILT)
+endif()
