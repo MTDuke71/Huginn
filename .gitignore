@@ -46,4 +46,11 @@
 
 /Testing/*
 
+# Generated assembly files
+/asm_output/
+
+# Generated performance test files
+*.exe
+sliding_*performance*.cpp
+
 .vscode/
