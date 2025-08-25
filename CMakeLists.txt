@@ -105,6 +105,46 @@ target_include_directories(parallel_benchmark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 target_compile_features(parallel_benchmark PRIVATE cxx_std_17)
 target_link_libraries(parallel_benchmark PRIVATE Threads::Threads)
 
+# ---- Move Generation Profiler ----
+add_executable(movegen_profiler
+  src/movegen_profiler_main.cpp
+  src/movegen_profiler.cpp # <-- detailed profiling implementation
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+)
+target_include_directories(movegen_profiler PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(movegen_profiler PRIVATE cxx_std_17)
+target_link_libraries(movegen_profiler PRIVATE Threads::Threads)
+
+# ---- Profiler Validation Test ----
+add_executable(profiler_test
+  src/profiler_test.cpp
+  src/movegen_profiler.cpp # <-- detailed profiling implementation
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+)
+target_include_directories(profiler_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(profiler_test PRIVATE cxx_std_17)
+target_link_libraries(profiler_test PRIVATE Threads::Threads)
+
 # ---- Tests ----
 find_package(GTest CONFIG QUIET)  # using MSYS2 packaged googletest
 
