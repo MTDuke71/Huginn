@@ -213,19 +213,77 @@ namespace Evaluation {
         if (king_square < 0) return -1000; // King missing!
         
         Color enemy = !color;
+        File king_file = file_of(king_square);
+        Rank king_rank = rank_of(king_square);
         
-        // Penalty for king in center during middlegame
-        if (!is_endgame(pos)) {
-            File king_file = file_of(king_square);
-            Rank king_rank = rank_of(king_square);
+        // CRITICAL: Check for broken pawn shelter (g5/g4/f6 pattern) - THE MAIN FIX
+        if (color == Color::Black) {
+            // Check for the catastrophic g5, g4, f6 pattern
+            Piece g7_pawn = pos.at(sq(File::G, Rank::R7));
+            Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
             
-            // Penalty for king on central files/ranks
-            if (king_file >= File::D && king_file <= File::E) safety_score -= 30;
-            if (color == Color::White && king_rank >= Rank::R4) safety_score -= 40;
-            if (color == Color::Black && king_rank <= Rank::R5) safety_score -= 40;
+            // Severe penalty if g-pawn moved from g7
+            if (is_none(g7_pawn) || color_of(g7_pawn) != color) {
+                safety_score -= 300; // Massive penalty for missing g7 pawn
+                
+                // Even worse if g-pawn is on g5 or g4 
+                Piece g5_piece = pos.at(sq(File::G, Rank::R5));
+                Piece g4_piece = pos.at(sq(File::G, Rank::R4));
+                if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
+                    safety_score -= 200; // g5 is terrible
+                }
+                if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
+                    safety_score -= 400; // g4 is catastrophic
+                }
+            }
+            
+            // Severe penalty if f-pawn moved from f7 (especially f6)
+            if (is_none(f7_pawn) || color_of(f7_pawn) != color) {
+                safety_score -= 250; // Major penalty for missing f7 pawn
+                
+                Piece f6_piece = pos.at(sq(File::F, Rank::R6));
+                if (!is_none(f6_piece) && color_of(f6_piece) == color && type_of(f6_piece) == PieceType::Pawn) {
+                    safety_score -= 500; // f6 is mate-threat level bad
+                }
+            }
         }
         
-        // Count enemy attackers around king
+        // Similar checks for White
+        if (color == Color::White) {
+            Piece g2_pawn = pos.at(sq(File::G, Rank::R2));
+            Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
+            
+            if (is_none(g2_pawn) || color_of(g2_pawn) != color) {
+                safety_score -= 300;
+                
+                Piece g4_piece = pos.at(sq(File::G, Rank::R4));
+                Piece g5_piece = pos.at(sq(File::G, Rank::R5));
+                if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
+                    safety_score -= 200;
+                }
+                if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
+                    safety_score -= 400;
+                }
+            }
+            
+            if (is_none(f2_pawn) || color_of(f2_pawn) != color) {
+                safety_score -= 250;
+                
+                Piece f3_piece = pos.at(sq(File::F, Rank::R3));
+                if (!is_none(f3_piece) && color_of(f3_piece) == color && type_of(f3_piece) == PieceType::Pawn) {
+                    safety_score -= 500;
+                }
+            }
+        }
+        
+        // Enhanced penalty for king in center during middlegame
+        if (!is_endgame(pos)) {
+            if (king_file >= File::D && king_file <= File::E) safety_score -= 100; // Increased from 30
+            if (color == Color::White && king_rank >= Rank::R4) safety_score -= 150; // Increased from 40
+            if (color == Color::Black && king_rank <= Rank::R5) safety_score -= 150; // Increased from 40
+        }
+        
+        // Count enemy attackers around king with heavier penalties
         int attackers = 0;
         for (int delta : KING_DELTAS) {
             int adjacent_sq = king_square + delta;
@@ -236,14 +294,19 @@ namespace Evaluation {
             }
         }
         
-        // Penalty for multiple attackers
-        safety_score -= attackers * 15;
+        // Much stronger penalty for multiple attackers
+        safety_score -= attackers * 50; // Increased from 15
+        
+        // CRITICAL: Check for immediate mate threats (queen attacks)
+        if (SqAttacked(king_square, pos, enemy)) {
+            safety_score -= 200; // King is in check - very dangerous
+        }
         
         // Bonus for castling rights (if still available)
         if (color == Color::White) {
-            if (pos.castling_rights & (CASTLE_WK | CASTLE_WQ)) safety_score += 20;
+            if (pos.castling_rights & (CASTLE_WK | CASTLE_WQ)) safety_score += 50; // Increased from 20
         } else {
-            if (pos.castling_rights & (CASTLE_BK | CASTLE_BQ)) safety_score += 20;
+            if (pos.castling_rights & (CASTLE_BK | CASTLE_BQ)) safety_score += 50; // Increased from 20
         }
         
         return safety_score;
