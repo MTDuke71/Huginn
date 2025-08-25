@@ -20,8 +20,19 @@ protected:
         }
         
         // Create sorted copies for comparison
-        std::vector<S_MOVE> moves1(list1.moves, list1.moves + list1.count);
-        std::vector<S_MOVE> moves2(list2.moves, list2.moves + list2.count);
+        std::vector<S_MOVE> moves1;
+        std::vector<S_MOVE> moves2;
+        
+        // Safely copy moves to vectors
+        moves1.reserve(list1.count);
+        moves2.reserve(list2.count);
+        
+        for (int i = 0; i < list1.count; ++i) {
+            moves1.push_back(list1.moves[i]);
+        }
+        for (int i = 0; i < list2.count; ++i) {
+            moves2.push_back(list2.moves[i]);
+        }
         
         // Sort by move encoding (from, to, flags)
         auto move_comparator = [](const S_MOVE& a, const S_MOVE& b) {
