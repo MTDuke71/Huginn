@@ -314,6 +314,9 @@ namespace Search {
         best_move = root_moves.moves[0];
         
         // Iterative deepening
+        int previous_score = 0;
+        bool eval_dropped_significantly = false;
+        
         for (int depth = 1; depth <= limits.max_depth && !should_stop(); ++depth) {
             root_depth = depth;
             PVLine current_pv;
@@ -322,6 +325,16 @@ namespace Search {
             int score = alpha_beta(search_pos, -MATE_SCORE, MATE_SCORE, depth, 0, current_pv);
             
             if (should_stop()) break;
+            
+            // Check for dramatic evaluation drop (potential tactical crisis)
+            if (depth >= 5 && previous_score > 200 && score < 50) {
+                eval_dropped_significantly = true;
+                // Extend search time when evaluation drops dramatically
+                if (!limits.infinite && limits.max_time.count() < 30000) {
+                    limits.max_time = std::chrono::milliseconds(limits.max_time.count() * 2);
+                }
+            }
+            previous_score = score;
             
             // Update statistics
             stats.depth_reached = depth;
@@ -433,6 +446,12 @@ namespace Search {
             }
         }
         
+        // Mate threat extension: if we have very few moves or opponent can capture our king next move
+        bool extend_for_mate_threat = false;
+        if (moves.count <= 3) { // Very limited mobility suggests mate threats
+            extend_for_mate_threat = true;
+        }
+        
         // Order moves
         move_orderer.order_moves(moves, pos.side_to_move, ply, hash_move);
         
@@ -449,20 +468,31 @@ namespace Search {
             // Make move
             pos.make_move_with_undo(move);
             
+            // Check extensions: extend search by 1 ply if move gives check
+            int extension = 0;
+            int king_square = pos.king_sq[int(pos.side_to_move)];
+            if (king_square >= 0 && SqAttacked(king_square, pos, !pos.side_to_move)) {
+                extension = 1; // Extend search when in check
+            }
+            // Also extend for mate threat situations
+            else if (extend_for_mate_threat && depth <= 2) {
+                extension = 1; // Extend when in potential mate threat with low depth
+            }
+            
             PVLine child_pv;
             int score;
             
             // Principal Variation Search
             if (i == 0) {
                 // Search first move with full window
-                score = -alpha_beta(pos, -beta, -alpha, depth - 1, ply + 1, child_pv);
+                score = -alpha_beta(pos, -beta, -alpha, depth - 1 + extension, ply + 1, child_pv);
             } else {
                 // Search with null window
-                score = -alpha_beta(pos, -alpha - 1, -alpha, depth - 1, ply + 1, child_pv);
+                score = -alpha_beta(pos, -alpha - 1, -alpha, depth - 1 + extension, ply + 1, child_pv);
                 
                 // Re-search if necessary
                 if (score > alpha && score < beta) {
-                    score = -alpha_beta(pos, -beta, -alpha, depth - 1, ply + 1, child_pv);
+                    score = -alpha_beta(pos, -beta, -alpha, depth - 1 + extension, ply + 1, child_pv);
                 }
             }
             
