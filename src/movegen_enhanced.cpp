@@ -7,6 +7,7 @@
 #include "pawn_optimizations.hpp"
 #include "king_optimizations.hpp"
 #include "knight_optimizations.hpp"
+#include "sliding_piece_optimizations.hpp"
 
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
@@ -18,9 +19,8 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     // Use optimized pawn generation (addresses 20.3% of generation time)
     PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
     KnightOptimizations::generate_knight_moves_template(pos, list, us);
-    generate_bishop_moves(pos, list, us);
-    generate_rook_moves(pos, list, us);
-    generate_queen_moves(pos, list, us);
+    // Use optimized sliding piece generation (addresses 45%+ of generation time)
+    SlidingPieceOptimizations::generate_all_sliding_moves_optimized(pos, list, us);
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
 }
 

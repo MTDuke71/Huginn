@@ -163,6 +163,7 @@ add_executable(huginn_tests
   test/test_pawn_optimization.cpp   # <-- pawn promotion optimization tests
   test/test_king_optimization.cpp   # <-- king move generation optimization tests
   test/test_knight_optimization.cpp # <-- knight move generation optimization tests
+  test/test_sliding_piece_optimization.cpp # <-- sliding piece move generation optimization tests
   src/bitboard.cpp       # <-- bitboard implementation for tests
   src/init.cpp           # <-- engine initialization for tests
   src/board.cpp          # <-- board management functions for tests

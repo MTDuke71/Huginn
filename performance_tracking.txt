@@ -14,3 +14,4 @@
 2025-08-25, 31fa2e5, King optimization measurement, 24074
 2025-08-25, 31fa2e5, Streamlined king optimization, 22489
 2025-08-25, c4495a4, Post-cleanup verification - parallel code removed, 21961
+2025-08-25, f360c8e, Knight template optimization integration, 22554
