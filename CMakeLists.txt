@@ -4,6 +4,17 @@ project(Huginn LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ---- Compiler Optimizations for Release Builds ----
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
+        message(STATUS "Release optimizations enabled (-O3 -march=native)")
+    elseif(MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
+        message(STATUS "Release optimizations enabled (/O2)")
+    endif()
+endif()
+
 # ---- Debug Mode Configuration ----
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")

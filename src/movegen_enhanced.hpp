@@ -103,7 +103,7 @@ void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us);
 void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, PieceType piece_type, const int* directions, int num_directions);
 
 // Enhanced legal move generation with better performance
-void generate_legal_moves_enhanced(const Position& pos, S_MOVELIST& list);
+void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list);
 
 // =============================================================================
 // BACKWARD COMPATIBILITY LAYER - Legacy MoveList interface
@@ -143,7 +143,7 @@ inline bool in_check(const Position& pos) {
 }
 
 // Check if a move is legal (doesn't leave own king in check)
-inline bool is_legal_move(const Position& pos, const S_MOVE& move) {
+inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     // Special handling for castling
     if (move.is_castle()) {
         int from = move.get_from();
@@ -167,20 +167,21 @@ inline bool is_legal_move(const Position& pos, const S_MOVE& move) {
     }
     
     // For all other moves, use the proper move/undo system
-    Position temp_pos = pos;
     Color current_side = pos.side_to_move;
     
     // Apply the move using the proper system
-    temp_pos.make_move_with_undo(move);
+    pos.make_move_with_undo(move);
     
     // Get the king position after the move (for the side that just moved)
-    int king_sq = temp_pos.king_sq[int(current_side)];
+    int king_sq = pos.king_sq[int(current_side)];
     
     // Check if our king would be in check after the move
     // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
-    bool legal = !SqAttacked(king_sq, temp_pos, !current_side);
+    bool legal = !SqAttacked(king_sq, pos, !current_side);
     
-    // No need to undo - temp_pos will be destroyed automatically
+    // Undo the move to restore the original position
+    pos.undo_move();
+    
     return legal;
 }
 
