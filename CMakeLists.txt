@@ -106,12 +106,17 @@ target_compile_features(parallel_benchmark PRIVATE cxx_std_17)
 target_link_libraries(parallel_benchmark PRIVATE Threads::Threads)
 
 # ---- Tests ----
-find_package(GTest CONFIG REQUIRED)  # using MSYS2 packaged googletest
+find_package(GTest CONFIG QUIET)  # using MSYS2 packaged googletest
 
-include(CTest)       # adds BUILD_TESTING and CTest config
-enable_testing()
-include(GoogleTest)
+if(GTest_FOUND)
+    include(CTest)       # adds BUILD_TESTING and CTest config
+    enable_testing()
+    include(GoogleTest)
+else()
+    message(WARNING "GTest not found, skipping tests")
+endif()
 
+if(GTest_FOUND)
 add_executable(huginn_tests
   test/test_board120.cpp
   test/test_chess_types.cpp
@@ -166,6 +171,7 @@ add_custom_target(check
   DEPENDS huginn_tests
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+endif()
 
 # ---- Perft Suite Demo ----
 add_executable(perft_suite_demo
