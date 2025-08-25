@@ -13,7 +13,7 @@
 class ParallelMoveGenerator {
 public:
     static void generate_all_moves_parallel(const Position& pos, S_MOVELIST& list);
-    static void generate_legal_moves_parallel(const Position& pos, S_MOVELIST& list);
+    static void generate_legal_moves_parallel(Position& pos, S_MOVELIST& list);
     
 private:
     // Helper structures for parallel generation
