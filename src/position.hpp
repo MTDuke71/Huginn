@@ -618,6 +618,16 @@ struct Position {
         return material_score[size_t(Color::White)] + material_score[size_t(Color::Black)];
     }
     
+    // Check if side has non-pawn material (for null move pruning)
+    bool has_non_pawn_material(Color c) const {
+        int color_idx = int(c);
+        // Check if side has pieces other than pawns and king
+        return pCount[color_idx][int(PieceType::Queen)] > 0 ||
+               pCount[color_idx][int(PieceType::Rook)] > 0 ||
+               pCount[color_idx][int(PieceType::Bishop)] > 0 ||
+               pCount[color_idx][int(PieceType::Knight)] > 0;
+    }
+    
     // Pawn bitboard access functions
     uint64_t get_pawn_bitboard(Color c) const {
         return pawns_bb[size_t(c)];

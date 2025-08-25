@@ -2,6 +2,7 @@
 #include "movegen_enhanced.hpp"
 #include "attack_detection.hpp"
 #include "board120.hpp"
+#include "zobrist.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -446,6 +447,10 @@ namespace Search {
             }
         }
         
+        // Check if in check
+        int king_square = pos.king_sq[int(pos.side_to_move)];
+        bool in_check = (king_square >= 0 && SqAttacked(king_square, pos, !pos.side_to_move));
+        
         // Mate threat extension: if we have very few moves or opponent can capture our king next move
         bool extend_for_mate_threat = false;
         if (moves.count <= 3) { // Very limited mobility suggests mate threats
@@ -454,6 +459,35 @@ namespace Search {
         
         // Order moves
         move_orderer.order_moves(moves, pos.side_to_move, ply, hash_move);
+        
+        // Null move pruning
+        bool do_null_move = depth >= 3 && !in_check && ply > 0 && 
+                           !is_mate_score(beta) && pos.has_non_pawn_material(pos.side_to_move);
+        
+        if (do_null_move) {
+            // Make null move (pass turn to opponent) 
+            // Save current state
+            Color original_side = pos.side_to_move;
+            int original_ply = pos.ply;
+            
+            pos.side_to_move = !pos.side_to_move;
+            pos.ply++;
+            pos.zobrist_key ^= Zobrist::Side; // Update zobrist for side change
+            
+            // Search with reduced depth
+            PVLine null_pv;
+            int null_score = -alpha_beta(pos, -beta, -beta + 1, depth - 3, ply + 1, null_pv);
+            
+            // Restore state
+            pos.side_to_move = original_side;
+            pos.ply = original_ply;
+            pos.zobrist_key ^= Zobrist::Side; // Restore zobrist
+            
+            // Null move cutoff
+            if (null_score >= beta) {
+                return beta; // Null move pruning cutoff
+            }
+        }
         
         // Search variables
         int best_score = -MATE_SCORE;
@@ -482,16 +516,23 @@ namespace Search {
             PVLine child_pv;
             int score;
             
-            // Principal Variation Search
+            // Principal Variation Search with Late Move Reductions
             if (i == 0) {
                 // Search first move with full window
                 score = -alpha_beta(pos, -beta, -alpha, depth - 1 + extension, ply + 1, child_pv);
             } else {
-                // Search with null window
-                score = -alpha_beta(pos, -alpha - 1, -alpha, depth - 1 + extension, ply + 1, child_pv);
+                // Late Move Reduction (LMR)
+                int reduction = 0;
+                if (i >= 4 && depth >= 3 && !in_check && !extension && 
+                    !move.is_capture() && !move.is_promotion()) {
+                    reduction = 1; // Reduce depth by 1 for late quiet moves
+                }
                 
-                // Re-search if necessary
-                if (score > alpha && score < beta) {
+                // Search with null window and possible reduction
+                score = -alpha_beta(pos, -alpha - 1, -alpha, depth - 1 + extension - reduction, ply + 1, child_pv);
+                
+                // Re-search if necessary (either score improved or reduction was applied)
+                if ((score > alpha && score < beta) || reduction > 0) {
                     score = -alpha_beta(pos, -beta, -alpha, depth - 1 + extension, ply + 1, child_pv);
                 }
             }
