@@ -24,7 +24,22 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
 }
 
-// Specialized move generation functions for each piece type
+// ====================================================================
+// Individual Piece Move Generation Functions
+// ====================================================================
+// NOTE: These functions are NOT used in production move generation.
+// They are retained for:
+// - Profiling system (movegen_profiler.cpp) - measures individual piece performance
+// - Test validation - ensures optimized versions produce identical results
+// - Development analysis - allows isolated testing of specific piece types
+//
+// Production code uses optimized combined functions:
+// - PawnOptimizations::generate_pawn_moves_optimized()
+// - KnightOptimizations::generate_knight_moves_template()
+// - SlidingPieceOptimizations::generate_all_sliding_moves_optimized()
+// - KingOptimizations::generate_king_moves_optimized()
+// ====================================================================
+
 void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us) {
     int piece_count = pos.pCount[int(us)][int(PieceType::Pawn)];
     
@@ -132,6 +147,13 @@ void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, Pie
         }
     }
 }
+
+// ====================================================================
+// Legacy Sliding Piece Functions (NOT used in production)
+// ====================================================================
+// These functions are retained for profiling and testing only.
+// Production uses: SlidingPieceOptimizations::generate_all_sliding_moves_optimized()
+// ====================================================================
 
 void generate_bishop_moves(const Position& pos, S_MOVELIST& list, Color us) {
     static const int directions[] = {NE, NW, SE, SW};

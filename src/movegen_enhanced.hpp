@@ -91,7 +91,18 @@ class Position;
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list);
 
-// Specialized move generation functions for each piece type
+// ====================================================================
+// Individual Piece Move Generation Functions
+// ====================================================================
+// NOTE: These functions are NOT used in production move generation.
+// They are retained for profiling and testing purposes only.
+//
+// Production move generation uses optimized versions:
+// - PawnOptimizations::generate_pawn_moves_optimized()
+// - KnightOptimizations::generate_knight_moves_template()  
+// - SlidingPieceOptimizations::generate_all_sliding_moves_optimized()
+// - KingOptimizations::generate_king_moves_optimized()
+// ====================================================================
 void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us);
 void generate_knight_moves(const Position& pos, S_MOVELIST& list, Color us);
 void generate_bishop_moves(const Position& pos, S_MOVELIST& list, Color us);
