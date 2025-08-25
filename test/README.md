@@ -18,7 +18,6 @@ This directory contains the comprehensive test suite for the Huginn chess engine
 - **Sliding piece optimization validation**
 
 ### Performance Tests
-- **`test_move_performance.ps1`** - Move decoding performance testing script
 - **Perft validation** against standard test suites
 - **Performance regression testing**
 
@@ -32,15 +31,6 @@ cmake --build build --target huginn_tests
 
 # Run specific test categories
 .\build\huginn_tests.exe --gtest_filter="PawnOptimization*"
-```
-
-### Performance Testing
-```powershell
-# Test move decoding performance (optimized)
-.\test\test_move_performance.ps1 -Optimized
-
-# Test move decoding performance (debug)  
-.\test\test_move_performance.ps1
 ```
 
 ## Test Framework

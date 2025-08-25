@@ -209,12 +209,3 @@ add_executable(perft_suite_demo
 )
 target_include_directories(perft_suite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(perft_suite_demo PRIVATE cxx_std_17)
-
-# ---- Move Decoding Performance Test ----
-add_executable(test_move_decoding
-  test_move_decoding.cpp
-  src/move.cpp           # <-- move structure implementation
-  src/chess_types.cpp    # <-- piece type utilities implementation
-)
-target_include_directories(test_move_decoding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(test_move_decoding PRIVATE cxx_std_17)
