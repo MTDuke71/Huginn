@@ -41,7 +41,7 @@ ninja huginn_demo   # Position display demo (optional)
 .\build\huginn.exe
 
 # Or test with commands
-Get-Content test_uci_commands.txt | .\build\huginn.exe
+Get-Content uci\test_uci_commands.txt | .\build\huginn.exe
 ```
 
 ### Testing with File Input
@@ -129,7 +129,7 @@ quit
 
 ### Position Setup Test
 ```bash
-# Test file: test_uci_positions.txt
+# Test file: uci\test_uci_positions.txt
 uci
 isready
 position startpos moves e2e4 e7e5
@@ -141,7 +141,7 @@ quit
 
 ### Debug Mode Test
 ```bash
-# Test file: test_uci_debug.txt
+# Test file: uci\test_uci_debug.txt
 uci
 debug on
 isready
