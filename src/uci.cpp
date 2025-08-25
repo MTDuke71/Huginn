@@ -63,6 +63,42 @@ void UCIInterface::run() {
         else if (command == "go") {
             handle_go(tokens);
         }
+        else if (command == "d") {
+            // Debug command to display position
+            std::cout << "info string Current FEN: " << position.to_fen() << std::endl;
+            std::cout << "info string Side to move: " << (position.side_to_move == Color::White ? "White" : "Black") << std::endl;
+            std::cout << "info string White King at: " << position.king_sq[0] << std::endl;
+            std::cout << "info string Black King at: " << position.king_sq[1] << std::endl;
+            std::cout << "info string Castling rights: " << int(position.castling_rights) << std::endl;
+            
+            // Print board representation
+            std::cout << "info string Board:" << std::endl;
+            for (int rank = 7; rank >= 0; rank--) {
+                std::string board_line = "info string ";
+                for (int file = 0; file < 8; file++) {
+                    int square = sq(File(file), Rank(rank));
+                    Piece p = position.at(square);
+                    char piece_char = '.';
+                    if (p != Piece::None) {
+                        switch (type_of(p)) {
+                            case PieceType::Pawn:   piece_char = 'P'; break;
+                            case PieceType::Knight: piece_char = 'N'; break;
+                            case PieceType::Bishop: piece_char = 'B'; break;
+                            case PieceType::Rook:   piece_char = 'R'; break;
+                            case PieceType::Queen:  piece_char = 'Q'; break;
+                            case PieceType::King:   piece_char = 'K'; break;
+                            default: piece_char = '?'; break;
+                        }
+                        if (color_of(p) == Color::Black) {
+                            piece_char = tolower(piece_char);
+                        }
+                    }
+                    board_line += piece_char;
+                    board_line += ' ';
+                }
+                std::cout << board_line << std::endl;
+            }
+        }
         else if (command == "stop") {
             should_stop = true;
             search_engine->stop();
@@ -161,8 +197,10 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     // Parse search limits from go command
     Search::SearchLimits limits;
     limits.infinite = false;
-    limits.max_depth = 6; // Default depth
-    limits.max_time = std::chrono::milliseconds(5000); // Default 5 seconds
+    limits.max_depth = 12; // Increased default depth for stronger play
+    limits.max_time = std::chrono::milliseconds(10000); // Default 10 seconds for stronger search
+    
+    std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
     
     // Parse go parameters
     for (size_t i = 1; i < tokens.size(); i++) {
@@ -177,14 +215,14 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
             int wtime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::White) {
-                limits.max_time = std::chrono::milliseconds(std::max(100, wtime / 30)); // Use 1/30th of remaining time
+                limits.max_time = std::chrono::milliseconds(std::max(200, wtime / 20)); // Use 1/20th of remaining time (more aggressive)
             }
             i++;
         }
         else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
             int btime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::Black) {
-                limits.max_time = std::chrono::milliseconds(std::max(100, btime / 30)); // Use 1/30th of remaining time
+                limits.max_time = std::chrono::milliseconds(std::max(200, btime / 20)); // Use 1/20th of remaining time (more aggressive)
             }
             i++;
         }
@@ -194,9 +232,14 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         }
     }
     
-    // Start search in separate thread
-    std::thread search_thread(&UCIInterface::search_best_move, this, limits);
-    search_thread.detach();
+    std::cout << "info string Debug: Starting search with depth " << limits.max_depth << std::endl;
+    
+    // For testing, do synchronous search
+    search_best_move(limits);
+    
+    // Alternative: Use thread and join for proper completion
+    // std::thread search_thread(&UCIInterface::search_best_move, this, limits);
+    // search_thread.join();
 }
 
 void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {

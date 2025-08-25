@@ -300,6 +300,19 @@ namespace Search {
         S_MOVE best_move;
         root_pv.clear();
         
+        // Generate root moves first to ensure we have legal moves
+        S_MOVELIST root_moves;
+        Position temp_pos = root_position;
+        generate_legal_moves_enhanced(temp_pos, root_moves);
+        
+        // If no legal moves, return immediately
+        if (root_moves.count == 0) {
+            return S_MOVE(); // No legal moves available
+        }
+        
+        // Set a fallback best move (first legal move)
+        best_move = root_moves.moves[0];
+        
         // Iterative deepening
         for (int depth = 1; depth <= limits.max_depth && !should_stop(); ++depth) {
             root_depth = depth;
@@ -322,7 +335,21 @@ namespace Search {
             }
             
             // Send search info
-            send_search_info(depth, score, current_pv);
+            if (info_callback) {
+                SearchInfo search_info;
+                search_info.depth = depth;
+                search_info.score = score;
+                search_info.nodes = stats.nodes_searched;
+                search_info.time_ms = static_cast<int>(stats.time_elapsed.count());
+                
+                // Convert PV to vector
+                search_info.pv.clear();
+                for (int i = 0; i < current_pv.length; ++i) {
+                    search_info.pv.push_back(current_pv.moves[i]);
+                }
+                
+                info_callback(search_info);
+            }
             
             // Check for mate
             if (is_mate_score(score)) {
