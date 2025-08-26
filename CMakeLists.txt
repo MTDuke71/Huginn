@@ -396,3 +396,6 @@ add_executable(timing_test
 )
 target_include_directories(timing_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(timing_test PRIVATE cxx_std_17)
+add_executable(debug_symmetry debug/debug_symmetry.cpp src/evaluation.cpp src/position.cpp src/board.cpp src/init.cpp src/movegen_enhanced.cpp src/zobrist.cpp src/attack_detection.cpp src/move.cpp src/board120.cpp src/chess_types.cpp src/debug.cpp src/bitboard.cpp src/search.cpp src/uci.cpp)
+target_include_directories(debug_symmetry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(debug_symmetry PRIVATE cxx_std_17)

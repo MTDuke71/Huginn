@@ -221,8 +221,11 @@ namespace Evaluation {
         Rank king_rank = rank_of(king_square);
         
         // MASSIVE PENALTY for king in center during opening/middlegame
+        // But in endgames, king activity is desirable, so skip these penalties
         bool early_game = pos.fullmove_number <= 15; // Extended to cover more of opening
-        if (early_game) {
+        bool endgame = is_endgame(pos);
+        
+        if (early_game && !endgame) {
             // Kings should NOT be in the center files (d, e) or advanced ranks
             if (color == Color::White) {
                 if (king_rank >= Rank::R3 && king_rank <= Rank::R6) {
@@ -250,66 +253,69 @@ namespace Evaluation {
         }
         
         // CRITICAL: Check for broken pawn shelter (g5/g4/f6 pattern) - THE MAIN FIX
-        if (color == Color::Black) {
-            // Check for the catastrophic g5, g4, f6 pattern
-            Piece g7_pawn = pos.at(sq(File::G, Rank::R7));
-            Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
-            
-            // Severe penalty if g-pawn moved from g7
-            if (is_none(g7_pawn) || color_of(g7_pawn) != color) {
-                safety_score -= 300; // Massive penalty for missing g7 pawn
+        // But only apply these penalties in opening/middlegame, not endgame
+        if (!endgame) {
+            if (color == Color::Black) {
+                // Check for the catastrophic g5, g4, f6 pattern
+                Piece g7_pawn = pos.at(sq(File::G, Rank::R7));
+                Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
                 
-                // Even worse if g-pawn is on g5 or g4 
-                Piece g5_piece = pos.at(sq(File::G, Rank::R5));
-                Piece g4_piece = pos.at(sq(File::G, Rank::R4));
-                if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
-                    safety_score -= 200; // g5 is terrible
+                // Severe penalty if g-pawn moved from g7
+                if (is_none(g7_pawn) || color_of(g7_pawn) != color) {
+                    safety_score -= 300; // Massive penalty for missing g7 pawn
+                    
+                    // Even worse if g-pawn is on g5 or g4 
+                    Piece g5_piece = pos.at(sq(File::G, Rank::R5));
+                    Piece g4_piece = pos.at(sq(File::G, Rank::R4));
+                    if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
+                        safety_score -= 200; // g5 is terrible
+                    }
+                    if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
+                        safety_score -= 400; // g4 is catastrophic
+                    }
                 }
-                if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
-                    safety_score -= 400; // g4 is catastrophic
-                }
-            }
-            
-            // Severe penalty if f-pawn moved from f7 (especially f6)
-            if (is_none(f7_pawn) || color_of(f7_pawn) != color) {
-                safety_score -= 400; // Major penalty for missing f7 pawn (increased)
                 
-                Piece f6_piece = pos.at(sq(File::F, Rank::R6));
-                if (!is_none(f6_piece) && color_of(f6_piece) == color && type_of(f6_piece) == PieceType::Pawn) {
-                    // f6 is absolutely catastrophic - massive penalty
-                    if (early_game) {
-                        safety_score -= 1200; // HUGE penalty in opening - nearly losing 
-                    } else {
-                        safety_score -= 800; // Still terrible in middlegame
+                // Severe penalty if f-pawn moved from f7 (especially f6)
+                if (is_none(f7_pawn) || color_of(f7_pawn) != color) {
+                    safety_score -= 400; // Major penalty for missing f7 pawn (increased)
+                    
+                    Piece f6_piece = pos.at(sq(File::F, Rank::R6));
+                    if (!is_none(f6_piece) && color_of(f6_piece) == color && type_of(f6_piece) == PieceType::Pawn) {
+                        // f6 is absolutely catastrophic - massive penalty
+                        if (early_game) {
+                            safety_score -= 1200; // HUGE penalty in opening - nearly losing 
+                        } else {
+                            safety_score -= 800; // Still terrible in middlegame
+                        }
                     }
                 }
             }
-        }
-        
-        // Similar checks for White
-        if (color == Color::White) {
-            Piece g2_pawn = pos.at(sq(File::G, Rank::R2));
-            Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
             
-            if (is_none(g2_pawn) || color_of(g2_pawn) != color) {
-                safety_score -= 300;
+            // Similar checks for White
+            if (color == Color::White) {
+                Piece g2_pawn = pos.at(sq(File::G, Rank::R2));
+                Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
                 
-                Piece g4_piece = pos.at(sq(File::G, Rank::R4));
-                Piece g5_piece = pos.at(sq(File::G, Rank::R5));
-                if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
-                    safety_score -= 200;
+                if (is_none(g2_pawn) || color_of(g2_pawn) != color) {
+                    safety_score -= 300;
+                    
+                    Piece g4_piece = pos.at(sq(File::G, Rank::R4));
+                    Piece g5_piece = pos.at(sq(File::G, Rank::R5));
+                    if (!is_none(g4_piece) && color_of(g4_piece) == color && type_of(g4_piece) == PieceType::Pawn) {
+                        safety_score -= 200;
+                    }
+                    if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
+                        safety_score -= 400;
+                    }
                 }
-                if (!is_none(g5_piece) && color_of(g5_piece) == color && type_of(g5_piece) == PieceType::Pawn) {
-                    safety_score -= 400;
-                }
-            }
-            
-            if (is_none(f2_pawn) || color_of(f2_pawn) != color) {
-                safety_score -= 250;
                 
-                Piece f3_piece = pos.at(sq(File::F, Rank::R3));
-                if (!is_none(f3_piece) && color_of(f3_piece) == color && type_of(f3_piece) == PieceType::Pawn) {
-                    safety_score -= 500;
+                if (is_none(f2_pawn) || color_of(f2_pawn) != color) {
+                    safety_score -= 250;
+                    
+                    Piece f3_piece = pos.at(sq(File::F, Rank::R3));
+                    if (!is_none(f3_piece) && color_of(f3_piece) == color && type_of(f3_piece) == PieceType::Pawn) {
+                        safety_score -= 500;
+                    }
                 }
             }
         }
