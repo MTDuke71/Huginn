@@ -216,3 +216,23 @@ add_executable(perft_suite_demo
 )
 target_include_directories(perft_suite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(perft_suite_demo PRIVATE cxx_std_17)
+
+# ---- Opening Analyzer Demo ----
+add_executable(opening_analyzer
+  demos/opening_analyzer.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- evaluation system
+  src/search.cpp         # <-- search engine
+)
+target_include_directories(opening_analyzer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(opening_analyzer PRIVATE cxx_std_17)

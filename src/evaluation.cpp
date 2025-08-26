@@ -2,8 +2,12 @@
 #include "movegen_enhanced.hpp"
 #include "attack_detection.hpp"
 #include "bitboard.hpp"
+#include "search.hpp"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <iomanip>
+#include <vector>
 
 namespace Evaluation {
 
@@ -21,16 +25,16 @@ namespace Evaluation {
              0,   0,   0,   0,   0,   0,   0,   0    // Rank 8
         };
         
-        // Knight piece-square table - encourages central placement
+        // Knight piece-square table - heavily penalizes rim squares ("Knights on the rim are dim")
         const int KNIGHT_PST[64] = {
-            -50, -40, -30, -30, -30, -30, -40, -50,
-            -40, -20,   0,   5,   5,   0, -20, -40,
-            -30,   5,  10,  15,  15,  10,   5, -30,
-            -30,   0,  15,  20,  20,  15,   0, -30,
-            -30,   5,  15,  20,  20,  15,   5, -30,
-            -30,   0,  10,  15,  15,  10,   0, -30,
-            -40, -20,   0,   0,   0,   0, -20, -40,
-            -50, -40, -30, -30, -30, -30, -40, -50
+            -80, -60, -40, -30, -30, -40, -60, -80,  // Rank 1: Harsh rim penalties
+            -60, -20,   0,   5,   5,   0, -20, -60,  // Rank 2: Rim still bad
+            -40,   5,  10,  15,  15,  10,   5, -40,  // Rank 3: Rim penalties
+            -30,   0,  15,  20,  20,  15,   0, -30,  // Rank 4: Slight rim penalty
+            -30,   5,  15,  20,  20,  15,   5, -30,  // Rank 5: Slight rim penalty
+            -40,   0,  10,  15,  15,  10,   0, -40,  // Rank 6: Rim penalties
+            -60, -20,   0,   0,   0,   0, -20, -60,  // Rank 7: Rim still bad
+            -80, -60, -40, -30, -30, -40, -60, -80   // Rank 8: Harsh rim penalties
         };
         
         // Bishop piece-square table - encourages long diagonals
@@ -351,6 +355,138 @@ namespace Evaluation {
         return score;
     }
 
+    int evaluate_development(const Position& pos) {
+        int score = 0;
+        
+        // Check if we're still in opening/early middlegame (< 10 moves)
+        bool early_game = pos.fullmove_number <= 10;
+        if (!early_game) return 0; // Skip development evaluation in middlegame/endgame
+        
+        for (int color = 0; color < 2; ++color) {
+            Color c = static_cast<Color>(color);
+            int dev_score = 0;
+            
+            // MASSIVE penalty for early rook moves that break castling
+            if (c == Color::White) {
+                // Check if white rooks moved from original squares
+                Piece a1_piece = pos.at(sq(File::A, Rank::R1));
+                Piece h1_piece = pos.at(sq(File::H, Rank::R1));
+                
+                if (is_none(a1_piece) || type_of(a1_piece) != PieceType::Rook || color_of(a1_piece) != Color::White) {
+                    // A1 rook moved early - check if it was a castling-breaking move
+                    if (!(pos.castling_rights & CASTLE_WQ)) {
+                        dev_score -= 200; // Heavy penalty for early queenside rook moves
+                    }
+                }
+                
+                if (is_none(h1_piece) || type_of(h1_piece) != PieceType::Rook || color_of(h1_piece) != Color::White) {
+                    if (!(pos.castling_rights & CASTLE_WK)) {
+                        dev_score -= 200; // Heavy penalty for early kingside rook moves  
+                    }
+                }
+                
+                // Extra penalty for very early rook moves (before move 5)
+                if (pos.fullmove_number <= 5) {
+                    for (int i = 0; i < pos.pCount[color][int(PieceType::Rook)]; ++i) {
+                        int rook_sq = pos.pList[color][int(PieceType::Rook)][i];
+                        // If rook is not on back rank, it moved early
+                        if (rank_of(rook_sq) != Rank::R1) {
+                            dev_score -= 300; // Massive penalty for very early rook development
+                        }
+                    }
+                }
+            } else {
+                // Similar checks for Black
+                Piece a8_piece = pos.at(sq(File::A, Rank::R8));
+                Piece h8_piece = pos.at(sq(File::H, Rank::R8));
+                
+                if (is_none(a8_piece) || type_of(a8_piece) != PieceType::Rook || color_of(a8_piece) != Color::Black) {
+                    if (!(pos.castling_rights & CASTLE_BQ)) {
+                        dev_score -= 200; // Heavy penalty for early queenside rook moves
+                    }
+                }
+                
+                if (is_none(h8_piece) || type_of(h8_piece) != PieceType::Rook || color_of(h8_piece) != Color::Black) {
+                    if (!(pos.castling_rights & CASTLE_BK)) {
+                        dev_score -= 200; // Heavy penalty for early kingside rook moves
+                    }
+                }
+                
+                // Extra penalty for very early rook moves (before move 5)
+                if (pos.fullmove_number <= 5) {
+                    for (int i = 0; i < pos.pCount[color][int(PieceType::Rook)]; ++i) {
+                        int rook_sq = pos.pList[color][int(PieceType::Rook)][i];
+                        // If rook is not on back rank, it moved early
+                        if (rank_of(rook_sq) != Rank::R8) {
+                            dev_score -= 300; // Massive penalty for very early rook development
+                        }
+                    }
+                }
+            }
+            
+            // HUGE bonus for maintaining castling rights in early game
+            if (c == Color::White) {
+                if (pos.castling_rights & CASTLE_WK) dev_score += 75; // Increased from 50
+                if (pos.castling_rights & CASTLE_WQ) dev_score += 75; // Increased from 50
+            } else {
+                if (pos.castling_rights & CASTLE_BK) dev_score += 75; // Increased from 50
+                if (pos.castling_rights & CASTLE_BQ) dev_score += 75; // Increased from 50
+            }
+            
+            // Bonus for proper minor piece development with "Knights on the rim are dim" penalty
+            int developed_knights = 0;
+            int developed_bishops = 0;
+            
+            for (int i = 0; i < pos.pCount[color][int(PieceType::Knight)]; ++i) {
+                int knight_sq = pos.pList[color][int(PieceType::Knight)][i];
+                Rank knight_rank = rank_of(knight_sq);
+                File knight_file = file_of(knight_sq);
+                
+                // Knights developed off back rank get bonus
+                if ((c == Color::White && knight_rank != Rank::R1) ||
+                    (c == Color::Black && knight_rank != Rank::R8)) {
+                    
+                    // MASSIVE penalty for "Knights on the rim are dim"
+                    if (knight_file == File::A || knight_file == File::H) {
+                        dev_score -= 100; // Heavy penalty for rim knights (Na3, Nh3, Na6, Nh6, etc.)
+                    } else if (knight_rank == Rank::R1 || knight_rank == Rank::R8) {
+                        dev_score -= 50; // Penalty for back rank edge squares
+                    } else {
+                        developed_knights++; // Only count non-rim knights as "developed"
+                    }
+                } else {
+                    // Even on back rank, penalize rim squares
+                    if (knight_file == File::A || knight_file == File::H) {
+                        dev_score -= 30; // Penalty for rim squares even on back rank
+                    }
+                }
+            }
+            
+            for (int i = 0; i < pos.pCount[color][int(PieceType::Bishop)]; ++i) {
+                int bishop_sq = pos.pList[color][int(PieceType::Bishop)][i];
+                Rank bishop_rank = rank_of(bishop_sq);
+                
+                // Bishops developed off back rank get bonus
+                if ((c == Color::White && bishop_rank != Rank::R1) ||
+                    (c == Color::Black && bishop_rank != Rank::R8)) {
+                    developed_bishops++;
+                }
+            }
+            
+            dev_score += developed_knights * 30;  // Bonus for knight development
+            dev_score += developed_bishops * 25;  // Bonus for bishop development
+            
+            // Apply score based on side to move
+            if (c == pos.side_to_move) {
+                score += dev_score;
+            } else {
+                score -= dev_score;
+            }
+        }
+        
+        return score;
+    }
+
     bool is_endgame(const Position& pos) {
         // Simple endgame detection: few pieces remaining
         int total_pieces = 0;
@@ -453,7 +589,157 @@ namespace Evaluation {
         // Pawn structure
         score += evaluate_pawn_structure(pos);
         
+        // Development evaluation (for opening play)
+        score += evaluate_development(pos);
+        
         return score;
+    }
+
+    void analyze_opening_moves(int depth) {
+        std::cout << "\n=== Opening Move Analysis (Static Evaluation) ===\n";
+        std::cout << std::setw(8) << "Move" << std::setw(10) << "Score" << std::setw(12) << "Evaluation" << std::setw(12) << "Hash%" << std::endl;
+        std::cout << std::string(42, '-') << std::endl;
+        
+        // Initialize starting position
+        Position pos;
+        pos.set_startpos();
+        
+        // Create search engine to track hash usage
+        Search::Engine engine;
+        engine.set_position(pos);
+        
+        // Generate all legal moves from starting position
+        S_MOVELIST moves;
+        generate_legal_moves_enhanced(pos, moves);
+        
+        // Vector to store move evaluations
+        struct MoveEval {
+            S_MOVE move;
+            int score;
+            std::string move_str;
+        };
+        std::vector<MoveEval> move_evals;
+        
+        // Analyze each move
+        for (int i = 0; i < moves.count; ++i) {
+            S_MOVE move = moves.moves[i];
+            
+            // Make the move
+            Position temp_pos = pos;
+            temp_pos.make_move_with_undo(move);
+            
+            // Get the static evaluation (from White's perspective)
+            int score = -evaluate_position(temp_pos); // Negate because it's Black's turn after White's move
+            
+            // Create move string
+            std::string move_str = "";
+            
+            int from_sq = move.get_from();
+            int to_sq = move.get_to();
+            
+            // Get piece at from square in original position
+            Piece piece_moved = pos.at(from_sq);
+            PieceType piece_type = type_of(piece_moved);
+            
+            // Format move string (basic algebraic notation)
+            if (piece_type == PieceType::Pawn) {
+                // Pawn moves - just show destination
+                char file_char = 'a' + int(file_of(to_sq));
+                char rank_char = '1' + int(rank_of(to_sq));
+                
+                // Check if it's a capture
+                if (move.is_capture()) {
+                    char from_file = 'a' + int(file_of(from_sq));
+                    move_str = std::string(1, from_file) + "x" + std::string(1, file_char) + std::string(1, rank_char);
+                } else {
+                    move_str = std::string(1, file_char) + std::string(1, rank_char);
+                }
+                
+                // Check for promotion
+                if (move.get_promoted() != PieceType::None) {
+                    char promo_char = '?';
+                    switch (move.get_promoted()) {
+                        case PieceType::Queen:  promo_char = 'Q'; break;
+                        case PieceType::Rook:   promo_char = 'R'; break;
+                        case PieceType::Bishop: promo_char = 'B'; break;
+                        case PieceType::Knight: promo_char = 'N'; break;
+                        default: break;
+                    }
+                    move_str += "=" + std::string(1, promo_char);
+                }
+            } else {
+                // Piece moves
+                char piece_char = '?';
+                switch (piece_type) {
+                    case PieceType::Knight: piece_char = 'N'; break;
+                    case PieceType::Bishop: piece_char = 'B'; break;
+                    case PieceType::Rook:   piece_char = 'R'; break;
+                    case PieceType::Queen:  piece_char = 'Q'; break;
+                    case PieceType::King:   piece_char = 'K'; break;
+                    default: piece_char = '?'; break;
+                }
+                
+                char to_file = 'a' + int(file_of(to_sq));
+                char to_rank = '1' + int(rank_of(to_sq));
+                
+                // Check for castling
+                if (move.is_castle()) {
+                    if (to_file == 'g') {
+                        move_str = "O-O";    // Kingside
+                    } else {
+                        move_str = "O-O-O";  // Queenside
+                    }
+                } else {
+                    // Regular piece move
+                    if (move.is_capture()) {
+                        move_str = std::string(1, piece_char) + "x" + std::string(1, to_file) + std::string(1, to_rank);
+                    } else {
+                        move_str = std::string(1, piece_char) + std::string(1, to_file) + std::string(1, to_rank);
+                    }
+                }
+            }
+            
+            move_evals.push_back({move, score, move_str});
+            
+            // Undo the move
+            temp_pos.undo_move();
+        }
+        
+        // Sort moves by score (best first)
+        std::sort(move_evals.begin(), move_evals.end(), 
+                  [](const MoveEval& a, const MoveEval& b) {
+                      return a.score > b.score;
+                  });
+        
+        // Print results
+        for (size_t i = 0; i < move_evals.size(); ++i) {
+            const auto& eval = move_evals[i];
+            std::string eval_str;
+            if (eval.score > 100) {
+                eval_str = "Excellent";
+            } else if (eval.score > 50) {
+                eval_str = "Good";
+            } else if (eval.score > -50) {
+                eval_str = "OK";
+            } else if (eval.score > -100) {
+                eval_str = "Poor";
+            } else {
+                eval_str = "Bad";
+            }
+            
+            // Get hash usage percentage (placeholder since we're using static eval)
+            size_t hash_usage = 0; // Static evaluation doesn't use hash table
+            
+            std::cout << std::setw(8) << eval.move_str 
+                      << std::setw(10) << std::showpos << eval.score << std::noshowpos
+                      << std::setw(12) << eval_str 
+                      << std::setw(11) << hash_usage << "%" << std::endl;
+        }
+        
+        std::cout << "\nAnalysis complete! Scores are from White's perspective.\n";
+        std::cout << "Positive scores favor White after the move.\n";
+        std::cout << "Hash% shows transposition table usage.\n";
+        std::cout << "This uses static evaluation, not search to depth " << depth << ".\n\n";
     }
 
 } // namespace Evaluation

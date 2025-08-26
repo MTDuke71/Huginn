@@ -80,6 +80,13 @@ namespace Evaluation {
     int evaluate_pawn_structure(const Position& pos);
 
     /**
+     * Development and early game evaluation
+     * @param pos Position to evaluate
+     * @return Development score from perspective of side to move
+     */
+    int evaluate_development(const Position& pos);
+
+    /**
      * Comprehensive position evaluation
      * @param pos Position to evaluate
      * @return Total evaluation score from perspective of side to move
@@ -120,5 +127,11 @@ namespace Evaluation {
      * @return True if position is in endgame phase
      */
     bool is_endgame(const Position& pos);
+
+    /**
+     * Analyze and print evaluation for all legal moves from starting position
+     * @param depth Search depth for analysis (default 8)
+     */
+    void analyze_opening_moves(int depth = 8);
 
 } // namespace Evaluation
