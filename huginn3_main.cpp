@@ -21,7 +21,7 @@ public:
     void run() {
         std::string line;
         
-        std::cout << "Huginn3 Chess Engine v1.0" << std::endl;
+        std::cout << "Huginn Chess Engine v1.1" << std::endl;
         
         while (std::getline(std::cin, line)) {
             if (line.empty()) continue;
@@ -56,7 +56,7 @@ public:
     
 private:
     void handle_uci() {
-        std::cout << "id name Huginn3" << std::endl;
+        std::cout << "id name Huginn" << std::endl;
         std::cout << "id author MTDuke71" << std::endl;
         std::cout << "option name Debug type check default false" << std::endl;
         std::cout << "uciok" << std::endl;

@@ -22,8 +22,28 @@ if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug assertions enabled")
 endif()
 
-# ---- App ----
+# ---- Huginn 1.1 (Engine3) - Main Executable ----
 add_executable(huginn
+  huginn3_main.cpp
+  Engine3_src/simple_search.cpp
+  Engine3_src/hybrid_evaluation.cpp
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+)
+target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src)
+target_compile_features(huginn PRIVATE cxx_std_17)
+find_package(Threads REQUIRED)
+target_link_libraries(huginn PRIVATE Threads::Threads)
+
+# ---- Legacy Huginn (Original Engine) ----
+add_executable(huginn_legacy
   src/main.cpp
   src/uci.cpp            # <-- UCI interface implementation
   src/bitboard.cpp       # <-- bitboard implementation
@@ -40,10 +60,10 @@ add_executable(huginn
   src/evaluation.cpp     # <-- position evaluation implementation
   src/search.cpp         # <-- search engine implementation
 )
-target_include_directories(huginn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(huginn PRIVATE cxx_std_17)
+target_include_directories(huginn_legacy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(huginn_legacy PRIVATE cxx_std_17)
 find_package(Threads REQUIRED)
-target_link_libraries(huginn PRIVATE Threads::Threads)
+target_link_libraries(huginn_legacy PRIVATE Threads::Threads)
 
 # ---- UCI Interface ----
 add_executable(huginn_uci
