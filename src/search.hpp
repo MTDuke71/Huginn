@@ -7,20 +7,27 @@
 #include <chrono>
 #include <atomic>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <vector>
+#include <memory>
 
 /**
  * Huginn Chess Engine - Search System
  * 
  * Implements minimax search with alpha-beta pruning, iterative deepening,
- * and various search enhancements for competitive play.
+ * multi-threading support, and various search enhancements for competitive play.
  */
 
 namespace Search {
 
     // Search limits and constants
-    constexpr int MAX_DEPTH = 64;
+    constexpr int MAX_DEPTH = 30;
     constexpr int MAX_PLY = 100;
     constexpr int INFINITE_TIME = 1000000;
+    constexpr int DEFAULT_THREADS = 8;
+    constexpr int MAX_THREADS = 256;
     
     // Search scores
     constexpr int MATE_SCORE = 32000;
@@ -28,12 +35,12 @@ namespace Search {
     
     // Search statistics
     struct SearchStats {
-        uint64_t nodes_searched = 0;
-        uint64_t qnodes_searched = 0;
-        int depth_reached = 0;
-        int selective_depth = 0;
+        std::atomic<uint64_t> nodes_searched{0};
+        std::atomic<uint64_t> qnodes_searched{0};
+        std::atomic<int> depth_reached{0};
+        std::atomic<int> selective_depth{0};
         std::chrono::milliseconds time_elapsed{0};
-        double nodes_per_second = 0.0;
+        std::atomic<double> nodes_per_second{0.0};
         
         void reset() {
             nodes_searched = 0;
@@ -46,7 +53,7 @@ namespace Search {
         
         void calculate_nps() {
             if (time_elapsed.count() > 0) {
-                nodes_per_second = (nodes_searched * 1000.0) / time_elapsed.count();
+                nodes_per_second = (nodes_searched.load() * 1000.0) / time_elapsed.count();
             }
         }
     };
@@ -57,6 +64,7 @@ namespace Search {
         std::chrono::milliseconds max_time{INFINITE_TIME};
         uint64_t max_nodes = UINT64_MAX;
         bool infinite = false;
+        int threads = DEFAULT_THREADS;
         
         // Time control
         std::chrono::milliseconds remaining_time{0};
@@ -140,12 +148,16 @@ namespace Search {
         }
     };
 
-    // Transposition table
+    // Transposition table (thread-safe)
     class TranspositionTable {
     private:
         std::vector<TTEntry> table;
+        mutable std::vector<std::unique_ptr<std::mutex>> locks;  // Per-bucket locking for thread safety
         size_t size_mask;
-        uint8_t current_age = 0;
+        std::atomic<uint8_t> current_age{0};
+        size_t lock_mask;
+        
+        size_t get_lock_index(uint64_t key) const { return key & lock_mask; }
         
     public:
         TranspositionTable(size_t size_mb = 64);
@@ -161,6 +173,40 @@ namespace Search {
         void resize(size_t size_mb);
     };
 
+    // Search worker thread data
+    struct SearchWorker {
+        int thread_id;
+        Position position;
+        SearchStats local_stats;
+        MoveOrderer move_orderer;
+        std::thread thread;
+        
+        SearchWorker(int id) : thread_id(id) {
+            local_stats.reset();
+        }
+    };
+
+    // Shared search data for all threads
+    struct SharedSearchData {
+        std::atomic<bool> stop_search{false};
+        std::atomic<int> completed_depth{0};
+        std::atomic<int> best_score{0};
+        std::atomic<int> active_workers{0};
+        std::mutex pv_mutex;
+        PVLine best_pv;
+        S_MOVE best_move;
+        std::chrono::steady_clock::time_point search_start;
+        
+        void reset() {
+            stop_search = false;
+            completed_depth = 0;
+            best_score = 0;
+            active_workers = 0;
+            best_pv.clear();
+            best_move = S_MOVE();
+        }
+    };
+
     // Main search class
     class Engine {
     private:
@@ -169,6 +215,12 @@ namespace Search {
         SearchStats stats;
         MoveOrderer move_orderer;
         TranspositionTable tt;
+        
+        // Multi-threading support
+        std::vector<std::unique_ptr<SearchWorker>> workers;
+        SharedSearchData shared_data;
+        std::mutex stats_mutex;
+        int num_threads = DEFAULT_THREADS;
         
         // Search control
         std::atomic<bool> stop_search{false};
@@ -183,7 +235,13 @@ namespace Search {
         
         // Search functions
         int alpha_beta(Position& pos, int alpha, int beta, int depth, int ply, PVLine& pv);
-        int quiescence_search(Position& pos, int alpha, int beta, int ply);
+        int quiescence_search(Position& pos, int alpha, int beta, int ply, PVLine& pv);
+        
+        // Multi-threading functions
+        void worker_search(SearchWorker* worker, int start_depth, int max_depth);
+        void parallel_search();
+        void merge_stats();
+        void update_shared_best_move(const S_MOVE& move, int score, const PVLine& pv);
         
         // Search helpers
         bool should_stop() const;
@@ -207,6 +265,8 @@ namespace Search {
         void clear_hash() { tt.clear(); move_orderer.clear(); }
         void resize_hash(size_t size_mb) { tt.resize(size_mb); }
         void set_hash_size(size_t size_mb) { resize_hash(size_mb); }
+        void set_threads(int threads);
+        int get_threads() const { return num_threads; }
         
         // Search information callback
         void set_info_callback(std::function<void(const SearchInfo&)> callback) {

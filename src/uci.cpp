@@ -261,9 +261,10 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
         }
         else if (option_name == "Threads") {
             int threads = std::stoi(option_value);
-            // For now, we don't support multiple threads, so just acknowledge
+            threads = std::max(1, std::min(threads, 64)); // Clamp to valid range
+            search_engine->set_threads(threads);
             if (debug_mode) {
-                std::cout << "info string Threads set to " << threads << " (single-threaded engine)" << std::endl;
+                std::cout << "info string Threads set to " << threads << std::endl;
             }
         }
         else if (option_name == "Ponder") {

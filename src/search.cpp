@@ -10,6 +10,9 @@
 
 namespace Search {
 
+    // Thread-local pointer to current worker's stats for node counting
+    thread_local SearchStats* current_worker_stats = nullptr;
+
     // =================================================================
     // Utility Functions
     // =================================================================
@@ -224,16 +227,47 @@ namespace Search {
         
         table.resize(actual_entries);
         size_mask = actual_entries - 1;
+        
+        // Initialize locks (use fewer locks than entries for performance)
+        size_t num_locks = std::min(actual_entries / 64, size_t(1024));
+        if (num_locks == 0) num_locks = 1;
+        
+        // Round down to power of 2
+        size_t lock_count = 1;
+        while (lock_count * 2 <= num_locks) {
+            lock_count *= 2;
+        }
+        
+        // Clear existing locks and create new ones
+        locks.clear();
+        locks.reserve(lock_count);
+        for (size_t i = 0; i < lock_count; ++i) {
+            locks.push_back(std::make_unique<std::mutex>());
+        }
+        lock_mask = lock_count - 1;
+        
         clear();
     }
 
     void TranspositionTable::clear() {
+        // Lock all buckets while clearing
+        for (auto& lock : locks) {
+            lock->lock();
+        }
+        
         std::fill(table.begin(), table.end(), TTEntry{});
         current_age = 0;
+        
+        for (auto& lock : locks) {
+            lock->unlock();
+        }
     }
 
     bool TranspositionTable::probe(uint64_t key, TTEntry& entry) const {
         size_t index = key & size_mask;
+        size_t lock_index = get_lock_index(key);
+        
+        std::lock_guard<std::mutex> lock(*locks[lock_index]);
         const TTEntry& stored = table[index];
         
         if (stored.is_valid(key)) {
@@ -247,6 +281,9 @@ namespace Search {
     void TranspositionTable::store(uint64_t key, const S_MOVE& best_move, 
                                   int score, int eval, int depth, TTFlag flag) {
         size_t index = key & size_mask;
+        size_t lock_index = get_lock_index(key);
+        
+        std::lock_guard<std::mutex> lock(*locks[lock_index]);
         TTEntry& entry = table[index];
         
         // Replace if:
@@ -257,7 +294,7 @@ namespace Search {
         bool should_replace = (entry.key == 0) || 
                              (entry.key == key) ||
                              (depth >= entry.depth) ||
-                             (entry.age != current_age);
+                             (entry.age != current_age.load());
         
         if (should_replace) {
             entry.key = key;
@@ -266,7 +303,7 @@ namespace Search {
             entry.eval = static_cast<int16_t>(eval);
             entry.depth = static_cast<uint8_t>(depth);
             entry.flag = flag;
-            entry.age = current_age;
+            entry.age = current_age.load();
         }
     }
 
@@ -287,6 +324,149 @@ namespace Search {
 
     Engine::Engine(size_t tt_size_mb) : tt(tt_size_mb) {
         clear_hash();
+        set_threads(DEFAULT_THREADS);
+    }
+
+    void Engine::set_threads(int threads) {
+        // Clamp threads to valid range
+        num_threads = std::max(1, std::min(threads, MAX_THREADS));
+        
+        // Initialize worker threads
+        workers.clear();
+        workers.reserve(num_threads);
+        
+        for (int i = 0; i < num_threads; ++i) {
+            workers.push_back(std::make_unique<SearchWorker>(i));
+        }
+    }
+
+    void Engine::update_shared_best_move(const S_MOVE& move, int score, const PVLine& pv) {
+        std::lock_guard<std::mutex> lock(shared_data.pv_mutex);
+        
+        // Update if this is better than current best
+        if (score > shared_data.best_score.load() || shared_data.best_move.move == 0) {
+            shared_data.best_score = score;
+            shared_data.best_move = move;
+            shared_data.best_pv = pv;
+        }
+    }
+
+    void Engine::merge_stats() {
+        std::lock_guard<std::mutex> lock(stats_mutex);
+        
+        uint64_t total_nodes = 0;
+        uint64_t total_qnodes = 0;
+        
+        for (const auto& worker : workers) {
+            total_nodes += worker->local_stats.nodes_searched.load();
+            total_qnodes += worker->local_stats.qnodes_searched.load();
+        }
+        
+        stats.nodes_searched = total_nodes;
+        stats.qnodes_searched = total_qnodes;
+    }
+
+    void Engine::worker_search(SearchWorker* worker, int start_depth, int max_depth) {
+        worker->position = root_position;
+        worker->local_stats.reset();
+        
+        // Set thread-local stats pointer for this worker
+        current_worker_stats = &worker->local_stats;
+        
+        // Each worker searches different depths in parallel (Lazy SMP approach)
+        for (int depth = start_depth; depth <= max_depth && !shared_data.stop_search.load(); ++depth) {
+            PVLine pv;
+            Position search_pos = worker->position;
+            
+            int score = alpha_beta(search_pos, -MATE_SCORE, MATE_SCORE, depth, 0, pv);
+            
+            if (shared_data.stop_search.load()) break;
+            
+            // Update shared best move if this worker found something better
+            if (pv.length > 0) {
+                update_shared_best_move(pv.moves[0], score, pv);
+            }
+            
+            // Update completed depth
+            shared_data.completed_depth = std::max(shared_data.completed_depth.load(), depth);
+        }
+    }
+
+    void Engine::parallel_search() {
+        shared_data.reset();
+        shared_data.search_start = std::chrono::steady_clock::now();
+        
+        // Start worker threads with different starting depths (Lazy SMP)
+        std::vector<std::thread> threads;
+        
+        for (int i = 0; i < num_threads; ++i) {
+            int start_depth = (i == 0) ? 1 : std::max(1, i);  // Main thread starts at depth 1
+            
+            shared_data.active_workers++;
+            threads.emplace_back([this, i, start_depth]() {
+                worker_search(workers[i].get(), start_depth, limits.max_depth);
+                shared_data.active_workers--;  // Signal this worker is done
+            });
+        }
+        
+        // Monitor search progress
+        auto last_info_time = std::chrono::steady_clock::now();
+        int last_reported_depth = 0;
+        
+        while (!shared_data.stop_search.load() && shared_data.active_workers.load() > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            
+            // Check time limits
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - shared_data.search_start);
+            
+            if (!limits.infinite && elapsed >= limits.max_time) {
+                shared_data.stop_search = true;
+                break;
+            }
+            
+            // Merge and send periodic updates
+            merge_stats();
+            stats.time_elapsed = elapsed;
+            stats.calculate_nps();
+            
+            // Send info updates at reasonable intervals (every 1000ms or depth change)
+            auto now = std::chrono::steady_clock::now();
+            auto time_since_last_info = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - last_info_time);
+            
+            int current_depth = shared_data.completed_depth.load();
+            bool depth_changed = current_depth > last_reported_depth;
+            bool time_for_update = time_since_last_info.count() >= 1000;
+            
+            if (info_callback && current_depth > 0 && (depth_changed || time_for_update)) {
+                SearchInfo info;
+                info.depth = current_depth;
+                info.score = shared_data.best_score.load();
+                info.nodes = stats.nodes_searched.load();
+                info.time_ms = static_cast<int>(elapsed.count());
+                
+                std::lock_guard<std::mutex> lock(shared_data.pv_mutex);
+                info.pv.clear();
+                for (int i = 0; i < shared_data.best_pv.length; ++i) {
+                    info.pv.push_back(shared_data.best_pv.moves[i]);
+                }
+                
+                info_callback(info);
+                last_info_time = now;
+                last_reported_depth = current_depth;
+            }
+        }
+        
+        // Wait for all threads to complete
+        for (auto& thread : threads) {
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+        
+        // Final stats merge
+        merge_stats();
     }
 
     S_MOVE Engine::search(const Position& pos, const SearchLimits& search_limits) {
@@ -298,8 +478,12 @@ namespace Search {
         search_start = std::chrono::steady_clock::now();
         tt.new_search();
         
+        // Update number of threads if specified
+        if (search_limits.threads > 0 && search_limits.threads != num_threads) {
+            set_threads(search_limits.threads);
+        }
+        
         S_MOVE best_move;
-        root_pv.clear();
         
         // Generate root moves first to ensure we have legal moves
         S_MOVELIST root_moves;
@@ -314,65 +498,74 @@ namespace Search {
         // Set a fallback best move (first legal move)
         best_move = root_moves.moves[0];
         
-        // Iterative deepening
-        int previous_score = 0;
-        bool eval_dropped_significantly = false;
-        
-        for (int depth = 1; depth <= limits.max_depth && !should_stop(); ++depth) {
-            root_depth = depth;
-            PVLine current_pv;
+        // Use parallel search if multiple threads, otherwise single-threaded
+        if (num_threads > 1) {
+            parallel_search();
             
-            Position search_pos = root_position;
-            int score = alpha_beta(search_pos, -MATE_SCORE, MATE_SCORE, depth, 0, current_pv);
-            
-            if (should_stop()) break;
-            
-            // Check for dramatic evaluation drop (potential tactical crisis)
-            if (depth >= 5 && previous_score > 200 && score < 50) {
-                eval_dropped_significantly = true;
-                // Extend search time when evaluation drops dramatically
-                if (!limits.infinite && limits.max_time.count() < 30000) {
-                    limits.max_time = std::chrono::milliseconds(limits.max_time.count() * 2);
-                }
+            // Get best move from shared data
+            std::lock_guard<std::mutex> lock(shared_data.pv_mutex);
+            if (shared_data.best_move.move != 0) {
+                best_move = shared_data.best_move;
             }
-            previous_score = score;
+        } else {
+            // Single-threaded iterative deepening (original implementation)
+            PVLine root_pv;
+            int previous_score = 0;
             
-            // Update statistics
-            stats.depth_reached = depth;
-            stats.time_elapsed = get_time_since(search_start);
-            stats.calculate_nps();
-            
-            // Update best move and PV
-            if (current_pv.length > 0) {
-                best_move = current_pv.moves[0];
-                root_pv = current_pv;
-            }
-            
-            // Send search info
-            if (info_callback) {
-                SearchInfo search_info;
-                search_info.depth = depth;
-                search_info.score = score;
-                search_info.nodes = stats.nodes_searched;
-                search_info.time_ms = static_cast<int>(stats.time_elapsed.count());
+            for (int depth = 1; depth <= limits.max_depth && !should_stop(); ++depth) {
+                PVLine current_pv;
                 
-                // Convert PV to vector
-                search_info.pv.clear();
-                for (int i = 0; i < current_pv.length; ++i) {
-                    search_info.pv.push_back(current_pv.moves[i]);
+                Position search_pos = root_position;
+                int score = alpha_beta(search_pos, -MATE_SCORE, MATE_SCORE, depth, 0, current_pv);
+                
+                if (should_stop()) break;
+                
+                // Check for dramatic evaluation drop (potential tactical crisis)
+                if (depth >= 5 && previous_score > 200 && score < 50) {
+                    // Extend search time when evaluation drops dramatically
+                    if (!limits.infinite && limits.max_time.count() < 30000) {
+                        limits.max_time = std::chrono::milliseconds(limits.max_time.count() * 2);
+                    }
+                }
+                previous_score = score;
+                
+                // Update statistics
+                stats.depth_reached = depth;
+                stats.time_elapsed = get_time_since(search_start);
+                stats.calculate_nps();
+                
+                // Update best move and PV
+                if (current_pv.length > 0) {
+                    best_move = current_pv.moves[0];
+                    root_pv = current_pv;
                 }
                 
-                info_callback(search_info);
-            }
-            
-            // Check for mate
-            if (is_mate_score(score)) {
-                break;
-            }
-            
-            // Check time limits for single-depth searches
-            if (depth == 1 && time_up()) {
-                break;
+                // Send search info
+                if (info_callback) {
+                    SearchInfo search_info;
+                    search_info.depth = depth;
+                    search_info.score = score;
+                    search_info.nodes = stats.nodes_searched.load();
+                    search_info.time_ms = static_cast<int>(stats.time_elapsed.count());
+                    
+                    // Convert PV to vector
+                    search_info.pv.clear();
+                    for (int i = 0; i < current_pv.length; ++i) {
+                        search_info.pv.push_back(current_pv.moves[i]);
+                    }
+                    
+                    info_callback(search_info);
+                }
+                
+                // Check for mate
+                if (is_mate_score(score)) {
+                    break;
+                }
+                
+                // Check time limits for single-depth searches
+                if (depth == 1 && time_up()) {
+                    break;
+                }
             }
         }
         
@@ -384,7 +577,12 @@ namespace Search {
         
         if (should_stop()) return alpha;
         
-        stats.nodes_searched++;
+        // Increment nodes in the appropriate stats object
+        if (current_worker_stats) {
+            current_worker_stats->nodes_searched++;
+        } else {
+            stats.nodes_searched++;
+        }
         
         // Check for terminal positions
         if (ply >= MAX_PLY) {
@@ -430,7 +628,7 @@ namespace Search {
         
         // Quiescence search at leaf nodes
         if (depth <= 0) {
-            return quiescence_search(pos, alpha, beta, ply);
+            return quiescence_search(pos, alpha, beta, ply, pv);
         }
         
         // Generate moves
@@ -581,10 +779,17 @@ namespace Search {
         return best_score;
     }
 
-    int Engine::quiescence_search(Position& pos, int alpha, int beta, int ply) {
+    int Engine::quiescence_search(Position& pos, int alpha, int beta, int ply, PVLine& pv) {
+        pv.clear();
+        
         if (should_stop()) return alpha;
         
-        stats.qnodes_searched++;
+        // Increment qnodes in the appropriate stats object
+        if (current_worker_stats) {
+            current_worker_stats->qnodes_searched++;
+        } else {
+            stats.qnodes_searched++;
+        }
         
         if (ply >= MAX_PLY) {
             return Evaluation::evaluate_position(pos);
@@ -635,7 +840,8 @@ namespace Search {
             
             // Make move
             pos.make_move_with_undo(tactical_move);
-            int score = -quiescence_search(pos, -beta, -alpha, ply + 1);
+            PVLine child_pv;
+            int score = -quiescence_search(pos, -beta, -alpha, ply + 1, child_pv);
             pos.undo_move();
             
             if (should_stop()) return alpha;
@@ -646,6 +852,12 @@ namespace Search {
             
             if (score > alpha) {
                 alpha = score;
+                // Update PV for quiescence search
+                pv.clear();
+                pv.add_move(tactical_move);
+                for (int j = 0; j < child_pv.length; ++j) {
+                    pv.add_move(child_pv.moves[j]);
+                }
             }
         }
         
@@ -653,13 +865,17 @@ namespace Search {
     }
 
     bool Engine::should_stop() const {
+        // Check shared stop flag for multi-threading
+        if (num_threads > 1 && shared_data.stop_search.load()) return true;
+        
+        // Check local stop flag for single-threading
         if (stop_search.load()) return true;
         
         // Check time limits
         if (time_up()) return true;
         
-        // Check node limits
-        if (stats.nodes_searched >= limits.max_nodes) return true;
+        // Check node limits (use atomic load for thread safety)
+        if (stats.nodes_searched.load() >= limits.max_nodes) return true;
         
         return false;
     }
