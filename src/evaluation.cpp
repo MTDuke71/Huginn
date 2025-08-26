@@ -16,11 +16,11 @@ namespace Evaluation {
         // Pawn piece-square table - encourages central advancement and promotion
         const int PAWN_PST[64] = {
              0,   0,   0,   0,   0,   0,   0,   0,   // Rank 1
-             5,  10,  10, -20, -20,  10,  10,   5,   // Rank 2
+             5,  10,  20,  30,  30,  20,  10,   5,   // Rank 2: Very strong central pawn encouragement
              5,  -5, -10,   0,   0, -10,  -5,   5,   // Rank 3
-             0,   0,   0,  20,  20,   0,   0,   0,   // Rank 4
-             5,   5,  10,  25,  25,  10,   5,   5,   // Rank 5
-            10,  10,  20,  30,  30,  20,  10,  10,   // Rank 6
+             0,   0,   0,  45,  45,   0,   0,   0,   // Rank 4: Massive bonus for central control
+             5,   5,  10,  50,  50,  10,   5,   5,   // Rank 5
+            10,  10,  20,  55,  55,  20,  10,  10,   // Rank 6
             50,  50,  50,  50,  50,  50,  50,  50,   // Rank 7
              0,   0,   0,   0,   0,   0,   0,   0    // Rank 8
         };

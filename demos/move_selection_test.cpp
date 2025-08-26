@@ -8,12 +8,80 @@ int main() {
     std::cout << "Testing Engine's Move Selection\n";
     std::cout << "==============================\n\n";
     
-    // Test if engine will choose f6 as Black in starting position
+    // First test: White opening moves from starting position
+    Position start_pos;
+    start_pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    
+    // Get baseline evaluation from White's perspective  
+    int baseline_eval = Evaluation::evaluate_position(start_pos);
+    std::cout << "Starting position evaluation: " << baseline_eval << "cp (White's perspective)\n\n";
+    
+    std::cout << "WHITE OPENING MOVES (Starting Position)\n";
+    std::cout << "=======================================\n";
+    
+    S_MOVELIST start_moves;
+    generate_legal_moves_enhanced(start_pos, start_moves);
+    
+    for (int i = 0; i < start_moves.count; ++i) {
+        S_MOVE move = start_moves.moves[i];
+        Position temp_pos = start_pos;
+        temp_pos.make_move_with_undo(move);
+        
+        int eval = Evaluation::evaluate_position(temp_pos);
+        // Convert all evaluations to White's perspective for comparison
+        int eval_from_white_perspective = (temp_pos.side_to_move == Color::White) ? eval : -eval;
+        int baseline_from_white_perspective = (start_pos.side_to_move == Color::White) ? baseline_eval : -baseline_eval;
+        int eval_change = eval_from_white_perspective - baseline_from_white_perspective;  // Positive means good for white
+        int from = move.get_from();
+        int to = move.get_to();
+        
+        // Check for key opening moves
+        if ((from == 34 && to == 54)) {   // e2-e4
+            std::cout << "CLASSIC: e2-e4 = " << eval_change << "cp change (King's Pawn) [pos=" << eval << "cp]\n";
+            
+            // Debug breakdown for e2-e4
+            int pos_change = Evaluation::evaluate_positional(temp_pos) - Evaluation::evaluate_positional(start_pos);
+            int pawn_str_change = Evaluation::evaluate_pawn_structure(temp_pos) - Evaluation::evaluate_pawn_structure(start_pos);
+            int dev_change = Evaluation::evaluate_development(temp_pos) - Evaluation::evaluate_development(start_pos);
+            std::cout << "  -> Positional: " << pos_change << "cp, Pawn Structure: " << pawn_str_change << "cp, Development: " << dev_change << "cp\n";
+        }
+        else if ((from == 33 && to == 53)) {   // d2-d4
+            std::cout << "CLASSIC: d2-d4 = " << eval_change << "cp change (Queen's Pawn) [pos=" << eval << "cp]\n";
+            
+            // Debug breakdown for d2-d4
+            int pos_change = Evaluation::evaluate_positional(temp_pos) - Evaluation::evaluate_positional(start_pos);
+            int pawn_str_change = Evaluation::evaluate_pawn_structure(temp_pos) - Evaluation::evaluate_pawn_structure(start_pos);
+            int dev_change = Evaluation::evaluate_development(temp_pos) - Evaluation::evaluate_development(start_pos);
+            std::cout << "  -> Positional: " << pos_change << "cp, Pawn Structure: " << pawn_str_change << "cp, Development: " << dev_change << "cp\n";
+        }
+        else if ((from == 16 && to == 45)) {   // g1-f3
+            std::cout << "GOOD: Nf3 = " << eval_change << "cp change (Knight Development) [pos=" << eval << "cp]\n";
+        }
+        else if ((from == 11 && to == 43)) {   // b1-c3
+            std::cout << "GOOD: Nc3 = " << eval_change << "cp change (Knight Development) [pos=" << eval << "cp]\n";
+        }
+        else if ((from == 32 && to == 52)) {   // c2-c4
+            std::cout << "GOOD: c4 = " << eval_change << "cp change (English Opening) [pos=" << eval << "cp]\n";
+        }
+        else if ((from == 32 && to == 43)) {   // c2-c3 (PASSIVE!)
+            std::cout << "PASSIVE: c2-c3 = " << eval_change << "cp change (Slow, non-developing) [pos=" << eval << "cp]\n";
+        }
+        else if ((from == 33 && to == 44)) {   // d2-d3 (PASSIVE!)
+            std::cout << "PASSIVE: d2-d3 = " << eval_change << "cp change (Blocks bishop) [pos=" << eval << "cp]\n";
+        }
+        else if ((from == 34 && to == 45)) {   // e2-e3
+            std::cout << "PASSIVE: e2-e3 = " << eval_change << "cp change (Slow development) [pos=" << eval << "cp]\n";
+        }
+    }
+    
+    std::cout << "\n";
+    
+    // Original test: Black responses after 1.e4
     Position pos;
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
     
-    std::cout << "Position after 1.e4 - Black to move\n";
-    std::cout << "Testing if engine will avoid f6...\n\n";
+    std::cout << "BLACK RESPONSES (After 1.e4)\n";
+    std::cout << "============================\n";
     
     // Generate and evaluate a few common moves
     S_MOVELIST legal_moves;
