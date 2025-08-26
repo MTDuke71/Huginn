@@ -1,0 +1,4 @@
+Date: Tue 08/26/2025 17:13:30.71 
+Compiler: MSVC x64 Release 
+Flags: /std:c++17 /EHsc /O2 /W3 /D_CRT_SECURE_NO_WARNINGS /DWIN32 /D_WINDOWS /DDEBUG 
+Files processed: bitboard movegen_enhanced attack_detection position evaluation search hybrid_evaluation simple_search 

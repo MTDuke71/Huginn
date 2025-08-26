@@ -5,7 +5,7 @@
 using U64 = std::uint64_t;
 constexpr int PIECE_NB = 12;
 
-// Forward declaration to avoid circular dependency
+// Forward declaration to avoid circular dependency - ensure consistency with position.hpp
 class Position;
 
 namespace Zobrist {

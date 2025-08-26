@@ -46,9 +46,6 @@
 
 /Testing/*
 
-# Generated assembly files
-/asm_output/
-
 # Generated performance test files
 *.exe
 sliding_*performance*.cpp
@@ -57,3 +54,7 @@ sliding_*performance*.cpp
 
 # Engine comparison source code (external)
 Engine2_src/
+
+.vs/
+
+out/build/*

@@ -85,9 +85,6 @@ struct S_MOVELIST {
     const S_MOVE* end() const { return moves + count; }
 };
 
-// Forward declarations
-class Position;
-
 // Enhanced move generation function with improved organization
 void generate_all_moves(const Position& pos, S_MOVELIST& list);
 

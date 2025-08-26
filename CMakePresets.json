@@ -1,0 +1,255 @@
+{
+    "version": 3,
+    "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+            "hostOS": [ "Windows" ]
+        }
+    },
+    "configurePresets": [
+        {
+            "name": "msvc-x64-debug",
+            "displayName": "MSVC x64 Debug",
+            "description": "Debug build using MSVC compiler with clean environment",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "",
+                "PKG_CONFIG_PATH": "",
+                "MSYSTEM": "",
+                "MSYS2_PATH_TYPE": ""
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [ "Windows" ],
+                    "intelliSenseMode": "windows-msvc-x64"
+                }
+            }
+        },
+        {
+            "name": "msvc-x64-release",
+            "displayName": "MSVC x64 Release",
+            "description": "Release build using MSVC compiler with Visual Studio generator",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/msvc-x64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "",
+                "PKG_CONFIG_PATH": "",
+                "MSYSTEM": "",
+                "MSYS2_PATH_TYPE": ""
+            }
+        },
+        {
+            "name": "msvc-x64-release-asm",
+            "displayName": "MSVC x64 Release with Assembly",
+            "description": "Release build with assembly generation for performance analysis",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/msvc-x64-release-asm",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "GENERATE_ASSEMBLY": "ON"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "",
+                "PKG_CONFIG_PATH": "",
+                "MSYSTEM": "",
+                "MSYS2_PATH_TYPE": ""
+            }
+        },
+        {
+            "name": "msvc-x64-debug-asm",
+            "displayName": "MSVC x64 Debug with Assembly",
+            "description": "Debug build with assembly generation for analysis",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc-x64-debug-asm",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "GENERATE_ASSEMBLY": "ON"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "",
+                "PKG_CONFIG_PATH": "",
+                "MSYSTEM": "",
+                "MSYS2_PATH_TYPE": ""
+            }
+        },
+        {
+            "name": "msvc-x64-release-ninja",
+            "displayName": "MSVC x64 Release (Ninja)",
+            "description": "Release build using MSVC compiler with Ninja (manual setup required)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc-x64-release-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "CMAKE_PREFIX_PATH": "",
+                "PKG_CONFIG_PATH": "",
+                "MSYSTEM": "",
+                "MSYS2_PATH_TYPE": ""
+            }
+        },
+        {
+            "name": "gcc-x64-debug",
+            "displayName": "GCC x64 Debug",
+            "description": "Debug build using GCC compiler",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/gcc-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "gcc-x64-release",
+            "displayName": "GCC x64 Release",
+            "description": "Release build using GCC compiler",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/gcc-x64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "gcc-x64-release-asm",
+            "displayName": "GCC x64 Release with Assembly",
+            "description": "Release build with assembly generation for performance analysis",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/gcc-x64-release-asm",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "GENERATE_ASSEMBLY": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "msvc-x64-debug",
+            "configurePreset": "msvc-x64-debug",
+            "displayName": "Build MSVC x64 Debug"
+        },
+        {
+            "name": "msvc-x64-release",
+            "configurePreset": "msvc-x64-release",
+            "displayName": "Build MSVC x64 Release",
+            "configuration": "Release"
+        },
+        {
+            "name": "msvc-x64-release-asm",
+            "configurePreset": "msvc-x64-release-asm",
+            "displayName": "Build MSVC x64 Release with Assembly",
+            "configuration": "Release"
+        },
+        {
+            "name": "msvc-x64-debug-asm",
+            "configurePreset": "msvc-x64-debug-asm",
+            "displayName": "Build MSVC x64 Debug with Assembly"
+        },
+        {
+            "name": "msvc-x64-release-ninja",
+            "configurePreset": "msvc-x64-release-ninja",
+            "displayName": "Build MSVC x64 Release (Ninja)"
+        },
+        {
+            "name": "gcc-x64-debug",
+            "configurePreset": "gcc-x64-debug",
+            "displayName": "Build GCC x64 Debug"
+        },
+        {
+            "name": "gcc-x64-release",
+            "configurePreset": "gcc-x64-release",
+            "displayName": "Build GCC x64 Release"
+        },
+        {
+            "name": "gcc-x64-release-asm",
+            "configurePreset": "gcc-x64-release-asm",
+            "displayName": "Build GCC x64 Release with Assembly"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "msvc-x64-debug",
+            "configurePreset": "msvc-x64-debug",
+            "displayName": "Test MSVC x64 Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "msvc-x64-release",
+            "configurePreset": "msvc-x64-release",
+            "displayName": "Test MSVC x64 Release",
+            "configuration": "Release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "msvc-x64-release-asm",
+            "configurePreset": "msvc-x64-release-asm",
+            "displayName": "Test MSVC x64 Release with Assembly",
+            "configuration": "Release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "msvc-x64-debug-asm",
+            "configurePreset": "msvc-x64-debug-asm",
+            "displayName": "Test MSVC x64 Debug with Assembly",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "msvc-x64-release-ninja",
+            "configurePreset": "msvc-x64-release-ninja",
+            "displayName": "Test MSVC x64 Release (Ninja)",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "gcc-x64-debug",
+            "configurePreset": "gcc-x64-debug",
+            "displayName": "Test GCC x64 Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "gcc-x64-release",
+            "configurePreset": "gcc-x64-release",
+            "displayName": "Test GCC x64 Release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "gcc-x64-release-asm",
+            "configurePreset": "gcc-x64-release-asm",
+            "displayName": "Test GCC x64 Release with Assembly",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}

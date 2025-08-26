@@ -58,7 +58,8 @@ struct S_UNDO {
     }
 };
 
-struct Position {
+class Position {
+public:
     std::array<Piece, 120> board{};  // Piece::None for empty, Piece::Offboard for offboard
     Color side_to_move{Color::White};
     int ep_square{-1};               // mailbox-120 index or -1
