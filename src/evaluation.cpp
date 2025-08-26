@@ -220,6 +220,35 @@ namespace Evaluation {
         File king_file = file_of(king_square);
         Rank king_rank = rank_of(king_square);
         
+        // MASSIVE PENALTY for king in center during opening/middlegame
+        bool early_game = pos.fullmove_number <= 15; // Extended to cover more of opening
+        if (early_game) {
+            // Kings should NOT be in the center files (d, e) or advanced ranks
+            if (color == Color::White) {
+                if (king_rank >= Rank::R3 && king_rank <= Rank::R6) {
+                    safety_score -= 800; // Massive penalty for king in center ranks
+                }
+                if (king_file >= File::D && king_file <= File::E) {
+                    safety_score -= 600; // Huge penalty for king in center files
+                }
+                // Extra penalty for king far from back rank
+                if (king_rank >= Rank::R4) {
+                    safety_score -= 1000; // Nearly mate-level penalty
+                }
+            } else { // Black
+                if (king_rank >= Rank::R3 && king_rank <= Rank::R6) {
+                    safety_score -= 800; // Massive penalty for king in center ranks  
+                }
+                if (king_file >= File::D && king_file <= File::E) {
+                    safety_score -= 600; // Huge penalty for king in center files
+                }
+                // Extra penalty for king far from back rank
+                if (king_rank <= Rank::R5) {
+                    safety_score -= 1000; // Nearly mate-level penalty for forward kings
+                }
+            }
+        }
+        
         // CRITICAL: Check for broken pawn shelter (g5/g4/f6 pattern) - THE MAIN FIX
         if (color == Color::Black) {
             // Check for the catastrophic g5, g4, f6 pattern
@@ -243,11 +272,16 @@ namespace Evaluation {
             
             // Severe penalty if f-pawn moved from f7 (especially f6)
             if (is_none(f7_pawn) || color_of(f7_pawn) != color) {
-                safety_score -= 250; // Major penalty for missing f7 pawn
+                safety_score -= 400; // Major penalty for missing f7 pawn (increased)
                 
                 Piece f6_piece = pos.at(sq(File::F, Rank::R6));
                 if (!is_none(f6_piece) && color_of(f6_piece) == color && type_of(f6_piece) == PieceType::Pawn) {
-                    safety_score -= 500; // f6 is mate-threat level bad
+                    // f6 is absolutely catastrophic - massive penalty
+                    if (early_game) {
+                        safety_score -= 1200; // HUGE penalty in opening - nearly losing 
+                    } else {
+                        safety_score -= 800; // Still terrible in middlegame
+                    }
                 }
             }
         }
@@ -344,6 +378,37 @@ namespace Evaluation {
             // Bonus for pawn center control
             color_score += pawns_per_file[int(File::D)] * 10;
             color_score += pawns_per_file[int(File::E)] * 10;
+            
+            // CRITICAL: Massive penalty for f6/f3 pawn moves (king safety disaster)
+            if (c == Color::Black) {
+                // Check if f7 pawn moved to f6 (catastrophic weakening)
+                Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
+                Piece f6_pawn = pos.at(sq(File::F, Rank::R6));
+                
+                if ((is_none(f7_pawn) || color_of(f7_pawn) != c) && 
+                    (!is_none(f6_pawn) && color_of(f6_pawn) == c && type_of(f6_pawn) == PieceType::Pawn)) {
+                    // f6 move detected - this is nearly a blunder level move
+                    if (pos.fullmove_number <= 10) {
+                        color_score -= 800; // MASSIVE penalty in opening - makes position nearly losing
+                    } else {
+                        color_score -= 400; // Still very bad in middlegame
+                    }
+                }
+            } else { // White
+                // Check if f2 pawn moved to f3 (also weakening)
+                Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
+                Piece f3_pawn = pos.at(sq(File::F, Rank::R3));
+                
+                if ((is_none(f2_pawn) || color_of(f2_pawn) != c) && 
+                    (!is_none(f3_pawn) && color_of(f3_pawn) == c && type_of(f3_pawn) == PieceType::Pawn)) {
+                    // f3 move detected - also weakening for White
+                    if (pos.fullmove_number <= 10) {
+                        color_score -= 800; // MASSIVE penalty in opening
+                    } else {
+                        color_score -= 400; // Still bad in middlegame
+                    }
+                }
+            }
             
             if (c == pos.side_to_move) {
                 score += color_score;
