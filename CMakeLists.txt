@@ -316,3 +316,83 @@ add_executable(f6_penalty_test
 )
 target_include_directories(f6_penalty_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(f6_penalty_test PRIVATE cxx_std_17)
+
+# ---- Systematic Move Tester ----
+add_executable(systematic_move_tester
+  demos/systematic_move_tester.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- evaluation system
+  src/search.cpp         # <-- search engine
+)
+target_include_directories(systematic_move_tester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(systematic_move_tester PRIVATE cxx_std_17)
+
+# ---- Self-Play Tester ----
+add_executable(self_play_tester
+  demos/self_play_tester.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- evaluation system
+  src/search.cpp         # <-- search engine
+)
+target_include_directories(self_play_tester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(self_play_tester PRIVATE cxx_std_17)
+
+# ---- Critical Position Test ----
+add_executable(critical_position_test
+  demos/critical_position_test.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- evaluation system
+  src/search.cpp         # <-- search engine
+)
+target_include_directories(critical_position_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(critical_position_test PRIVATE cxx_std_17)
+
+# ---- Timing Test ----
+add_executable(timing_test
+  demos/timing_test.cpp
+  src/bitboard.cpp       # <-- bitboard implementation
+  src/init.cpp           # <-- engine initialization
+  src/board.cpp          # <-- board management functions
+  src/position.cpp       # <-- position implementation with Zobrist updates
+  src/zobrist.cpp        # <-- zobrist implementation
+  src/debug.cpp          # <-- debug and validation functions
+  src/movegen_enhanced.cpp # <-- enhanced move generation system
+  src/attack_detection.cpp # <-- attack detection implementation
+  src/move.cpp           # <-- move structure implementation
+  src/board120.cpp       # <-- coordinate utilities implementation
+  src/chess_types.cpp    # <-- piece type utilities implementation
+  src/evaluation.cpp     # <-- evaluation system
+  src/search.cpp         # <-- search engine
+)
+target_include_directories(timing_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(timing_test PRIVATE cxx_std_17)
