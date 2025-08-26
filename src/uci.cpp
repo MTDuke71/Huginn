@@ -282,10 +282,11 @@ void UCIInterface::search_best_move(const Search::SearchLimits& limits) {
     // Set up search info callback to send UCI info
     search_engine->set_info_callback([this](const Search::SearchInfo& info) {
         std::cout << "info depth " << info.depth
+                  << " score cp " << info.score
                   << " nodes " << info.nodes
-                  << " time " << info.time_ms
                   << " nps " << (info.time_ms > 0 ? (info.nodes * 1000) / info.time_ms : 0)
-                  << " score cp " << info.score;
+                  << " hashfull " << search_engine->get_hashfull()
+                  << " time " << info.time_ms;
         
         if (!info.pv.empty()) {
             std::cout << " pv";

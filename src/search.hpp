@@ -216,6 +216,7 @@ namespace Search {
         // Search information
         const SearchStats& get_stats() const { return stats; }
         const PVLine& get_pv() const { return root_pv; }
+        size_t get_hashfull() const { return tt.get_hashfull(); }
         
         // UCI communication helpers
         void send_bestmove(const S_MOVE& move) const;
