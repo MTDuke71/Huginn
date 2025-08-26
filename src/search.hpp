@@ -245,8 +245,6 @@ namespace Search {
         
         // Search helpers
         bool should_stop() const;
-        bool is_mate_score(int score) const;
-        int mate_distance(int score) const;
         void send_search_info(int depth, int score, const PVLine& pv) const;
         
         // Time management
@@ -277,6 +275,10 @@ namespace Search {
         const SearchStats& get_stats() const { return stats; }
         const PVLine& get_pv() const { return root_pv; }
         size_t get_hashfull() const { return tt.get_hashfull(); }
+        
+        // Mate score helpers
+        bool is_mate_score(int score) const;
+        int mate_distance(int score) const;
         
         // UCI communication helpers
         void send_bestmove(const S_MOVE& move) const;

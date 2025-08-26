@@ -282,9 +282,17 @@ void UCIInterface::search_best_move(const Search::SearchLimits& limits) {
     
     // Set up search info callback to send UCI info
     search_engine->set_info_callback([this](const Search::SearchInfo& info) {
-        std::cout << "info depth " << info.depth
-                  << " score cp " << info.score
-                  << " nodes " << info.nodes
+        std::cout << "info depth " << info.depth;
+        
+        // Check if this is a mate score
+        if (search_engine->is_mate_score(info.score)) {
+            int mate_dist = search_engine->mate_distance(info.score);
+            std::cout << " score mate " << mate_dist;
+        } else {
+            std::cout << " score cp " << info.score;
+        }
+        
+        std::cout << " nodes " << info.nodes
                   << " nps " << (info.time_ms > 0 ? (info.nodes * 1000) / info.time_ms : 0)
                   << " hashfull " << search_engine->get_hashfull()
                   << " time " << info.time_ms;
