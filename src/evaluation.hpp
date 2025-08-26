@@ -136,6 +136,13 @@ namespace Evaluation {
     bool is_endgame(const Position& pos);
 
     /**
+     * Comprehensive pawn structure evaluation using bitboards
+     * @param pos Position to evaluate
+     * @return Pawn structure score from perspective of side to move
+     */
+    int evaluate_pawn_structure(const Position& pos);
+
+    /**
      * Analyze and print evaluation for all legal moves from starting position
      * @param depth Search depth for analysis (default 8)
      */

@@ -54,3 +54,6 @@
 sliding_*performance*.cpp
 
 .vscode/
+
+# Engine comparison source code (external)
+Engine2_src/

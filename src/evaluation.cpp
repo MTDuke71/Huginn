@@ -359,71 +359,207 @@ namespace Evaluation {
     int evaluate_pawn_structure(const Position& pos) {
         int score = 0;
         
-        // Simple pawn structure evaluation
-        for (int color = 0; color < 2; ++color) {
-            int color_score = 0;
-            Color c = static_cast<Color>(color);
+        // Get pawn bitboards
+        uint64_t white_pawns = pos.get_pawn_bitboard(Color::White);
+        uint64_t black_pawns = pos.get_pawn_bitboard(Color::Black);
+        uint64_t all_pawns = pos.get_all_pawns_bitboard();
+        
+        // Pawn structure penalties and bonuses
+        constexpr int ISOLATED_PAWN_PENALTY = 20;
+        constexpr int DOUBLED_PAWN_PENALTY = 15;
+        constexpr int BACKWARD_PAWN_PENALTY = 12;
+        constexpr int PASSED_PAWN_BONUS[8] = {0, 10, 15, 25, 40, 70, 120, 0}; // By rank
+        constexpr int PAWN_CHAIN_BONUS = 8;
+        constexpr int CONNECTED_PAWNS_BONUS = 5;
+        constexpr int WEAK_PAWN_PENALTY = 10;
+        
+        // Analyze each file for pawn structure
+        for (int file = 0; file < 8; ++file) {
+            uint64_t file_mask = FILE_BB[file];
+            uint64_t white_pawns_on_file = white_pawns & file_mask;
+            uint64_t black_pawns_on_file = black_pawns & file_mask;
             
-            // Count pawns per file
-            int pawns_per_file[8] = {0};
-            for (int i = 0; i < pos.pCount[color][int(PieceType::Pawn)]; ++i) {
-                int sq120 = pos.pList[color][int(PieceType::Pawn)][i];
-                File file = file_of(sq120);
-                if (file != File::None) {
-                    pawns_per_file[int(file)]++;
-                }
+            int white_pawns_count = CNT(white_pawns_on_file);
+            int black_pawns_count = CNT(black_pawns_on_file);
+            
+            // DOUBLED PAWNS PENALTY
+            if (white_pawns_count > 1) {
+                score -= DOUBLED_PAWN_PENALTY * (white_pawns_count - 1);
+            }
+            if (black_pawns_count > 1) {
+                score += DOUBLED_PAWN_PENALTY * (black_pawns_count - 1);
             }
             
-            // Penalty for doubled pawns
-            for (int file = 0; file < 8; ++file) {
-                if (pawns_per_file[file] > 1) {
-                    color_score -= (pawns_per_file[file] - 1) * 20;
-                }
-            }
-            
-            // Bonus for pawn center control
-            color_score += pawns_per_file[int(File::D)] * 10;
-            color_score += pawns_per_file[int(File::E)] * 10;
-            
-            // CRITICAL: Massive penalty for f6/f3 pawn moves (king safety disaster)
-            if (c == Color::Black) {
-                // Check if f7 pawn moved to f6 (catastrophic weakening)
-                Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
-                Piece f6_pawn = pos.at(sq(File::F, Rank::R6));
+            // ISOLATED PAWNS PENALTY
+            if (white_pawns_count > 0) {
+                // Check if there are white pawns on adjacent files
+                bool has_support = false;
+                if (file > 0 && (white_pawns & FILE_BB[file - 1])) has_support = true;
+                if (file < 7 && (white_pawns & FILE_BB[file + 1])) has_support = true;
                 
-                if ((is_none(f7_pawn) || color_of(f7_pawn) != c) && 
-                    (!is_none(f6_pawn) && color_of(f6_pawn) == c && type_of(f6_pawn) == PieceType::Pawn)) {
-                    // f6 move detected - this is nearly a blunder level move
-                    if (pos.fullmove_number <= 10) {
-                        color_score -= 800; // MASSIVE penalty in opening - makes position nearly losing
-                    } else {
-                        color_score -= 400; // Still very bad in middlegame
-                    }
-                }
-            } else { // White
-                // Check if f2 pawn moved to f3 (also weakening)
-                Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
-                Piece f3_pawn = pos.at(sq(File::F, Rank::R3));
-                
-                if ((is_none(f2_pawn) || color_of(f2_pawn) != c) && 
-                    (!is_none(f3_pawn) && color_of(f3_pawn) == c && type_of(f3_pawn) == PieceType::Pawn)) {
-                    // f3 move detected - also weakening for White
-                    if (pos.fullmove_number <= 10) {
-                        color_score -= 800; // MASSIVE penalty in opening
-                    } else {
-                        color_score -= 400; // Still bad in middlegame
-                    }
+                if (!has_support) {
+                    score -= ISOLATED_PAWN_PENALTY * white_pawns_count;
                 }
             }
             
-            if (c == pos.side_to_move) {
-                score += color_score;
-            } else {
-                score -= color_score;
+            if (black_pawns_count > 0) {
+                // Check if there are black pawns on adjacent files
+                bool has_support = false;
+                if (file > 0 && (black_pawns & FILE_BB[file - 1])) has_support = true;
+                if (file < 7 && (black_pawns & FILE_BB[file + 1])) has_support = true;
+                
+                if (!has_support) {
+                    score += ISOLATED_PAWN_PENALTY * black_pawns_count;
+                }
+            }
+            
+            // PASSED PAWNS ANALYSIS
+            if (white_pawns_count == 1 && black_pawns_count == 0) {
+                // Potential white passed pawn - check if path is clear
+                uint64_t temp_pawns = white_pawns_on_file;
+                int pawn_sq = POP(temp_pawns);
+                
+                int rank = pawn_sq / 8;
+                bool is_passed = true;
+                
+                // Check if any black pawns can stop this pawn
+                for (int check_file = std::max(0, file - 1); check_file <= std::min(7, file + 1); ++check_file) {
+                    uint64_t check_file_mask = FILE_BB[check_file];
+                    uint64_t blocking_pawns = black_pawns & check_file_mask;
+                    
+                    uint64_t temp_blocking = blocking_pawns;
+                    while (temp_blocking) {
+                        int blocker_sq = POP(temp_blocking);
+                        int blocker_rank = blocker_sq / 8;
+                        
+                        if (blocker_rank > rank) { // Black pawn ahead of white pawn
+                            is_passed = false;
+                            break;
+                        }
+                    }
+                    if (!is_passed) break;
+                }
+                
+                if (is_passed) {
+                    score += PASSED_PAWN_BONUS[rank];
+                }
+            }
+            
+            if (black_pawns_count == 1 && white_pawns_count == 0) {
+                // Potential black passed pawn - check if path is clear
+                uint64_t temp_pawns = black_pawns_on_file;
+                int pawn_sq = POP(temp_pawns);
+                
+                int rank = pawn_sq / 8;
+                bool is_passed = true;
+                
+                // Check if any white pawns can stop this pawn
+                for (int check_file = std::max(0, file - 1); check_file <= std::min(7, file + 1); ++check_file) {
+                    uint64_t check_file_mask = FILE_BB[check_file];
+                    uint64_t blocking_pawns = white_pawns & check_file_mask;
+                    
+                    uint64_t temp_blocking = blocking_pawns;
+                    while (temp_blocking) {
+                        int blocker_sq = POP(temp_blocking);
+                        int blocker_rank = blocker_sq / 8;
+                        
+                        if (blocker_rank < rank) { // White pawn ahead of black pawn (from black's perspective)
+                            is_passed = false;
+                            break;
+                        }
+                    }
+                    if (!is_passed) break;
+                }
+                
+                if (is_passed) {
+                    score -= PASSED_PAWN_BONUS[7 - rank]; // Flip rank for black
+                }
             }
         }
         
-        return score;
+        // PAWN CHAINS AND CONNECTED PAWNS
+        // Analyze pawn connections (pawns defending each other)
+        uint64_t temp_white_pawns = white_pawns;
+        while (temp_white_pawns) {
+            int sq = POP(temp_white_pawns);
+            int file = sq % 8;
+            int rank = sq / 8;
+            
+            // Check if this pawn is defended by another pawn
+            if (rank > 0) {
+                if (file > 0 && (white_pawns & BIT_MASK[sq - 9])) { // Pawn on lower-left
+                    score += PAWN_CHAIN_BONUS;
+                }
+                if (file < 7 && (white_pawns & BIT_MASK[sq - 7])) { // Pawn on lower-right
+                    score += PAWN_CHAIN_BONUS;
+                }
+            }
+            
+            // Check for connected pawns (same rank, adjacent files)
+            if (file > 0 && (white_pawns & BIT_MASK[sq - 1])) { // Pawn to the left
+                score += CONNECTED_PAWNS_BONUS;
+            }
+            if (file < 7 && (white_pawns & BIT_MASK[sq + 1])) { // Pawn to the right
+                score += CONNECTED_PAWNS_BONUS;
+            }
+        }
+        
+        uint64_t temp_black_pawns = black_pawns;
+        while (temp_black_pawns) {
+            int sq = POP(temp_black_pawns);
+            int file = sq % 8;
+            int rank = sq / 8;
+            
+            // Check if this pawn is defended by another pawn
+            if (rank < 7) {
+                if (file > 0 && (black_pawns & BIT_MASK[sq + 7])) { // Pawn on upper-left
+                    score -= PAWN_CHAIN_BONUS;
+                }
+                if (file < 7 && (black_pawns & BIT_MASK[sq + 9])) { // Pawn on upper-right
+                    score -= PAWN_CHAIN_BONUS;
+                }
+            }
+            
+            // Check for connected pawns (same rank, adjacent files)
+            if (file > 0 && (black_pawns & BIT_MASK[sq - 1])) { // Pawn to the left
+                score -= CONNECTED_PAWNS_BONUS;
+            }
+            if (file < 7 && (black_pawns & BIT_MASK[sq + 1])) { // Pawn to the right
+                score -= CONNECTED_PAWNS_BONUS;
+            }
+        }
+        
+        // CRITICAL: Massive penalty for f6/f3 pawn moves (king safety disaster)
+        // Check if f7 pawn moved to f6 (catastrophic weakening for Black)
+        Piece f7_pawn = pos.at(sq(File::F, Rank::R7));
+        Piece f6_pawn = pos.at(sq(File::F, Rank::R6));
+        
+        if ((is_none(f7_pawn) || color_of(f7_pawn) != Color::Black) && 
+            (!is_none(f6_pawn) && color_of(f6_pawn) == Color::Black && type_of(f6_pawn) == PieceType::Pawn)) {
+            // f6 move detected - this is nearly a blunder level move
+            if (pos.fullmove_number <= 10) {
+                score += 800; // MASSIVE penalty for Black in opening
+            } else {
+                score += 400; // Still very bad in middlegame
+            }
+        }
+        
+        // Check if f2 pawn moved to f3 (also weakening for White)
+        Piece f2_pawn = pos.at(sq(File::F, Rank::R2));
+        Piece f3_pawn = pos.at(sq(File::F, Rank::R3));
+        
+        if ((is_none(f2_pawn) || color_of(f2_pawn) != Color::White) && 
+            (!is_none(f3_pawn) && color_of(f3_pawn) == Color::White && type_of(f3_pawn) == PieceType::Pawn)) {
+            // f3 move detected - also weakening for White
+            if (pos.fullmove_number <= 10) {
+                score -= 800; // MASSIVE penalty for White in opening
+            } else {
+                score -= 400; // Still bad in middlegame
+            }
+        }
+        
+        // Return score from the perspective of the side to move
+        return pos.side_to_move == Color::White ? score : -score;
     }
 
     int evaluate_development(const Position& pos) {
