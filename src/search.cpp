@@ -601,27 +601,40 @@ namespace Search {
             alpha = stand_pat;
         }
         
-        // Generate captures only
+        // Generate all moves for quiescence (captures and checks)
         S_MOVELIST moves;
         generate_all_moves(pos, moves);
         
-        // Filter to captures only and order
-        S_MOVELIST captures;
+        // Filter to captures and checks, and order
+        S_MOVELIST tactical_moves;
         for (int i = 0; i < moves.count; ++i) {
-            if (moves.moves[i].is_capture()) {
-                captures.moves[captures.count++] = moves.moves[i];
+            const S_MOVE& move = moves.moves[i];
+            
+            // Include captures
+            if (move.is_capture()) {
+                tactical_moves.moves[tactical_moves.count++] = move;
+                continue;
+            }
+            
+            // Include checks (test by making the move temporarily)
+            pos.make_move_with_undo(move);
+            bool gives_check = in_check(pos);
+            pos.undo_move();
+            
+            if (gives_check) {
+                tactical_moves.moves[tactical_moves.count++] = move;
             }
         }
         
-        // Order captures by MVV-LVA (already scored)
-        captures.sort_by_score();
+        // Order tactical moves by MVV-LVA (already scored)
+        tactical_moves.sort_by_score();
         
-        // Search captures
-        for (int i = 0; i < captures.count; ++i) {
-            const S_MOVE& capture = captures.moves[i];
+        // Search tactical moves (captures and checks)
+        for (int i = 0; i < tactical_moves.count; ++i) {
+            const S_MOVE& tactical_move = tactical_moves.moves[i];
             
             // Make move
-            pos.make_move_with_undo(capture);
+            pos.make_move_with_undo(tactical_move);
             int score = -quiescence_search(pos, -beta, -alpha, ply + 1);
             pos.undo_move();
             
