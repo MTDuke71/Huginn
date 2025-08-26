@@ -10,6 +10,11 @@
 
 namespace Engine3 {
 
+// Search constants
+constexpr int MAX_PLY = 100;
+constexpr int MATE_SCORE = 32000;
+constexpr int MATE_IN_MAX_PLY = MATE_SCORE - MAX_PLY;
+
 // Simple search statistics
 struct SearchStats {
     uint64_t nodes_searched = 0;
@@ -38,7 +43,7 @@ struct PVLine {
 
 // Simple search limits
 struct SearchLimits {
-    int max_depth = 6;
+    int max_depth = 0;
     uint64_t max_time_ms = 5000;
     uint64_t max_nodes = 1000000;
     bool infinite = false;
@@ -86,6 +91,11 @@ public:
     // Utility functions
     static std::string move_to_uci(const S_MOVE& move);
     static std::string pv_to_string(const PVLine& pv);
+    
+    // Mate detection
+    static bool is_mate_score(int score) { return std::abs(score) > MATE_IN_MAX_PLY; }
+    static int mate_distance(int score);
+    static std::string score_to_uci(int score);
 };
 
 } // namespace Engine3

@@ -61,6 +61,26 @@ std::string SimpleEngine::pv_to_string(const PVLine& pv) {
     return result;
 }
 
+// Calculate mate distance
+int SimpleEngine::mate_distance(int score) {
+    if (score > MATE_IN_MAX_PLY) {
+        return (MATE_SCORE - score + 1) / 2;
+    } else if (score < -MATE_IN_MAX_PLY) {
+        return -(MATE_SCORE + score) / 2;
+    }
+    return 0;
+}
+
+// Convert score to UCI format
+std::string SimpleEngine::score_to_uci(int score) {
+    if (is_mate_score(score)) {
+        int mate_dist = mate_distance(score);
+        return "mate " + std::to_string(mate_dist);
+    } else {
+        return "cp " + std::to_string(score);
+    }
+}
+
 // Check if time is up
 bool SimpleEngine::time_up() const {
     if (current_limits.infinite) return false;
@@ -189,7 +209,7 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
         // Check if king is in check
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            return -32000 + (stats.max_depth_reached - depth); // Mate, prefer quicker mates
+            return -MATE_SCORE + (stats.max_depth_reached - depth); // Mate, prefer quicker mates
         } else {
             return 0; // Stalemate
         }
@@ -244,7 +264,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     S_MOVE best_move;
     best_move.move = 0;
     best_move.score = 0;
-    int best_score = -40000;
+    int best_score = -MATE_SCORE;
     
     // Iterative deepening
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
@@ -253,7 +273,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
         stats.max_depth_reached = depth;
         
         PVLine current_pv;
-        int score = alpha_beta(pos, depth, -40000, 40000, current_pv);
+        int score = alpha_beta(pos, depth, -MATE_SCORE, MATE_SCORE, current_pv);
         
         if (time_up()) break;
         
@@ -268,7 +288,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
         
         // Print search info (UCI format)
         std::cout << "info depth " << depth 
-                  << " score cp " << score
+                  << " score " << score_to_uci(score)
                   << " nodes " << stats.nodes_searched
                   << " time " << stats.time_ms;
         
