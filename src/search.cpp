@@ -188,7 +188,7 @@ namespace Search {
         return 0;
     }
 
-    void MoveOrderer::order_moves(S_MOVELIST& moves, Color color, int ply, const S_MOVE& pv_move) const {
+    void MoveOrderer::order_moves(S_MOVELIST& moves, Color color, int ply, const S_MOVE& pv_move, const Position* pos) const {
         // Score all moves
         for (int i = 0; i < moves.count; ++i) {
             S_MOVE& move = moves.moves[i];
@@ -201,6 +201,29 @@ namespace Search {
                 int base_score = move.score;
                 int heuristic_score = get_move_score(move, color, ply);
                 move.score = base_score + heuristic_score;
+                
+                // CRITICAL FIX: Test if move gives check (requires position)
+                if (pos != nullptr) {
+                    Position temp_pos = *pos;
+                    temp_pos.make_move_with_undo(move);
+                    
+                    // Check if opponent king is in check after this move
+                    int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
+                    if (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move)) {
+                        move.score += 10000; // Very high priority for checking moves
+                        
+                        // Even higher priority if it might be mate
+                        S_MOVELIST opp_moves;
+                        generate_legal_moves_enhanced(temp_pos, opp_moves);
+                        if (opp_moves.count == 0) {
+                            move.score += 1000000; // Highest priority for mate
+                        } else if (opp_moves.count <= 2) {
+                            move.score += 50000; // High priority for near-mate
+                        }
+                    }
+                    
+                    temp_pos.undo_move();
+                }
             }
         }
         
@@ -557,9 +580,10 @@ namespace Search {
                     info_callback(search_info);
                 }
                 
-                // Check for mate
-                if (is_mate_score(score)) {
-                    break;
+                // Only stop for immediate mate (mate in 0), not mate in 1+
+                // Continue searching to find the shortest mate
+                if (is_mate_score(score) && mate_distance(score) == 0) {
+                    break; // Found immediate mate, no need to search deeper
                 }
                 
                 // Check time limits for single-depth searches
@@ -656,7 +680,7 @@ namespace Search {
         }
         
         // Order moves
-        move_orderer.order_moves(moves, pos.side_to_move, ply, hash_move);
+        move_orderer.order_moves(moves, pos.side_to_move, ply, hash_move, &pos);
         
         // Null move pruning
         bool do_null_move = depth >= 3 && !in_check && ply > 0 && 

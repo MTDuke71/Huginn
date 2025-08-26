@@ -124,7 +124,7 @@ namespace Search {
         void add_killer_move(int ply, const S_MOVE& move);
         void update_history(Color color, const S_MOVE& move, int depth);
         int get_move_score(const S_MOVE& move, Color color, int ply) const;
-        void order_moves(S_MOVELIST& moves, Color color, int ply, const S_MOVE& pv_move = S_MOVE()) const;
+        void order_moves(S_MOVELIST& moves, Color color, int ply, const S_MOVE& pv_move = S_MOVE(), const Position* pos = nullptr) const;
     };
 
     // Transposition table entry

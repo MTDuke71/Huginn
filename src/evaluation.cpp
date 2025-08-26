@@ -820,6 +820,9 @@ namespace Evaluation {
     int evaluate_position(const Position& pos) {
         // Check for special positions first
         if (is_checkmate(pos)) {
+            // If current side to move is in checkmate, they lose
+            // Return negative score for the side in checkmate
+            // But since evaluation is from current side's perspective, this is correct
             return -CHECKMATE_SCORE;
         }
         
