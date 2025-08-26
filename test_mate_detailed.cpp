@@ -1,7 +1,7 @@
 #include "src/position.hpp"
-#include "src/evaluation.hpp"
+#include "Engine3_src/hybrid_evaluation.hpp"
 #include "src/movegen_enhanced.hpp"
-#include "src/search.hpp"
+#include "Engine3_src/simple_search.hpp"
 #include "src/attack_detection.hpp"
 #include <iostream>
 #include <iomanip>
@@ -11,15 +11,10 @@ void analyze_position_detailed(Position pos, const std::string& description) {
     std::cout << "FEN: " << pos.to_fen() << std::endl;
     std::cout << "Side to move: " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
     
-    // Basic evaluation
-    int total_eval = Evaluation::evaluate_position(pos);
+    // Basic evaluation using Engine3
+    Engine3::HybridEvaluator evaluator;
+    int total_eval = evaluator.evaluate(pos);
     std::cout << "Total Evaluation: " << total_eval << " cp" << std::endl;
-    
-    // Check basic game state
-    bool is_checkmate = Evaluation::is_checkmate(pos);
-    bool is_stalemate = Evaluation::is_stalemate(pos);
-    std::cout << "Is Checkmate: " << (is_checkmate ? "YES" : "NO") << std::endl;
-    std::cout << "Is Stalemate: " << (is_stalemate ? "YES" : "NO") << std::endl;
     
     // Check if king is in check
     int king_square = pos.king_sq[int(pos.side_to_move)];
@@ -56,9 +51,10 @@ void analyze_position_detailed(Position pos, const std::string& description) {
         
         bool delivers_mate = (opponent_moves.count == 0 && opp_in_check);
         
-        int eval_after = -Evaluation::evaluate_position(temp_pos);
+        Engine3::HybridEvaluator eval_after_move;
+        int eval_after = -eval_after_move.evaluate(temp_pos);
         
-        std::cout << "  " << (i+1) << ". " << Search::move_to_uci(legal_moves.moves[i]) 
+        std::cout << "  " << (i+1) << ". " << Engine3::SimpleEngine::move_to_uci(legal_moves.moves[i]) 
                   << " -> eval: " << eval_after << " cp";
         
         if (delivers_mate) {
@@ -87,7 +83,7 @@ void test_simple_mate_position() {
     generate_legal_moves_enhanced(simple_mate, moves);
     
     for (int i = 0; i < moves.count; ++i) {
-        std::string move_str = Search::move_to_uci(moves.moves[i]);
+        std::string move_str = Engine3::SimpleEngine::move_to_uci(moves.moves[i]);
         if (move_str == "h1h8") {
             std::cout << "\nFound Qh8 move! Testing it..." << std::endl;
             Position after_mate = simple_mate;
@@ -118,7 +114,7 @@ int main() {
         
         bool move_found = false;
         for (int i = 0; i < legal_moves.count; ++i) {
-            std::string uci_move = Search::move_to_uci(legal_moves.moves[i]);
+            std::string uci_move = Engine3::SimpleEngine::move_to_uci(legal_moves.moves[i]);
             if (uci_move == move_str) {
                 pos1.make_move_with_undo(legal_moves.moves[i]);
                 move_found = true;

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "evaluation.hpp"
+#include "hybrid_evaluation.hpp"
 #include "init.hpp"
 #include <sstream>
 #include <vector>
@@ -95,9 +95,10 @@ protected:
         std::string mirrored_fen = mirror_fen(fen);
         ASSERT_TRUE(pos2.set_from_fen(mirrored_fen)) << "Failed to parse mirrored FEN: " << mirrored_fen;
         
-        // Evaluate both positions
-        int eval1 = Evaluation::evaluate_position(pos1);
-        int eval2 = Evaluation::evaluate_position(pos2);
+        // Evaluate both positions using Engine3 hybrid evaluator
+        Engine3::HybridEvaluator evaluator;
+        int eval1 = evaluator.evaluate(pos1);
+        int eval2 = evaluator.evaluate(pos2);
         
         // Evaluations should be equal (both from the perspective of side to move)
         EXPECT_EQ(eval1, eval2) 

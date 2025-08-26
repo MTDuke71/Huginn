@@ -200,11 +200,11 @@ add_executable(huginn_tests
   src/move.cpp           # <-- move structure implementation for tests
   src/board120.cpp       # <-- coordinate utilities implementation for tests
   src/chess_types.cpp    # <-- piece type utilities implementation for tests
-  src/evaluation.cpp     # <-- position evaluation implementation for tests
-  src/search.cpp         # <-- search engine implementation for tests
+  Engine3_src/hybrid_evaluation.cpp  # <-- Engine3 hybrid evaluation for tests
+  Engine3_src/simple_search.cpp      # <-- Engine3 search engine for tests
 )
 target_compile_features(huginn_tests PRIVATE cxx_std_17)
-target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(huginn_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src)
 target_link_libraries(huginn_tests PRIVATE GTest::gtest Threads::Threads)  # keep test_main.cpp, so no gtest_main
 
 # Discover tests at test time (prevents NOT_BUILT placeholders)
