@@ -117,15 +117,21 @@ public:
             
             // Subtract captured piece value from opponent's material (exclude kings)
             if (type_of(captured) != PieceType::King) {
-                material_score[size_t(color_of(captured))] -= value_of(captured);
+                Color captured_color = color_of(captured);
+                if (captured_color != Color::None) {
+                    material_score[size_t(captured_color)] -= value_of(captured);
+                }
             }
             
             // Remove captured pawn from bitboard
             if (type_of(captured) == PieceType::Pawn) {
                 int s64_to = MAILBOX_MAPS.to64[m.get_to()];
                 if (s64_to >= 0) {
-                    popBit(pawns_bb[size_t(color_of(captured))], s64_to);
-                    popBit(all_pawns_bb, s64_to);
+                    Color captured_color = color_of(captured);
+                    if (captured_color != Color::None) {
+                        popBit(pawns_bb[size_t(captured_color)], s64_to);
+                        popBit(all_pawns_bb, s64_to);
+                    }
                 }
             }
         }

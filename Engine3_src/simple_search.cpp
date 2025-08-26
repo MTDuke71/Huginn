@@ -223,7 +223,7 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
     order_moves(pos, legal_moves);
     
     PVLine best_pv;
-    bool pv_found = false;
+    // bool pv_found = false; // TODO: Use for PV handling logic
     
     for (int i = 0; i < legal_moves.count; ++i) {
         if (time_up()) break;
@@ -248,7 +248,7 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
             for (int j = 0; j < child_pv.length; ++j) {
                 pv.add_move(child_pv.moves[j]);
             }
-            pv_found = true;
+            // pv_found = true; // TODO: Use for PV handling logic
         }
     }
     
@@ -264,7 +264,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     S_MOVE best_move;
     best_move.move = 0;
     best_move.score = 0;
-    int best_score = -MATE_SCORE;
+    // int best_score = -MATE_SCORE; // TODO: Use for move scoring logic
     
     // Iterative deepening
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
@@ -277,7 +277,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
         
         if (time_up()) break;
         
-        best_score = score;
+        // best_score = score; // TODO: Use for move scoring logic
         main_pv = current_pv;
         
         if (main_pv.length > 0) {

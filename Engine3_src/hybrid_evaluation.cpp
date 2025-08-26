@@ -255,7 +255,7 @@ int HybridEvaluator::evaluate_material(const Position& pos, GamePhase phase) {
         
         int piece_value = 0;
         int table_value = 0;
-        bool is_white = static_cast<int>(piece) < 6;
+        // bool is_white = static_cast<int>(piece) < 6; // TODO: Use for color-dependent evaluation
         
         switch (piece) {
             case Piece::WhitePawn:
@@ -387,6 +387,7 @@ int HybridEvaluator::evaluate_pawn_structure(const Position& pos) {
 
 // Evaluate piece activity (outposts, open files, etc.)
 int HybridEvaluator::evaluate_piece_activity(const Position& pos, GamePhase phase) {
+    (void)phase; // TODO: Use phase for piece activity evaluation
     int score = 0;
     int white_bishops = 0, black_bishops = 0;
     

@@ -715,7 +715,7 @@ namespace Search {
         int best_score = -MATE_SCORE;
         S_MOVE best_move;
         TTFlag tt_flag = TTFlag::ALPHA;
-        int original_alpha = alpha;
+        // int original_alpha = alpha; // TODO: Use for transposition table bounds
         
         // Search all moves
         for (int i = 0; i < moves.count; ++i) {

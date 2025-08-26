@@ -89,7 +89,7 @@ inline void generate_pawn_moves_optimized(const Position& pos, S_MOVELIST& list,
     // Pre-calculate direction and ranks once
     const int direction = (us == Color::White) ? NORTH : SOUTH;
     const Rank start_rank = (us == Color::White) ? Rank::R2 : Rank::R7;
-    const Rank promo_rank = (us == Color::White) ? Rank::R8 : Rank::R1;
+    // const Rank promo_rank = (us == Color::White) ? Rank::R8 : Rank::R1; // Not used - using promo_min/max instead
     
     // Pre-calculate promotion rank bounds for fast comparison
     const int promo_min = (us == Color::White) ? 91 : 21;

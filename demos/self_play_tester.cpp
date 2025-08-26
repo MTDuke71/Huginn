@@ -44,6 +44,9 @@ public:
 
 private:
     GameResult play_single_game(int time_per_move_ms) {
+        // Note: time_per_move_ms is not currently used in this simplified implementation
+        (void)time_per_move_ms; // Suppress unused parameter warning
+        
         GameResult game;
         Position pos;
         pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");

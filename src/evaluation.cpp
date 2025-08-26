@@ -362,16 +362,16 @@ namespace Evaluation {
         // Get pawn bitboards
         uint64_t white_pawns = pos.get_pawn_bitboard(Color::White);
         uint64_t black_pawns = pos.get_pawn_bitboard(Color::Black);
-        uint64_t all_pawns = pos.get_all_pawns_bitboard();
+        // uint64_t all_pawns = pos.get_all_pawns_bitboard(); // TODO: Use for pawn evaluation
         
         // Pawn structure penalties and bonuses
         constexpr int ISOLATED_PAWN_PENALTY = 20;
         constexpr int DOUBLED_PAWN_PENALTY = 15;
-        constexpr int BACKWARD_PAWN_PENALTY = 12;
+        // constexpr int BACKWARD_PAWN_PENALTY = 12; // TODO: Implement backward pawn detection
         constexpr int PASSED_PAWN_BONUS[8] = {0, 10, 15, 25, 40, 70, 120, 0}; // By rank
         constexpr int PAWN_CHAIN_BONUS = 8;
         constexpr int CONNECTED_PAWNS_BONUS = 5;
-        constexpr int WEAK_PAWN_PENALTY = 10;
+        // constexpr int WEAK_PAWN_PENALTY = 10; // TODO: Implement weak pawn detection
         
         // Analyze each file for pawn structure
         for (int file = 0; file < 8; ++file) {
