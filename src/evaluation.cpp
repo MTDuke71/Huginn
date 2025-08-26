@@ -635,6 +635,52 @@ namespace Evaluation {
         return false;
     }
 
+    int evaluate_hanging_pieces(const Position& pos) {
+        int score = 0;
+        
+        // Check all squares for pieces
+        for (int sq = 0; sq < 64; ++sq) {
+            Piece piece = pos.at(sq);
+            if (piece == Piece::None) continue;
+            
+            Color piece_color = color_of(piece);
+            PieceType piece_type = type_of(piece);
+            
+            // Skip pawns for now - they're handled differently
+            if (piece_type == PieceType::Pawn) continue;
+            
+            // Check if this piece is attacked by the opponent
+            bool is_attacked = SqAttacked(sq, pos, !piece_color);
+            
+            if (is_attacked) {
+                // Check if this piece is defended by our pieces
+                bool is_defended = SqAttacked(sq, pos, piece_color);
+                
+                if (!is_defended) {
+                    // This piece is hanging! Apply penalty based on piece value
+                    int penalty = 0;
+                    switch (piece_type) {
+                        case PieceType::Queen:  penalty = 800; break;  // Almost full queen value
+                        case PieceType::Rook:   penalty = 400; break;  // Almost full rook value
+                        case PieceType::Bishop: penalty = 250; break;  // Almost full bishop value
+                        case PieceType::Knight: penalty = 250; break;  // Almost full knight value
+                        case PieceType::King:   penalty = 50;  break;  // King hanging is bad but not losing
+                        default: penalty = 0; break;
+                    }
+                    
+                    // Apply penalty from the perspective of the piece owner
+                    if (piece_color == Color::White) {
+                        score -= penalty;  // White hanging piece = penalty for White
+                    } else {
+                        score += penalty;  // Black hanging piece = bonus for White
+                    }
+                }
+            }
+        }
+        
+        return score;
+    }
+
     int evaluate_position(const Position& pos) {
         // Check for special positions first
         if (is_checkmate(pos)) {
@@ -662,6 +708,9 @@ namespace Evaluation {
         
         // Development evaluation (for opening play)
         score += evaluate_development(pos);
+        
+        // Hanging pieces evaluation (critical for piece safety)
+        score += evaluate_hanging_pieces(pos);
         
         return score;
     }

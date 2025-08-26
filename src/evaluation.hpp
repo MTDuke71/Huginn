@@ -87,6 +87,13 @@ namespace Evaluation {
     int evaluate_development(const Position& pos);
 
     /**
+     * Hanging pieces evaluation - detects undefended pieces under attack
+     * @param pos Position to evaluate
+     * @return Penalty for hanging pieces from perspective of side to move
+     */
+    int evaluate_hanging_pieces(const Position& pos);
+
+    /**
      * Comprehensive position evaluation
      * @param pos Position to evaluate
      * @return Total evaluation score from perspective of side to move
