@@ -155,7 +155,7 @@ void SimpleEngine::order_moves(const Position& pos, S_MOVELIST& moves) {
 
 // Quiescence search to avoid horizon effect
 int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
-    stats.nodes_searched++;
+    increment_nodes();
     
     if (time_up()) return 0;
     
@@ -197,7 +197,7 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
 // Main alpha-beta search
 int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLine& pv) {
     pv.clear();
-    stats.nodes_searched++;
+    increment_nodes();
     
     if (time_up()) return 0;
     
