@@ -1,6 +1,6 @@
 #include "hybrid_evaluation.hpp"
-#include "../src/attack_detection.hpp"
-#include "../src/movegen_enhanced.hpp"
+#include "attack_detection.hpp"
+#include "movegen_enhanced.hpp"
 #include <algorithm>
 
 namespace Engine3 {

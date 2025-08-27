@@ -1,5 +1,5 @@
-#include "../Engine3_src/hybrid_evaluation.hpp"
-#include "../Engine3_src/simple_search.hpp"
+#include "../src/hybrid_evaluation.hpp"
+#include "../src/simple_search.hpp"
 #include "position.hpp"
 #include "init.hpp"
 #include <iostream>

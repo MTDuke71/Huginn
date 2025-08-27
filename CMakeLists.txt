@@ -196,7 +196,6 @@ function(add_assembly_target target_name source_files)
                 /FA /Fa${CMAKE_BINARY_DIR}/asm/${filename}.asm 
                 /c ${filepath} 
                 /I${CMAKE_CURRENT_SOURCE_DIR}/src 
-                /I${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
                 /std:c++17
                 /O2
                 /D_CRT_SECURE_NO_WARNINGS
@@ -236,20 +235,19 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/position.cpp
-    Engine3_src/hybrid_evaluation.cpp
-    Engine3_src/simple_search.cpp
+    src/hybrid_evaluation.cpp
+    src/simple_search.cpp
 )
 
 # ---- Huginn 1.1 (Engine3) - Main Executable ----
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp
-        Engine3_src/simple_search.cpp
-        Engine3_src/hybrid_evaluation.cpp
+        src/simple_search.cpp
+        src/hybrid_evaluation.cpp
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
 )
 
 # ---- Move Generation Profiler ----
@@ -340,14 +338,13 @@ if(GTEST_FOUND)
     add_executable(huginn_tests
         ${TEST_SOURCES}
         ${ENGINE_SOURCES}
-        Engine3_src/hybrid_evaluation.cpp
-        Engine3_src/simple_search.cpp
+        src/hybrid_evaluation.cpp
+        src/simple_search.cpp
     )
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
     target_include_directories(huginn_tests PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/src 
-        ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
     )
     target_link_libraries(huginn_tests PRIVATE ${GTEST_LIBRARIES} Threads::Threads)
 
@@ -403,11 +400,10 @@ foreach(demo_name ${DEMO_NAMES})
         SOURCES
             ${demo_source}
             ${demo_sources}
-            Engine3_src/hybrid_evaluation.cpp
-            Engine3_src/simple_search.cpp
+            src/hybrid_evaluation.cpp
+            src/simple_search.cpp
         INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
     )
 endforeach()
 
@@ -416,11 +412,10 @@ add_huginn_executable(debug_symmetry
     SOURCES
         debug/debug_symmetry.cpp
         ${ENGINE_SOURCES}
-        Engine3_src/hybrid_evaluation.cpp
-        Engine3_src/simple_search.cpp
+        src/hybrid_evaluation.cpp
+        src/simple_search.cpp
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
 )
 
 # ---- Summary ----

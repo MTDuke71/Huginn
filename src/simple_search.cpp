@@ -1,5 +1,5 @@
 #include "simple_search.hpp"
-#include "../src/attack_detection.hpp"
+#include "attack_detection.hpp"
 #include <algorithm>
 #include <iostream>
 

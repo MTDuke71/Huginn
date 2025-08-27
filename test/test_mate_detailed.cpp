@@ -1,7 +1,7 @@
 #include "src/position.hpp"
-#include "Engine3_src/hybrid_evaluation.hpp"
+#include "../src/hybrid_evaluation.hpp"
 #include "src/movegen_enhanced.hpp"
-#include "Engine3_src/simple_search.hpp"
+#include "../src/simple_search.hpp"
 #include "src/attack_detection.hpp"
 #include <iostream>
 #include <iomanip>
