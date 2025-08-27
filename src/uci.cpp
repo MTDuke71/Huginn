@@ -9,8 +9,8 @@ UCIInterface::UCIInterface() {
     // Set starting position
     position.set_startpos();
     
-    // Initialize search engine
-    search_engine = std::make_unique<Search::Engine>();
+    // Initialize search engine with Engine3
+    search_engine = std::make_unique<Engine3::SimpleEngine>();
 }
 
 void UCIInterface::run() {
@@ -52,7 +52,7 @@ void UCIInterface::run() {
         else if (command == "ucinewgame") {
             // Reset for new game
             position.set_startpos();
-            search_engine->clear_hash(); // Clear transposition table
+            search_engine->reset(); // Reset Engine3 state
             if (debug_mode) {
                 std::cout << "info string New game started" << std::endl;
             }
@@ -121,14 +121,13 @@ void UCIInterface::run() {
 }
 
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 1.0" << std::endl;
+    std::cout << "id name Huginn 1.1 Engine3" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
 void UCIInterface::send_options() {
-    // Send basic UCI options
-    std::cout << "option name Hash type spin default 32 min 1 max 1024" << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
+    // Send basic UCI options for Engine3
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
 }
 
@@ -194,13 +193,15 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     
     should_stop = false;
     
-    // Parse search limits from go command
-    Search::SearchLimits limits;
+    // Parse search limits from go command using Engine3 format
+    Engine3::SearchLimits limits;
     limits.infinite = false;
-    limits.max_depth = 12; // Increased default depth for stronger play
-    limits.max_time = std::chrono::milliseconds(10000); // Default 10 seconds for stronger search
+    limits.max_depth = 8; // Engine3 default depth
+    limits.max_time_ms = 5000; // Default 5 seconds
     
-    std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
+    if (debug_mode) {
+        std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
+    }
     
     // Parse go parameters
     for (size_t i = 1; i < tokens.size(); i++) {
@@ -209,37 +210,35 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
             i++;
         }
         else if (tokens[i] == "movetime" && i + 1 < tokens.size()) {
-            limits.max_time = std::chrono::milliseconds(std::stoi(tokens[i + 1]));
+            limits.max_time_ms = std::stoi(tokens[i + 1]);
             i++;
         }
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
             int wtime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::White) {
-                limits.max_time = std::chrono::milliseconds(std::max(200, wtime / 20)); // Use 1/20th of remaining time (more aggressive)
+                limits.max_time_ms = std::max(200, wtime / 20); // Use 1/20th of remaining time
             }
             i++;
         }
         else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
             int btime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::Black) {
-                limits.max_time = std::chrono::milliseconds(std::max(200, btime / 20)); // Use 1/20th of remaining time (more aggressive)
+                limits.max_time_ms = std::max(200, btime / 20); // Use 1/20th of remaining time
             }
             i++;
         }
         else if (tokens[i] == "infinite") {
             limits.infinite = true;
-            limits.max_time = std::chrono::milliseconds(0); // No time limit
+            limits.max_time_ms = 0; // No time limit
         }
     }
     
-    std::cout << "info string Debug: Starting search with depth " << limits.max_depth << std::endl;
+    if (debug_mode) {
+        std::cout << "info string Debug: Starting search with depth " << limits.max_depth << std::endl;
+    }
     
-    // For testing, do synchronous search
+    // Perform synchronous search
     search_best_move(limits);
-    
-    // Alternative: Use thread and join for proper completion
-    // std::thread search_thread(&UCIInterface::search_best_move, this, limits);
-    // search_thread.join();
 }
 
 void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
@@ -253,23 +252,20 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
         std::string option_value = tokens[4];
         
         if (option_name == "Hash") {
-            int hash_size = std::stoi(option_value);
-            search_engine->set_hash_size(hash_size);
+            // Engine3 doesn't use hash tables yet, acknowledge but don't set
             if (debug_mode) {
-                std::cout << "info string Hash size set to " << hash_size << " MB" << std::endl;
+                std::cout << "info string Hash setting acknowledged (Engine3 doesn't use hash tables)" << std::endl;
             }
         }
         else if (option_name == "Threads") {
-            int threads = std::stoi(option_value);
-            threads = std::max(1, std::min(threads, 64)); // Clamp to valid range
-            search_engine->set_threads(threads);
+            // Engine3 is single-threaded, acknowledge but don't change
             if (debug_mode) {
-                std::cout << "info string Threads set to " << threads << std::endl;
+                std::cout << "info string Threads setting acknowledged (Engine3 is single-threaded)" << std::endl;
             }
         }
         else if (option_name == "Ponder") {
             bool ponder = (option_value == "true");
-            // For now, we don't support pondering, so just acknowledge
+            // Engine3 doesn't support pondering yet
             if (debug_mode) {
                 std::cout << "info string Ponder set to " << (ponder ? "true" : "false") << " (not supported)" << std::endl;
             }
@@ -277,41 +273,39 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     }
 }
 
-void UCIInterface::search_best_move(const Search::SearchLimits& limits) {
+void UCIInterface::search_best_move(const Engine3::SearchLimits& limits) {
     is_searching = true;
     
-    // Set up search info callback to send UCI info
-    search_engine->set_info_callback([this](const Search::SearchInfo& info) {
-        std::cout << "info depth " << info.depth;
-        
-        // Check if this is a mate score
-        if (search_engine->is_mate_score(info.score)) {
-            int mate_dist = search_engine->mate_distance(info.score);
-            std::cout << " score mate " << mate_dist;
-        } else {
-            std::cout << " score cp " << info.score;
-        }
-        
-        std::cout << " nodes " << info.nodes
-                  << " nps " << (info.time_ms > 0 ? (info.nodes * 1000) / info.time_ms : 0)
-                  << " hashfull " << search_engine->get_hashfull()
-                  << " time " << info.time_ms;
-        
-        if (!info.pv.empty()) {
-            std::cout << " pv";
-            for (const auto& move : info.pv) {
-                std::cout << " " << move_to_uci(move);
-            }
-        }
-        std::cout << std::endl;
-    });
+    // Reset the search engine
+    search_engine->reset();
     
     // Perform the search
     S_MOVE best_move = search_engine->search(position, limits);
     
+    // Get search statistics
+    const auto& stats = search_engine->get_stats();
+    const auto& pv = search_engine->get_pv();
+    
+    // Send final search info
+    std::cout << "info depth " << stats.max_depth_reached;
+    std::cout << " nodes " << stats.nodes_searched;
+    std::cout << " time " << stats.time_ms;
+    if (stats.time_ms > 0) {
+        std::cout << " nps " << (stats.nodes_searched * 1000) / stats.time_ms;
+    }
+    
+    // Add PV if available
+    if (pv.length > 0) {
+        std::cout << " pv";
+        for (int i = 0; i < pv.length; i++) {
+            std::cout << " " << Engine3::SimpleEngine::move_to_uci(pv.moves[i]);
+        }
+    }
+    std::cout << std::endl;
+    
     // Send the best move
     if (best_move.move != 0) {
-        std::string uci_move = move_to_uci(best_move);
+        std::string uci_move = Engine3::SimpleEngine::move_to_uci(best_move);
         std::cout << "bestmove " << uci_move << std::endl;
     } else {
         std::cout << "bestmove 0000" << std::endl;
@@ -374,37 +368,6 @@ S_MOVE UCIInterface::parse_uci_move(const std::string& uci_move) {
 }
 
 std::string UCIInterface::move_to_uci(const S_MOVE& move) {
-    int from = move.get_from();
-    int to = move.get_to();
-    
-    File from_file = file_of(from);
-    Rank from_rank = rank_of(from);
-    File to_file = file_of(to);
-    Rank to_rank = rank_of(to);
-    
-    // Convert to UCI notation
-    char from_file_char = 'a' + static_cast<int>(from_file);
-    char from_rank_char = '1' + static_cast<int>(from_rank);
-    char to_file_char = 'a' + static_cast<int>(to_file);
-    char to_rank_char = '1' + static_cast<int>(to_rank);
-    
-    std::string uci_move;
-    uci_move += from_file_char;
-    uci_move += from_rank_char;
-    uci_move += to_file_char;
-    uci_move += to_rank_char;
-    
-    // Add promotion piece if present
-    PieceType promoted = move.get_promoted();
-    if (promoted != PieceType::None) {
-        switch (promoted) {
-            case PieceType::Queen:  uci_move += 'q'; break;
-            case PieceType::Rook:   uci_move += 'r'; break;
-            case PieceType::Bishop: uci_move += 'b'; break;
-            case PieceType::Knight: uci_move += 'n'; break;
-            default: break;
-        }
-    }
-    
-    return uci_move;
+    // Use Engine3's move_to_uci implementation
+    return Engine3::SimpleEngine::move_to_uci(move);
 }

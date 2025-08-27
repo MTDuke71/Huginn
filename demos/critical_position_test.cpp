@@ -1,7 +1,7 @@
-#include "evaluation.hpp"
+#include "../Engine3_src/hybrid_evaluation.hpp"
+#include "../Engine3_src/simple_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
-#include "search.hpp"
 #include <iostream>
 #include <vector>
 
@@ -28,7 +28,7 @@ int main() {
         Position temp_pos = pos;
         temp_pos.make_move_with_undo(move);
         
-        int eval = -Evaluation::evaluate_position(temp_pos);
+        int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
         
         if (eval > best_eval) {
             best_eval = eval;

@@ -1,4 +1,4 @@
-#include "evaluation.hpp"
+#include "../Engine3_src/hybrid_evaluation.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -35,13 +35,13 @@ int main() {
     std::cout << std::setw(12) << "Move" << std::setw(15) << "Evaluation" << std::setw(12) << "Penalty" << std::endl;
     std::cout << std::string(39, '-') << std::endl;
     
-    int baseline_eval = Evaluation::evaluate_position(pos);
+    int baseline_eval = Engine3::HybridEvaluator::evaluate(pos);
     
     for (const auto& test : test_moves) {
         Position test_pos;
         test_pos.set_from_fen(test.fen);
         
-        int eval = Evaluation::evaluate_position(test_pos);
+        int eval = Engine3::HybridEvaluator::evaluate(test_pos);
         int penalty = eval - baseline_eval;
         
         std::cout << std::setw(12) << test.move_name 
@@ -53,3 +53,5 @@ int main() {
     
     return 0;
 }
+
+

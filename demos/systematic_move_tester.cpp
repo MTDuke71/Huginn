@@ -1,4 +1,4 @@
-#include "evaluation.hpp"
+#include "../Engine3_src/hybrid_evaluation.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -95,7 +95,7 @@ private:
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(move);
             
-            int eval = -Evaluation::evaluate_position(temp_pos);
+            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
             
             MoveResult result;
             result.from = move.get_from();
@@ -197,3 +197,5 @@ int main() {
     
     return 0;
 }
+
+

@@ -227,8 +227,6 @@ set(ENGINE_SOURCES
     ${COMMON_SOURCES}
     src/board.cpp
     src/debug.cpp
-    src/evaluation.cpp
-    src/search.cpp
     src/uci.cpp
 )
 
@@ -238,8 +236,6 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/position.cpp
-    src/evaluation.cpp
-    src/search.cpp
     Engine3_src/hybrid_evaluation.cpp
     Engine3_src/simple_search.cpp
 )
@@ -407,8 +403,11 @@ foreach(demo_name ${DEMO_NAMES})
         SOURCES
             ${demo_source}
             ${demo_sources}
+            Engine3_src/hybrid_evaluation.cpp
+            Engine3_src/simple_search.cpp
         INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
     )
 endforeach()
 
@@ -417,8 +416,11 @@ add_huginn_executable(debug_symmetry
     SOURCES
         debug/debug_symmetry.cpp
         ${ENGINE_SOURCES}
+        Engine3_src/hybrid_evaluation.cpp
+        Engine3_src/simple_search.cpp
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
 )
 
 # ---- Summary ----
