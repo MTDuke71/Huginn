@@ -256,26 +256,6 @@ add_huginn_executable(huginn
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
 )
 
-# ---- UCI Interface ----
-add_huginn_executable(huginn_uci
-    SOURCES
-        src/uci_main.cpp
-        ${ENGINE_SOURCES}
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-# ---- Position Display Demo ----
-add_huginn_executable(huginn_demo
-    SOURCES
-        src/demo_main.cpp
-        ${COMMON_SOURCES}
-        src/board.cpp
-        src/debug.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
 # ---- Move Generation Profiler ----
 add_huginn_executable(movegen_profiler
     SOURCES
