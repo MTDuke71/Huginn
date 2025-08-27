@@ -45,7 +45,7 @@ struct PVLine {
 struct SearchLimits {
     int max_depth = 0;
     uint64_t max_time_ms = 5000;
-    uint64_t max_nodes = 1000000;
+    uint64_t max_nodes = UINT64_MAX; // Effectively unlimited nodes
     bool infinite = false;
 };
 

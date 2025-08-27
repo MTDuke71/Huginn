@@ -213,6 +213,10 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
             limits.max_time_ms = std::stoi(tokens[i + 1]);
             i++;
         }
+        else if (tokens[i] == "nodes" && i + 1 < tokens.size()) {
+            limits.max_nodes = std::stoull(tokens[i + 1]);
+            i++;
+        }
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
             int wtime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::White) {
@@ -230,6 +234,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "infinite") {
             limits.infinite = true;
             limits.max_time_ms = 0; // No time limit
+            limits.max_nodes = UINT64_MAX; // No node limit
         }
     }
     
