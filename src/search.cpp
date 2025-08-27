@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace Engine3 {
+namespace Huginn {
 
 // Convert move to UCI notation
 std::string SimpleEngine::move_to_uci(const S_MOVE& move) {
@@ -308,4 +308,4 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     return best_move;
 }
 
-} // namespace Engine3
+} // namespace Huginn

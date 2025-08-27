@@ -9,8 +9,8 @@ UCIInterface::UCIInterface() {
     // Set starting position
     position.set_startpos();
     
-    // Initialize search engine with Engine3
-    search_engine = std::make_unique<Engine3::SimpleEngine>();
+    // Initialize search engine
+    search_engine = std::make_unique<Huginn::SimpleEngine>();
 }
 
 void UCIInterface::run() {
@@ -52,7 +52,7 @@ void UCIInterface::run() {
         else if (command == "ucinewgame") {
             // Reset for new game
             position.set_startpos();
-            search_engine->reset(); // Reset Engine3 state
+            search_engine->reset(); // Reset search state
             if (debug_mode) {
                 std::cout << "info string New game started" << std::endl;
             }
@@ -121,12 +121,12 @@ void UCIInterface::run() {
 }
 
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 1.1 Engine3" << std::endl;
+    std::cout << "id name Huginn 1.1" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
 void UCIInterface::send_options() {
-    // Send basic UCI options for Engine3
+    // Send basic UCI options
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
 }
@@ -193,10 +193,10 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     
     should_stop = false;
     
-    // Parse search limits from go command using Engine3 format
-    Engine3::SearchLimits limits;
+    // Parse search limits from go command
+    Huginn::SearchLimits limits;
     limits.infinite = false;
-    limits.max_depth = 8; // Engine3 default depth
+    limits.max_depth = 8; // Default depth
     limits.max_time_ms = 5000; // Default 5 seconds
     
     if (debug_mode) {
@@ -252,20 +252,20 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
         std::string option_value = tokens[4];
         
         if (option_name == "Hash") {
-            // Engine3 doesn't use hash tables yet, acknowledge but don't set
+            // Hash tables not implemented yet, acknowledge but don't set
             if (debug_mode) {
-                std::cout << "info string Hash setting acknowledged (Engine3 doesn't use hash tables)" << std::endl;
+                std::cout << "info string Hash setting acknowledged (not implemented yet)" << std::endl;
             }
         }
         else if (option_name == "Threads") {
-            // Engine3 is single-threaded, acknowledge but don't change
+            // Single-threaded engine, acknowledge but don't change
             if (debug_mode) {
-                std::cout << "info string Threads setting acknowledged (Engine3 is single-threaded)" << std::endl;
+                std::cout << "info string Threads setting acknowledged (single-threaded)" << std::endl;
             }
         }
         else if (option_name == "Ponder") {
             bool ponder = (option_value == "true");
-            // Engine3 doesn't support pondering yet
+            // Pondering not supported yet
             if (debug_mode) {
                 std::cout << "info string Ponder set to " << (ponder ? "true" : "false") << " (not supported)" << std::endl;
             }
@@ -273,7 +273,7 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     }
 }
 
-void UCIInterface::search_best_move(const Engine3::SearchLimits& limits) {
+void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
     is_searching = true;
     
     // Reset the search engine
@@ -298,14 +298,14 @@ void UCIInterface::search_best_move(const Engine3::SearchLimits& limits) {
     if (pv.length > 0) {
         std::cout << " pv";
         for (int i = 0; i < pv.length; i++) {
-            std::cout << " " << Engine3::SimpleEngine::move_to_uci(pv.moves[i]);
+            std::cout << " " << Huginn::SimpleEngine::move_to_uci(pv.moves[i]);
         }
     }
     std::cout << std::endl;
     
     // Send the best move
     if (best_move.move != 0) {
-        std::string uci_move = Engine3::SimpleEngine::move_to_uci(best_move);
+        std::string uci_move = Huginn::SimpleEngine::move_to_uci(best_move);
         std::cout << "bestmove " << uci_move << std::endl;
     } else {
         std::cout << "bestmove 0000" << std::endl;
@@ -368,6 +368,6 @@ S_MOVE UCIInterface::parse_uci_move(const std::string& uci_move) {
 }
 
 std::string UCIInterface::move_to_uci(const S_MOVE& move) {
-    // Use Engine3's move_to_uci implementation
-    return Engine3::SimpleEngine::move_to_uci(move);
+    // Use move_to_uci implementation
+    return Huginn::SimpleEngine::move_to_uci(move);
 }

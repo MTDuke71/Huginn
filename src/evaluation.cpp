@@ -3,7 +3,7 @@
 #include "movegen_enhanced.hpp"
 #include <algorithm>
 
-namespace Engine3 {
+namespace Huginn {
 
 // Convert square120 to square64 format
 int HybridEvaluator::square120_to_64(int sq120) {
@@ -541,4 +541,4 @@ int HybridEvaluator::evaluate(const Position& pos) {
     return pos.side_to_move == Color::White ? score : -score;
 }
 
-} // namespace Engine3
+} // namespace Huginn

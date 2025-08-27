@@ -3,7 +3,7 @@ _Huginn: Odin's Thought, in Every Move_
 
 ![Huginn Logo](images/Huginn.png)
 
-> **🎉 Version 1.1** - Major release featuring Engine3 with hybrid evaluation and dramatically improved chess playing strength!ginn  
+> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength!  
 _Huginn: Odin’s Thought, in Every Move_
 
 ![Huginn Logo](images/Huginn.png)
@@ -39,7 +39,7 @@ cmake --build build
 
 ## Features
 
-### UCI Chess Engine (Engine3 Architecture)
+### UCI Chess Engine
 - **Complete UCI Protocol**: Compatible with Arena, Fritz, ChessBase, and all UCI chess GUIs
 - **Hybrid Evaluation System**: Advanced evaluation combining Engine2's bitboard analysis with mailbox position representation
 - **Single-threaded Alpha-Beta Search**: Robust search with quiescence, iterative deepening, and move ordering
@@ -47,7 +47,7 @@ cmake --build build
 - **Enhanced Move Encoding**: Proper UCI move output (d2d4, e2e4) replacing legacy "0000" move bugs
 - **Game Phase Detection**: Opening/middlegame/endgame evaluation adjustments for optimal play strength
 
-### Chess Engine Architecture (Engine3)
+### Chess Engine Architecture
 - **Hybrid Evaluation Engine**: Combines advanced bitboard evaluation techniques with mailbox position representation
 - **Comprehensive Position Analysis**: Material counting, pawn structure, piece activity, king safety, and mobility evaluation
 - **Game Phase Awareness**: Dynamic evaluation adjustments based on opening/middlegame/endgame detection
@@ -94,9 +94,9 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **Efficient Memory Layout**: Compact data structures and minimal indirection
 
 ### Demo Applications
-- **huginn.exe**: Main chess engine application (Engine3 v1.1) with hybrid evaluation and single-threaded search
+- **huginn.exe**: Main chess engine application (v1.1) with hybrid evaluation and single-threaded search
 - **huginn_legacy.exe**: Original engine preserved for comparison and regression testing
-- **huginn_v1.1.exe**: Versioned copy of the main Engine3 chess engine
+- **huginn_v1.1.exe**: Versioned copy of the main chess engine
 - **debug_demo.exe**: Comprehensive validation system demonstration with passing/failing scenarios
 - **castling_demo.exe**: Interactive castling validation showing detection of various inconsistency types
 - **fen_demo.exe**: FEN generation demonstration showing round-trip conversion capabilities

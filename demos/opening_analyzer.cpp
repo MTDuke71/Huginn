@@ -8,8 +8,8 @@ int main() {
     std::cout << "============================\n\n";
     
     try {
-        // Analyze all opening moves using static evaluation
-        Evaluation::analyze_opening_moves(8);
+        // Opening analysis not yet implemented in current architecture
+        std::cout << "Opening analysis not yet implemented" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "Error during analysis: " << e.what() << std::endl;
         return 1;

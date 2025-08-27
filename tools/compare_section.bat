@@ -27,7 +27,7 @@ echo === C++ CODE ===
 if exist "asm_output\cpp\%FILE%.cpp" (
     findstr /N /C:"%PATTERN%" "asm_output\cpp\%FILE%.cpp"
     echo.
-    echo Context (±3 lines):
+    echo Context (ï¿½3 lines):
     for /f "tokens=1 delims=:" %%i in ('findstr /N /C:"%PATTERN%" "asm_output\cpp\%FILE%.cpp"') do (
         echo Line %%i context:
         powershell -command "Get-Content 'asm_output\cpp\%FILE%.cpp' | Select-Object -Skip (%%i-4) -First 7 | ForEach-Object -Begin { $line = %%i-3 } -Process { Write-Host ('{0,3}: {1}' -f $line, $_); $line++ }"

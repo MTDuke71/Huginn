@@ -142,7 +142,7 @@ private:
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(legal_moves.moves[i]);
             
-            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
+            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
             
             if (eval > best_eval) {
                 best_eval = eval;

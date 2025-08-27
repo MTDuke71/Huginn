@@ -8,7 +8,7 @@
 #include <vector>
 #include <chrono>
 
-namespace Engine3 {
+namespace Huginn {
 
 // Search constants
 constexpr int MAX_PLY = 100;
@@ -98,4 +98,4 @@ public:
     static std::string score_to_uci(int score);
 };
 
-} // namespace Engine3
+} // namespace Huginn

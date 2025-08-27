@@ -17,7 +17,7 @@ echo.
 set FILES=bitboard movegen_enhanced attack_detection position evaluation search
 
 :: Copy include paths from successful build
-set INCLUDES=/I"src" /I"Engine3_src"
+set INCLUDES=/I"src" /I"src"
 set DEFINES=/D_CRT_SECURE_NO_WARNINGS /DWIN32 /D_WINDOWS /DDEBUG
 set FLAGS=/std:c++17 /EHsc /O2 /W3
 
@@ -37,17 +37,17 @@ for %%f in (%FILES%) do (
     )
 )
 
-:: Process Engine3 files
+:: Process evaluation and search files
 echo.
-echo Processing Engine3 files...
-for %%f in (hybrid_evaluation simple_search) do (
+echo Processing evaluation and search files...
+for %%f in (evaluation search) do (
     echo Processing %%f.cpp...
     
     :: Copy source file for comparison
-    copy "Engine3_src\%%f.cpp" "asm_output\cpp\" >nul 2>&1
+    copy "src\%%f.cpp" "asm_output\cpp\" >nul 2>&1
     
     :: Generate assembly 
-    cl %FLAGS% %DEFINES% %INCLUDES% /FA /Fa"asm_output\asm\%%f.asm" /c "Engine3_src\%%f.cpp" >nul 2>&1
+    cl %FLAGS% %DEFINES% %INCLUDES% /FA /Fa"asm_output\asm\%%f.asm" /c "src\%%f.cpp" >nul 2>&1
     
     if exist "asm_output\asm\%%f.asm" (
         echo   ? %%f.asm generated successfully

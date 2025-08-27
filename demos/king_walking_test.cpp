@@ -26,7 +26,7 @@ int main() {
         if (from == sq(File::F, Rank::R7) && to == sq(File::F, Rank::R6)) {
             Position temp_pos = pos1;
             temp_pos.make_move_with_undo(move);
-            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
+            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
             std::cout << "f6 move evaluation: " << eval << "cp\n";
             temp_pos.undo_move();
             break;
@@ -51,7 +51,7 @@ int main() {
         if (from == sq(File::E, Rank::R8) && to == sq(File::E, Rank::R7)) {
             Position temp_pos = pos2;
             temp_pos.make_move_with_undo(move);
-            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
+            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
             std::cout << "Ke7 move evaluation: " << eval << "cp\n";
             temp_pos.undo_move();
             break;

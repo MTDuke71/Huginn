@@ -87,7 +87,7 @@ private:
             temp_pos.make_move_with_undo(move);
             
             // Evaluate position
-            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
+            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
             
             // Create move notation
             std::string move_notation = square_to_notation(move.get_from()) + 

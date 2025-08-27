@@ -16,7 +16,7 @@
 class UCIInterface {
 private:
     Position position;
-    std::unique_ptr<Engine3::SimpleEngine> search_engine;
+    std::unique_ptr<Huginn::SimpleEngine> search_engine;
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
@@ -40,7 +40,7 @@ private:
     void handle_setoption(const std::vector<std::string>& tokens);
     
     // Search for best move using the search engine
-    void search_best_move(const Engine3::SearchLimits& limits);
+    void search_best_move(const Huginn::SearchLimits& limits);
 
 public:
     UCIInterface();

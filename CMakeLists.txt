@@ -247,7 +247,7 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/search.cpp
 )
 
-# ---- Huginn 1.1 (Engine3) - Main Executable ----
+# ---- Huginn 1.1 - Main Executable ----
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp

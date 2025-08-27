@@ -1278,16 +1278,16 @@ int main() {
     pos.set_startpos();
     
     // Evaluation
-    Engine3::HybridEvaluator evaluator;
+    Huginn::HybridEvaluator evaluator;
     int score = evaluator.evaluate(pos);
     
     // Search
-    Engine3::SimpleEngine engine;
-    Engine3::SearchLimits limits;
+    Huginn::SimpleEngine engine;
+    Huginn::SearchLimits limits;
     limits.max_depth = 6;
     
     S_MOVE best_move = engine.search(pos, limits);
-    std::string uci_move = Engine3::SimpleEngine::move_to_uci(best_move);
+    std::string uci_move = Huginn::SimpleEngine::move_to_uci(best_move);
     
     return 0;
 }

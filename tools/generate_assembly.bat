@@ -59,8 +59,8 @@ copy "src\attack_detection.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\position.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\evaluation.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\search.cpp" "%ANALYSIS_DIR%\cpp\" >nul
-copy "Engine3_src\hybrid_evaluation.cpp" "%ANALYSIS_DIR%\cpp\" >nul
-copy "Engine3_src\simple_search.cpp" "%ANALYSIS_DIR%\cpp\" >nul
+copy "src\hybrid_evaluation.cpp" "%ANALYSIS_DIR%\cpp\" >nul
+copy "src\simple_search.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 
 :: Copy assembly files
 echo Copying assembly files...

@@ -95,8 +95,8 @@ protected:
         std::string mirrored_fen = mirror_fen(fen);
         ASSERT_TRUE(pos2.set_from_fen(mirrored_fen)) << "Failed to parse mirrored FEN: " << mirrored_fen;
         
-        // Evaluate both positions using Engine3 hybrid evaluator
-        Engine3::HybridEvaluator evaluator;
+        // Evaluate both positions using hybrid evaluator
+        Huginn::HybridEvaluator evaluator;
         int eval1 = evaluator.evaluate(pos1);
         int eval2 = evaluator.evaluate(pos2);
         

@@ -1,14 +1,14 @@
-# Engine3 Architecture Documentation
+# Huginn Chess Engine Architecture Documentation
 
 ## Overview
 
-Engine3 represents the next generation of the Huginn chess engine, featuring a complete architectural rewrite that delivers dramatically improved chess playing strength and reliability. This document details the technical implementation and design decisions behind Engine3.
+Huginn represents a complete architectural rewrite that delivers dramatically improved chess playing strength and reliability. This document details the technical implementation and design decisions behind the current architecture.
 
 ## Architecture Components
 
-### 1. Hybrid Evaluation System (`Engine3_src/hybrid_evaluation.hpp/cpp`)
+### 1. Hybrid Evaluation System (`src/evaluation.hpp/cpp`)
 
-Engine3 implements a sophisticated hybrid evaluation system that combines the best of bitboard-based evaluation techniques with mailbox position representation.
+Huginn implements a sophisticated hybrid evaluation system that combines the best of bitboard-based evaluation techniques with mailbox position representation.
 
 #### Core Design Philosophy
 - **Game Phase Awareness**: Dynamic evaluation adjustments based on material count and position characteristics
@@ -71,9 +71,9 @@ inline constexpr int PASSED_PAWN_BONUS = 20; // varies by rank
 - **Blocked Pieces**: Penalties for pieces with limited mobility
 - **Central Control**: Bonuses for pieces controlling key central squares
 
-### 2. Single-threaded Search Engine (`Engine3_src/simple_search.hpp/cpp`)
+### 2. Single-threaded Search Engine (`src/search.hpp/cpp`)
 
-Engine3 implements a robust single-threaded search engine that prioritizes reliability and correctness over threading complexity.
+Huginn implements a robust single-threaded search engine that prioritizes reliability and correctness over threading complexity.
 
 #### Core Search Algorithm
 ```cpp
@@ -92,7 +92,7 @@ int quiescence(Position& pos, int alpha, int beta, PVLine& pv);
 - **Capture-only Search**: Extends search for captures and checks
 
 #### Move Ordering Strategy
-Engine3 implements sophisticated move ordering to maximize alpha-beta efficiency:
+Huginn implements sophisticated move ordering to maximize alpha-beta efficiency:
 
 1. **Hash Move**: Best move from transposition table (when available)
 2. **Captures**: Ordered by MVV-LVA (Most Valuable Victim - Least Valuable Attacker)
@@ -122,7 +122,7 @@ struct PVLine {
 
 ### 3. UCI Interface Integration (`huginn3_main.cpp`)
 
-Engine3 provides complete UCI (Universal Chess Interface) protocol compliance for integration with chess GUIs.
+Huginn provides complete UCI (Universal Chess Interface) protocol compliance for integration with chess GUIs.
 
 #### UCI Protocol Support
 - **Engine Identification**: Reports as "Huginn Chess Engine v1.1"
@@ -135,7 +135,7 @@ Engine3 provides complete UCI (Universal Chess Interface) protocol compliance fo
 static std::string move_to_uci(const S_MOVE& move);
 ```
 
-Engine3 provides reliable move encoding that replaces the broken "0000" output of legacy systems:
+Huginn provides reliable move encoding that replaces the broken "0000" output of legacy systems:
 - **Proper UCI Format**: e2e4, d7d5, e7e8q (promotion), e1g1 (castling)
 - **Special Move Handling**: Castling, en passant, and promotion correctly encoded
 - **Consistency**: All moves properly formatted for external consumption
@@ -197,7 +197,7 @@ Engine3 provides reliable move encoding that replaces the broken "0000" output o
 
 ## Conclusion
 
-Engine3 represents a significant advancement in the Huginn chess engine project, delivering:
+Huginn represents a significant advancement in the Huginn chess engine project, delivering:
 
 1. **Reliable Chess Playing**: Accurate position evaluation and sound move selection
 2. **Clean Architecture**: Maintainable, extensible codebase

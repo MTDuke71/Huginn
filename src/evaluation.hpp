@@ -10,7 +10,7 @@
 #define CASTLE_BK 4   // Black kingside
 #define CASTLE_BQ 8   // Black queenside
 
-namespace Engine3 {
+namespace Huginn {
 
 namespace EvalParams {
 
@@ -135,4 +135,4 @@ private:
     static int count_developed_pieces(const Position& pos, Color color);
 };
 
-} // namespace Engine3
+} // namespace Huginn

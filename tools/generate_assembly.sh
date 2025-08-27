@@ -54,8 +54,8 @@ cp src/attack_detection.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/position.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/evaluation.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/search.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
-cp Engine3_src/hybrid_evaluation.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
-cp Engine3_src/simple_search.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
+cp src/hybrid_evaluation.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
+cp src/simple_search.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 
 # Copy assembly files
 echo "Copying assembly files..."

@@ -35,13 +35,13 @@ int main() {
     std::cout << std::setw(12) << "Move" << std::setw(15) << "Evaluation" << std::setw(12) << "Penalty" << std::endl;
     std::cout << std::string(39, '-') << std::endl;
     
-    int baseline_eval = Engine3::HybridEvaluator::evaluate(pos);
+    int baseline_eval = Huginn::HybridEvaluator::evaluate(pos);
     
     for (const auto& test : test_moves) {
         Position test_pos;
         test_pos.set_from_fen(test.fen);
         
-        int eval = Engine3::HybridEvaluator::evaluate(test_pos);
+        int eval = Huginn::HybridEvaluator::evaluate(test_pos);
         int penalty = eval - baseline_eval;
         
         std::cout << std::setw(12) << test.move_name 

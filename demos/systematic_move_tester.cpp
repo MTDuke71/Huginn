@@ -95,7 +95,7 @@ private:
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(move);
             
-            int eval = -Engine3::HybridEvaluator::evaluate(temp_pos);
+            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
             
             MoveResult result;
             result.from = move.get_from();
