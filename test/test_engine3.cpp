@@ -1,5 +1,5 @@
-#include "../src/simple_search.hpp"
-#include "../src/hybrid_evaluation.hpp"
+#include "../src/search.hpp"
+#include "../src/evaluation.hpp"
 #include "src/position.hpp"
 #include <iostream>
 

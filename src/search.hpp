@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../src/position.hpp"
-#include "../src/move.hpp"
-#include "../src/movegen_enhanced.hpp"
-#include "hybrid_evaluation.hpp"
+#include "position.hpp"
+#include "move.hpp"
+#include "movegen_enhanced.hpp"
+#include "evaluation.hpp"
 #include <string>
 #include <vector>
 #include <chrono>

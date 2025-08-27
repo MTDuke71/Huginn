@@ -10,8 +10,16 @@ if(WIN32)
         unset(ENV{PKG_CONFIG_PATH})
         unset(ENV{ACLOCAL_PATH})
         unset(ENV{MANPATH})
-        
-        # Force CMake to not use any non-Windows paths
+      # ---- Debug Symmetry Executable ----
+add_huginn_executable(debug_symmetry
+    SOURCES
+        debug/debug_symmetry.cpp
+        ${ENGINE_SOURCES}
+        src/evaluation.cpp
+        src/search.cpp
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)  # Force CMake to not use any non-Windows paths
         set(CMAKE_FIND_ROOT_PATH "")
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
@@ -235,16 +243,16 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/position.cpp
-    src/hybrid_evaluation.cpp
-    src/simple_search.cpp
+    src/evaluation.cpp
+    src/search.cpp
 )
 
 # ---- Huginn 1.1 (Engine3) - Main Executable ----
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp
-        src/simple_search.cpp
-        src/hybrid_evaluation.cpp
+        src/search.cpp
+        src/evaluation.cpp
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -338,8 +346,8 @@ if(GTEST_FOUND)
     add_executable(huginn_tests
         ${TEST_SOURCES}
         ${ENGINE_SOURCES}
-        src/hybrid_evaluation.cpp
-        src/simple_search.cpp
+        src/evaluation.cpp
+        src/search.cpp
     )
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
@@ -400,8 +408,8 @@ foreach(demo_name ${DEMO_NAMES})
         SOURCES
             ${demo_source}
             ${demo_sources}
-            src/hybrid_evaluation.cpp
-            src/simple_search.cpp
+            src/evaluation.cpp
+            src/search.cpp
         INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
@@ -412,8 +420,8 @@ add_huginn_executable(debug_symmetry
     SOURCES
         debug/debug_symmetry.cpp
         ${ENGINE_SOURCES}
-        src/hybrid_evaluation.cpp
-        src/simple_search.cpp
+        src/evaluation.cpp
+        src/search.cpp
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

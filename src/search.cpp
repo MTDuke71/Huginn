@@ -1,4 +1,4 @@
-#include "simple_search.hpp"
+#include "search.hpp"
 #include "attack_detection.hpp"
 #include <algorithm>
 #include <iostream>

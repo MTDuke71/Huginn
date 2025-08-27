@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "../src/hybrid_evaluation.hpp"
+#include "../src/evaluation.hpp"
 #include "init.hpp"
 #include <sstream>
 #include <vector>

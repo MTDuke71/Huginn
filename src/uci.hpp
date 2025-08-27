@@ -10,7 +10,7 @@
 #include <memory>
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
-#include "simple_search.hpp"
+#include "search.hpp"
 
 // UCI (Universal Chess Interface) implementation for Huginn chess engine
 class UCIInterface {
