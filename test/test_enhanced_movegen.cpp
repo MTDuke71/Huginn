@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <chrono>
 #include "movegen_enhanced.hpp"
 #include "position.hpp"
 #include "init.hpp"

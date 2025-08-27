@@ -1,21 +1,40 @@
 cmake_minimum_required(VERSION 3.24)
 
-# Prevent CMake from adding MSYS2 paths when using MSVC
-if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # Clear any MSYS2-related variables that might interfere
-    unset(ENV{MSYSTEM})
-    unset(ENV{MSYS2_PATH_TYPE})
-    
-    # Explicitly prevent MSYS2 paths from being added
-    set(CMAKE_FIND_ROOT_PATH "")
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
-    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-    
-    # Ensure we use Windows SDK paths, not MSYS2
-    set(CMAKE_SYSTEM_INCLUDE_PATH "")
-    set(CMAKE_SYSTEM_LIBRARY_PATH "")
+# Prefer MSVC but allow fallback
+if(WIN32)
+    # Aggressive MSYS2 interference prevention
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        # Clear all MSYS2-related environment variables
+        unset(ENV{MSYSTEM})
+        unset(ENV{MSYS2_PATH_TYPE})
+        unset(ENV{PKG_CONFIG_PATH})
+        unset(ENV{ACLOCAL_PATH})
+        unset(ENV{MANPATH})
+        
+        # Force CMake to not use any non-Windows paths
+        set(CMAKE_FIND_ROOT_PATH "")
+        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
+        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
+        set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
+        set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+        
+        # Clear system paths that might include MSYS2
+        set(CMAKE_SYSTEM_INCLUDE_PATH "")
+        set(CMAKE_SYSTEM_LIBRARY_PATH "")
+        
+        # Explicitly exclude MSYS2 paths from include search
+        set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "")
+        set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "")
+        
+        # Remove any MSYS2 paths from PATH during build
+        string(REPLACE "C:/msys64/ucrt64/bin;" "" CMAKE_PROGRAM_PATH "$ENV{PATH}")
+        string(REPLACE "C:/msys64/ucrt64/include;" "" CMAKE_INCLUDE_PATH "$ENV{INCLUDE}")
+        string(REPLACE "C:/msys64/ucrt64/lib;" "" CMAKE_LIBRARY_PATH "$ENV{LIB}")
+        
+        message(STATUS "Using MSVC toolchain with aggressive MSYS2 interference prevention")
+    else()
+        message(WARNING "Not using MSVC - MSYS2 interference prevention disabled")
+    endif()
 endif()
 
 project(Huginn LANGUAGES CXX)
@@ -86,58 +105,29 @@ endif()
 # ---- Find Threads (required for all targets) ----
 find_package(Threads REQUIRED)
 
-# ---- Find GTest with proper toolchain handling ----
-set(GTEST_FOUND FALSE)
+# ---- Find GTest with FetchContent ----
+include(FetchContent)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # For MSVC, prefer vcpkg or CONFIG mode
-    find_package(GTest CONFIG QUIET)
-    if(GTest_FOUND)
-        set(GTEST_FOUND TRUE)
-        set(GTEST_LIBRARIES GTest::gtest)
-        set(GTEST_MAIN_LIBRARIES GTest::gtest_main)
-        message(STATUS "GTest found via CONFIG mode (likely vcpkg)")
-    endif()
-else()
-    # For GCC/MinGW, try both CONFIG and MODULE modes
-    find_package(GTest CONFIG QUIET)
-    if(GTest_FOUND)
-        set(GTEST_FOUND TRUE)
-        if(TARGET GTest::gtest)
-            set(GTEST_LIBRARIES GTest::gtest)
-            set(GTEST_MAIN_LIBRARIES GTest::gtest_main)
-        elseif(TARGET gtest)
-            set(GTEST_LIBRARIES gtest)
-            set(GTEST_MAIN_LIBRARIES gtest_main)
-        endif()
-        message(STATUS "GTest found via CONFIG mode")
-    else()
-        # Fallback to MODULE mode
-        find_package(GTest MODULE QUIET)
-        if(GTEST_FOUND)
-            set(GTEST_LIBRARIES ${GTEST_LIBRARIES})
-            set(GTEST_MAIN_LIBRARIES ${GTEST_MAIN_LIBRARIES})
-            message(STATUS "GTest found via MODULE mode")
-        endif()
-    endif()
-endif()
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
 
-if(GTEST_FOUND)
-    message(STATUS "GTest libraries: ${GTEST_LIBRARIES}")
-    include(CTest)
-    enable_testing()
-    if(COMMAND gtest_discover_tests)
-        include(GoogleTest)
-    endif()
-else()
-    message(WARNING "GTest not found - tests will be skipped")
-    message(STATUS "To install GTest:")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        message(STATUS "  Use vcpkg: vcpkg install gtest:x64-windows")
-    else()
-        message(STATUS "  Use MSYS2: pacman -S mingw-w64-ucrt-x86_64-gtest")
-    endif()
-endif()
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(googletest)
+
+# Enable testing
+include(CTest)
+enable_testing()
+include(GoogleTest)
+
+set(GTEST_FOUND TRUE)
+set(GTEST_LIBRARIES gtest)
+set(GTEST_MAIN_LIBRARIES gtest_main)
+message(STATUS "GoogleTest configured via FetchContent")
 
 # ---- Function to create executables with common settings ----
 function(add_huginn_executable target_name)
@@ -246,10 +236,10 @@ set(PERFORMANCE_CRITICAL_SOURCES
 # ---- Huginn 1.1 (Engine3) - Main Executable ----
 add_huginn_executable(huginn
     SOURCES
-        huginn3_main.cpp
+        src/main.cpp
         Engine3_src/simple_search.cpp
         Engine3_src/hybrid_evaluation.cpp
-        ${COMMON_SOURCES}
+        ${ENGINE_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
@@ -379,32 +369,34 @@ if(GTEST_FOUND)
         Engine3_src/hybrid_evaluation.cpp
         Engine3_src/simple_search.cpp
     )
-    
+
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
     target_include_directories(huginn_tests PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/src 
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
     )
     target_link_libraries(huginn_tests PRIVATE ${GTEST_LIBRARIES} Threads::Threads)
-    
+
     set_target_properties(huginn_tests PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
 
-    # Discover tests if GoogleTest module is available
-    if(COMMAND gtest_discover_tests)
-        set(GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
-        gtest_discover_tests(huginn_tests DISCOVERY_TIMEOUT 30)
-    endif()
+    # Always include GoogleTest before discovering tests
+    include(GoogleTest)
+    gtest_discover_tests(
+        huginn_tests
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        DISCOVERY_TIMEOUT 30
+    )
 
     # Convenience target to build and run tests
     add_custom_target(check
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --test-dir ${CMAKE_BINARY_DIR}
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS huginn_tests
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         COMMENT "Building and running tests"
     )
-    
+
     message(STATUS "Tests enabled - use 'cmake --build . --target check' to run")
 else()
     message(STATUS "Tests disabled - GTest not found")
