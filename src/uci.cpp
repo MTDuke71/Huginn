@@ -194,19 +194,21 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     should_stop = false;
     
     // Parse search limits from go command
-    Huginn::SearchLimits limits;
+    Huginn::SearchLimits limits;  // Uses defaults from SearchLimits struct
     limits.infinite = false;
     limits.max_depth = 8; // Default depth
-    limits.max_time_ms = 5000; // Default 5 seconds
+    // limits.max_time_ms uses default from SearchLimits (10000ms)
     
     if (debug_mode) {
         std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
     }
     
     // Parse go parameters
+    bool depth_specified = false;
     for (size_t i = 1; i < tokens.size(); i++) {
         if (tokens[i] == "depth" && i + 1 < tokens.size()) {
             limits.max_depth = std::stoi(tokens[i + 1]);
+            depth_specified = true;
             i++;
         }
         else if (tokens[i] == "movetime" && i + 1 < tokens.size()) {
@@ -236,6 +238,13 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
             limits.max_time_ms = 0; // No time limit
             limits.max_nodes = UINT64_MAX; // No node limit
         }
+    }
+    
+    // If depth is specified, ignore time limits to complete the requested depth
+    if (depth_specified) {
+        limits.infinite = true;
+        limits.max_time_ms = 0; // No time limit for depth searches
+        limits.max_nodes = UINT64_MAX; // No node limit for depth searches
     }
     
     if (debug_mode) {
