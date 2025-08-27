@@ -256,15 +256,6 @@ add_huginn_executable(huginn
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
 )
 
-# ---- Legacy Huginn (Original Engine) ----
-add_huginn_executable(huginn_legacy
-    SOURCES
-        src/main.cpp
-        ${ENGINE_SOURCES}
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
 # ---- UCI Interface ----
 add_huginn_executable(huginn_uci
     SOURCES
