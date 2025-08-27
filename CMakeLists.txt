@@ -33,7 +33,7 @@ if(WIN32)
         
         message(STATUS "Using MSVC toolchain with aggressive MSYS2 interference prevention")
     else()
-        message(WARNING "Not using MSVC - MSYS2 interference prevention disabled")
+        message(STATUS "Not using MSVC - MSYS2 interference prevention disabled")
     endif()
 endif()
 
@@ -57,6 +57,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_options(/W3)
     
+    # Suppress specific warnings that are common in this codebase and safe
+    add_compile_options(
+        /wd4244  # Conversion warnings (int64 to int) - safe in our context
+        /wd4267  # Size_t conversion warnings - safe in our context
+    )
+    
     # Assembly generation for MSVC
     if(GENERATE_ASSEMBLY)
         add_compile_options(/FA)  # Generate assembly listings
@@ -72,7 +78,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(STATUS "Using GNU/Clang toolchain")
     # GCC/Clang specific settings
-    add_compile_options(-Wall -Wextra)
+    add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+    
+    # Additional safety warnings
+    add_compile_options(
+        -Wconversion          # Warn about implicit conversions that may change value
+        -Wsign-conversion     # Warn about sign conversions
+        -Wcast-qual           # Warn about casts that remove qualifiers
+        -Wcast-align          # Warn about potential alignment issues
+    )
     
     # Assembly generation for GCC/Clang
     if(GENERATE_ASSEMBLY)
@@ -84,22 +98,76 @@ else()
     message(STATUS "Using unknown toolchain: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-# ---- Compiler Optimizations for Release Builds ----
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        add_compile_options(-O3 -march=native)
-        message(STATUS "Release optimizations enabled (-O3 -march=native)")
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        add_compile_options(/O2)
-        message(STATUS "Release optimizations enabled (/O2)")
+# ---- Build Type Validation ----
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+# ---- Compiler Optimizations ----
+# For multi-config generators (Visual Studio), use generator expressions
+if(CMAKE_CONFIGURATION_TYPES)
+    # Multi-config generator (Visual Studio, Xcode)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        # Configuration-specific flags using generator expressions
+        add_compile_options(
+            $<$<CONFIG:Release>:/O2>
+            $<$<CONFIG:Release>:/GS>
+            $<$<CONFIG:Release>:/guard:cf>
+            $<$<CONFIG:Debug>:/Od>
+            $<$<CONFIG:Debug>:/Zi>
+        )
+        
+        # Global warning suppression for all configurations
+        add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
+        message(STATUS "Multi-config generator: Optimizations set per configuration")
+        message(STATUS "MSVC warning suppression enabled for safe conversions")
+    endif()
+else()
+    # Single-config generator (Ninja, Make)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            add_compile_options(-O3 -march=native)
+            # Add security hardening for release builds
+            add_compile_options(-D_FORTIFY_SOURCE=2 -fstack-protector-strong)
+            message(STATUS "Release optimizations enabled (-O3 -march=native) with security hardening")
+        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            add_compile_options(/O2)
+            # Add security features for MSVC
+            add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
+            message(STATUS "Release optimizations enabled (/O2) with security features")
+        endif()
+    else()
+        # Debug build specific options
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            add_compile_options(-g -O0)
+            message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
+        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            add_compile_options(/Od /Zi)
+            message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
+        endif()
     endif()
 endif()
 
 # ---- Debug Mode Configuration ----
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
+option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
+
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
     message(STATUS "Debug assertions enabled")
+endif()
+
+# ---- Sanitizers for enhanced debugging ----
+if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_compile_options(-fsanitize=address -fsanitize=undefined)
+        add_link_options(-fsanitize=address -fsanitize=undefined)
+        message(STATUS "Sanitizers enabled: AddressSanitizer + UndefinedBehaviorSanitizer")
+    else()
+        message(WARNING "Sanitizers requested but not supported with ${CMAKE_CXX_COMPILER_ID}")
+    endif()
 endif()
 
 # ---- Find Threads (required for all targets) ----
