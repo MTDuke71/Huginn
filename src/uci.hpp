@@ -16,10 +16,11 @@
 class UCIInterface {
 private:
     Position position;
-    std::unique_ptr<Huginn::SimpleEngine> search_engine;
+    std::unique_ptr<Huginn::ThreadedEngine> search_engine;
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
+    int threads = 16; // Default to 16 threads for optimal performance
     
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
     S_MOVE parse_uci_move(const std::string& uci_move);

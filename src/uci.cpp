@@ -10,7 +10,7 @@ UCIInterface::UCIInterface() {
     position.set_startpos();
     
     // Initialize search engine
-    search_engine = std::make_unique<Huginn::SimpleEngine>();
+    search_engine = std::make_unique<Huginn::ThreadedEngine>();
 }
 
 void UCIInterface::run() {
@@ -127,7 +127,7 @@ void UCIInterface::send_id() {
 
 void UCIInterface::send_options() {
     // Send basic UCI options
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    std::cout << "option name Threads type spin default 16 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
 }
 
@@ -263,9 +263,12 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
             }
         }
         else if (option_name == "Threads") {
-            // Single-threaded engine, acknowledge but don't change
-            if (debug_mode) {
-                std::cout << "info string Threads setting acknowledged (single-threaded)" << std::endl;
+            int thread_count = std::stoi(option_value);
+            if (thread_count >= 1 && thread_count <= 64) {
+                threads = thread_count;
+                if (debug_mode) {
+                    std::cout << "info string Threads set to " << threads << std::endl;
+                }
             }
         }
         else if (option_name == "Ponder") {
@@ -284,8 +287,12 @@ void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
     // Reset the search engine
     search_engine->reset();
     
+    // Set thread count in limits
+    Huginn::SearchLimits modified_limits = limits;
+    modified_limits.threads = threads; // Use the UCI-configured thread count directly
+    
     // Perform the search
-    S_MOVE best_move = search_engine->search(position, limits);
+    S_MOVE best_move = search_engine->search(position, modified_limits);
     
     // Get search statistics
     const auto& stats = search_engine->get_stats();

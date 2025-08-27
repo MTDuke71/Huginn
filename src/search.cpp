@@ -308,4 +308,223 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     return best_move;
 }
 
+// ThreadedEngine implementation
+
+// Thread-safe time checking
+bool ThreadedEngine::thread_time_up() const {
+    if (current_limits.infinite) return false;
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+    
+    return elapsed.count() >= static_cast<long long>(current_limits.max_time_ms) || 
+           thread_safe_stats.nodes_searched >= current_limits.max_nodes ||
+           global_stop;
+}
+
+// Thread worker function
+S_MOVE ThreadedEngine::thread_search_worker(Position pos, const SearchLimits& limits, int thread_id) {
+    S_MOVE best_move;
+    best_move.move = 0;
+    best_move.score = -MATE_SCORE;
+    
+    // Generate root moves once
+    S_MOVELIST root_moves;
+    generate_legal_moves_enhanced(pos, root_moves);
+    
+    if (root_moves.count == 0) return best_move;
+    
+    // Each thread works on different moves using round-robin distribution
+    PVLine best_pv;
+    
+    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        if (thread_time_up()) break;
+        
+        for (int move_idx = thread_id; move_idx < root_moves.count; move_idx += limits.threads) {
+            if (thread_time_up()) break;
+            
+            S_MOVE move = root_moves.moves[move_idx];
+            
+            // Make the move
+            Position thread_pos = pos;
+            thread_pos.make_move_with_undo(move);
+            
+            PVLine child_pv;
+            
+            // Search from this position with the full remaining depth
+            int score = -alpha_beta(thread_pos, depth - 1, -MATE_SCORE, MATE_SCORE, child_pv);
+            
+            // Update best if this is better
+            if (score > best_move.score) {
+                best_move = move;
+                best_move.score = score;
+                
+                // Construct the correct PV: root move + child PV
+                best_pv.clear();
+                best_pv.add_move(move);
+                for (int i = 0; i < child_pv.length; ++i) {
+                    best_pv.add_move(child_pv.moves[i]);
+                }
+                
+                // Update global best move if this is better
+                if (score > global_best_score.load()) {
+                    std::lock_guard<std::mutex> lock(best_move_mutex);
+                    if (score > global_best_score.load()) {  // Double-check after acquiring lock
+                        global_best_move = move;
+                        global_best_move.score = score;
+                        global_best_pv = best_pv;
+                        global_best_score = score;
+                    }
+                }
+            }
+        }
+        
+        // Thread 0 handles output to avoid garbled UCI info
+        if (thread_id == 0) {
+            std::lock_guard<std::mutex> output_lock(output_mutex);
+            
+            thread_safe_stats.max_depth_reached = depth;
+            
+            uint64_t total_nodes = thread_safe_stats.nodes_searched.load();
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+            uint64_t time_ms = elapsed.count();
+            
+            // Use global best move for output
+            S_MOVE output_move;
+            PVLine output_pv;
+            int output_score;
+            {
+                std::lock_guard<std::mutex> best_lock(best_move_mutex);
+                output_move = global_best_move;
+                output_pv = global_best_pv;
+                output_score = global_best_score.load();
+            }
+            
+            if (output_move.move != 0) {
+                std::cout << "info depth " << depth 
+                          << " score " << score_to_uci(output_score)
+                          << " nodes " << total_nodes
+                          << " time " << time_ms;
+                
+                if (time_ms > 0) {
+                    std::cout << " nps " << (total_nodes * 1000) / time_ms;
+                }
+                
+                std::cout << " pv " << pv_to_string(output_pv) << std::endl;
+            }
+        }
+        
+        // Check for mate
+        if (abs(best_move.score) > 30000) {
+            break;
+        }
+    }
+    
+    return best_move;
+}
+
+// Main threaded search
+S_MOVE ThreadedEngine::search(Position pos, const SearchLimits& limits) {
+    reset();
+    current_limits = limits;
+    start_time = std::chrono::steady_clock::now();
+    
+    // Initialize global best move
+    global_best_move.move = 0;
+    global_best_move.score = -MATE_SCORE;
+    global_best_pv.clear();
+    global_best_score = -MATE_SCORE;
+    
+    // Use only 1 thread if threads is 1 or less
+    if (limits.threads <= 1) {
+        return single_threaded_search(pos, limits);
+    }
+    
+    // Launch multiple threads
+    std::vector<std::future<S_MOVE>> futures;
+    
+    for (int i = 0; i < limits.threads; ++i) {
+        futures.push_back(
+            std::async(std::launch::async, 
+                      &ThreadedEngine::thread_search_worker, 
+                      this, pos, limits, i)
+        );
+    }
+    
+    // Wait for all threads to complete
+    for (auto& future : futures) {
+        future.get();  // Just wait for completion, best move is in global_best_move
+    }
+    
+    // Return the global best move
+    std::lock_guard<std::mutex> lock(best_move_mutex);
+    S_MOVE final_best = global_best_move;
+    
+    // Update final stats
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+    thread_safe_stats.time_ms = elapsed.count();
+    
+    return final_best;
+}
+
+// Single-threaded search for ThreadedEngine
+S_MOVE ThreadedEngine::single_threaded_search(Position pos, const SearchLimits& limits) {
+    thread_safe_stats.reset();
+    current_limits = limits;
+    start_time = std::chrono::steady_clock::now();
+    
+    S_MOVE best_move;
+    best_move.move = 0;
+    best_move.score = 0;
+    
+    // Iterative deepening (similar to SimpleEngine but with thread-safe stats)
+    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        if (thread_time_up()) break;
+        
+        thread_safe_stats.max_depth_reached = depth;
+        
+        PVLine current_pv;
+        int score = alpha_beta(pos, depth, -MATE_SCORE, MATE_SCORE, current_pv);
+        
+        if (thread_time_up()) break;
+        
+        main_pv = current_pv;
+        
+        if (main_pv.length > 0) {
+            best_move = main_pv.moves[0];
+        }
+        
+        // Update final stats
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+        thread_safe_stats.time_ms = elapsed.count();
+        
+        // Print search info (UCI format)
+        std::cout << "info depth " << depth 
+                  << " score " << score_to_uci(score)
+                  << " nodes " << thread_safe_stats.nodes_searched.load()
+                  << " time " << thread_safe_stats.time_ms.load();
+        
+        if (thread_safe_stats.time_ms.load() > 0) {
+            std::cout << " nps " << (thread_safe_stats.nodes_searched.load() * 1000) / thread_safe_stats.time_ms.load();
+        }
+        
+        std::cout << " pv " << pv_to_string(main_pv) << std::endl;
+        
+        // Check for mate
+        if (abs(score) > 30000) {
+            break; // Found mate, no need to search deeper
+        }
+    }
+    
+    // Update final stats
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+    thread_safe_stats.time_ms = elapsed.count();
+    
+    return best_move;
+}
+
 } // namespace Huginn
