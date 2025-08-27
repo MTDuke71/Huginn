@@ -74,28 +74,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if(CMAKE_CXX_COMPILER_INCLUDE_DIRS)
         list(FILTER CMAKE_CXX_COMPILER_INCLUDE_DIRS EXCLUDE REGEX "msys64")
     endif()
-    
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    message(STATUS "Using GNU/Clang toolchain")
-    # GCC/Clang specific settings
-    add_compile_options(-Wall -Wextra -Wno-unused-parameter)
-    
-    # Additional safety warnings
-    add_compile_options(
-        -Wconversion          # Warn about implicit conversions that may change value
-        -Wsign-conversion     # Warn about sign conversions
-        -Wcast-qual           # Warn about casts that remove qualifiers
-        -Wcast-align          # Warn about potential alignment issues
-    )
-    
-    # Assembly generation for GCC/Clang
-    if(GENERATE_ASSEMBLY)
-        add_compile_options(-S)  # Generate assembly
-        add_compile_options(-fverbose-asm)  # Make assembly more readable
-        message(STATUS "Assembly generation enabled")
-    endif()
 else()
-    message(STATUS "Using unknown toolchain: ${CMAKE_CXX_COMPILER_ID}")
+    message(FATAL_ERROR "This project requires MSVC compiler. Current compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 # ---- Build Type Validation ----
@@ -106,47 +86,32 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # ---- Compiler Optimizations ----
-# For multi-config generators (Visual Studio), use generator expressions
+# Multi-config generator (Visual Studio) with MSVC
 if(CMAKE_CONFIGURATION_TYPES)
-    # Multi-config generator (Visual Studio, Xcode)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        # Configuration-specific flags using generator expressions
-        add_compile_options(
-            $<$<CONFIG:Release>:/O2>
-            $<$<CONFIG:Release>:/GS>
-            $<$<CONFIG:Release>:/guard:cf>
-            $<$<CONFIG:Debug>:/Od>
-            $<$<CONFIG:Debug>:/Zi>
-        )
-        
-        # Global warning suppression for all configurations
-        add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
-        message(STATUS "Multi-config generator: Optimizations set per configuration")
-        message(STATUS "MSVC warning suppression enabled for safe conversions")
-    endif()
+    # Configuration-specific flags using generator expressions
+    add_compile_options(
+        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/GS>
+        $<$<CONFIG:Release>:/guard:cf>
+        $<$<CONFIG:Debug>:/Od>
+        $<$<CONFIG:Debug>:/Zi>
+    )
+    
+    # Global warning suppression for all configurations
+    add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
+    message(STATUS "Multi-config generator: Optimizations set per configuration")
+    message(STATUS "MSVC warning suppression enabled for safe conversions")
 else()
-    # Single-config generator (Ninja, Make)
+    # Single-config generator (Ninja, Make) with MSVC
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            add_compile_options(-O3 -march=native)
-            # Add security hardening for release builds
-            add_compile_options(-D_FORTIFY_SOURCE=2 -fstack-protector-strong)
-            message(STATUS "Release optimizations enabled (-O3 -march=native) with security hardening")
-        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            add_compile_options(/O2)
-            # Add security features for MSVC
-            add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
-            message(STATUS "Release optimizations enabled (/O2) with security features")
-        endif()
+        add_compile_options(/O2)
+        # Add security features for MSVC
+        add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
+        message(STATUS "Release optimizations enabled (/O2) with security features")
     else()
         # Debug build specific options
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            add_compile_options(-g -O0)
-            message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
-        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            add_compile_options(/Od /Zi)
-            message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
-        endif()
+        add_compile_options(/Od /Zi)
+        message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
     endif()
 endif()
 
@@ -161,13 +126,7 @@ endif()
 
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        add_compile_options(-fsanitize=address -fsanitize=undefined)
-        add_link_options(-fsanitize=address -fsanitize=undefined)
-        message(STATUS "Sanitizers enabled: AddressSanitizer + UndefinedBehaviorSanitizer")
-    else()
-        message(WARNING "Sanitizers requested but not supported with ${CMAKE_CXX_COMPILER_ID}")
-    endif()
+    message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
 endif()
 
 # ---- Find Threads (required for all targets) ----
@@ -230,40 +189,24 @@ function(add_assembly_target target_name source_files)
         get_filename_component(filename ${source_file} NAME_WE)
         get_filename_component(filepath ${source_file} ABSOLUTE)
         
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            # MSVC assembly generation with proper flags
-            add_custom_command(
-                OUTPUT ${CMAKE_BINARY_DIR}/asm/${filename}.asm
-                COMMAND ${CMAKE_CXX_COMPILER} 
-                    /FA /Fa${CMAKE_BINARY_DIR}/asm/${filename}.asm 
-                    /c ${filepath} 
-                    /I${CMAKE_CURRENT_SOURCE_DIR}/src 
-                    /I${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
-                    /std:c++17
-                    /O2
-                    /D_CRT_SECURE_NO_WARNINGS
-                    /EHsc
-                    /DWIN32
-                    /D_WINDOWS
-                DEPENDS ${source_file}
-                COMMENT "Generating assembly for ${filename}"
-                VERBATIM
-            )
-        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            # GCC/Clang assembly generation
-            add_custom_command(
-                OUTPUT ${CMAKE_BINARY_DIR}/asm/${filename}.s
-                COMMAND ${CMAKE_CXX_COMPILER} 
-                    -S -fverbose-asm -O2 -std=c++17 
-                    -I${CMAKE_CURRENT_SOURCE_DIR}/src 
-                    -I${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src 
-                    -o ${CMAKE_BINARY_DIR}/asm/${filename}.s 
-                    ${filepath}
-                DEPENDS ${source_file}
-                COMMENT "Generating assembly for ${filename}"
-                VERBATIM
-            )
-        endif()
+        # MSVC assembly generation with proper flags
+        add_custom_command(
+            OUTPUT ${CMAKE_BINARY_DIR}/asm/${filename}.asm
+            COMMAND ${CMAKE_CXX_COMPILER} 
+                /FA /Fa${CMAKE_BINARY_DIR}/asm/${filename}.asm 
+                /c ${filepath} 
+                /I${CMAKE_CURRENT_SOURCE_DIR}/src 
+                /I${CMAKE_CURRENT_SOURCE_DIR}/Engine3_src
+                /std:c++17
+                /O2
+                /D_CRT_SECURE_NO_WARNINGS
+                /EHsc
+                /DWIN32
+                /D_WINDOWS
+            DEPENDS ${source_file}
+            COMMENT "Generating assembly for ${filename}"
+            VERBATIM
+        )
     endforeach()
 endfunction()
 
@@ -375,11 +318,7 @@ if(GENERATE_ASSEMBLY)
     add_assembly_target(huginn_assembly "${PERFORMANCE_CRITICAL_SOURCES}")
     
     # Create a target that generates all assembly files
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        set(asm_extension ".asm")
-    else()
-        set(asm_extension ".s")
-    endif()
+    set(asm_extension ".asm")  # MSVC assembly extension
     
     set(asm_files "")
     foreach(source_file ${PERFORMANCE_CRITICAL_SOURCES})
