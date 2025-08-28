@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22)
 
 # Prefer MSVC but allow fallback
 if(WIN32)
@@ -82,8 +82,23 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if(CMAKE_CXX_COMPILER_INCLUDE_DIRS)
         list(FILTER CMAKE_CXX_COMPILER_INCLUDE_DIRS EXCLUDE REGEX "msys64")
     endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(STATUS "Using GCC compiler")
+    # GCC optimizations for Release builds
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_compile_options(
+            -O3                 # Maximum optimization
+            -march=native       # Optimize for current CPU
+            -mtune=native       # Tune for current CPU  
+            -flto               # Link-time optimization
+            -ffast-math         # Fast math optimizations
+            -funroll-loops      # Loop unrolling
+            -finline-functions  # Aggressive inlining
+        )
+        add_link_options(-flto)  # LTO for linking
+    endif()
 else()
-    message(FATAL_ERROR "This project requires MSVC compiler. Current compiler: ${CMAKE_CXX_COMPILER_ID}")
+    message(WARNING "Untested compiler: ${CMAKE_CXX_COMPILER_ID}. Proceeding anyway...")
 endif()
 
 # ---- Build Type Validation ----
@@ -94,51 +109,54 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # ---- Compiler Optimizations ----
-# Multi-config generator (Visual Studio) with MSVC
-if(CMAKE_CONFIGURATION_TYPES)
-    # Configuration-specific flags using generator expressions
-    add_compile_options(
-        $<$<CONFIG:Release>:/O2>          # Full optimization
-        $<$<CONFIG:Release>:/Oi>          # Enable intrinsic functions
-        $<$<CONFIG:Release>:/Ot>          # Favor speed over size
-        $<$<CONFIG:Release>:/Oy>          # Omit frame pointers
-        $<$<CONFIG:Release>:/GT>          # Enable fiber-safe thread-local storage
-        $<$<CONFIG:Release>:/GL>          # Whole program optimization
-        $<$<CONFIG:Release>:/arch:AVX2>   # Enable AVX2 instructions
-        $<$<CONFIG:Release>:/fp:fast>     # Fast floating point
-        $<$<CONFIG:Release>:/GS>
-        $<$<CONFIG:Release>:/guard:cf>
-        $<$<CONFIG:Debug>:/Od>
-        $<$<CONFIG:Debug>:/Zi>
-    )
-    
-    # Global warning suppression for all configurations
-    add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
-    message(STATUS "Multi-config generator: Advanced MSVC optimizations enabled")
-    message(STATUS "MSVC warning suppression enabled for safe conversions")
-else()
-    # Single-config generator (Ninja, Make) with MSVC
-    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_options(/O2)          # Full optimization
-        add_compile_options(/Oi)          # Enable intrinsic functions  
-        add_compile_options(/Ot)          # Favor speed over size
-        add_compile_options(/Oy)          # Omit frame pointers
-        add_compile_options(/GT)          # Enable fiber-safe thread-local storage
-        add_compile_options(/GL)          # Whole program optimization
-        add_compile_options(/arch:AVX2)   # Enable AVX2 instructions
-        add_compile_options(/fp:fast)     # Fast floating point
-        # Add security features for MSVC
-        add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
+# MSVC-specific optimizations
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # Multi-config generator (Visual Studio) with MSVC
+    if(CMAKE_CONFIGURATION_TYPES)
+        # Configuration-specific flags using generator expressions
+        add_compile_options(
+            $<$<CONFIG:Release>:/O2>          # Full optimization
+            $<$<CONFIG:Release>:/Oi>          # Enable intrinsic functions
+            $<$<CONFIG:Release>:/Ot>          # Favor speed over size
+            $<$<CONFIG:Release>:/Oy>          # Omit frame pointers
+            $<$<CONFIG:Release>:/GT>          # Enable fiber-safe thread-local storage
+            $<$<CONFIG:Release>:/GL>          # Whole program optimization
+            $<$<CONFIG:Release>:/arch:AVX2>   # Enable AVX2 instructions
+            $<$<CONFIG:Release>:/fp:fast>     # Fast floating point
+            $<$<CONFIG:Release>:/GS>
+            $<$<CONFIG:Release>:/guard:cf>
+            $<$<CONFIG:Debug>:/Od>
+            $<$<CONFIG:Debug>:/Zi>
+        )
         
-        # Link-time optimizations
-        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /OPT:REF /OPT:ICF")
-        
-        message(STATUS "Release optimizations enabled with advanced MSVC flags")
-        message(STATUS "AVX2, intrinsics, and whole program optimization enabled")
+        # Global warning suppression for all configurations
+        add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
+        message(STATUS "Multi-config generator: Advanced MSVC optimizations enabled")
+        message(STATUS "MSVC warning suppression enabled for safe conversions")
     else()
-        # Debug build specific options
-        add_compile_options(/Od /Zi)
-        message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
+        # Single-config generator (Ninja, Make) with MSVC
+        if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+            add_compile_options(/O2)          # Full optimization
+            add_compile_options(/Oi)          # Enable intrinsic functions  
+            add_compile_options(/Ot)          # Favor speed over size
+            add_compile_options(/Oy)          # Omit frame pointers
+            add_compile_options(/GT)          # Enable fiber-safe thread-local storage
+            add_compile_options(/GL)          # Whole program optimization
+            add_compile_options(/arch:AVX2)   # Enable AVX2 instructions
+            add_compile_options(/fp:fast)     # Fast floating point
+            # Add security features for MSVC
+            add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
+            
+            # Link-time optimizations
+            set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /OPT:REF /OPT:ICF")
+            
+            message(STATUS "Release optimizations enabled with advanced MSVC flags")
+            message(STATUS "AVX2, intrinsics, and whole program optimization enabled")
+        else()
+            # Debug build specific options
+            add_compile_options(/Od /Zi)
+            message(STATUS "Debug build: optimizations disabled, debug symbols enabled")
+        endif()
     endif()
 endif()
 

@@ -99,38 +99,33 @@ namespace MSVCOptimizations {
         __assume(index < N);  // Tell MSVC this access is always valid
         return arr[index];
     }
+}
 
-    // ---- MSVC-Optimized Branching ----
+#else // Non-MSVC compiler fallbacks
 
-    // Optimize switch statements with jump tables
-    #define OPTIMIZE_SWITCH() __pragma(optimize("gt", on))
-
-    // Restore normal optimization after switch
-    #define RESTORE_OPTIMIZATION() __pragma(optimize("", on))
-
-} // namespace MSVCOptimizations
-
-#else // Not MSVC
-
-// Provide fallback definitions for other compilers
+// Fallback definitions for non-MSVC compilers (GCC, Clang)
 #define FORCE_INLINE inline
-#define LIKELY(x) (x)
+#define LIKELY_IF(condition) if (condition)
+#define UNLIKELY_IF(condition) if (condition)
+#define LIKELY(x)   (x)
 #define UNLIKELY(x) (x)
-#define PREFETCH_READ(ptr) ((void)0)
-#define PREFETCH_WRITE(ptr) ((void)0)
-#define OPTIMIZE_SWITCH()
-#define RESTORE_OPTIMIZATION()
+#define PREFETCH_READ(ptr)  __builtin_prefetch((ptr), 0, 3)
+#define PREFETCH_WRITE(ptr) __builtin_prefetch((ptr), 1, 3)
 
+// GCC doesn't have __assume, but we can use __builtin_unreachable for similar effect
+#define __assume(x) do { if (!(x)) __builtin_unreachable(); } while(0)
+
+// GCC/Clang equivalents for bit operations
 namespace MSVCOptimizations {
     inline int popcount(uint64_t x) { return __builtin_popcountll(x); }
-    inline int ctz(uint64_t x) { return __builtin_ctzll(x); }
-    inline int clz(uint64_t x) { return __builtin_clzll(x); }
+    inline int ctz(uint64_t x) { return x ? __builtin_ctzll(x) : 64; }
+    inline int clz(uint64_t x) { return x ? __builtin_clzll(x) : 64; }
     inline uint64_t blsi(uint64_t x) { return x & (0ULL - x); }
     inline uint64_t blsr(uint64_t x) { return x & (x - 1); }
     
     template<typename T, size_t N>
     inline T& array_access_unsafe(T (&arr)[N], size_t index) {
-        return arr[index];
+        return arr[index];  // GCC optimizes bounds checks well
     }
 }
 

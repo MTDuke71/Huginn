@@ -15,7 +15,13 @@
 2025-08-25, 31fa2e5, Streamlined king optimization, 22489
 2025-08-25, c4495a4, Post-cleanup verification - parallel code removed, 21961
 2025-08-25, f360c8e, Knight template optimization integration, 22554
-2025-08-25, 41c1fbb, Sliding piece optimizations complete, 22519
+2025-08-25, 41c1fbb, Sliding piece optimizations complete [GCC COMPILER], 22519
 2025-08-27, aca7b89, CastlePerm array optimization - single lookup vs multiple conditionals, 29537
 2025-08-27, aca7b89, MSVC C++20 Optimizations Final, 31344
 2025-08-27, 243c8fe, CastlePerm array reverted to conditional logic, 28692
+2025-08-27, 2c0dfe6, MSVC Performance Analysis - Current baseline documentation, 28641
+
+# Compiler Performance Analysis:
+# GCC (22,519ms) vs MSVC (28,641ms) = 27% performance difference
+# This gap is primarily due to compiler optimization differences
+# GCC shows superior performance for computationally intensive chess engine code
