@@ -146,7 +146,7 @@
 
 ## 🚧 Current Development Priorities
 
-### **HIGH PRIORITY: Performance Optimizations (30-50% improvement potential)**
+### **HIGH PRIORITY: Critical Performance Bottlenecks (20-50% improvement potential)**
 - [ ] **Magic Bitboards Implementation**
   - [ ] Magic bitboard lookup tables for sliding pieces (bishops, rooks, queens)
   - [ ] Replace direction-based loops with bitboard operations
@@ -162,7 +162,29 @@
   - [ ] Pawn attack tables by color and square
   - [ ] Target: 2-5x speedup for non-sliding piece attacks
 
-### **MEDIUM PRIORITY: Modern Hardware Utilization (15-25% improvement)**
+### **HIGH PRIORITY: Newly Identified Critical Optimizations (20-75% improvement potential)**
+- [ ] **S_MOVELIST Memory Optimization** (75% memory reduction potential)
+  - [ ] Replace fixed 256-move array with dynamic allocation or smaller fixed size (64 moves)
+  - [ ] Current: `array<S_MOVE,256> moves` wastes 85-90% allocated memory (2KB per movelist)
+  - [ ] Target: 75% memory reduction, dramatically better cache utilization
+  - [ ] Impact: Positions typically have 20-40 legal moves, not 256
+- [ ] **Castling Rights Lookup Table** (3-5x speedup potential)
+  - [ ] Replace 8+ conditional checks per move with single lookup table operation
+  - [ ] Current: `if (from == 25 || to == 25)...` repeated for all castling squares
+  - [ ] Target: `castling_rights &= CASTLE_MASK[from] & CASTLE_MASK[to]`
+  - [ ] Impact: 3-5x faster castling rights updates in make/unmake moves
+- [ ] **Attack Detection Caching** (40-60% speedup potential)
+  - [ ] Cache attack calculations to avoid redundant sq_attacked() calls
+  - [ ] Current: Castling validation calls sq_attacked() multiple times for same squares
+  - [ ] Target: Attack bitboard caching or batch attack detection
+  - [ ] Impact: 40-60% faster castling validation and king safety checks
+- [ ] **Position Copying Elimination** (60-80% threading improvement)
+  - [ ] Replace full position copies in ThreadedEngine with thread-local pools
+  - [ ] Current: `Position temp_pos = pos` creates expensive deep copies per thread
+  - [ ] Target: Thread-local position pools or copy-on-write semantics
+  - [ ] Impact: 60-80% reduction in multi-threaded search overhead
+
+### **MEDIUM PRIORITY: Architecture & Performance Optimizations (10-25% improvement)**
 - [ ] **SIMD Optimizations**
   - [ ] Vectorized bitboard operations using SSE/AVX
   - [ ] Parallel bitboard manipulation for move generation
@@ -171,9 +193,25 @@
   - [ ] Bitboard-based pawn pushes and captures
   - [ ] Optimized promotion move generation (reduce branching)
   - [ ] Specialized en passant handling
+- [ ] **Piece List Compaction** (15-25% speedup potential)
+  - [ ] Eliminate -1 sentinels in piece lists to avoid wasted iterations
+  - [ ] Current: `if (from == -1) continue;` wastes cycles on empty slots
+  - [ ] Target: Compact piece lists without gaps for faster iteration
+  - [ ] Impact: 15-25% faster piece list traversal in move generation
+- [ ] **Move Scoring Optimization** (10-20% speedup potential)
+  - [ ] Eliminate redundant move scoring in generation vs search phases
+  - [ ] Current: Moves scored multiple times (generation + search ordering)
+  - [ ] Target: Score once in generation, reuse S_MOVE.score in search
+  - [ ] Impact: 10-20% search speedup by avoiding duplicate scoring
+- [ ] **Memory Layout Optimization** (10-15% cache performance)
+  - [ ] Reorder Position class fields by access frequency and alignment
+  - [ ] Current: Scattered field layout causes cache misses
+  - [ ] Target: Group frequently accessed fields for better cache locality
+  - [ ] Impact: 10-15% improvement in position access patterns
 - [ ] **Zobrist Hashing Performance Optimizations**
   - [ ] **HIGH IMPACT**: Optimize `Zobrist::compute()` to use piece lists instead of board scanning (2-4x faster)
   - [ ] **MEDIUM IMPACT**: Cache piece decomposition in `update_zobrist_for_move()` to reduce `color_of()`/`type_of()` calls (10-20% faster)
+  - [ ] **MEDIUM IMPACT**: Ensure all move types use incremental XOR updates instead of full recomputation (5-10x faster)
   - [ ] **LOW IMPACT**: Remove redundant bounds checking in en passant file calculation (5-10% faster)
   - [ ] Target: Faster position hashing for transposition tables and repetition detection
 
