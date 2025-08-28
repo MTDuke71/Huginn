@@ -275,26 +275,30 @@ public:
         std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
     std::cout << std::endl;
 #endif
-    // --- Optimized castling rights update (CastlePerm array lookup) ---
-    // Single array lookup replaces multiple conditional checks for significant performance gain
-    // This clears appropriate castling rights when pieces move from key squares (a1,e1,h1,a8,e8,h8)
+    // --- Standard castling rights update (conditional logic) ---
+    // Clear castling rights when pieces move from key squares
+    int from = m.get_from();
+    int to = m.get_to();
     
-    // MSVC optimization: Prefetch the CastlePerm array for better cache performance
-    PREFETCH_READ(&CastlePerm[m.get_from()]);
-    castling_rights &= CastlePerm[m.get_from()];
-    
-    // Handle rook captures - also use CastlePerm optimization with branch prediction  
-    if (type_of(undo.captured) == PieceType::Rook) {
-        PREFETCH_READ(&CastlePerm[m.get_to()]);
-        castling_rights &= CastlePerm[m.get_to()];
-#ifdef DEBUG_CASTLING
-        std::cout << "[DEBUG] Rook captured on " << m.get_to() << ". Applied CastlePerm[" << m.get_to() << "] = " << int(CastlePerm[m.get_to()]) << std::endl;
-#endif
+    // Clear castling rights based on piece movement from key squares
+    if (from == 21 || to == 21) {  // a1 square
+        castling_rights &= ~CASTLE_WQ;  // Clear white queenside
     }
-
-#ifdef DEBUG_CASTLING
-    std::cout << "[DEBUG] After CastlePerm optimization: from=" << m.get_from() << " perm=" << int(CastlePerm[m.get_from()]) << " new_rights=" << int(castling_rights) << std::endl;
-#endif
+    if (from == 25 || to == 25) {  // e1 square  
+        castling_rights &= ~(CASTLE_WK | CASTLE_WQ);  // Clear both white rights
+    }
+    if (from == 28 || to == 28) {  // h1 square
+        castling_rights &= ~CASTLE_WK;  // Clear white kingside
+    }
+    if (from == 91 || to == 91) {  // a8 square
+        castling_rights &= ~CASTLE_BQ;  // Clear black queenside
+    }
+    if (from == 95 || to == 95) {  // e8 square
+        castling_rights &= ~(CASTLE_BK | CASTLE_BQ);  // Clear both black rights
+    }
+    if (from == 98 || to == 98) {  // h8 square
+        castling_rights &= ~CASTLE_BK;  // Clear black kingside
+    }
 
 #ifdef DEBUG_CASTLING
     std::cout << "[DEBUG] After move: " << m.get_from() << "->" << m.get_to() << " rights: " << int(castling_rights) << std::endl;
