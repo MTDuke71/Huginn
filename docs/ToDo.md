@@ -246,6 +246,23 @@
   - [ ] Parallel bitboard operations
   - [ ] AVX2/AVX-512 attack generation
 
+### **Advanced Evaluation Concepts (NNUE Bridge)**
+- [ ] **Context-Aware Evaluation** (15-25% strength improvement)
+  - [ ] **Piece Interaction Matrices**: Evaluate piece combinations (e.g., knight+bishop vs rook+pawn)
+  - [ ] **Conditional Evaluation**: Piece values change based on pawn structure (e.g., bishops stronger in open positions)
+  - [ ] **Phase-Dependent Parameters**: Different evaluation weights for opening/middlegame/endgame
+  - [ ] **Pattern Recognition**: Common tactical motifs (pins, forks, skewers) as evaluation features
+- [ ] **Non-Linear Evaluation Features**
+  - [ ] **Sigmoid Activation**: Smooth evaluation curves instead of linear scoring
+  - [ ] **Feature Combinations**: Evaluate multiple features together (king safety + pawn structure)
+  - [ ] **Threshold Effects**: Piece activity bonuses that activate at certain thresholds
+  - [ ] **Dynamic Piece Values**: Material values that change based on position characteristics
+- [ ] **Machine Learning Preparation**
+  - [ ] **Feature Extraction Framework**: Structured position features for future ML training
+  - [ ] **Evaluation Tuning**: Automated parameter optimization using game results
+  - [ ] **Position Classification**: Categorize positions (tactical, positional, endgame) for specialized evaluation
+  - [ ] **Pattern Database**: Collect common patterns and their outcomes for learning
+
 ### **Modern Chess Engine Features**
 - [ ] **Neural Network Integration**
   - [ ] NNUE (Efficiently Updatable Neural Network) evaluation
