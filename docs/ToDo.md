@@ -172,6 +172,14 @@
   - [ ] Optimized promotion move generation (reduce branching)
   - [ ] Specialized en passant handling
 
+### **LOW PRIORITY: Code Quality & Performance Micro-optimizations (5-10% improvement)**
+- [ ] **Replace Manual File/Rank Calculations with Lookup Tables**
+  - [ ] Fix `src/search.cpp` lines 25-26: Replace `(sq120 % 10) - 1` and `(sq120 / 10) - 2` with `file_of(sq120)` and `rank_of(sq120)`
+  - [ ] Fix `src/evaluation.cpp` lines 16-17, 28-29, 37, 61-62, 97: Replace manual modulo/division with lookup table functions
+  - [ ] Fix `test/test_bitboard.cpp` line 116: Replace `(sq120 % 10)` with proper boundary check function
+  - [ ] Target: Eliminate division/modulo operations, use faster lookup tables
+  - [ ] Benefits: Better performance, consistency, reduced duplicate logic
+
 ### **Advanced Search Features**
 - [ ] **Transposition Table**
   - [ ] Hash table for position caching
