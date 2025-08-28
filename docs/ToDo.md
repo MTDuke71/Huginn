@@ -146,6 +146,32 @@
 
 ## 🚧 Current Development Priorities
 
+### **HIGH PRIORITY: Performance Optimizations (30-50% improvement potential)**
+- [ ] **Magic Bitboards Implementation**
+  - [ ] Magic bitboard lookup tables for sliding pieces (bishops, rooks, queens)
+  - [ ] Replace direction-based loops with bitboard operations
+  - [ ] Target: 2-4x speedup for sliding piece move generation (currently 45% of movegen time)
+- [ ] **Advanced Move Ordering**
+  - [ ] Killer move heuristic (non-capture moves that cause cutoffs)
+  - [ ] History heuristic (move success tracking across positions)
+  - [ ] Hash move ordering (best move from transposition table)
+  - [ ] Target: Better alpha-beta pruning efficiency
+- [ ] **Precomputed Attack Tables**
+  - [ ] Knight attack lookup tables (eliminate L-shape calculation)
+  - [ ] King attack lookup tables (eliminate adjacent square calculation)
+  - [ ] Pawn attack tables by color and square
+  - [ ] Target: 2-5x speedup for non-sliding piece attacks
+
+### **MEDIUM PRIORITY: Modern Hardware Utilization (15-25% improvement)**
+- [ ] **SIMD Optimizations**
+  - [ ] Vectorized bitboard operations using SSE/AVX
+  - [ ] Parallel bitboard manipulation for move generation
+  - [ ] CPU-specific optimizations (BMI2, POPCNT instructions)
+- [ ] **Pawn Move Generation Optimization** (currently 23.9% of movegen time)
+  - [ ] Bitboard-based pawn pushes and captures
+  - [ ] Optimized promotion move generation (reduce branching)
+  - [ ] Specialized en passant handling
+
 ### **Advanced Search Features**
 - [ ] **Transposition Table**
   - [ ] Hash table for position caching
@@ -155,8 +181,6 @@
 
 ### **Search Optimizations**
 - [ ] **Move Ordering Enhancements**
-  - [ ] Killer move heuristic (non-capture moves that cause cutoffs)
-  - [ ] History heuristic (move success tracking)
   - [ ] Counter-move heuristic
   - [ ] Internal iterative deepening for PV nodes without hash move
 - [ ] **Pruning Techniques**
