@@ -3,6 +3,10 @@
 #include "movegen_enhanced.hpp"
 #include <algorithm>
 
+#ifdef _MSC_VER
+#include "msvc_optimizations.hpp"
+#endif
+
 namespace Huginn {
 
 // Convert square120 to square64 format
@@ -516,7 +520,11 @@ int HybridEvaluator::evaluate(const Position& pos) {
     S_MOVELIST legal_moves;
     generate_legal_moves_enhanced(temp_pos, legal_moves);
     
+    // Use intrinsic to hint that this is unlikely
     if (legal_moves.count == 0) {
+#ifdef _MSC_VER
+        __assume(0); // Tell compiler this path is unlikely
+#endif
         int king_sq = pos.king_sq[static_cast<int>(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
             // Checkmate - return large negative score for side to move

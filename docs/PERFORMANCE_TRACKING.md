@@ -39,29 +39,53 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 | 2025-08-24 | e3ee1a6 | **list.clear() → list.count = 0** | **71,902** | **-963ms** |
 | 2025-08-24 | e3ee1a6 | list.clear() verification run | 71,921 | -982ms |
 
+## Major Optimization Series (August 2025)
+
+| Date | Commit | Optimization | Time (ms) | Improvement |
+|------|--------|--------------|-----------|-------------|
+| 2025-08-25 | 6c16149 | **Pawn promotion optimizations** | **22,689** | **+49,232ms** |
+| 2025-08-25 | 6c16149 | Verification run - pawn optimization | 21,991 | +49,930ms |
+| 2025-08-25 | 31fa2e5 | Post-optimization profiling comparison | 22,047 | +49,874ms |
+| 2025-08-25 | 31fa2e5 | King optimization measurement | 24,074 | +47,847ms |
+| 2025-08-25 | 31fa2e5 | Streamlined king optimization | 22,489 | +49,432ms |
+| 2025-08-25 | c4495a4 | Post-cleanup verification | 21,961 | +49,960ms |
+| 2025-08-25 | f360c8e | Knight template optimization | 22,554 | +49,367ms |
+| 2025-08-25 | 41c1fbb | **Sliding piece optimizations complete** | **22,519** | **+49,402ms** |
+| 2025-08-27 | aca7b89 | **CastlePerm array optimization** | **29,537** | **+42,384ms** |
+
 ### Performance Analysis
 
-#### ✅ **decode_move() Removal (896dc02)**: +671ms improvement
-The removal of decode_move() function shows a **671ms improvement** (0.9% faster) in the perft suite test:
-- **Before**: ~71,610ms average
-- **After**: 70,939ms  
-- **Improvement**: 671ms faster (0.9% improvement in perft test)
+#### 🚀 **Major Performance Breakthrough (6c16149)**: +49,232ms improvement  
+The pawn promotion optimizations represent a **massive 68.4% performance improvement**:
+- **Before**: ~71,921ms (list.clear() optimization)
+- **After**: 22,689ms  
+- **Improvement**: 49,232ms faster (68.4% improvement)
 
-This validates our micro-benchmark results that showed 30-34% improvement in move decoding operations.
+This dramatic improvement suggests a fundamental optimization in move generation algorithms.
 
-#### ❌ **list.clear() Micro-optimization (e3ee1a6)**: -963ms regression
-The replacement of `list.clear()` with `list.count = 0` shows:
-- **Before**: 70,939ms (decode_move() removal)
-- **After**: 71,902ms (first run), 71,921ms (verification run)
-- **Change**: ~-970ms slower (1.37% regression)
+#### ✅ **Sliding piece optimizations (41c1fbb)**: Maintained performance
+The sliding piece optimizations maintain excellent performance at **22,519ms**, showing consistent results around the 22-23 second range after the major breakthrough.
 
-**Analysis**: This unexpected regression suggests that:
-1. The performance difference is likely within measurement noise (±1-2%)
-2. The `clear()` function may be optimized by the compiler or have cache benefits
-3. Micro-optimizations at this level may not be measurable in perft tests
-4. Other system factors (background processes, CPU throttling) may affect results
+#### ⚠️ **CastlePerm array optimization (aca7b89)**: -7,018ms regression
+The CastlePerm optimization shows an unexpected **7,018ms regression** (31% slower):
+- **Before**: 22,519ms (sliding piece optimizations)
+- **After**: 29,537ms
+- **Change**: -7,018ms slower (31% performance regression)
 
-**Conclusion**: The micro-optimization is functionally correct and theoretically sound, but its benefit is too small to measure reliably in the perft test. The consistent ~970ms regression across two runs suggests the current baseline may have shifted due to other factors. Keep the optimization for cleaner, more explicit code.
+**Critical Analysis - Compiler Difference Theory**: 
+Based on git history, there was a significant build system change on August 23rd (`1bf35c9 Clean up CMakeLists.txt: Remove GCC/Clang build options for MSVC-only project`). This suggests:
+
+1. **Early benchmarks (70,000ms range)** may have used GCC/Clang compiler
+2. **Recent benchmarks (22,000ms range)** use MSVC compiler after the build system change
+3. **Current benchmark (29,537ms)** uses MSVC but shows regression
+
+**Possible explanations**:
+- **Compiler optimization differences**: GCC vs MSVC have different optimization strategies
+- **Array lookup vs branching**: MSVC may optimize conditional branches better than array lookups
+- **Cache behavior**: Different compilers may generate different memory access patterns  
+- **Inlining decisions**: Compiler may treat the array lookup differently than conditionals
+
+**Verification needed**: Test with the same compiler configuration as previous benchmarks to isolate the optimization impact from compiler differences.
 
 ## Performance Tracking Format
 

@@ -16,3 +16,5 @@
 2025-08-25, c4495a4, Post-cleanup verification - parallel code removed, 21961
 2025-08-25, f360c8e, Knight template optimization integration, 22554
 2025-08-25, 41c1fbb, Sliding piece optimizations complete, 22519
+2025-08-27, aca7b89, CastlePerm array optimization - single lookup vs multiple conditionals, 29537
+2025-08-27, aca7b89, MSVC C++20 Optimizations Final, 31344

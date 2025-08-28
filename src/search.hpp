@@ -12,6 +12,10 @@
 #include <mutex>
 #include <future>
 
+#ifdef _MSC_VER
+#include "msvc_optimizations.hpp"
+#endif
+
 namespace Huginn {
 
 // Search constants

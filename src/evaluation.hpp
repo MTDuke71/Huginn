@@ -4,6 +4,10 @@
 #include "../src/chess_types.hpp"
 #include <array>
 
+#ifdef _MSC_VER
+#include "msvc_optimizations.hpp"
+#endif
+
 // Castling rights constants
 #define CASTLE_WK 1   // White kingside
 #define CASTLE_WQ 2   // White queenside  

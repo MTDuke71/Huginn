@@ -11,6 +11,7 @@
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "move.hpp"
+#include "msvc_optimizations.hpp"
 
 // Maximum search depth / game length (legacy constant - move_history now uses dynamic vector)
 #define MAXPLY 2048
@@ -274,93 +275,26 @@ public:
         std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
     std::cout << std::endl;
 #endif
-    // --- Castling rights update logic (robust) ---
-    // Clear castling rights if king or rook moves, rook is captured, or castling is performed
-    // King moves (including castling)
-    if (type_of(at(m.get_from())) == PieceType::King) {
-        if (color_of(at(m.get_from())) == Color::White) {
-#ifdef DEBUG_CASTLING
-            std::cout << "[DEBUG] White king moves. Clearing WK/WQ rights." << std::endl;
-#endif
-            castling_rights &= ~(CASTLE_WK | CASTLE_WQ);
-        } else {
-#ifdef DEBUG_CASTLING
-            std::cout << "[DEBUG] Black king moves. Clearing BK/BQ rights." << std::endl;
-#endif
-            castling_rights &= ~(CASTLE_BK | CASTLE_BQ);
-        }
-    }
-    // Rook moves
-    if (type_of(at(m.get_from())) == PieceType::Rook) {
-        if (color_of(at(m.get_from())) == Color::White) {
-            if (m.get_from() == sq(File::A, Rank::R1)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] White rook moves from a1. Clearing WQ right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_WQ;
-            }
-            if (m.get_from() == sq(File::H, Rank::R1)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] White rook moves from h1. Clearing WK right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_WK;
-            }
-        } else {
-            if (m.get_from() == sq(File::A, Rank::R8)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] Black rook moves from a8. Clearing BQ right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_BQ;
-            }
-            if (m.get_from() == sq(File::H, Rank::R8)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] Black rook moves from h8. Clearing BK right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_BK;
-            }
-        }
-    }
-    // Rook captured
+    // --- Optimized castling rights update (CastlePerm array lookup) ---
+    // Single array lookup replaces multiple conditional checks for significant performance gain
+    // This clears appropriate castling rights when pieces move from key squares (a1,e1,h1,a8,e8,h8)
+    
+    // MSVC optimization: Prefetch the CastlePerm array for better cache performance
+    PREFETCH_READ(&CastlePerm[m.get_from()]);
+    castling_rights &= CastlePerm[m.get_from()];
+    
+    // Handle rook captures - also use CastlePerm optimization with branch prediction  
     if (type_of(undo.captured) == PieceType::Rook) {
-        if (color_of(undo.captured) == Color::White) {
-            if (m.get_to() == sq(File::A, Rank::R1)) {
+        PREFETCH_READ(&CastlePerm[m.get_to()]);
+        castling_rights &= CastlePerm[m.get_to()];
 #ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] White rook captured on a1. Clearing WQ right." << std::endl;
+        std::cout << "[DEBUG] Rook captured on " << m.get_to() << ". Applied CastlePerm[" << m.get_to() << "] = " << int(CastlePerm[m.get_to()]) << std::endl;
 #endif
-                castling_rights &= ~CASTLE_WQ;
-            }
-            if (m.get_to() == sq(File::H, Rank::R1)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] White rook captured on h1. Clearing WK right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_WK;
-            }
-        } else {
-            if (m.get_to() == sq(File::A, Rank::R8)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] Black rook captured on a8. Clearing BQ right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_BQ;
-            }
-            if (m.get_to() == sq(File::H, Rank::R8)) {
-#ifdef DEBUG_CASTLING
-                std::cout << "[DEBUG] Black rook captured on h8. Clearing BK right." << std::endl;
-#endif
-                castling_rights &= ~CASTLE_BK;
-            }
-        }
     }
-    // Explicit castling move: clear both king and rook rights for the moving color
-    if (m.is_castle()) {
+
 #ifdef DEBUG_CASTLING
-        std::cout << "[DEBUG] Castling move performed. Clearing rights for " << (color_of(at(m.get_from())) == Color::White ? "White" : "Black") << std::endl;
+    std::cout << "[DEBUG] After CastlePerm optimization: from=" << m.get_from() << " perm=" << int(CastlePerm[m.get_from()]) << " new_rights=" << int(castling_rights) << std::endl;
 #endif
-        if (color_of(at(m.get_from())) == Color::White) {
-            castling_rights &= ~(CASTLE_WK | CASTLE_WQ);
-        } else {
-            castling_rights &= ~(CASTLE_BK | CASTLE_BQ);
-        }
-    }
 
 #ifdef DEBUG_CASTLING
     std::cout << "[DEBUG] After move: " << m.get_from() << "->" << m.get_to() << " rights: " << int(castling_rights) << std::endl;

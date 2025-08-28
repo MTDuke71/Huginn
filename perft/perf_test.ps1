@@ -11,8 +11,8 @@ Write-Host "Starting perft quick test..." -ForegroundColor Yellow
 
 # Build the project
 Write-Host "Building project..." -ForegroundColor Cyan
-Set-Location build
-cmake --build . --config Debug
+Set-Location ..\build\msvc-x64-release
+cmake --build . --config Release
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
     exit 1
@@ -20,7 +20,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Run perft test and capture output
 Set-Location ..
-$output = Write-Output "1" | .\build\perft_suite_demo.exe
+$output = Write-Output "1" | .\build\msvc-x64-release\bin\Release\perft_suite_demo.exe
 $totalTimeMatch = $output | Select-String "Total time: (\d+)ms"
 if ($totalTimeMatch) {
     $totalTime = $totalTimeMatch.Matches[0].Groups[1].Value
@@ -32,7 +32,7 @@ if ($totalTimeMatch) {
     
     # Append to performance tracking file
     $logEntry = "$date, $commit, $Description, $totalTime"
-    Add-Content -Path "performance_tracking.txt" -Value $logEntry
+    Add-Content -Path ".\perft\performance_tracking.txt" -Value $logEntry
     
     Write-Host "Performance logged to performance_tracking.txt" -ForegroundColor Cyan
     Write-Host "Entry: $logEntry" -ForegroundColor White

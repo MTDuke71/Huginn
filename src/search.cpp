@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <iostream>
 
+#ifdef _MSC_VER
+#include "msvc_optimizations.hpp"
+#endif
+
 namespace Huginn {
 
 // Convert move to UCI notation
@@ -162,6 +166,7 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
     // Stand pat evaluation
     int stand_pat = HybridEvaluator::evaluate(pos);
     
+    // Beta cutoff from stand pat
     if (stand_pat >= beta) return beta;
     if (stand_pat > alpha) alpha = stand_pat;
     
@@ -169,9 +174,15 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
     S_MOVELIST captures;
     generate_legal_moves_enhanced(pos, captures);
     
-    // Filter for captures only
+    // Filter for captures only - preallocate for better performance
     S_MOVELIST capture_moves;
     capture_moves.count = 0;
+    
+#ifdef _MSC_VER
+    // Hint that we expect some captures but not all moves
+    __assume(captures.count >= 0 && captures.count <= 256);
+#endif
+    
     for (int i = 0; i < captures.count; ++i) {
         if (captures.moves[i].get_captured() != PieceType::None) {
             capture_moves.moves[capture_moves.count++] = captures.moves[i];
@@ -187,6 +198,7 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
         int score = -quiescence_search(pos, -beta, -alpha);
         pos.undo_move();
         
+        // Beta cutoff - most common case first
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -205,7 +217,11 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
     S_MOVELIST legal_moves;
     generate_legal_moves_enhanced(pos, legal_moves);
     
+    // Early exit for checkmate/stalemate - this is uncommon
     if (legal_moves.count == 0) {
+#ifdef _MSC_VER
+        __assume(0); // Tell compiler this path is unlikely
+#endif
         // Check if king is in check
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
@@ -235,6 +251,7 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
         
         pos.undo_move();
         
+        // Beta cutoff - most common case first
         if (score >= beta) {
             return beta; // Beta cutoff
         }

@@ -6,6 +6,7 @@
 #include "chess_types.hpp"
 #include "board120.hpp"
 #include "attack_detection.hpp"  // For SqAttacked function
+#include "msvc_optimizations.hpp"
 #include <algorithm>
 #include <vector>
 
@@ -23,13 +24,16 @@ struct S_MOVELIST {
     void clear() { count = 0; }
     
     // Add methods for different move types with optimized scoring
-    void add_quiet_move(const S_MOVE& move) {
+    FORCE_INLINE void add_quiet_move(const S_MOVE& move) {
+        // MSVC optimization: Tell compiler array bounds are safe
+        __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
         moves[count].score = 0;  // Quiet moves get base score
         count++;
     }
     
-    void add_capture_move(const S_MOVE& move, const Position& pos) {
+    FORCE_INLINE void add_capture_move(const S_MOVE& move, const Position& pos) {
+        __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
         // MVV-LVA scoring: Most Valuable Victim - Least Valuable Attacker
         Piece victim_piece = make_piece(!pos.side_to_move, move.get_captured());
@@ -38,19 +42,21 @@ struct S_MOVELIST {
         count++;
     }
     
-    void add_en_passant_move(const S_MOVE& move) {
+    FORCE_INLINE void add_en_passant_move(const S_MOVE& move) {
+        __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
         moves[count].score = 1000105;  // En passant gets high priority (captures pawn)
         count++;
     }
     
-    void add_promotion_move(const S_MOVE& move) {
+    FORCE_INLINE void add_promotion_move(const S_MOVE& move) {
+        __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
         // Promotion scoring based on promoted piece value
         Piece promo_piece = make_piece(Color::White, move.get_promoted());  // Color doesn't matter for value
         int promo_bonus = value_of(promo_piece) * 100;
         int capture_bonus = 0;
-        if (move.is_capture()) {
+        if (move.is_capture()) [[likely]] {
             Piece captured_piece = make_piece(Color::White, move.get_captured());  // Color doesn't matter for value
             capture_bonus = value_of(captured_piece) * 10;
         }
@@ -58,7 +64,8 @@ struct S_MOVELIST {
         count++;
     }
     
-    void add_castle_move(const S_MOVE& move) {
+    FORCE_INLINE void add_castle_move(const S_MOVE& move) {
+        __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
         moves[count].score = 50000;  // Castling gets moderate priority
         count++;

@@ -47,7 +47,7 @@ endif()
 
 project(Huginn LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---- Assembly Generation Option ----
@@ -98,7 +98,14 @@ endif()
 if(CMAKE_CONFIGURATION_TYPES)
     # Configuration-specific flags using generator expressions
     add_compile_options(
-        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/O2>          # Full optimization
+        $<$<CONFIG:Release>:/Oi>          # Enable intrinsic functions
+        $<$<CONFIG:Release>:/Ot>          # Favor speed over size
+        $<$<CONFIG:Release>:/Oy>          # Omit frame pointers
+        $<$<CONFIG:Release>:/GT>          # Enable fiber-safe thread-local storage
+        $<$<CONFIG:Release>:/GL>          # Whole program optimization
+        $<$<CONFIG:Release>:/arch:AVX2>   # Enable AVX2 instructions
+        $<$<CONFIG:Release>:/fp:fast>     # Fast floating point
         $<$<CONFIG:Release>:/GS>
         $<$<CONFIG:Release>:/guard:cf>
         $<$<CONFIG:Debug>:/Od>
@@ -107,15 +114,27 @@ if(CMAKE_CONFIGURATION_TYPES)
     
     # Global warning suppression for all configurations
     add_compile_options(/wd4244 /wd4267)  # int/size_t conversions
-    message(STATUS "Multi-config generator: Optimizations set per configuration")
+    message(STATUS "Multi-config generator: Advanced MSVC optimizations enabled")
     message(STATUS "MSVC warning suppression enabled for safe conversions")
 else()
     # Single-config generator (Ninja, Make) with MSVC
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_options(/O2)
+        add_compile_options(/O2)          # Full optimization
+        add_compile_options(/Oi)          # Enable intrinsic functions  
+        add_compile_options(/Ot)          # Favor speed over size
+        add_compile_options(/Oy)          # Omit frame pointers
+        add_compile_options(/GT)          # Enable fiber-safe thread-local storage
+        add_compile_options(/GL)          # Whole program optimization
+        add_compile_options(/arch:AVX2)   # Enable AVX2 instructions
+        add_compile_options(/fp:fast)     # Fast floating point
         # Add security features for MSVC
         add_compile_options(/GS /guard:cf)  # Buffer security check + Control Flow Guard
-        message(STATUS "Release optimizations enabled (/O2) with security features")
+        
+        # Link-time optimizations
+        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /OPT:REF /OPT:ICF")
+        
+        message(STATUS "Release optimizations enabled with advanced MSVC flags")
+        message(STATUS "AVX2, intrinsics, and whole program optimization enabled")
     else()
         # Debug build specific options
         add_compile_options(/Od /Zi)
