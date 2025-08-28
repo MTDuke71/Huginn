@@ -1,4 +1,15 @@
-# Huginn Chess Engine v1.1
+# Hug> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength!  
+_Huginn: Odin's Thought, in Every Move_
+
+![Huginn Logo](images/Huginn.png)
+
+## Acknowledgments
+
+Huginn was inspired by and built upon the foundation of the **VICE Chess Engine** by Richard Allbert (Bluefever Software). VICE (Video Instructional Chess Engine) provided an excellent educational framework for understanding chess engine programming fundamentals, including board representation, move generation, and search algorithms. While Huginn has evolved significantly with its own hybrid evaluation system, modern C++ architecture, and advanced optimizations, we gratefully acknowledge VICE as the foundational inspiration that made this project possible.
+
+You can find the original VICE engine and instructional video series on YouTube: [VICE Chess Engine Playlist](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
+
+## MSYS2 UCRT64 C++ Build Instructionsess Engine v1.1
 _Huginn: Odin's Thought, in Every Move_
 
 ![Huginn Logo](images/Huginn.png)
