@@ -9,15 +9,6 @@ Huginn was inspired by and built upon the foundation of the **VICE Chess Engine*
 
 You can find the original VICE engine and instructional video series on YouTube: [VICE Chess Engine Playlist](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
 
-## MSYS2 UCRT64 C++ Build Instructionsess Engine v1.1
-_Huginn: Odin's Thought, in Every Move_
-
-![Huginn Logo](images/Huginn.png)
-
-> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength!  
-_Huginn: Odin’s Thought, in Every Move_
-
-![Huginn Logo](images/Huginn.png)
 
 ## MSYS2 UCRT64 C++ Build Instructions
 
