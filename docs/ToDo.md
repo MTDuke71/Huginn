@@ -171,6 +171,11 @@
   - [ ] Bitboard-based pawn pushes and captures
   - [ ] Optimized promotion move generation (reduce branching)
   - [ ] Specialized en passant handling
+- [ ] **Zobrist Hashing Performance Optimizations**
+  - [ ] **HIGH IMPACT**: Optimize `Zobrist::compute()` to use piece lists instead of board scanning (2-4x faster)
+  - [ ] **MEDIUM IMPACT**: Cache piece decomposition in `update_zobrist_for_move()` to reduce `color_of()`/`type_of()` calls (10-20% faster)
+  - [ ] **LOW IMPACT**: Remove redundant bounds checking in en passant file calculation (5-10% faster)
+  - [ ] Target: Faster position hashing for transposition tables and repetition detection
 
 ### **LOW PRIORITY: Code Quality & Performance Micro-optimizations (5-10% improvement)**
 - [ ] **Replace Manual File/Rank Calculations with Lookup Tables**
