@@ -53,6 +53,7 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 | 2025-08-25 | 41c1fbb | **Sliding piece optimizations complete** | **22,519** | **+49,402ms** |
 | 2025-08-27 | aca7b89 | **CastlePerm array optimization** | **29,537** | **+42,384ms** |
 | 2025-08-28 | f39fdc6 | **Castling lookup table optimization** | **28,572** | **+43,349ms** |
+| 2025-08-29 | 1c6af67 | **Atomic piece operations** | **28,873** | **+43,048ms** |
 
 ### Performance Analysis
 
@@ -80,6 +81,27 @@ The redesigned castling lookup table shows a **965ms improvement** (3.3% faster)
 - **Change**: +965ms faster (3.3% performance improvement)
 
 This improvement demonstrates that the lookup table approach is more efficient than both the previous array implementation and the original conditional logic, while maintaining Huginn's C++ architecture and style.
+
+#### 🔬 **Atomic piece operations (1c6af67)**: -301ms regression
+The atomic `clear_piece()` and `add_piece()` functions show a **301ms regression** (1.1% slower):
+- **Before**: 28,572ms (distributed piece operations)
+- **After**: 28,873ms
+- **Change**: -301ms slower (1.1% performance regression)
+
+**Analysis**: This implementation follows the VICE tutorial pattern of atomic piece operations, consolidating:
+- Zobrist hash updates
+- Board square updates  
+- Material score updates
+- Piece counter updates
+- Bitboard updates
+- Piece list management
+
+The slight performance regression likely occurs because:
+1. **Branch prediction**: The distributed approach had highly predictable branches that CPUs optimized well
+2. **Function inlining**: The compiler may have been inlining the smaller functions very effectively
+3. **Instruction cache**: The larger atomic functions may have different cache characteristics
+
+**Decision**: Keeping this change for code clarity, maintainability, and consistency with VICE tutorial learning, despite the minor performance cost.
 
 **Critical Analysis - Compiler Difference Theory**: 
 Based on git history, there was a significant build system change on August 23rd (`1bf35c9 Clean up CMakeLists.txt: Remove GCC/Clang build options for MSVC-only project`). This suggests:

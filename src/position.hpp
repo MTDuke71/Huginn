@@ -12,6 +12,7 @@
 #include "chess_types.hpp"
 #include "move.hpp"
 #include "msvc_optimizations.hpp"
+#include "zobrist.hpp"
 
 // Maximum search depth / game length (legacy constant - move_history now uses dynamic vector)
 #define MAXPLY 2048
@@ -238,6 +239,102 @@ public:
         // DEBUG_ASSERT(false, "Piece not found in piece list during move");
     }
     
+    // Atomic piece removal - consolidates all operations for better performance
+    // Follows the VICE ClearPiece pattern but maintains Huginn's C++ style
+    void clear_piece(int square) {
+        DEBUG_ASSERT(is_playable(square), "Cannot clear piece from invalid square");
+        
+        Piece piece = at(square);
+        if (is_none(piece)) return; // Nothing to clear
+        
+        DEBUG_ASSERT(!is_offboard(piece), "Cannot clear offboard piece");
+        
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+        
+        // 1. Update zobrist hash (XOR out the piece using Huginn's zobrist system)
+        zobrist_key ^= Zobrist::Piece[size_t(piece)][square];
+        
+        // 2. Clear the board square
+        set(square, Piece::None);
+        
+        // 3. Update material score (kings can never be captured in chess)
+        material_score[size_t(piece_color)] -= value_of(piece);
+        
+        // 4. Update piece counters
+        --piece_counts[size_t(piece_type)];
+        
+        // 5. Update bitboards for pawns
+        if (piece_type == PieceType::Pawn) {
+            int sq64 = MAILBOX_MAPS.to64[square];
+            if (sq64 >= 0) {
+                popBit(pawns_bb[size_t(piece_color)], sq64);
+                popBit(all_pawns_bb, sq64);
+            }
+        }
+        
+        // 6. Remove from piece list (atomic operation)
+        int color_idx = int(piece_color);
+        int type_idx = int(piece_type);
+        
+        DEBUG_ASSERT(pCount[color_idx][type_idx] > 0, "Piece count already zero");
+        
+        // Find the piece in the list and remove it efficiently
+        for (int i = 0; i < pCount[color_idx][type_idx]; ++i) {
+            if (pList[color_idx][type_idx][i] == square) {
+                // Replace with last piece in list and decrement count
+                --pCount[color_idx][type_idx];
+                pList[color_idx][type_idx][i] = pList[color_idx][type_idx][pCount[color_idx][type_idx]];
+                pList[color_idx][type_idx][pCount[color_idx][type_idx]] = -1; // Clear old position
+                return;
+            }
+        }
+        
+        DEBUG_ASSERT(false, "Piece not found in piece list during clear_piece");
+    }
+    
+    // Atomic piece addition - complements clear_piece for better performance
+    // Follows the VICE AddPiece pattern but maintains Huginn's C++ style
+    void add_piece(int square, Piece piece) {
+        DEBUG_ASSERT(is_playable(square), "Cannot add piece to invalid square");
+        DEBUG_ASSERT(!is_none(piece) && !is_offboard(piece), "Cannot add invalid piece");
+        DEBUG_ASSERT(is_none(at(square)), "Cannot add piece to occupied square");
+        
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+        
+        // 1. Update zobrist hash (XOR in the piece)
+        zobrist_key ^= Zobrist::Piece[size_t(piece)][square];
+        
+        // 2. Place piece on board
+        set(square, piece);
+        
+        // 3. Update material score
+        if (piece_type != PieceType::King) { // Don't count king value
+            material_score[size_t(piece_color)] += value_of(piece);
+        }
+        
+        // 4. Update piece counters
+        ++piece_counts[size_t(piece_type)];
+        
+        // 5. Update bitboards for pawns
+        if (piece_type == PieceType::Pawn) {
+            int sq64 = MAILBOX_MAPS.to64[square];
+            if (sq64 >= 0) {
+                setBit(pawns_bb[size_t(piece_color)], sq64);
+                setBit(all_pawns_bb, sq64);
+            }
+        }
+        
+        // 6. Add to piece list
+        int color_idx = int(piece_color);
+        int type_idx = int(piece_type);
+        
+        pList[color_idx][type_idx][pCount[color_idx][type_idx]] = square;
+        ++pCount[color_idx][type_idx];
+    }
+    
+    
     // Enhanced move making with full undo support
     void make_move_with_undo(const S_MOVE& m) {
         // Debug assertions for move validity
@@ -308,9 +405,9 @@ public:
         Color moving_color = color_of(moving);
         PieceType moving_type = type_of(moving);
 
-        // Remove captured piece from piece list
+        // Remove captured piece using atomic operation for better performance
         if (!is_none(captured)) {
-            remove_piece_from_list(color_of(captured), type_of(captured), m.get_to());
+            clear_piece(m.get_to());
         }
 
         // Handle en passant captures
@@ -327,20 +424,18 @@ public:
 
             Piece captured_pawn = at(captured_pawn_sq);
             if (!is_none(captured_pawn)) {
-                // Remove the captured pawn from board and piece lists
-                remove_piece_from_list(color_of(captured_pawn), PieceType::Pawn, captured_pawn_sq);
-                set(captured_pawn_sq, Piece::None);
-
+                // Use atomic clear_piece for en passant capture
+                clear_piece(captured_pawn_sq);
+                
                 // Update undo information to remember the captured pawn
                 undo.captured = captured_pawn;
             }
         }
 
-        // Handle promotion - remove pawn and add promoted piece
+        // Handle promotion - use atomic operations for better performance
         if (m.is_promotion()) {
-            remove_piece_from_list(moving_color, PieceType::Pawn, m.get_from());
-            add_piece_to_list(moving_color, m.get_promoted(), m.get_to());
-            set(m.get_to(), make_piece(moving_color, m.get_promoted()));
+            clear_piece(m.get_from());  // Remove pawn
+            add_piece(m.get_to(), make_piece(moving_color, m.get_promoted()));  // Add promoted piece
         } else {
             // Regular move - update piece location in list
             move_piece_in_list(moving_color, moving_type, m.get_from(), m.get_to());
