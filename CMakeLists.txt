@@ -10,16 +10,8 @@ if(WIN32)
         unset(ENV{PKG_CONFIG_PATH})
         unset(ENV{ACLOCAL_PATH})
         unset(ENV{MANPATH})
-      # ---- Debug Symmetry Executable ----
-add_huginn_executable(debug_symmetry
-    SOURCES
-        debug/debug_symmetry.cpp
-        ${ENGINE_SOURCES}
-        src/evaluation.cpp
-        src/search.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)  # Force CMake to not use any non-Windows paths
+        
+        # Force CMake to not use any non-Windows paths
         set(CMAKE_FIND_ROOT_PATH "")
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
@@ -422,33 +414,6 @@ endif()
 set(DEMO_NAMES
     perft_suite_demo
     perft_suite_vice
-    vice_debug_test
-    test_legal_moves_vice
-    simple_perft_vice
-    simple_alphabeta_vice
-    alphabeta_with_pv_test
-    alphabeta_no_ordering_test
-    position_copy_test
-    move_ordering_test
-    minimal_alphabeta_test
-    full_search_test
-    node_count_investigation
-    threading_investigation
-    comprehensive_perft_vice
-    array_bounds_debug
-    array_bounds_detector
-    enhanced_bounds_debug
-    epd_bounds_detective
-    kiwipete_debugger
-    position_corruption_detective
-    simplified_corruption_detective
-    minimal_kiwipete_test
-    ultra_focused_crash_test
-    move2_analyzer
-    exact_perft_sequence
-    en_passant_debug
-    minimal_en_passant_test
-    safe_perft_vice
     opening_analyzer
     king_safety_test
     king_walking_specific_test
@@ -467,87 +432,6 @@ foreach(demo_name ${DEMO_NAMES})
     elseif(demo_name STREQUAL "perft_suite_vice")
         set(demo_source "perft/perft_suite_vice.cpp")
         set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "vice_debug_test")
-        set(demo_source "debug/vice_debug_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "test_legal_moves_vice")
-        set(demo_source "debug/test_legal_moves_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "simple_perft_vice")
-        set(demo_source "debug/simple_perft_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "simple_alphabeta_vice")
-        set(demo_source "debug/simple_alphabeta_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "alphabeta_with_pv_test")
-        set(demo_source "debug/alphabeta_with_pv_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "alphabeta_no_ordering_test")
-        set(demo_source "debug/alphabeta_no_ordering_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "position_copy_test")
-        set(demo_source "debug/position_copy_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "move_ordering_test")
-        set(demo_source "debug/move_ordering_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "minimal_alphabeta_test")
-        set(demo_source "debug/minimal_alphabeta_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "full_search_test")
-        set(demo_source "debug/full_search_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/search.cpp src/evaluation.cpp)
-    elseif(demo_name STREQUAL "node_count_investigation")
-        set(demo_source "debug/node_count_investigation.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/search.cpp src/evaluation.cpp)
-    elseif(demo_name STREQUAL "threading_investigation")
-        set(demo_source "debug/threading_investigation.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/search.cpp src/evaluation.cpp)
-    elseif(demo_name STREQUAL "comprehensive_perft_vice")
-        set(demo_source "debug/comprehensive_perft_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "array_bounds_debug")
-        set(demo_source "debug/array_bounds_debug.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "safe_perft_vice")
-        set(demo_source "debug/safe_perft_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "array_bounds_detector")
-        set(demo_source "debug/array_bounds_detector.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "enhanced_bounds_debug")
-        set(demo_source "debug/enhanced_bounds_debug.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "epd_bounds_detective")
-        set(demo_source "debug/epd_bounds_detective.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "kiwipete_debugger")
-        set(demo_source "debug/kiwipete_debugger.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "position_corruption_detective")
-        set(demo_source "debug/position_corruption_detective.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "simplified_corruption_detective")
-        set(demo_source "debug/simplified_corruption_detective.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "minimal_kiwipete_test")
-        set(demo_source "debug/minimal_kiwipete_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "ultra_focused_crash_test")
-        set(demo_source "debug/ultra_focused_crash_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "move2_analyzer")
-        set(demo_source "debug/move2_analyzer.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "exact_perft_sequence")
-        set(demo_source "debug/exact_perft_sequence.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "en_passant_debug")
-        set(demo_source "debug/en_passant_debug.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
-    elseif(demo_name STREQUAL "minimal_en_passant_test")
-        set(demo_source "debug/minimal_en_passant_test.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
     else()
         set(demo_source "demos/${demo_name}.cpp")
         set(demo_sources ${ENGINE_SOURCES})
@@ -563,17 +447,6 @@ foreach(demo_name ${DEMO_NAMES})
             ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 endforeach()
-
-# ---- Debug Symmetry Executable ----
-add_huginn_executable(debug_symmetry
-    SOURCES
-        debug/debug_symmetry.cpp
-        ${ENGINE_SOURCES}
-        src/evaluation.cpp
-        src/search.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
 # ---- Summary ----
 message(STATUS "=== Build Configuration Summary ===")

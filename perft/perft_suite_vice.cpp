@@ -13,11 +13,11 @@
 static uint64_t perft_vice(Position& pos, int depth) {
     if (depth == 0) return 1;
     S_MOVELIST list; 
-    generate_legal_moves_enhanced(pos, list);
+    generate_all_moves(pos, list);  // Use pseudo-legal moves + MakeMove validation (true VICE style)
     uint64_t nodes = 0;
     for (int i = 0; i < list.count; i++) {
         const auto& m = list.moves[i];
-        // Use VICE MakeMove/TakeMove instead of make_move_with_undo/undo_move
+        // Use VICE MakeMove/TakeMove - MakeMove validates legality
         if (pos.MakeMove(m) == 1) {
             nodes += perft_vice(pos, depth - 1);
             pos.TakeMove();

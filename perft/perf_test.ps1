@@ -11,7 +11,7 @@ Write-Host "Starting perft quick test..." -ForegroundColor Yellow
 
 # Build the project
 Write-Host "Building project..." -ForegroundColor Cyan
-Set-Location ..\build
+Set-Location .\build
 cmake --build . --config Release
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
@@ -20,7 +20,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Run perft test and capture output
 Set-Location ..
-$output = Write-Output "1" | .\build\bin\Release\perft_suite_demo.exe
+$output = Write-Output "1" | .\build\bin\Release\perft_suite_vice.exe
 $totalTimeMatch = $output | Select-String "Total time: (\d+)ms"
 if ($totalTimeMatch) {
     $totalTime = $totalTimeMatch.Matches[0].Groups[1].Value

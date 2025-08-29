@@ -30,3 +30,6 @@
 2025-08-29, 1c6af67, Atomic piece operations (clear_piece/add_piece) - VICE-style atomic functions, 28873
 2025-08-29, a5eee87, Fully atomic piece operations (move_piece) - Complete VICE video #40 implementation, 29837
 2025-08-29, cdebf3d, VICE Tutorial Video #41: MakeMove function implementation, 29921
+2025-08-29, ba833cc, VICE Tutorial Video #42: TakeMove function + En passant bug fix, 34895
+2025-08-29, ba833cc, VICE Tutorial Video #42: TakeMove function (VICE method), 39388
+2025-08-29, ba833cc, VICE Tutorial Video #42: Optimized pseudo-legal + MakeMove validation, 19010
