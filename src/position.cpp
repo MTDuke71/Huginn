@@ -319,7 +319,20 @@ int Position::MakeMove(const S_MOVE& move) {
     undo.ep_square = ep_square; 
     undo.halfmove_clock = halfmove_clock;
     undo.zobrist_key = zobrist_key;
-    undo.captured = at(to);
+    
+    // Set captured piece - handle en passant special case
+    if (move.is_en_passant()) {
+        Color moving_color = color_of(at(from));
+        int captured_pawn_sq;
+        if (moving_color == Color::White) {
+            captured_pawn_sq = to + SOUTH;  // Black pawn south of target
+        } else {
+            captured_pawn_sq = to + NORTH;  // White pawn north of target  
+        }
+        undo.captured = at(captured_pawn_sq);  // Capture the pawn that's actually being removed
+    } else {
+        undo.captured = at(to);  // Normal capture
+    }
     
     // Save additional state needed for undo
     save_derived_state(undo);
