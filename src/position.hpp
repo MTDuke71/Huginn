@@ -275,30 +275,13 @@ public:
         std::cout << pList[static_cast<size_t>(Color::White)][static_cast<size_t>(PieceType::Rook)][i] << " ";
     std::cout << std::endl;
 #endif
-    // --- Standard castling rights update (conditional logic) ---
-    // Clear castling rights when pieces move from key squares
+    // --- Efficient castling rights update using lookup table ---
+    // Single operation replaces multiple conditional checks for better performance
     int from = m.get_from();
     int to = m.get_to();
     
-    // Clear castling rights based on piece movement from key squares
-    if (from == 21 || to == 21) {  // a1 square
-        castling_rights &= ~CASTLE_WQ;  // Clear white queenside
-    }
-    if (from == 25 || to == 25) {  // e1 square  
-        castling_rights &= ~(CASTLE_WK | CASTLE_WQ);  // Clear both white rights
-    }
-    if (from == 28 || to == 28) {  // h1 square
-        castling_rights &= ~CASTLE_WK;  // Clear white kingside
-    }
-    if (from == 91 || to == 91) {  // a8 square
-        castling_rights &= ~CASTLE_BQ;  // Clear black queenside
-    }
-    if (from == 95 || to == 95) {  // e8 square
-        castling_rights &= ~(CASTLE_BK | CASTLE_BQ);  // Clear both black rights
-    }
-    if (from == 98 || to == 98) {  // h8 square
-        castling_rights &= ~CASTLE_BK;  // Clear black kingside
-    }
+    // Update castling rights using optimized lookup table (single AND operation)
+    castling_rights = CastlingLookup::update_castling_rights(castling_rights, from, to);
 
 #ifdef DEBUG_CASTLING
     std::cout << "[DEBUG] After move: " << m.get_from() << "->" << m.get_to() << " rights: " << int(castling_rights) << std::endl;

@@ -25,3 +25,5 @@
 # GCC (22,519ms) vs MSVC (28,641ms) = 27% performance difference
 # This gap is primarily due to compiler optimization differences
 # GCC shows superior performance for computationally intensive chess engine code
+
+2025-08-28, f39fdc6, Castling lookup table optimization - constexpr table with single AND operation, 28572

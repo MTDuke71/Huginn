@@ -58,3 +58,5 @@ Engine2_src/
 .vs/
 
 out/build/*
+
+EngineX/*

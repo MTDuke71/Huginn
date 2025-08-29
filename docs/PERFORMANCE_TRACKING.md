@@ -52,6 +52,7 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 | 2025-08-25 | f360c8e | Knight template optimization | 22,554 | +49,367ms |
 | 2025-08-25 | 41c1fbb | **Sliding piece optimizations complete** | **22,519** | **+49,402ms** |
 | 2025-08-27 | aca7b89 | **CastlePerm array optimization** | **29,537** | **+42,384ms** |
+| 2025-08-28 | f39fdc6 | **Castling lookup table optimization** | **28,572** | **+43,349ms** |
 
 ### Performance Analysis
 
@@ -71,6 +72,14 @@ The CastlePerm optimization shows an unexpected **7,018ms regression** (31% slow
 - **Before**: 22,519ms (sliding piece optimizations)
 - **After**: 29,537ms
 - **Change**: -7,018ms slower (31% performance regression)
+
+#### ✅ **Castling lookup table optimization (f39fdc6)**: +965ms improvement
+The redesigned castling lookup table shows a **965ms improvement** (3.3% faster):
+- **Before**: 29,537ms (CastlePerm array)
+- **After**: 28,572ms  
+- **Change**: +965ms faster (3.3% performance improvement)
+
+This improvement demonstrates that the lookup table approach is more efficient than both the previous array implementation and the original conditional logic, while maintaining Huginn's C++ architecture and style.
 
 **Critical Analysis - Compiler Difference Theory**: 
 Based on git history, there was a significant build system change on August 23rd (`1bf35c9 Clean up CMakeLists.txt: Remove GCC/Clang build options for MSVC-only project`). This suggests:

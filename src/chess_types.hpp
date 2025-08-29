@@ -76,6 +76,40 @@ constexpr inline uint8_t remove_castling_rights(uint8_t rights, Color c) {
                              : (rights & ~(CASTLE_BK | CASTLE_BQ));
 }
 
+// Helper function to update castling rights efficiently
+constexpr inline uint8_t update_castling_rights_for_squares(uint8_t current_rights, int from_square, int to_square) {
+    // Use bitwise operations to efficiently clear castling rights based on square involvement
+    uint8_t new_rights = current_rights;
+    
+    // Clear castling rights when pieces move from or to key squares
+    // A1 (21): Clear White Queenside
+    if (from_square == 21 || to_square == 21) {
+        new_rights &= ~CASTLE_WQ;
+    }
+    // E1 (25): Clear both White castling rights (king move)
+    if (from_square == 25 || to_square == 25) {
+        new_rights &= ~(CASTLE_WK | CASTLE_WQ);
+    }
+    // H1 (28): Clear White Kingside
+    if (from_square == 28 || to_square == 28) {
+        new_rights &= ~CASTLE_WK;
+    }
+    // A8 (91): Clear Black Queenside
+    if (from_square == 91 || to_square == 91) {
+        new_rights &= ~CASTLE_BQ;
+    }
+    // E8 (95): Clear both Black castling rights (king move)
+    if (from_square == 95 || to_square == 95) {
+        new_rights &= ~(CASTLE_BK | CASTLE_BQ);
+    }
+    // H8 (98): Clear Black Kingside
+    if (from_square == 98 || to_square == 98) {
+        new_rights &= ~CASTLE_BK;
+    }
+    
+    return new_rights;
+}
+
 // ---------- Piece Types (colorless) ----------
 enum class PieceType : uint8_t {
     None  = 0,
@@ -169,3 +203,37 @@ struct PieceTypeIter {
 };
 
 // Example: for (auto t : PieceTypeIter()) {...}
+
+// ---------- Castling Rights Optimization ----------
+// Lookup table for efficient castling rights updates during move making
+// Each square maps to a mask that preserves only the castling rights that should remain
+// when a piece moves from or to that square
+namespace CastlingLookup {
+    // Initialize castling permission lookup table
+    constexpr std::array<uint8_t, 120> create_castling_mask_table() {
+        std::array<uint8_t, 120> table{};
+        
+        // Default: all castling rights preserved (15 = 0b1111)
+        for (size_t i = 0; i < 120; ++i) {
+            table[i] = CASTLE_WK | CASTLE_WQ | CASTLE_BK | CASTLE_BQ;
+        }
+        
+        // Critical squares that affect castling rights:
+        table[21] = CASTLE_WK | CASTLE_BK | CASTLE_BQ;  // a1 - clear white queenside
+        table[25] = CASTLE_BK | CASTLE_BQ;              // e1 - clear both white rights  
+        table[28] = CASTLE_WQ | CASTLE_BK | CASTLE_BQ;  // h1 - clear white kingside
+        table[91] = CASTLE_WK | CASTLE_WQ | CASTLE_BK;  // a8 - clear black queenside
+        table[95] = CASTLE_WK | CASTLE_WQ;              // e8 - clear both black rights
+        table[98] = CASTLE_WK | CASTLE_WQ | CASTLE_BQ;  // h8 - clear black kingside
+        
+        return table;
+    }
+    
+    // Compile-time generated lookup table
+    constexpr auto CASTLING_MASK = create_castling_mask_table();
+    
+    // Fast castling rights update: AND with masks for both from and to squares
+    constexpr inline uint8_t update_castling_rights(uint8_t current_rights, int from_sq, int to_sq) {
+        return current_rights & CASTLING_MASK[from_sq] & CASTLING_MASK[to_sq];
+    }
+}
