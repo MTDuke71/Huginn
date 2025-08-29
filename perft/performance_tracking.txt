@@ -33,3 +33,4 @@
 2025-08-29, ba833cc, VICE Tutorial Video #42: TakeMove function + En passant bug fix, 34895
 2025-08-29, ba833cc, VICE Tutorial Video #42: TakeMove function (VICE method), 39388
 2025-08-29, ba833cc, VICE Tutorial Video #42: Optimized pseudo-legal + MakeMove validation, 19010
+2025-08-29, e1da793, Full evaluation re-enabled (comprehensive), 18149

@@ -515,37 +515,35 @@ int HybridEvaluator::evaluate_king_safety(const Position& pos, GamePhase phase) 
 
 // Main evaluation function
 int HybridEvaluator::evaluate(const Position& pos) {
-    // TEMPORARY DEBUG: Return simple material count to isolate the crash
-    int material = 0;
+    // Determine game phase
+    GamePhase phase = get_game_phase(pos);
     
-    // Simple material counting without complex evaluation
-    for (int sq = 0; sq < 120; ++sq) {
-        Piece piece = pos.board[sq];
-        if (!is_none(piece) && !is_offboard(piece)) {
-            PieceType type = type_of(piece);
-            Color color = color_of(piece);
-            
-            int value = 0;
-            switch (type) {
-                case PieceType::Pawn:   value = 100; break;
-                case PieceType::Knight: value = 320; break;
-                case PieceType::Bishop: value = 330; break;
-                case PieceType::Rook:   value = 500; break;
-                case PieceType::Queen:  value = 900; break;
-                case PieceType::King:   value = 0; break;
-                default: value = 0; break;
-            }
-            
-            if (color == Color::White) {
-                material += value;
-            } else if (color == Color::Black) {
-                material -= value;
-            }
-        }
+    int total_score = 0;
+    
+    // Material evaluation (most important)
+    total_score += evaluate_material(pos, phase);
+    
+    // Pawn structure evaluation
+    total_score += evaluate_pawn_structure(pos);
+    
+    // Piece activity and positioning
+    total_score += evaluate_piece_activity(pos, phase);
+    
+    // King safety evaluation (more important in middlegame)
+    if (phase != GamePhase::Endgame) {
+        total_score += evaluate_king_safety(pos, phase);
     }
     
+    // Development evaluation (important in opening)
+    if (phase == GamePhase::Opening) {
+        total_score += evaluate_development(pos, phase);
+    }
+    
+    // Mobility evaluation
+    total_score += evaluate_mobility(pos, phase);
+    
     // Return from side to move perspective
-    return pos.side_to_move == Color::White ? material : -material;
+    return pos.side_to_move == Color::White ? total_score : -total_score;
 }
 
 } // namespace Huginn
