@@ -54,6 +54,7 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 | 2025-08-27 | aca7b89 | **CastlePerm array optimization** | **29,537** | **+42,384ms** |
 | 2025-08-28 | f39fdc6 | **Castling lookup table optimization** | **28,572** | **+43,349ms** |
 | 2025-08-29 | 1c6af67 | **Atomic piece operations** | **28,873** | **+43,048ms** |
+| 2025-08-29 | a5eee87 | **Fully atomic piece operations (VICE #40)** | **29,837** | **+42,084ms** |
 
 ### Performance Analysis
 
@@ -102,6 +103,30 @@ The slight performance regression likely occurs because:
 3. **Instruction cache**: The larger atomic functions may have different cache characteristics
 
 **Decision**: Keeping this change for code clarity, maintainability, and consistency with VICE tutorial learning, despite the minor performance cost.
+
+#### 🔬 **Fully atomic piece operations - VICE #40 (a5eee87)**: -964ms regression  
+The complete transition to atomic operations (`move_piece()` function) shows a **964ms regression** (3.3% slower):
+- **Before**: 28,873ms (partial atomic operations)
+- **After**: 29,837ms  
+- **Change**: -964ms slower (3.3% performance regression)
+
+**Analysis**: This completes the VICE video #40 implementation by:
+- Converting remaining distributed `clear_piece()` + `add_piece()` calls to `move_piece()`
+- Ensuring all piece operations go through atomic functions consistently
+- Following VICE tutorial pattern exactly for educational consistency
+
+The additional regression suggests:
+1. **Function call overhead**: `move_piece()` adds an extra function call layer vs direct `clear_piece()` + `add_piece()`
+2. **Stack operations**: More parameters and local variables in the unified function
+3. **Optimization boundaries**: Compiler may struggle to optimize the larger atomic function
+
+**Decision**: Maintaining this implementation as it provides:
+- **Educational value**: Exact match with VICE tutorial progression
+- **Code consistency**: All piece operations use the same atomic pattern
+- **Maintainability**: Centralized piece movement logic
+- **Foundation**: Proper base for future VICE tutorial implementations
+
+**Trade-off Acceptance**: The 3.3% performance cost is acceptable for achieving tutorial compliance and code architecture benefits.
 
 **Critical Analysis - Compiler Difference Theory**: 
 Based on git history, there was a significant build system change on August 23rd (`1bf35c9 Clean up CMakeLists.txt: Remove GCC/Clang build options for MSVC-only project`). This suggests:

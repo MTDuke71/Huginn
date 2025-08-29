@@ -28,3 +28,4 @@
 
 2025-08-28, f39fdc6, Castling lookup table optimization - constexpr table with single AND operation, 28572
 2025-08-29, 1c6af67, Atomic piece operations (clear_piece/add_piece) - VICE-style atomic functions, 28873
+2025-08-29, a5eee87, Fully atomic piece operations (move_piece) - Complete VICE video #40 implementation, 29837

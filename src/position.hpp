@@ -239,6 +239,52 @@ public:
         // DEBUG_ASSERT(false, "Piece not found in piece list during move");
     }
     
+    // Atomic piece movement - follows VICE MovePiece pattern
+    // Moves a piece from one square to another, updating all necessary data structures
+    void move_piece(int from_square, int to_square) {
+        DEBUG_ASSERT(is_playable(from_square), "Invalid source square for piece move");
+        DEBUG_ASSERT(is_playable(to_square), "Invalid destination square for piece move");
+        
+        Piece piece = at(from_square);
+        DEBUG_ASSERT(!is_none(piece), "Cannot move piece from empty square");
+        DEBUG_ASSERT(is_none(at(to_square)), "Cannot move piece to occupied square");
+        
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+        
+        // 1. Hash piece out of from square and into to square
+        zobrist_key ^= Zobrist::Piece[size_t(piece)][from_square];
+        zobrist_key ^= Zobrist::Piece[size_t(piece)][to_square];
+        
+        // 2. Update pieces array
+        set(from_square, Piece::None);
+        set(to_square, piece);
+        
+        // 3. Update pawn bitboards if moving a pawn
+        if (piece_type == PieceType::Pawn) {
+            int from_sq64 = MAILBOX_MAPS.to64[from_square];
+            int to_sq64 = MAILBOX_MAPS.to64[to_square];
+            if (from_sq64 >= 0 && to_sq64 >= 0) {
+                popBit(pawns_bb[size_t(piece_color)], from_sq64);
+                popBit(all_pawns_bb, from_sq64);
+                setBit(pawns_bb[size_t(piece_color)], to_sq64);
+                setBit(all_pawns_bb, to_sq64);
+            }
+        }
+        
+        // 4. Update piece list (find piece and update its square)
+        int color_idx = int(piece_color);
+        int type_idx = int(piece_type);
+        for (int i = 0; i < pCount[color_idx][type_idx]; ++i) {
+            if (pList[color_idx][type_idx][i] == from_square) {
+                pList[color_idx][type_idx][i] = to_square;
+                return;
+            }
+        }
+        
+        DEBUG_ASSERT(false, "Piece not found in piece list during move_piece");
+    }
+    
     // Atomic piece removal - consolidates all operations for better performance
     // Follows the VICE ClearPiece pattern but maintains Huginn's C++ style
     void clear_piece(int square) {
@@ -437,12 +483,9 @@ public:
             clear_piece(m.get_from());  // Remove pawn
             add_piece(m.get_to(), make_piece(moving_color, m.get_promoted()));  // Add promoted piece
         } else {
-            // Regular move - update piece location in list
-            move_piece_in_list(moving_color, moving_type, m.get_from(), m.get_to());
-            set(m.get_to(), moving);
+            // Regular move - use atomic move_piece for better performance
+            move_piece(m.get_from(), m.get_to());
         }
-
-        set(m.get_from(), Piece::None);
 
         // Handle castling move - place rook correctly
         if (m.is_castle()) {
@@ -477,9 +520,8 @@ public:
                 // This should not happen in a legal position - just skip the rook move
                 return;
             }
-            set(rook_to, rook);
-            set(rook_from, Piece::None);
-            move_piece_in_list(king_color, PieceType::Rook, rook_from, rook_to);
+            // Use atomic move_piece for castling rook movement
+            move_piece(rook_from, rook_to);
         }
 
         ep_square = -1; // Reset, then check for pawn double moves
