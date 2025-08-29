@@ -4,36 +4,14 @@
 #include "movegen_enhanced.hpp"  // For in_check function
 #include "attack_detection.hpp"  // For SqAttacked function
 
-// Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
+// Update Zobrist key incrementally for side/castling/en passant changes only
+// (Piece position changes are handled by atomic operations)
 void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square) {
-    Color moving_color = color_of(moving);
-    PieceType moving_type = type_of(moving);
-    
-    // XOR out the moving piece from its original square
-    int piece_index = int(moving_type) + (moving_color == Color::Black ? 6 : 0);
-    zobrist_key ^= Zobrist::Piece[piece_index][m.get_from()];
-    
-    // XOR out captured piece (if any) from destination square
-    if (!is_none(captured)) {
-        Color captured_color = color_of(captured);
-        PieceType captured_type = type_of(captured);
-        int captured_index = int(captured_type) + (captured_color == Color::Black ? 6 : 0);
-        zobrist_key ^= Zobrist::Piece[captured_index][m.get_to()];
-    }
-    
-    // XOR in the piece at its new square
-    if (m.is_promotion()) {
-        // For promotion, the piece type changes
-        int promoted_index = int(m.get_promoted()) + (moving_color == Color::Black ? 6 : 0);
-        zobrist_key ^= Zobrist::Piece[promoted_index][m.get_to()];
-    } else {
-        // Regular move - same piece type
-        zobrist_key ^= Zobrist::Piece[piece_index][m.get_to()];
-    }
-    
-    // XOR out old castling rights
+    // XOR side to move (we switched sides after the move)
+    zobrist_key ^= Zobrist::Side;
+
+    // XOR out old castling rights and XOR in new castling rights
     zobrist_key ^= Zobrist::Castle[old_castling_rights & 0xF];
-    // XOR in new castling rights
     zobrist_key ^= Zobrist::Castle[castling_rights & 0xF];
 
     // XOR out old en passant file (if any)
@@ -42,15 +20,12 @@ void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece capt
         if (old_ep_file >= 0 && old_ep_file < 8)
             zobrist_key ^= Zobrist::EpFile[old_ep_file];
     }
-    // XOR in new en passant file (if any)
+    // XOR in new en passant file (if any)  
     if (ep_square != -1) {
         int new_ep_file = static_cast<int>(file_of(ep_square));
         if (new_ep_file >= 0 && new_ep_file < 8)
             zobrist_key ^= Zobrist::EpFile[new_ep_file];
     }
-
-    // XOR the side to move (since it always flips)
-    zobrist_key ^= Zobrist::Side;
 }
 
 // Compute and set the Zobrist key from current position
@@ -297,18 +272,7 @@ int Position::MakeMove(const S_MOVE& move) {
     int from = move.get_from();
     int to = move.get_to();
     
-    // Hash out the current position state before making move
-    zobrist_key ^= Zobrist::Side;  // Hash out current side
-    
-    // Hash out en passant square if set
-    if (ep_square != -1) {
-        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
-    }
-    
-    // Hash out current castling rights
-    zobrist_key ^= Zobrist::Castle[castling_rights];
-    
-    // Store history before making the move
+    // Store history before making the move (BEFORE any modifications)
     if (ply >= static_cast<int>(move_history.size())) {
         move_history.resize(ply + 1);
     }
@@ -318,7 +282,11 @@ int Position::MakeMove(const S_MOVE& move) {
     undo.castling_rights = castling_rights;
     undo.ep_square = ep_square; 
     undo.halfmove_clock = halfmove_clock;
-    undo.zobrist_key = zobrist_key;
+    undo.zobrist_key = zobrist_key;  // Save ORIGINAL zobrist key (BEFORE modifications)
+    
+    // Update castling rights based on move (from/to squares)
+    uint8_t new_castling_rights = CastlingLookup::update_castling_rights(undo.castling_rights, from, to);
+    castling_rights = new_castling_rights;
     
     // Set captured piece - handle en passant special case
     if (move.is_en_passant()) {
@@ -329,7 +297,14 @@ int Position::MakeMove(const S_MOVE& move) {
         } else {
             captured_pawn_sq = to + NORTH;  // White pawn north of target  
         }
-        undo.captured = at(captured_pawn_sq);  // Capture the pawn that's actually being removed
+        
+        Piece piece_at_captured_sq = at(captured_pawn_sq);
+        if (is_none(piece_at_captured_sq)) {
+            // This is an invalid en passant move - there's no pawn to capture!
+            return 0;  // Return illegal move
+        }
+        
+        undo.captured = piece_at_captured_sq;  // Capture the pawn that's actually being removed
     } else {
         undo.captured = at(to);  // Normal capture
     }
@@ -337,13 +312,7 @@ int Position::MakeMove(const S_MOVE& move) {
     // Save additional state needed for undo
     save_derived_state(undo);
     
-    // Update castling rights based on move (from/to squares)
-    castling_rights = CastlingLookup::update_castling_rights(castling_rights, from, to);
-    
-    // Reset en passant square 
-    ep_square = -1;
-    
-    // Handle en passant captures
+    // Handle en passant captures BEFORE updating ep_square
     if (move.is_en_passant()) {
         Color moving_color = color_of(at(from));
         int captured_pawn_sq;
@@ -356,7 +325,7 @@ int Position::MakeMove(const S_MOVE& move) {
         // Clear the captured pawn using atomic operation
         clear_piece(captured_pawn_sq);
     }
-    
+
     // Handle 50-move rule: reset on pawn move or capture
     Piece moving_piece = at(from);
     if (type_of(moving_piece) == PieceType::Pawn || !is_none(at(to))) {
@@ -368,17 +337,17 @@ int Position::MakeMove(const S_MOVE& move) {
     // Increment ply counter
     ++ply;
     
+    // Reset en passant square 
+    ep_square = -1;
+    
     // Set en passant square for pawn double moves
-    if (type_of(moving_piece) == PieceType::Pawn) {
+    if (type_of(moving_piece) == PieceType::Pawn && !move.is_capture()) {
         int from_rank = int(rank_of(from));
         int to_rank = int(rank_of(to));
         
         if (abs(to_rank - from_rank) == 2) {  // Pawn moved two squares
             int ep_rank = (from_rank + to_rank) / 2;
             ep_square = sq(file_of(to), Rank(ep_rank));
-            
-            // Hash in new en passant square
-            zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
         }
     }
     
@@ -436,18 +405,38 @@ int Position::MakeMove(const S_MOVE& move) {
         ++fullmove_number;
     }
     
-    // Hash in new position state
-    zobrist_key ^= Zobrist::Side;  // Hash in new side
-    zobrist_key ^= Zobrist::Castle[castling_rights];  // Hash in new castling rights
+    // Update Zobrist key AFTER all move operations are complete
+    // This ensures transposition table sees consistent state
     
-    // Update derived state incrementally  
-    update_derived_state_for_move(move, moving_piece, undo.captured);
+    // Hash out original state from saved key
+    zobrist_key = undo.zobrist_key;  // Start with original key
+    
+    // XOR side to move (position now has opposite side)
+    zobrist_key ^= Zobrist::Side;
+    
+    // XOR out old castling rights and XOR in new castling rights  
+    zobrist_key ^= Zobrist::Castle[undo.castling_rights];
+    zobrist_key ^= Zobrist::Castle[castling_rights];
+    
+    // XOR out old en passant square (if any)
+    if (undo.ep_square != -1) {
+        zobrist_key ^= Zobrist::EpFile[int(file_of(undo.ep_square))];
+    }
+    
+    // XOR in new en passant square (if any)
+    if (ep_square != -1) {
+        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
+    }
+    
+    // NOTE: Piece position changes are automatically handled by atomic operations
+    // (clear_piece, add_piece, move_piece all update zobrist_key via XOR)
     
     // Check if move left current player's king in check
     // Note: side_to_move has already been flipped, so we check the previous side's king
     Color previous_side = !side_to_move;  
     int king_square = king_sq[int(previous_side)];
     
+    // Re-enable legality check now that we've debugged the Zobrist issues
     // Use SqAttacked directly to check if king is attacked by current side
     if (SqAttacked(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
@@ -475,23 +464,13 @@ void Position::TakeMove() {
     // Extract move information - for TakeMove, from/to are effectively reversed
     int from = move.get_from();
     int to = move.get_to();
-    
-    // Hash out current position state
-    zobrist_key ^= Zobrist::Side;  // Hash out current side
-    
-    // Hash out current en passant square if set
-    if (ep_square != -1) {
-        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
-    }
-    
-    // Hash out current castling rights
-    zobrist_key ^= Zobrist::Castle[castling_rights];
-    
-    // Restore position state from history
+
+    // Restore position state from history (let forced recomputation handle zobrist)
     castling_rights = undo.castling_rights;
     ep_square = undo.ep_square;
-    halfmove_clock = undo.halfmove_clock;
-    zobrist_key = undo.zobrist_key;  // Restore complete zobrist state
+    halfmove_clock = undo.halfmove_clock;    // NOTE: Don't restore zobrist_key here - let incremental updates handle it
+    // The atomic operations will restore piece positions incrementally
+    // We just need to restore side/castling/en passant incrementally
     
     // Handle en passant undo - restore captured pawn
     if (move.is_en_passant()) {
@@ -567,6 +546,7 @@ void Position::TakeMove() {
         --fullmove_number;
     }
     
-    // Restore derived state from history (much faster than rebuilding)
-    restore_derived_state(undo);
+    // Restore the original zobrist key directly from history
+    // The atomic operations automatically handle piece position changes via XOR
+    zobrist_key = undo.zobrist_key;
 }

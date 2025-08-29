@@ -91,7 +91,7 @@ protected:
         // Set up original position
         ASSERT_TRUE(pos1.set_from_fen(fen)) << "Failed to parse FEN: " << fen;
         
-        // Set up mirrored position
+        // Set up mirrored position  
         std::string mirrored_fen = mirror_fen(fen);
         ASSERT_TRUE(pos2.set_from_fen(mirrored_fen)) << "Failed to parse mirrored FEN: " << mirrored_fen;
         

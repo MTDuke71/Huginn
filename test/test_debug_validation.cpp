@@ -42,16 +42,20 @@ TEST_F(DebugValidationTest, ValidateAfterMovesConsistency) {
     
     // Make some moves: e2-e4, e7-e5, Nf3, Nc6
     S_MOVE move1 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
-    pos.make_move_with_undo(move1);
+    int result1 = pos.MakeMove(move1);
+    EXPECT_EQ(1, result1) << "Move e2-e4 should be legal";
     
     S_MOVE move2 = make_move(sq(File::E, Rank::R7), sq(File::E, Rank::R5));
-    pos.make_move_with_undo(move2);
+    int result2 = pos.MakeMove(move2);
+    EXPECT_EQ(1, result2) << "Move e7-e5 should be legal";
     
     S_MOVE move3 = make_move(sq(File::G, Rank::R1), sq(File::F, Rank::R3));
-    pos.make_move_with_undo(move3);
+    int result3 = pos.MakeMove(move3);
+    EXPECT_EQ(1, result3) << "Move Nf3 should be legal";
     
     S_MOVE move4 = make_move(sq(File::B, Rank::R8), sq(File::C, Rank::R6));
-    pos.make_move_with_undo(move4);
+    int result4 = pos.MakeMove(move4);
+    EXPECT_EQ(1, result4) << "Move Nc6 should be legal";
     
     // Expected FEN after these moves
     std::string expected_fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
@@ -100,7 +104,8 @@ TEST_F(DebugValidationTest, ValidateAfterCaptureMove) {
     
     // Make a capture move: exd5
     S_MOVE capture_move = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
-    pos.make_move_with_undo(capture_move);
+    int capture_result = pos.MakeMove(capture_move);
+    EXPECT_EQ(1, capture_result) << "Capture move exd5 should be legal";
     
     // Validate all components after capture
     EXPECT_TRUE(Debug::validate_bitboards_consistency(pos))

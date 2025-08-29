@@ -20,8 +20,9 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     // Make a simple pawn move: e2-e4
     S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
-    // Make the move
-    pos.make_move_with_undo(move);
+    // Make the move using VICE MakeMove function
+    int move_result = pos.MakeMove(move);
+    EXPECT_EQ(move_result, 1) << "Move should be legal";
     
     // Verify the pawn bitboard was updated correctly
     // White pawn should have moved from e2 to e4
@@ -39,9 +40,8 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     // King positions should be unchanged
     EXPECT_EQ(pos.king_sq, initial_king_sq) << "King positions should be unchanged";
     
-    // Undo the move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using VICE TakeMove function
+    pos.TakeMove();
     
     // Verify state is completely restored
     EXPECT_EQ(pos.king_sq, initial_king_sq) << "King positions should be restored";
@@ -68,8 +68,9 @@ TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     // Make a capture move: d2xd4 (assuming we move the d2 pawn to capture on e4)
     S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
     
-    // Make the move
-    pos.make_move_with_undo(move);
+    // Make the move using VICE MakeMove function
+    int move_result = pos.MakeMove(move);
+    EXPECT_EQ(move_result, 1) << "Move should be legal";
     
     // Verify piece count decreased by 1 (captured pawn)
     EXPECT_EQ(pos.piece_counts[size_t(PieceType::Pawn)], initial_piece_counts[size_t(PieceType::Pawn)] - 1)
@@ -80,9 +81,8 @@ TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     EXPECT_TRUE(getBit(pos.pawns_bb[size_t(Color::White)], e4_sq64)) 
         << "White pawn should be on e4";
     
-    // Undo the move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using VICE TakeMove function
+    pos.TakeMove();
     
     // Verify state is completely restored
     EXPECT_EQ(pos.piece_counts, initial_piece_counts) << "Piece counts should be restored";
@@ -106,8 +106,9 @@ TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
     // Make a king move: Ke1-Ke2
     S_MOVE move = make_move(sq(File::E, Rank::R1), sq(File::E, Rank::R2));
     
-    // Make the move
-    pos.make_move_with_undo(move);
+    // Make the move using VICE MakeMove function
+    int move_result = pos.MakeMove(move);
+    EXPECT_EQ(move_result, 1) << "King move should be legal";
     
     // Verify white king square was updated
     EXPECT_EQ(pos.king_sq[size_t(Color::White)], sq(File::E, Rank::R2)) 
@@ -115,9 +116,8 @@ TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
     EXPECT_EQ(pos.king_sq[size_t(Color::Black)], initial_king_sq[size_t(Color::Black)]) 
         << "Black king square should be unchanged";
     
-    // Undo the move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using VICE TakeMove function
+    pos.TakeMove();
     
     // Verify king square is restored
     EXPECT_EQ(pos.king_sq, initial_king_sq) << "King squares should be restored";

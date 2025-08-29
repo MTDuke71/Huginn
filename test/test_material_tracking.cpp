@@ -52,8 +52,9 @@ TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     // Make a capture move: d2 pawn captures e4 pawn
     S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
     
-    // Make the move
-    pos.make_move_with_undo(move);
+    // Make the move using VICE MakeMove function
+    int move_result = pos.MakeMove(move);
+    EXPECT_EQ(move_result, 1) << "Move should be legal";
     
     // After capture, black should lose the pawn value, white stays same
     EXPECT_EQ(pos.get_material_score(Color::Black), black_material_before - 100) 
@@ -63,9 +64,8 @@ TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     EXPECT_EQ(pos.get_material_balance(), white_material_before - (black_material_before - 100)) 
         << "Material balance should reflect the captured pawn";
     
-    // Undo the move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using VICE TakeMove function
+    pos.TakeMove();
     
     // Verify material scores are restored
     EXPECT_EQ(pos.get_material_score(Color::Black), black_material_before) 
@@ -92,8 +92,9 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
     // Make a promotion move: e7-e8=Q
     S_MOVE move = make_promotion(sq(File::E, Rank::R7), sq(File::E, Rank::R8), PieceType::Queen);
     
-    // Make the move
-    pos.make_move_with_undo(move);
+    // Make the move using VICE MakeMove function
+    int move_result = pos.MakeMove(move);
+    EXPECT_EQ(move_result, 1) << "Move should be legal";
     
     // After promotion, white should lose pawn value and gain queen value
     int expected_material_change = value_of(make_piece(Color::White, PieceType::Queen)) - 
@@ -103,9 +104,8 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
     EXPECT_EQ(pos.get_material_score(Color::Black), initial_black_material) 
         << "Black material should remain unchanged";
     
-    // Undo the move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using VICE TakeMove function
+    pos.TakeMove();
     
     // Verify material scores are restored
     EXPECT_EQ(pos.get_material_score(Color::White), initial_white_material) 
@@ -127,7 +127,8 @@ TEST_F(MaterialTrackingTest, MaterialConsistencyWithRebuildCounts) {
         int white_incremental = pos.get_material_score(Color::White);
         int black_incremental = pos.get_material_score(Color::Black);
         
-        pos.make_move_with_undo(move);
+        int move_result = pos.MakeMove(move);
+        EXPECT_EQ(move_result, 1) << "Move should be legal";
         
         // Get incremental material after move
         int white_after_incremental = pos.get_material_score(Color::White);

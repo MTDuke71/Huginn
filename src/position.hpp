@@ -550,9 +550,6 @@ public:
         side_to_move = !side_to_move;
         if (side_to_move == Color::White) ++fullmove_number;
 
-        // Update derived state incrementally (much faster than rebuild_counts)
-        update_derived_state_for_move(m, moving, captured);
-
         // Update zobrist_key incrementally using XOR (much faster than recomputing)
         update_zobrist_for_move(m, moving, captured, undo.castling_rights, undo.ep_square);
         
