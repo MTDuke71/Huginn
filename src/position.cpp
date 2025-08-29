@@ -371,10 +371,18 @@ int Position::MakeMove(const S_MOVE& move) {
     
     // Make the actual move using atomic operations
     if (move.is_promotion()) {
+        // Handle capture before promotion
+        if (!is_none(at(to))) {
+            clear_piece(to);  // Remove captured piece
+        }
         clear_piece(from);  // Remove pawn
         add_piece(to, make_piece(color_of(moving_piece), move.get_promoted()));  // Add promoted piece
     } else {
-        move_piece(from, to);  // Atomic move operation
+        // Handle normal capture
+        if (!is_none(at(to))) {
+            clear_piece(to);  // Remove captured piece first
+        }
+        move_piece(from, to);  // Then move the piece
     }
     
     // Handle castling - move the rook
@@ -430,7 +438,7 @@ int Position::MakeMove(const S_MOVE& move) {
     // Use SqAttacked directly to check if king is attacked by current side
     if (SqAttacked(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
-        undo_move();
+        TakeMove();
         return 0;  // Illegal move
     }
     
@@ -446,6 +454,8 @@ void Position::TakeMove() {
     // Decrement ply first to get the correct history index
     --ply;
     
+    DEBUG_ASSERT(ply >= 0, "Invalid ply after decrement in TakeMove");
+    DEBUG_ASSERT(ply < static_cast<int>(move_history.size()), "Ply exceeds move_history size in TakeMove");
     S_UNDO& undo = move_history[ply];
     S_MOVE move = undo.move;
     
@@ -521,6 +531,9 @@ void Position::TakeMove() {
         add_piece(from, make_piece(moving_color, PieceType::Pawn));  // Restore pawn
     } else {
         // Regular move - move piece back
+        DEBUG_ASSERT(is_playable(to), "Invalid 'to' square in TakeMove");
+        DEBUG_ASSERT(is_playable(from), "Invalid 'from' square in TakeMove");
+        DEBUG_ASSERT(!is_none(at(to)), "No piece to move back from 'to' square");
         move_piece(to, from);
     }
     

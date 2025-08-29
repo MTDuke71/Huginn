@@ -251,16 +251,19 @@ void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list) {
     
     list.count = 0;  // Direct clear - faster than function call
     
+    // BUGFIX: Work on a copy to avoid modifying the input position
+    Position temp_pos = pos;
+    
     // Filter out illegal moves (those that leave king in check)
     for (int i = 0; i < pseudo_moves.size(); ++i) {
-        pos.make_move_with_undo(pseudo_moves[i]);
-        
-        // Check if our king is still in check after the move
-        Color us = !pos.side_to_move; // Side to move is now the opponent
-        if (!SqAttacked(pos.king_sq[int(us)], pos, !us)) {
-            list.add_quiet_move(pseudo_moves[i]);  // Use proper API
+        if (temp_pos.MakeMove(pseudo_moves[i]) == 1) {
+            // Check if our king is still in check after the move
+            Color us = !temp_pos.side_to_move; // Side to move is now the opponent
+            if (!SqAttacked(temp_pos.king_sq[int(us)], temp_pos, !us)) {
+                list.add_quiet_move(pseudo_moves[i]);  // Use proper API
+            }
+            temp_pos.TakeMove();
         }
-        pos.undo_move();
     }
 }
 

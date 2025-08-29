@@ -184,8 +184,10 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     // For all other moves, use the proper move/undo system
     Color current_side = pos.side_to_move;
     
-    // Apply the move using the proper system
-    pos.make_move_with_undo(move);
+    // Apply the move using VICE method
+    if (pos.MakeMove(move) != 1) {
+        return false;  // Move was illegal
+    }
     
     // Get the king position after the move (for the side that just moved)
     int king_sq = pos.king_sq[int(current_side)];
@@ -195,7 +197,7 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     bool legal = !SqAttacked(king_sq, pos, !current_side);
     
     // Undo the move to restore the original position
-    pos.undo_move();
+    pos.TakeMove();
     
     return legal;
 }

@@ -421,6 +421,16 @@ endif()
 # ---- Demo executables ----
 set(DEMO_NAMES
     perft_suite_demo
+    vice_debug_test
+    test_legal_moves_vice
+    simple_perft_vice
+    simple_alphabeta_vice
+    alphabeta_with_pv_test
+    alphabeta_no_ordering_test
+    position_copy_test
+    move_ordering_test
+    minimal_alphabeta_test
+    full_search_test
     opening_analyzer
     king_safety_test
     king_walking_specific_test
@@ -430,15 +440,42 @@ set(DEMO_NAMES
     self_play_tester
     critical_position_test
     timing_test
-    test_make_move
-    test_makemove_vs_makemove_with_undo
-    test_takemove
 )
 
 foreach(demo_name ${DEMO_NAMES})
     if(demo_name STREQUAL "perft_suite_demo")
         set(demo_source "perft/perft_suite_demo.cpp")
         set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "vice_debug_test")
+        set(demo_source "debug/vice_debug_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "test_legal_moves_vice")
+        set(demo_source "debug/test_legal_moves_vice.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "simple_perft_vice")
+        set(demo_source "debug/simple_perft_vice.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "simple_alphabeta_vice")
+        set(demo_source "debug/simple_alphabeta_vice.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "alphabeta_with_pv_test")
+        set(demo_source "debug/alphabeta_with_pv_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "alphabeta_no_ordering_test")
+        set(demo_source "debug/alphabeta_no_ordering_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "position_copy_test")
+        set(demo_source "debug/position_copy_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "move_ordering_test")
+        set(demo_source "debug/move_ordering_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "minimal_alphabeta_test")
+        set(demo_source "debug/minimal_alphabeta_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+    elseif(demo_name STREQUAL "full_search_test")
+        set(demo_source "debug/full_search_test.cpp")
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/search.cpp src/evaluation.cpp)
     else()
         set(demo_source "demos/${demo_name}.cpp")
         set(demo_sources ${ENGINE_SOURCES})

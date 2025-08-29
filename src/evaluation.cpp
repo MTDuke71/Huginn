@@ -515,38 +515,37 @@ int HybridEvaluator::evaluate_king_safety(const Position& pos, GamePhase phase) 
 
 // Main evaluation function
 int HybridEvaluator::evaluate(const Position& pos) {
-    // Handle checkmate/stalemate
-    Position temp_pos = pos;  // Make a copy
-    S_MOVELIST legal_moves;
-    generate_legal_moves_enhanced(temp_pos, legal_moves);
+    // TEMPORARY DEBUG: Return simple material count to isolate the crash
+    int material = 0;
     
-    // Use intrinsic to hint that this is unlikely
-    if (legal_moves.count == 0) {
-#ifdef _MSC_VER
-        __assume(0); // Tell compiler this path is unlikely
-#endif
-        int king_sq = pos.king_sq[static_cast<int>(pos.side_to_move)];
-        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            // Checkmate - return large negative score for side to move
-            return -32000;
-        } else {
-            // Stalemate
-            return 0;
+    // Simple material counting without complex evaluation
+    for (int sq = 0; sq < 120; ++sq) {
+        Piece piece = pos.board[sq];
+        if (!is_none(piece) && !is_offboard(piece)) {
+            PieceType type = type_of(piece);
+            Color color = color_of(piece);
+            
+            int value = 0;
+            switch (type) {
+                case PieceType::Pawn:   value = 100; break;
+                case PieceType::Knight: value = 320; break;
+                case PieceType::Bishop: value = 330; break;
+                case PieceType::Rook:   value = 500; break;
+                case PieceType::Queen:  value = 900; break;
+                case PieceType::King:   value = 0; break;
+                default: value = 0; break;
+            }
+            
+            if (color == Color::White) {
+                material += value;
+            } else if (color == Color::Black) {
+                material -= value;
+            }
         }
     }
     
-    GamePhase phase = get_game_phase(pos);
-    
-    int score = 0;
-    score += evaluate_material(pos, phase);
-    score += evaluate_pawn_structure(pos);
-    score += evaluate_piece_activity(pos, phase);
-    score += evaluate_development(pos, phase);
-    score += evaluate_king_safety(pos, phase);
-    score += evaluate_mobility(pos, phase);
-    
-    // Return score from the perspective of the side to move
-    return pos.side_to_move == Color::White ? score : -score;
+    // Return from side to move perspective
+    return pos.side_to_move == Color::White ? material : -material;
 }
 
 } // namespace Huginn

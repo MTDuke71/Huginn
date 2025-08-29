@@ -61,6 +61,9 @@ cmake --build build
 - **Piece List Optimization**: Fast piece iteration without board scanning (up to 10 pieces per type)
 
 ### Move System
+- **Dual Move Implementation**: Both VICE Tutorial (MakeMove/TakeMove) and Huginn (make_move_with_undo) systems
+- **VICE Tutorial Videos #41-42**: Complete implementation of standard chess programming move making/unmaking
+- **Performance Advantage**: VICE approach is 1.55x faster with 54.6% higher node throughput
 - **Dynamic Move History**: Vector-based move history with automatic resizing and minimal memory overhead
 - **Comprehensive Move Encoding**: From/to/promotion packed into single integer
 - **Attack Detection**: Fast square attack detection for all piece types with proper blocking
@@ -81,6 +84,7 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **[🔧 API Reference](docs/API.md)** - Complete API and usage guide  
 - **[🏗️ Architecture](docs/POSITION_AND_MOVEGEN_ARCHITECTURE.md)** - Core system design
 - **[📊 Performance Tracking](docs/PERFORMANCE_TRACKING.md)** - Optimization results and tracking
+- **[🎯 VICE Tutorial Implementation](docs/VICE_TUTORIAL_41_42_IMPLEMENTATION.md)** - Complete VICE Videos #41-42 implementation with performance analysis
 - **[✅ Validation Systems](docs/DEBUG_VALIDATION.md)** - Testing and validation documentation
 
 ### Quick Links

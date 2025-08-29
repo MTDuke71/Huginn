@@ -128,10 +128,12 @@ int SimpleEngine::score_move(const Position& pos, const S_MOVE& move) {
     
     // Check if move gives check (simple version)
     Position temp_pos = pos;
-    temp_pos.make_move_with_undo(move);
-    int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
-    if (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move)) {
-        score += 50;
+    if (temp_pos.MakeMove(move) == 1) {
+        int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
+        if (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move)) {
+            score += 50;
+        }
+        temp_pos.TakeMove();
     }
     
     return score;
@@ -189,18 +191,20 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
         }
     }
     
-    order_moves(pos, capture_moves);
+    // BUGFIX: Disable move ordering in quiescence to avoid excessive Position copying
+    // order_moves(pos, capture_moves);  // <-- DISABLED
     
     for (int i = 0; i < capture_moves.count; ++i) {
         if (time_up()) break;
         
-        pos.make_move_with_undo(capture_moves.moves[i]);
-        int score = -quiescence_search(pos, -beta, -alpha);
-        pos.undo_move();
-        
-        // Beta cutoff - most common case first
-        if (score >= beta) return beta;
-        if (score > alpha) alpha = score;
+        if (pos.MakeMove(capture_moves.moves[i]) == 1) {
+            int score = -quiescence_search(pos, -beta, -alpha);
+            pos.TakeMove();
+            
+            // Beta cutoff - most common case first
+            if (score >= beta) return beta;
+            if (score > alpha) alpha = score;
+        }
     }
     
     return alpha;
@@ -244,28 +248,28 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
     for (int i = 0; i < legal_moves.count; ++i) {
         if (time_up()) break;
         
-        pos.make_move_with_undo(legal_moves.moves[i]);
-        
-        PVLine child_pv;
-        int score = -alpha_beta(pos, depth - 1, -beta, -alpha, child_pv);
-        
-        pos.undo_move();
-        
-        // Beta cutoff - most common case first
-        if (score >= beta) {
-            return beta; // Beta cutoff
-        }
-        
-        if (score > alpha) {
-            alpha = score;
+        if (pos.MakeMove(legal_moves.moves[i]) == 1) {
+            PVLine child_pv;
+            int score = -alpha_beta(pos, depth - 1, -beta, -alpha, child_pv);
             
-            // Update PV
-            pv.clear();
-            pv.add_move(legal_moves.moves[i]);
-            for (int j = 0; j < child_pv.length; ++j) {
-                pv.add_move(child_pv.moves[j]);
+            pos.TakeMove();
+            
+            // Beta cutoff - most common case first
+            if (score >= beta) {
+                return beta; // Beta cutoff
             }
-            // pv_found = true; // TODO: Use for PV handling logic
+            
+            if (score > alpha) {
+                alpha = score;
+                
+                // Update PV
+                pv.clear();
+                pv.add_move(legal_moves.moves[i]);
+                for (int j = 0; j < child_pv.length; ++j) {
+                    pv.add_move(child_pv.moves[j]);
+                }
+                // pv_found = true; // TODO: Use for PV handling logic
+            }
         }
     }
     
@@ -421,7 +425,7 @@ S_MOVE ThreadedEngine::thread_search_worker(Position pos, const SearchLimits& li
 
                 // Make the move
                 Position thread_pos = pos;
-                thread_pos.make_move_with_undo(move);
+                if (!thread_pos.MakeMove(move)) continue; // Skip illegal moves
 
                 PVLine child_pv;
 

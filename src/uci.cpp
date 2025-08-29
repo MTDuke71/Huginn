@@ -174,7 +174,11 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
         for (size_t i = move_index + 1; i < tokens.size(); ++i) {
             S_MOVE move = parse_uci_move(tokens[i]);
             if (move.move != 0) {
-                position.make_move_with_undo(move);
+                if (position.MakeMove(move) != 1) {
+                    if (debug_mode) {
+                        std::cout << "info string Illegal move: " << tokens[i] << std::endl;
+                    }
+                }
             } else if (debug_mode) {
                 std::cout << "info string Invalid move: " << tokens[i] << std::endl;
             }
