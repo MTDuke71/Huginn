@@ -431,6 +431,8 @@ set(DEMO_NAMES
     critical_position_test
     timing_test
     test_make_move
+    test_makemove_vs_makemove_with_undo
+    test_takemove
 )
 
 foreach(demo_name ${DEMO_NAMES})

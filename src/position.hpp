@@ -101,6 +101,9 @@ public:
     // VICE Tutorial Video #41: MakeMove function
     int MakeMove(const S_MOVE& move);
     
+    // VICE Tutorial Video #42: TakeMove function
+    void TakeMove();
+    
     void restore_derived_state(const S_UNDO& undo) {
         king_sq = undo.king_sq_backup;
         pawns_bb = undo.pawns_bb_backup;

@@ -436,3 +436,111 @@ int Position::MakeMove(const S_MOVE& move) {
     
     return 1;  // Legal move
 }
+
+// VICE Tutorial Video #42: TakeMove function
+// Undoes the last move by retrieving information from the history array
+void Position::TakeMove() {
+    // Must have at least one move to undo
+    DEBUG_ASSERT(ply > 0, "Cannot take move when ply is 0");
+    
+    // Decrement ply first to get the correct history index
+    --ply;
+    
+    S_UNDO& undo = move_history[ply];
+    S_MOVE move = undo.move;
+    
+    // Extract move information - for TakeMove, from/to are effectively reversed
+    int from = move.get_from();
+    int to = move.get_to();
+    
+    // Hash out current position state
+    zobrist_key ^= Zobrist::Side;  // Hash out current side
+    
+    // Hash out current en passant square if set
+    if (ep_square != -1) {
+        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
+    }
+    
+    // Hash out current castling rights
+    zobrist_key ^= Zobrist::Castle[castling_rights];
+    
+    // Restore position state from history
+    castling_rights = undo.castling_rights;
+    ep_square = undo.ep_square;
+    halfmove_clock = undo.halfmove_clock;
+    zobrist_key = undo.zobrist_key;  // Restore complete zobrist state
+    
+    // Handle en passant undo - restore captured pawn
+    if (move.is_en_passant()) {
+        Color moving_color = color_of(at(to));
+        int captured_pawn_sq;
+        if (moving_color == Color::White) {
+            captured_pawn_sq = to + SOUTH;  // Black pawn was south of target
+        } else {
+            captured_pawn_sq = to + NORTH;  // White pawn was north of target
+        }
+        
+        // Restore the captured pawn (stored in undo.captured)
+        add_piece(captured_pawn_sq, undo.captured);
+    }
+    
+    // Handle castling undo - move rook back to original position
+    if (move.is_castle()) {
+        Color king_color = color_of(at(to));
+        int rook_from, rook_to;
+        
+        if (king_color == Color::White) {
+            if (to == sq(File::G, Rank::R1)) {  // White kingside
+                rook_from = sq(File::H, Rank::R1);  // Original rook position
+                rook_to = sq(File::F, Rank::R1);    // Current rook position
+            } else {  // White queenside
+                rook_from = sq(File::A, Rank::R1);  // Original rook position
+                rook_to = sq(File::D, Rank::R1);    // Current rook position
+            }
+        } else {
+            if (to == sq(File::G, Rank::R8)) {  // Black kingside
+                rook_from = sq(File::H, Rank::R8);  // Original rook position
+                rook_to = sq(File::F, Rank::R8);    // Current rook position
+            } else {  // Black queenside
+                rook_from = sq(File::A, Rank::R8);  // Original rook position
+                rook_to = sq(File::D, Rank::R8);    // Current rook position
+            }
+        }
+        
+        // Move rook back to original position
+        move_piece(rook_to, rook_from);
+    }
+    
+    // Move piece back to original square BEFORE adding captured piece
+    if (move.is_promotion()) {
+        // For promotion, remove promoted piece and restore original pawn
+        clear_piece(to);  // Remove promoted piece
+        Color moving_color = color_of(undo.captured) == Color::None ? 
+            (side_to_move == Color::White ? Color::Black : Color::White) : 
+            (color_of(undo.captured) == Color::White ? Color::Black : Color::White);
+        add_piece(from, make_piece(moving_color, PieceType::Pawn));  // Restore pawn
+    } else {
+        // Regular move - move piece back
+        move_piece(to, from);
+    }
+    
+    // Add captured piece back to destination square (if any)
+    if (!is_none(undo.captured) && !move.is_en_passant()) {
+        add_piece(to, undo.captured);
+    }
+    
+    // Update king square if king moved
+    Piece moved_piece = at(from);
+    if (type_of(moved_piece) == PieceType::King) {
+        king_sq[int(color_of(moved_piece))] = from;
+    }
+    
+    // Flip side to move back
+    side_to_move = !side_to_move;
+    if (side_to_move == Color::Black) {
+        --fullmove_number;
+    }
+    
+    // Restore derived state from history (much faster than rebuilding)
+    restore_derived_state(undo);
+}
