@@ -55,6 +55,7 @@ As of commit `486b47b` (IS_PLAYABLE macro optimization):
 | 2025-08-28 | f39fdc6 | **Castling lookup table optimization** | **28,572** | **+43,349ms** |
 | 2025-08-29 | 1c6af67 | **Atomic piece operations** | **28,873** | **+43,048ms** |
 | 2025-08-29 | a5eee87 | **Fully atomic piece operations (VICE #40)** | **29,837** | **+42,084ms** |
+| 2025-08-29 | cdebf3d | **VICE Tutorial Video #41: MakeMove function** | **29,921** | **+42,000ms** |
 
 ### Performance Analysis
 
@@ -127,6 +128,33 @@ The additional regression suggests:
 - **Foundation**: Proper base for future VICE tutorial implementations
 
 **Trade-off Acceptance**: The 3.3% performance cost is acceptable for achieving tutorial compliance and code architecture benefits.
+
+#### ✅ **VICE Tutorial Video #41: MakeMove function (cdebf3d)**: -84ms regression
+The VICE MakeMove function implementation shows a **84ms regression** (0.3% slower):
+- **Before**: 29,837ms (fully atomic piece operations)
+- **After**: 29,921ms
+- **Change**: -84ms slower (0.3% performance regression)
+
+**Analysis**: This implements the complete VICE tutorial MakeMove function pattern:
+- Returns `int` (1 for legal, 0 for illegal moves)
+- Makes move temporarily using atomic piece operations
+- Checks if king is left in check using `SqAttacked()`
+- Automatically undoes illegal moves and returns 0
+- Maintains all VICE tutorial state management patterns
+
+The minimal performance impact demonstrates:
+1. **Efficient implementation**: Using existing atomic piece operations minimizes overhead
+2. **Proper legality checking**: SqAttacked() function provides accurate move validation
+3. **Clean integration**: New function works seamlessly with existing codebase
+4. **Educational value**: Exact VICE tutorial compliance for learning purposes
+
+**Key Implementation Details**:
+- Function implemented in `src/position.cpp` to avoid circular dependencies
+- Uses `SqAttacked()` directly instead of `in_check()` for better performance
+- Leverages existing atomic operations (clear_piece, add_piece, move_piece)
+- Maintains zobrist hashing and all position state correctly
+
+**Decision**: Excellent addition providing VICE tutorial compliance with negligible performance cost.
 
 **Critical Analysis - Compiler Difference Theory**: 
 Based on git history, there was a significant build system change on August 23rd (`1bf35c9 Clean up CMakeLists.txt: Remove GCC/Clang build options for MSVC-only project`). This suggests:

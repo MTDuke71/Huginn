@@ -1,6 +1,8 @@
 // position.cpp - Implementation file for Position class methods
 #include "position.hpp"
 #include "zobrist.hpp"
+#include "movegen_enhanced.hpp"  // For in_check function
+#include "attack_detection.hpp"  // For SqAttacked function
 
 // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
 void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square) {
@@ -282,4 +284,155 @@ void Position::rebuild_counts() {
 void Position::set_startpos() {
     const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     set_from_fen(start_fen);
+}
+
+// VICE Tutorial Video #41: MakeMove function
+// Returns 1 if move is legal, 0 if illegal (leaves king in check)
+int Position::MakeMove(const S_MOVE& move) {
+    // Debug assertions for move validity  
+    DEBUG_ASSERT(is_playable(move.get_from()), "Move source square must be playable");
+    DEBUG_ASSERT(is_playable(move.get_to()), "Move destination square must be playable");
+    
+    // Store history information for potential undo
+    int from = move.get_from();
+    int to = move.get_to();
+    
+    // Hash out the current position state before making move
+    zobrist_key ^= Zobrist::Side;  // Hash out current side
+    
+    // Hash out en passant square if set
+    if (ep_square != -1) {
+        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
+    }
+    
+    // Hash out current castling rights
+    zobrist_key ^= Zobrist::Castle[castling_rights];
+    
+    // Store history before making the move
+    if (ply >= static_cast<int>(move_history.size())) {
+        move_history.resize(ply + 1);
+    }
+    
+    S_UNDO& undo = move_history[ply];
+    undo.move = move;
+    undo.castling_rights = castling_rights;
+    undo.ep_square = ep_square; 
+    undo.halfmove_clock = halfmove_clock;
+    undo.zobrist_key = zobrist_key;
+    undo.captured = at(to);
+    
+    // Save additional state needed for undo
+    save_derived_state(undo);
+    
+    // Update castling rights based on move (from/to squares)
+    castling_rights = CastlingLookup::update_castling_rights(castling_rights, from, to);
+    
+    // Reset en passant square 
+    ep_square = -1;
+    
+    // Handle en passant captures
+    if (move.is_en_passant()) {
+        Color moving_color = color_of(at(from));
+        int captured_pawn_sq;
+        if (moving_color == Color::White) {
+            captured_pawn_sq = to + SOUTH;  // Black pawn south of target
+        } else {
+            captured_pawn_sq = to + NORTH;  // White pawn north of target  
+        }
+        
+        // Clear the captured pawn using atomic operation
+        clear_piece(captured_pawn_sq);
+    }
+    
+    // Handle 50-move rule: reset on pawn move or capture
+    Piece moving_piece = at(from);
+    if (type_of(moving_piece) == PieceType::Pawn || !is_none(at(to))) {
+        halfmove_clock = 0;
+    } else {
+        ++halfmove_clock;
+    }
+    
+    // Increment ply counter
+    ++ply;
+    
+    // Set en passant square for pawn double moves
+    if (type_of(moving_piece) == PieceType::Pawn) {
+        int from_rank = int(rank_of(from));
+        int to_rank = int(rank_of(to));
+        
+        if (abs(to_rank - from_rank) == 2) {  // Pawn moved two squares
+            int ep_rank = (from_rank + to_rank) / 2;
+            ep_square = sq(file_of(to), Rank(ep_rank));
+            
+            // Hash in new en passant square
+            zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
+        }
+    }
+    
+    // Make the actual move using atomic operations
+    if (move.is_promotion()) {
+        clear_piece(from);  // Remove pawn
+        add_piece(to, make_piece(color_of(moving_piece), move.get_promoted()));  // Add promoted piece
+    } else {
+        move_piece(from, to);  // Atomic move operation
+    }
+    
+    // Handle castling - move the rook
+    if (move.is_castle()) {
+        Color king_color = color_of(moving_piece);
+        int rook_from, rook_to;
+        
+        if (king_color == Color::White) {
+            if (to == sq(File::G, Rank::R1)) {  // White kingside
+                rook_from = sq(File::H, Rank::R1);
+                rook_to = sq(File::F, Rank::R1);
+            } else {  // White queenside
+                rook_from = sq(File::A, Rank::R1);
+                rook_to = sq(File::D, Rank::R1);
+            }
+        } else {
+            if (to == sq(File::G, Rank::R8)) {  // Black kingside
+                rook_from = sq(File::H, Rank::R8);
+                rook_to = sq(File::F, Rank::R8);
+            } else {  // Black queenside
+                rook_from = sq(File::A, Rank::R8);
+                rook_to = sq(File::D, Rank::R8);
+            }
+        }
+        
+        // Move the rook using atomic operation
+        move_piece(rook_from, rook_to);
+    }
+    
+    // Update king square if king moved
+    if (type_of(moving_piece) == PieceType::King) {
+        king_sq[int(color_of(moving_piece))] = to;
+    }
+    
+    // Change side to move
+    side_to_move = !side_to_move;
+    if (side_to_move == Color::White) {
+        ++fullmove_number;
+    }
+    
+    // Hash in new position state
+    zobrist_key ^= Zobrist::Side;  // Hash in new side
+    zobrist_key ^= Zobrist::Castle[castling_rights];  // Hash in new castling rights
+    
+    // Update derived state incrementally  
+    update_derived_state_for_move(move, moving_piece, undo.captured);
+    
+    // Check if move left current player's king in check
+    // Note: side_to_move has already been flipped, so we check the previous side's king
+    Color previous_side = !side_to_move;  
+    int king_square = king_sq[int(previous_side)];
+    
+    // Use SqAttacked directly to check if king is attacked by current side
+    if (SqAttacked(king_square, *this, side_to_move)) {
+        // Move is illegal - undo it
+        undo_move();
+        return 0;  // Illegal move
+    }
+    
+    return 1;  // Legal move
 }

@@ -430,6 +430,7 @@ set(DEMO_NAMES
     self_play_tester
     critical_position_test
     timing_test
+    test_make_move
 )
 
 foreach(demo_name ${DEMO_NAMES})
