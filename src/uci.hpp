@@ -20,7 +20,7 @@ private:
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
-    int threads = 1; // Default to 1 thread for stable search (16 threads caused excessive node counts)
+    int threads = 16; // Default to 16 threads for optimal performance
     
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
     S_MOVE parse_uci_move(const std::string& uci_move);

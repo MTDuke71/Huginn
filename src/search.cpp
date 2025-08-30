@@ -104,58 +104,76 @@ void SimpleEngine::update_stats() {
     stats.time_ms = elapsed.count();
 }
 
-// Score a move for ordering (simple version)
+// Score a move for ordering (enhanced version for better performance)
 int SimpleEngine::score_move(const Position& pos, const S_MOVE& move) {
     int score = 0;
     
-    // Basic capture scoring
+    // 1. Hash move (highest priority - from transposition table)
+    // TODO: Add when transposition table is implemented
+    
+    // 2. Winning captures (MVV-LVA)
     PieceType captured = move.get_captured();
     if (captured != PieceType::None) {
-        score += 1000 + static_cast<int>(captured) * 10;
-        
-        // Get piece type being moved
         int from_sq = move.get_from();
         if (from_sq >= 0 && from_sq < 120) {
             PieceType moving_piece = type_of(pos.board[from_sq]);
-            score -= static_cast<int>(moving_piece); // MVV-LVA
+            
+            // Most Valuable Victim - Least Valuable Attacker
+            int victim_value = static_cast<int>(captured) * 100;
+            int attacker_value = static_cast<int>(moving_piece);
+            score += 10000 + victim_value - attacker_value;
         }
     }
     
-    // Promotion
+    // 3. Promotions (very high value)
     if (move.get_promoted() != PieceType::None) {
-        score += 900;
+        score += 9000 + static_cast<int>(move.get_promoted()) * 100;
     }
     
-    // Check if move gives check (simple version)
-    Position temp_pos = pos;
-    if (temp_pos.MakeMove(move) == 1) {
-        int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
-        if (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move)) {
-            score += 50;
-        }
-        temp_pos.TakeMove();
+    // 4. Killer moves (moves that caused beta cutoffs at same depth)
+    // TODO: Add killer move heuristic
+    
+    // 5. History heuristic (moves that worked well before)
+    // TODO: Add history tables
+    
+    // 6. Castling (generally good)
+    if (move.is_castle()) {
+        score += 500;
+    }
+    
+    // 7. Center control moves
+    int to_sq = move.get_to();
+    int file = to_sq % 10;
+    int rank = to_sq / 10;
+    if (file >= 3 && file <= 6 && rank >= 3 && rank <= 6) {
+        score += 20; // Center squares
     }
     
     return score;
 }
 
-// Order moves for better alpha-beta pruning
+// Order moves for better alpha-beta pruning (optimized version)
 void SimpleEngine::order_moves(const Position& pos, S_MOVELIST& moves) {
-    // Score all moves
-    std::vector<std::pair<int, int>> move_scores;
+    // Score moves directly in the movelist structure to avoid allocations
     for (int i = 0; i < moves.count; ++i) {
-        int score = score_move(pos, moves.moves[i]);
-        move_scores.push_back({score, i});
+        moves.moves[i].score = score_move(pos, moves.moves[i]);
     }
     
-    // Sort by score (highest first)
-    std::sort(move_scores.begin(), move_scores.end(), 
-              [](const auto& a, const auto& b) { return a.first > b.first; });
-    
-    // Reorder moves array
-    S_MOVELIST temp_moves = moves;
-    for (int i = 0; i < moves.count; ++i) {
-        moves.moves[i] = temp_moves.moves[move_scores[i].second];
+    // Use simple insertion sort for small lists (faster than std::sort for small N)
+    if (moves.count <= 16) {
+        for (int i = 1; i < moves.count; ++i) {
+            S_MOVE key = moves.moves[i];
+            int j = i - 1;
+            while (j >= 0 && moves.moves[j].score < key.score) {
+                moves.moves[j + 1] = moves.moves[j];
+                --j;
+            }
+            moves.moves[j + 1] = key;
+        }
+    } else {
+        // For larger lists, use partial sort to only sort the best moves
+        std::partial_sort(moves.moves, moves.moves + std::min(8, moves.count), moves.moves + moves.count,
+                         [](const S_MOVE& a, const S_MOVE& b) { return a.score > b.score; });
     }
 }
 
@@ -217,6 +235,25 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
     
     if (time_up()) return 0;
     
+    // Probe transposition table
+    int tt_score;
+    uint8_t tt_depth, tt_node_type;
+    uint32_t tt_best_move;
+    uint64_t zobrist_key = pos.zobrist_key;
+    
+    if (tt.probe(zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move)) {
+        if (tt_depth >= depth) {
+            // Use cached result if search depth is sufficient
+            if (tt_node_type == TTEntry::EXACT) {
+                return tt_score;
+            } else if (tt_node_type == TTEntry::LOWER_BOUND && tt_score >= beta) {
+                return beta; // Beta cutoff
+            } else if (tt_node_type == TTEntry::UPPER_BOUND && tt_score <= alpha) {
+                return alpha; // Alpha cutoff
+            }
+        }
+    }
+    
     // Check for mate/stalemate
     S_MOVELIST legal_moves;
     generate_legal_moves_enhanced(pos, legal_moves);
@@ -243,7 +280,8 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
     order_moves(pos, legal_moves);
     
     PVLine best_pv;
-    // bool pv_found = false; // TODO: Use for PV handling logic
+    S_MOVE best_move = S_MOVE(); // Track best move for TT
+    int original_alpha = alpha;
     
     for (int i = 0; i < legal_moves.count; ++i) {
         if (time_up()) break;
@@ -256,11 +294,14 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
             
             // Beta cutoff - most common case first
             if (score >= beta) {
-                return beta; // Beta cutoff
+                // Store as lower bound (beta cutoff)
+                tt.store(zobrist_key, beta, depth, TTEntry::LOWER_BOUND, legal_moves.moves[i].move);
+                return beta;
             }
             
             if (score > alpha) {
                 alpha = score;
+                best_move = legal_moves.moves[i];
                 
                 // Update PV
                 pv.clear();
@@ -268,9 +309,17 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
                 for (int j = 0; j < child_pv.length; ++j) {
                     pv.add_move(child_pv.moves[j]);
                 }
-                // pv_found = true; // TODO: Use for PV handling logic
             }
         }
+    }
+    
+    // Store result in transposition table
+    if (alpha > original_alpha) {
+        // Exact score (PV node)
+        tt.store(zobrist_key, alpha, depth, TTEntry::EXACT, best_move.move);
+    } else {
+        // Upper bound (all moves failed low)
+        tt.store(zobrist_key, alpha, depth, TTEntry::UPPER_BOUND);
     }
     
     return alpha;

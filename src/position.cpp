@@ -7,7 +7,9 @@
 // Update Zobrist key incrementally for side/castling/en passant changes only
 // (Piece position changes are handled by atomic operations)
 void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square) {
-    // XOR side to move (we switched sides after the move)
+    // XOR side to move flag to match full computation logic
+    // Full computation: if (side_to_move == Color::Black) key ^= Side;
+    // Since we always flip sides on a move, we always need to XOR the Side bit
     zobrist_key ^= Zobrist::Side;
 
     // XOR out old castling rights and XOR in new castling rights
@@ -17,14 +19,16 @@ void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece capt
     // XOR out old en passant file (if any)
     if (old_ep_square != -1) {
         int old_ep_file = static_cast<int>(file_of(old_ep_square));
-        if (old_ep_file >= 0 && old_ep_file < 8)
+        if (old_ep_file >= 0 && old_ep_file < 8) {
             zobrist_key ^= Zobrist::EpFile[old_ep_file];
+        }
     }
     // XOR in new en passant file (if any)  
     if (ep_square != -1) {
         int new_ep_file = static_cast<int>(file_of(ep_square));
-        if (new_ep_file >= 0 && new_ep_file < 8)
+        if (new_ep_file >= 0 && new_ep_file < 8) {
             zobrist_key ^= Zobrist::EpFile[new_ep_file];
+        }
     }
 }
 
@@ -405,31 +409,8 @@ int Position::MakeMove(const S_MOVE& move) {
         ++fullmove_number;
     }
     
-    // Update Zobrist key AFTER all move operations are complete
-    // This ensures transposition table sees consistent state
-    
-    // Hash out original state from saved key
-    zobrist_key = undo.zobrist_key;  // Start with original key
-    
-    // XOR side to move (position now has opposite side)
-    zobrist_key ^= Zobrist::Side;
-    
-    // XOR out old castling rights and XOR in new castling rights  
-    zobrist_key ^= Zobrist::Castle[undo.castling_rights];
-    zobrist_key ^= Zobrist::Castle[castling_rights];
-    
-    // XOR out old en passant square (if any)
-    if (undo.ep_square != -1) {
-        zobrist_key ^= Zobrist::EpFile[int(file_of(undo.ep_square))];
-    }
-    
-    // XOR in new en passant square (if any)
-    if (ep_square != -1) {
-        zobrist_key ^= Zobrist::EpFile[int(file_of(ep_square))];
-    }
-    
-    // NOTE: Piece position changes are automatically handled by atomic operations
-    // (clear_piece, add_piece, move_piece all update zobrist_key via XOR)
+    // Update zobrist_key incrementally using XOR (much faster than recomputing)
+    update_zobrist_for_move(move, moving_piece, undo.captured, undo.castling_rights, undo.ep_square);
     
     // Check if move left current player's king in check
     // Note: side_to_move has already been flipped, so we check the previous side's king

@@ -36,3 +36,4 @@
 2025-08-29, e1da793, Full evaluation re-enabled (comprehensive), 18149
 2025-08-29, 33b2e7c, Performance test, 54219
 2025-08-29, 33b2e7c, Fast incremental Zobrist test, 16267
+2025-08-29, 7486de7, Incremental Zobrist Fix + Transposition Table, 16564

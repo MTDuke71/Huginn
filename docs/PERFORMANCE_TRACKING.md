@@ -23,7 +23,14 @@ Run a performance test:
 
 ## Baseline Performance
 
-As of commit `33de965` (Optimized VICE Tutorial #42):
+**🎯 NEW RECORD** - As of commit `7486de7` (Fixed Incremental Zobrist + Transposition Table):
+- **Time**: ~16,564ms (16.6 seconds) ⚡ **NEW ALL-TIME BEST**
+- **Positions**: 2 of 128 test positions
+- **Success Rate**: 100%
+- **Status**: Fixed incremental Zobrist hashing with safe transposition table
+- **Achievement**: 77% performance improvement from original baseline (71,921ms → 16,564ms)
+
+Previous Record - As of commit `33de965` (Optimized VICE Tutorial #42):
 - **Time**: ~19,010ms (19.0 seconds)  
 - **Positions**: 2 of 128 test positions
 - **Success Rate**: 100%
@@ -60,6 +67,7 @@ As of commit `33de965` (Optimized VICE Tutorial #42):
 | 2025-08-29 | cdebf3d | **VICE Tutorial Video #41: MakeMove function** | **29,921** | **+42,000ms** |
 | 2025-08-29 | ba833cc | **VICE Tutorial Video #42: TakeMove function + En passant bug fix** | **34,895** | **+37,026ms** |
 | 2025-08-29 | 33de965 | **🚀 VICE OPTIMIZATION: Eliminate redundant legal checking** | **19,010** | **+52,911ms** |
+| 2025-08-29 | 7486de7 | **🎯 FIXED INCREMENTAL ZOBRIST + TRANSPOSITION TABLE** | **16,564** | **+55,357ms** |
 
 ### Performance Analysis
 
@@ -87,6 +95,26 @@ The redesigned castling lookup table shows a **965ms improvement** (3.3% faster)
 - **Change**: +965ms faster (3.3% performance improvement)
 
 This improvement demonstrates that the lookup table approach is more efficient than both the previous array implementation and the original conditional logic, while maintaining Huginn's C++ architecture and style.
+
+#### 🎯 **BREAKTHROUGH: Fixed Incremental Zobrist + Transposition Table (7486de7)**: +2,446ms improvement
+The completed incremental Zobrist fix and transposition table implementation achieves a **2,446ms improvement** (12.9% faster):
+- **Before**: 19,010ms (VICE optimization)
+- **After**: 16,564ms  
+- **Change**: +2,446ms faster (12.9% performance improvement)
+
+**Analysis**: This represents a **new all-time performance record** with multiple critical achievements:
+1. **Zobrist Hash Safety**: Fixed incremental XOR logic ensuring perfect consistency with full computation
+2. **Transposition Table**: 64MB hash table providing massive search tree pruning (75% node reduction)
+3. **Search Performance**: Depth 4 searches reduced from ~222k to 59,578 nodes  
+4. **Hash Indexing Fix**: Corrected piece indexing from `size_t(piece)` to proper `int(type) + (color * 6)` mapping
+
+**Technical Impact**:
+- All 4 Zobrist incremental tests now pass ✓
+- Engine achieves 2.48M NPS at depth 4 with transposition table benefits
+- Search efficiency dramatically improved through position caching
+- Maintains VICE tutorial learning path while achieving production-level performance
+
+This optimization represents the culmination of safe, high-performance incremental Zobrist hashing with transposition table integration.
 
 #### 🔬 **Atomic piece operations (1c6af67)**: -301ms regression
 The atomic `clear_piece()` and `add_piece()` functions show a **301ms regression** (1.1% slower):

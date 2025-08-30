@@ -4,6 +4,7 @@
 #include "move.hpp"
 #include "movegen_enhanced.hpp"
 #include "evaluation.hpp"
+#include "transposition_table.hpp"
 #include <string>
 #include <vector>
 #include <chrono>
@@ -66,6 +67,9 @@ protected:
     std::chrono::steady_clock::time_point start_time;
     SearchLimits current_limits;
     bool should_stop = false;
+    
+    // Transposition table for position caching
+    TranspositionTable tt;
     
     // Core search functions
     int alpha_beta(Position& pos, int depth, int alpha, int beta, PVLine& pv);

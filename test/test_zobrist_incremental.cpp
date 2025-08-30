@@ -48,12 +48,11 @@ TEST_F(ZobristIncrementalTest, CaptureMovesUpdateCorrectly) {
     pos.clear_piece(sq(File::D, Rank::R2));  // Remove original d2 pawn
     pos.add_piece(sq(File::D, Rank::R4), make_piece(Color::White, PieceType::Pawn));  // Add pawn on d4
     
-    // Place a black pawn on e5 that can be captured safely
-    pos.set(sq(File::E, Rank::R5), make_piece(Color::Black, PieceType::Pawn));
+    // Place a black pawn on e5 that can be captured safely using atomic operation
+    pos.add_piece(sq(File::E, Rank::R5), make_piece(Color::Black, PieceType::Pawn));  // Use atomic operation
     pos.rebuild_counts(); // Recalculate after manual piece placement
-    pos.update_zobrist_key(); // IMPORTANT: Recalculate Zobrist hash after manual changes
     
-    // Get the Zobrist key using full computation
+    // Get the Zobrist key using full computation and sync with position
     uint64_t full_key_before = Zobrist::compute(pos);
     pos.zobrist_key = full_key_before; // Sync the position's key
     
