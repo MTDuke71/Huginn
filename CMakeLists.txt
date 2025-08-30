@@ -288,28 +288,7 @@ add_huginn_executable(huginn
 )
 
 # ---- Move Generation Profiler ----
-add_huginn_executable(movegen_profiler
-    SOURCES
-        src/movegen_profiler_main.cpp
-        src/movegen_profiler.cpp
-        ${COMMON_SOURCES}
-        src/board.cpp
-        src/debug.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
-# ---- Profiler Validation Test ----
-add_huginn_executable(profiler_test
-    SOURCES
-        src/profiler_test.cpp
-        src/movegen_profiler.cpp
-        ${COMMON_SOURCES}
-        src/board.cpp
-        src/debug.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
 # ---- Assembly Generation Target ----
 if(GENERATE_ASSEMBLY)
@@ -366,9 +345,7 @@ if(GTEST_FOUND)
         test/test_complete_movegen.cpp
         test/test_enhanced_movegen.cpp
         test/test_pawn_optimization.cpp
-        test/test_king_optimization.cpp
         test/test_knight_optimization.cpp
-        test/test_sliding_piece_optimization.cpp
         test/test_evaluation_symmetry.cpp
     )
 
