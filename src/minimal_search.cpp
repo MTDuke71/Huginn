@@ -60,6 +60,11 @@ int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta) {
         return alpha;
     }
     
+    // Check for repetition (VICE tutorial style)
+    if (isRepetition(pos)) {
+        return 0; // Draw score
+    }
+    
     // Terminal node - evaluate position
     if (depth == 0) {
         return evaluate(pos);
@@ -148,6 +153,22 @@ std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
     }
     
     return result;
+}
+
+// Simple repetition detection - VICE tutorial style
+bool MinimalEngine::isRepetition(const Position& pos) {
+    // Start from when fifty move rule was last reset (tutorial optimization)
+    int start_index = static_cast<int>(pos.move_history.size()) - pos.halfmove_clock;
+    if (start_index < 0) start_index = 0;
+    
+    // Look through history for matching position key
+    for (int index = start_index; index < static_cast<int>(pos.move_history.size()); ++index) {
+        if (pos.zobrist_key == pos.move_history[index].zobrist_key) {
+            return true; // Repetition found
+        }
+    }
+    
+    return false; // No repetition
 }
 
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {

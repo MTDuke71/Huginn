@@ -35,6 +35,9 @@ public:  // Make members public for easier access
     
     // Utility to convert move to UCI string
     static std::string move_to_uci(const S_MOVE& move);
+    
+    // Simple repetition detection (VICE tutorial style)
+    static bool isRepetition(const Position& pos);
 };
 
 } // namespace Huginn
