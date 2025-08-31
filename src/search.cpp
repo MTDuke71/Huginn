@@ -354,7 +354,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     // int best_score = -MATE_SCORE; // TODO: Use for move scoring logic
     
     // Iterative deepening
-    int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 64; // Use 64 as practical maximum for unlimited depth
+    int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 12; // Use reasonable depth for time-limited searches
     for (int depth = 1; depth <= max_search_depth; ++depth) {
         if (time_up()) break;
         

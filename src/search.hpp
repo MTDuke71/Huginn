@@ -56,7 +56,7 @@ struct SearchLimits {
     uint64_t max_time_ms = 10000;  // 10 seconds default
     uint64_t max_nodes = UINT64_MAX; // Effectively unlimited nodes
     bool infinite = false;
-    int threads = 4; // Default to 4 threads for stability
+    int threads = 1; // Default to 1 thread to test for threading issues
 };
 
 // Simple single-threaded search engine

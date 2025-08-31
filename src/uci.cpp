@@ -133,7 +133,7 @@ void UCIInterface::send_id() {
 
 void UCIInterface::send_options() {
     // Send basic UCI options
-    std::cout << "option name Threads type spin default 4 min 1 max 64" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
 }
 
@@ -206,7 +206,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     // Parse search limits from go command
     Huginn::SearchLimits limits;  // Uses defaults from SearchLimits struct
     limits.infinite = false;
-    limits.threads = 4; // Use 4 threads for stability
+    limits.threads = 1; // Use 1 thread to test for threading issues
     // limits.max_depth = 0 (unlimited depth by default from struct)
     // limits.max_time_ms uses default from SearchLimits (10000ms)
     
@@ -233,16 +233,30 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
             int wtime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::White) {
-                // Better time allocation: 
-                // - Use more time early in game, less time later
-                // - Minimum 3 seconds, maximum 15 seconds per move
-                // - For 60000ms (1 minute), allocate 5-8 seconds per move
-                int base_time = wtime / 10;  // Use 1/10th of remaining time
-                limits.max_time_ms = std::min(15000, std::max(3000, base_time));
+                // Ultra-aggressive time management for Arena tournament compatibility:
+                // Prevent engine lockups by using very conservative time allocation
+                int base_time = wtime / 20;  // Use 1/20th of remaining time
+                
+                // Much more conservative minimums to avoid Arena timeouts
+                int min_time;
+                if (wtime < 3000) {         // Less than 3 seconds - EMERGENCY
+                    min_time = 50;          // Just 50ms minimum  
+                } else if (wtime < 10000) { // Less than 10 seconds
+                    min_time = 200;         // 200ms minimum
+                } else if (wtime < 30000) { // Less than 30 seconds  
+                    min_time = 500;         // 500ms minimum
+                } else {
+                    min_time = 800;         // 800ms minimum for normal time
+                }
+                
+                // Much more conservative maximum time
+                int max_time = std::min(5000, wtime / 5); // Never use more than 1/5 of remaining time
+                limits.max_time_ms = std::min(max_time, std::max(min_time, base_time));
                 
                 if (debug_mode) {
                     std::cout << "info string White time allocation: wtime=" << wtime 
-                              << " base=" << base_time << " final=" << limits.max_time_ms << std::endl;
+                              << " base=" << base_time << " min=" << min_time << " max=" << max_time 
+                              << " final=" << limits.max_time_ms << std::endl;
                 }
             }
             i++;
@@ -250,16 +264,30 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
             int btime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::Black) {
-                // Better time allocation: 
-                // - Use more time early in game, less time later
-                // - Minimum 3 seconds, maximum 15 seconds per move
-                // - For 60000ms (1 minute), allocate 5-8 seconds per move
-                int base_time = btime / 10;  // Use 1/10th of remaining time
-                limits.max_time_ms = std::min(15000, std::max(3000, base_time));
+                // Ultra-aggressive time management for Arena tournament compatibility:
+                // Prevent engine lockups by using very conservative time allocation
+                int base_time = btime / 20;  // Use 1/20th of remaining time
+                
+                // Much more conservative minimums to avoid Arena timeouts
+                int min_time;
+                if (btime < 3000) {         // Less than 3 seconds - EMERGENCY
+                    min_time = 50;          // Just 50ms minimum  
+                } else if (btime < 10000) { // Less than 10 seconds
+                    min_time = 200;         // 200ms minimum
+                } else if (btime < 30000) { // Less than 30 seconds  
+                    min_time = 500;         // 500ms minimum
+                } else {
+                    min_time = 800;         // 800ms minimum for normal time
+                }
+                
+                // Much more conservative maximum time
+                int max_time = std::min(5000, btime / 5); // Never use more than 1/5 of remaining time
+                limits.max_time_ms = std::min(max_time, std::max(min_time, base_time));
                 
                 if (debug_mode) {
                     std::cout << "info string Black time allocation: btime=" << btime 
-                              << " base=" << base_time << " final=" << limits.max_time_ms << std::endl;
+                              << " base=" << base_time << " min=" << min_time << " max=" << max_time 
+                              << " final=" << limits.max_time_ms << std::endl;
                 }
             }
             i++;

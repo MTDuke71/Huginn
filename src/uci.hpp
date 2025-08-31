@@ -20,7 +20,7 @@ private:
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
-    int threads = 4; // Conservative default for tournament stability
+    int threads = 1; // Default to 1 thread to test for threading issues
     
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
 public:
