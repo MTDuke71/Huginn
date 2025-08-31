@@ -56,7 +56,7 @@ struct SearchLimits {
     uint64_t max_time_ms = 10000;  // 10 seconds default
     uint64_t max_nodes = UINT64_MAX; // Effectively unlimited nodes
     bool infinite = false;
-    int threads = 16; // Default to 16 threads for optimal performance
+    int threads = 4; // Default to 4 threads for stability
 };
 
 // Simple single-threaded search engine
@@ -87,6 +87,8 @@ protected:
     void update_stats();
 
 private:
+    // Repetition detection
+    std::vector<uint64_t> repetition_stack;
     
 public:
     SimpleEngine() = default;
@@ -104,7 +106,8 @@ public:
     virtual void reset() { 
         stats.reset(); 
         main_pv.clear(); 
-        should_stop = false; 
+        should_stop = false;
+        repetition_stack.clear(); // Clear repetition history for new search
     }
     
     // Utility functions

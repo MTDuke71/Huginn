@@ -232,23 +232,39 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
 int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLine& pv) {
     pv.clear();
     increment_nodes();
-    
+
     if (time_up()) return 0;
-    
+
+    // --- Repetition detection ---
+    // Only track up to MAX_PLY positions
+    if (repetition_stack.size() > static_cast<size_t>(depth)) repetition_stack.resize(depth);
+    repetition_stack.push_back(pos.zobrist_key);
+    int repetition_count = 0;
+    for (size_t i = 0; i + 1 < repetition_stack.size(); ++i) {
+        if (repetition_stack[i] == pos.zobrist_key) repetition_count++;
+    }
+    if (repetition_count >= 2) { // Threefold repetition
+        repetition_stack.pop_back();
+        return 0; // Draw score
+    }
+
     // Probe transposition table
     int tt_score;
     uint8_t tt_depth, tt_node_type;
     uint32_t tt_best_move;
     uint64_t zobrist_key = pos.zobrist_key;
-    
+
     if (tt.probe(zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move)) {
         if (tt_depth >= depth) {
             // Use cached result if search depth is sufficient
             if (tt_node_type == TTEntry::EXACT) {
+                repetition_stack.pop_back();
                 return tt_score;
             } else if (tt_node_type == TTEntry::LOWER_BOUND && tt_score >= beta) {
+                repetition_stack.pop_back();
                 return beta; // Beta cutoff
             } else if (tt_node_type == TTEntry::UPPER_BOUND && tt_score <= alpha) {
+                repetition_stack.pop_back();
                 return alpha; // Alpha cutoff
             }
         }
@@ -321,7 +337,8 @@ int SimpleEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, PVLi
         // Upper bound (all moves failed low)
         tt.store(zobrist_key, alpha, depth, TTEntry::UPPER_BOUND);
     }
-    
+
+    repetition_stack.pop_back();
     return alpha;
 }
 
@@ -337,7 +354,8 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
     // int best_score = -MATE_SCORE; // TODO: Use for move scoring logic
     
     // Iterative deepening
-    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+    int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 64; // Use 64 as practical maximum for unlimited depth
+    for (int depth = 1; depth <= max_search_depth; ++depth) {
         if (time_up()) break;
         
         stats.max_depth_reached = depth;
@@ -367,6 +385,7 @@ S_MOVE SimpleEngine::search(Position pos, const SearchLimits& limits) {
         }
         
         std::cout << " pv " << pv_to_string(main_pv) << std::endl;
+        std::cout.flush(); // Ensure immediate output
         
         // Check for mate
         if (abs(score) > 30000) {
@@ -412,7 +431,8 @@ S_MOVE ThreadedEngine::thread_search_worker(Position pos, const SearchLimits& li
     // Other threads help by searching alternative moves in parallel
     if (thread_id == 0) {
         // Thread 0: Do full iterative deepening like single-threaded search
-        for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 64; // Use 64 as practical maximum for unlimited depth
+        for (int depth = 1; depth <= max_search_depth; ++depth) {
             if (thread_time_up()) break;
 
             PVLine current_pv;
@@ -463,7 +483,8 @@ S_MOVE ThreadedEngine::thread_search_worker(Position pos, const SearchLimits& li
     } else {
         // Other threads: Help by searching alternative moves at various depths
         // This provides parallel search without interfering with PV construction
-        for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 64; // Use 64 as practical maximum for unlimited depth
+        for (int depth = 1; depth <= max_search_depth; ++depth) {
             if (thread_time_up()) break;
 
             // Each helper thread searches a different subset of moves
@@ -560,7 +581,8 @@ S_MOVE ThreadedEngine::single_threaded_search(Position pos, const SearchLimits& 
     best_move.score = 0;
 
     // Iterative deepening (similar to SimpleEngine but with thread-safe stats)
-    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+    int max_search_depth = (limits.max_depth > 0) ? limits.max_depth : 64; // Use 64 as practical maximum for unlimited depth
+    for (int depth = 1; depth <= max_search_depth; ++depth) {
         if (thread_time_up()) break;
 
         thread_safe_stats.max_depth_reached = depth;

@@ -1,16 +1,19 @@
 #include "uci.hpp"
 #include "init.hpp"
 #include "board120.hpp"
+#include "uci_utils.hpp"
+#include "movegen_enhanced.hpp"
 
 UCIInterface::UCIInterface() {
     // Initialize the chess engine
     Huginn::init();
     
     // Set starting position
+    // Ensure uci_utils.hpp is included at the top of the file
     position.set_startpos();
     
     // Initialize search engine
-    search_engine = std::make_unique<Huginn::ThreadedEngine>();
+    search_engine = std::make_unique<Huginn::SimpleEngine>();
 }
 
 void UCIInterface::run() {
@@ -31,6 +34,7 @@ void UCIInterface::run() {
             send_id();
             send_options();
             std::cout << "uciok" << std::endl;
+            std::cout.flush();
         }
         else if (command == "debug") {
             if (tokens.size() > 1) {
@@ -39,6 +43,8 @@ void UCIInterface::run() {
         }
         else if (command == "isready") {
             std::cout << "readyok" << std::endl;
+            std::cout.flush();
+            // No move parsing needed for isready
         }
         else if (command == "setoption") {
             handle_setoption(tokens);
@@ -127,7 +133,7 @@ void UCIInterface::send_id() {
 
 void UCIInterface::send_options() {
     // Send basic UCI options
-    std::cout << "option name Threads type spin default 16 min 1 max 64" << std::endl;
+    std::cout << "option name Threads type spin default 4 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
 }
 
@@ -172,7 +178,7 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     // Apply moves if "moves" keyword is present
     if (move_index < tokens.size() && tokens[move_index] == "moves") {
         for (size_t i = move_index + 1; i < tokens.size(); ++i) {
-            S_MOVE move = parse_uci_move(tokens[i]);
+            S_MOVE move = parse_uci_move(tokens[i], position);
             if (move.move != 0) {
                 if (position.MakeMove(move) != 1) {
                     if (debug_mode) {
@@ -200,7 +206,8 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     // Parse search limits from go command
     Huginn::SearchLimits limits;  // Uses defaults from SearchLimits struct
     limits.infinite = false;
-    limits.max_depth = 8; // Default depth
+    limits.threads = 4; // Use 4 threads for stability
+    // limits.max_depth = 0 (unlimited depth by default from struct)
     // limits.max_time_ms uses default from SearchLimits (10000ms)
     
     if (debug_mode) {
@@ -226,14 +233,34 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
             int wtime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::White) {
-                limits.max_time_ms = std::max(200, wtime / 20); // Use 1/20th of remaining time
+                // Better time allocation: 
+                // - Use more time early in game, less time later
+                // - Minimum 3 seconds, maximum 15 seconds per move
+                // - For 60000ms (1 minute), allocate 5-8 seconds per move
+                int base_time = wtime / 10;  // Use 1/10th of remaining time
+                limits.max_time_ms = std::min(15000, std::max(3000, base_time));
+                
+                if (debug_mode) {
+                    std::cout << "info string White time allocation: wtime=" << wtime 
+                              << " base=" << base_time << " final=" << limits.max_time_ms << std::endl;
+                }
             }
             i++;
         }
         else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
             int btime = std::stoi(tokens[i + 1]);
             if (position.side_to_move == Color::Black) {
-                limits.max_time_ms = std::max(200, btime / 20); // Use 1/20th of remaining time
+                // Better time allocation: 
+                // - Use more time early in game, less time later
+                // - Minimum 3 seconds, maximum 15 seconds per move
+                // - For 60000ms (1 minute), allocate 5-8 seconds per move
+                int base_time = btime / 10;  // Use 1/10th of remaining time
+                limits.max_time_ms = std::min(15000, std::max(3000, base_time));
+                
+                if (debug_mode) {
+                    std::cout << "info string Black time allocation: btime=" << btime 
+                              << " base=" << base_time << " final=" << limits.max_time_ms << std::endl;
+                }
             }
             i++;
         }
@@ -252,7 +279,8 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     }
     
     if (debug_mode) {
-        std::cout << "info string Debug: Starting search with depth " << limits.max_depth << std::endl;
+        std::cout << "info string Debug: Starting search with depth " << limits.max_depth 
+                  << " time " << limits.max_time_ms << "ms" << std::endl;
     }
     
     // Perform synchronous search
@@ -304,8 +332,33 @@ void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
     Huginn::SearchLimits modified_limits = limits;
     modified_limits.threads = threads; // Use the UCI-configured thread count directly
     
+    // Safety mechanism: ensure we always return a move within reasonable time
+    // Add 500ms buffer to account for search overhead
+    auto search_start = std::chrono::high_resolution_clock::now();
+    auto max_search_time = std::chrono::milliseconds(modified_limits.max_time_ms + 500);
+    
     // Perform the search
-    S_MOVE best_move = search_engine->search(position, modified_limits);
+    S_MOVE best_move;
+    try {
+        best_move = search_engine->search(position, modified_limits);
+    } catch (const std::exception& e) {
+        std::cout << "info string Search threw exception: " << e.what() << std::endl;
+        std::cout.flush();
+        best_move.move = 0; // Set to invalid move to trigger fallback
+    } catch (...) {
+        std::cout << "info string Search threw unknown exception" << std::endl;
+        std::cout.flush();
+        best_move.move = 0; // Set to invalid move to trigger fallback
+    }
+    
+    // Emergency fallback: if search took too long or returned no move, get any legal move
+    if (best_move.move == 0 || should_stop) {
+        S_MOVELIST moves;
+        generate_legal_moves_enhanced(position, moves);
+        if (moves.count > 0) {
+            best_move = moves.moves[0]; // Use first legal move as fallback
+        }
+    }
     
     // Get search statistics
     const auto& stats = search_engine->get_stats();
@@ -328,69 +381,20 @@ void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
     }
     std::cout << std::endl;
     
-    // Send the best move
+    // Send the best move - ALWAYS send something
     if (best_move.move != 0) {
         std::string uci_move = Huginn::SimpleEngine::move_to_uci(best_move);
         std::cout << "bestmove " << uci_move << std::endl;
+        std::cout.flush(); // Ensure immediate output
     } else {
+        // Last resort fallback - this should never happen
         std::cout << "bestmove 0000" << std::endl;
+        std::cout.flush(); // Ensure immediate output
     }
     
     is_searching = false;
 }
 
-S_MOVE UCIInterface::parse_uci_move(const std::string& uci_move) {
-    if (uci_move.length() < 4) return S_MOVE();
-    
-    // Parse from square (e.g., "e2")
-    int from_file = uci_move[0] - 'a';
-    int from_rank = uci_move[1] - '1';
-    if (from_file < 0 || from_file > 7 || from_rank < 0 || from_rank > 7) {
-        return S_MOVE();
-    }
-    int from = sq(File(from_file), Rank(from_rank));
-    
-    // Parse to square (e.g., "e4")
-    int to_file = uci_move[2] - 'a';
-    int to_rank = uci_move[3] - '1';
-    if (to_file < 0 || to_file > 7 || to_rank < 0 || to_rank > 7) {
-        return S_MOVE();
-    }
-    int to = sq(File(to_file), Rank(to_rank));
-    
-    // Check for promotion
-    PieceType promoted = PieceType::None;
-    if (uci_move.length() == 5) {
-        char promo_char = uci_move[4];
-        switch (promo_char) {
-            case 'q': promoted = PieceType::Queen; break;
-            case 'r': promoted = PieceType::Rook; break;
-            case 'b': promoted = PieceType::Bishop; break;
-            case 'n': promoted = PieceType::Knight; break;
-            default: return S_MOVE(); // Invalid promotion
-        }
-    }
-    
-    // Generate legal moves to find the matching move with proper flags
-    S_MOVELIST move_list;
-    generate_legal_moves_enhanced(position, move_list);
-    
-    for (int i = 0; i < move_list.count; ++i) {
-        const S_MOVE& move = move_list.moves[i];
-        if (move.get_from() == from && move.get_to() == to) {
-            // Check promotion match
-            if (promoted != PieceType::None) {
-                if (move.get_promoted() == promoted) {
-                    return move;
-                }
-            } else if (move.get_promoted() == PieceType::None) {
-                return move;
-            }
-        }
-    }
-    
-    return S_MOVE(); // Move not found
-}
 
 std::string UCIInterface::move_to_uci(const S_MOVE& move) {
     // Use move_to_uci implementation

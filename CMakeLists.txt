@@ -264,6 +264,7 @@ set(ENGINE_SOURCES
     src/board.cpp
     src/debug.cpp
     src/uci.cpp
+    src/uci_utils.cpp
 )
 
 # ---- Performance Critical Sources (for assembly analysis) ----
@@ -401,6 +402,7 @@ set(DEMO_NAMES
     critical_position_test
     timing_test
     perft6_huginn
+    repetition_detection_demo
 )
 
 foreach(demo_name ${DEMO_NAMES})
