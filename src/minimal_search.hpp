@@ -3,6 +3,7 @@
 #include "position.hpp"
 #include "move.hpp"
 #include "movegen_enhanced.hpp"
+#include "pvtable.hpp"
 #include <chrono>
 
 namespace Huginn {
@@ -19,6 +20,10 @@ public:  // Make members public for easier access
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
+    PVTable pv_table;  // Principal Variation table (VICE tutorial style)
+    
+    // Constructor
+    MinimalEngine() : pv_table(2) {}  // 2MB default size like tutorial
     
     // Simple material evaluation
     int evaluate(const Position& pos);
@@ -38,6 +43,10 @@ public:  // Make members public for easier access
     
     // Simple repetition detection (VICE tutorial style)
     static bool isRepetition(const Position& pos);
+    
+    // PV table helper functions
+    void store_pv_move(uint64_t position_key, const S_MOVE& move);
+    bool probe_pv_move(uint64_t position_key, S_MOVE& move) const;
 };
 
 } // namespace Huginn

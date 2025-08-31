@@ -393,6 +393,7 @@ add_huginn_executable(huginn_minimal
     SOURCES
         src/minimal_main.cpp
         src/minimal_search.cpp
+        src/pvtable.cpp
         ${COMMON_SOURCES}
         src/movegen_enhanced.cpp
         src/board.cpp

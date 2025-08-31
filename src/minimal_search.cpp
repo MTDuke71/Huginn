@@ -171,6 +171,15 @@ bool MinimalEngine::isRepetition(const Position& pos) {
     return false; // No repetition
 }
 
+// PV table helper functions
+void MinimalEngine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
+    pv_table.store_move(position_key, move);
+}
+
+bool MinimalEngine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
+    return pv_table.probe_move(position_key, move);
+}
+
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
@@ -209,6 +218,9 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
         
         if (depth_best_move.move != 0) {
             best_move = depth_best_move;
+            
+            // Store best move in PV table (VICE tutorial approach)
+            store_pv_move(pos.zobrist_key, depth_best_move);
             
             // UCI output
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
