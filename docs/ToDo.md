@@ -240,6 +240,16 @@
   - [ ] Futility pruning (forward pruning in leaf nodes)
   - [ ] Razoring (reduce depth when evaluation is far below alpha)
 
+    ---
+    **Notes for Review:**
+    - Futility pruning is a forward pruning technique applied at leaf nodes (or near-leaf nodes) in the search tree. The idea is to skip searching moves that are very unlikely to raise alpha, based on a static evaluation plus a margin. This can greatly reduce the number of nodes searched in quiet positions, but must be carefully tuned to avoid missing tactical resources.
+    - Typical implementation: If static_eval + margin <= alpha, prune all non-captures/non-promotions at depth 1 (sometimes also at depth 2 with larger margin). Margin is often depth-dependent and may be tuned empirically.
+    - Risks: Aggressive futility pruning can miss tactical shots, especially in positions with hidden threats. Should be disabled in PV nodes and when in check.
+    - Razoring is a related technique: If static_eval + razor_margin <= alpha at shallow depth (usually depth 1 or 2), reduce the search depth by 1 (or skip to quiescence). This is less aggressive than full pruning and can be combined with futility pruning for additional speedup.
+    - Both techniques are most effective in quiet positions and can yield significant node reductions, but require careful margin selection and tactical safety checks.
+    - For Huginn: Consider margin tables based on depth, and always disable in PV nodes, checks, or when TT move is available. Benchmark with/without these techniques to measure impact on search speed and tactical strength.
+    ---
+
 ### **Evaluation Enhancements**
 - [ ] **Advanced Pawn Evaluation**
   - [ ] Passed pawn evaluation with distance to promotion
