@@ -388,6 +388,21 @@ else()
     message(STATUS "Tests disabled - GTest not found")
 endif()
 
+# ---- Minimal Engine ----
+add_huginn_executable(huginn_minimal
+    SOURCES
+        src/minimal_main.cpp
+        src/minimal_search.cpp
+        ${COMMON_SOURCES}
+        src/movegen_enhanced.cpp
+        src/board.cpp
+        src/position.cpp
+        src/attack_detection.cpp
+        src/debug.cpp
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # ---- Demo executables ----
 set(DEMO_NAMES
     perft_suite_demo
