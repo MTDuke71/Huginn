@@ -8,6 +8,22 @@
 
 namespace Huginn {
 
+// Search info structure - equivalent to S_SEARCHINFO from VICE tutorial (0:19)
+struct SearchInfo {
+    std::chrono::steady_clock::time_point start_time;  // When search started
+    std::chrono::steady_clock::time_point stop_time;   // When to stop search
+    int depth;          // Current search depth
+    int max_depth;      // Maximum depth to search
+    int movestogo;      // Moves until next time control
+    bool infinite;      // Search until told to stop
+    bool quit;          // Flag to quit search
+    bool stopped;       // Flag indicating search was stopped
+    uint64_t nodes;     // Nodes searched so far
+    
+    SearchInfo() : depth(0), max_depth(6), movestogo(30), infinite(false), 
+                   quit(false), stopped(false), nodes(0) {}
+};
+
 struct MinimalLimits {
     int max_depth = 6;
     int max_time_ms = 5000;
@@ -22,8 +38,21 @@ public:  // Make members public for easier access
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
     
+    // Search History array (3:55) - stores scores for moves that improved alpha
+    // [piece][to_square] - 13 piece types, 120 squares (mailbox)
+    int search_history[13][120];
+    
+    // Search Killers array (4:37) - stores non-capture moves causing beta cutoff  
+    // [depth][killer_slot] - MAX_DEPTH levels, 2 killer moves per depth
+    S_MOVE search_killers[MAX_DEPTH][2];
+    
     // Constructor
-    MinimalEngine() : pv_table(2) {}  // 2MB default size like tutorial
+    MinimalEngine() : pv_table(2) {
+        clear_search_tables();
+    }
+    
+    // Clear search tables
+    void clear_search_tables();
     
     // Simple material evaluation
     int evaluate(const Position& pos);
@@ -50,6 +79,10 @@ public:  // Make members public for easier access
     
     // Get PV line for display (Part 53)
     int get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]);
+    
+    // Search history and killer move functions
+    void update_search_history(const Position& pos, const S_MOVE& move, int depth);
+    void update_killer_moves(const S_MOVE& move, int depth);
 };
 
 } // namespace Huginn

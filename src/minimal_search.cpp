@@ -171,6 +171,22 @@ bool MinimalEngine::isRepetition(const Position& pos) {
     return false; // No repetition
 }
 
+// Clear search tables - reset history and killers
+void MinimalEngine::clear_search_tables() {
+    // Clear search history array (3:55)
+    for (int piece = 0; piece < 13; ++piece) {
+        for (int sq = 0; sq < 120; ++sq) {
+            search_history[piece][sq] = 0;
+        }
+    }
+    
+    // Clear search killers array (4:37)
+    for (int depth = 0; depth < MAX_DEPTH; ++depth) {
+        search_killers[depth][0] = S_MOVE();  // Clear first killer
+        search_killers[depth][1] = S_MOVE();  // Clear second killer
+    }
+}
+
 // PV table helper functions
 void MinimalEngine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
     pv_table.store_move(position_key, move);
@@ -185,11 +201,45 @@ int MinimalEngine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEP
     return pv_table.get_pv_line(pos, depth, pv_array);
 }
 
+// Update search history when move improves alpha (3:55)
+void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
+    if (move.move == 0) return;
+    
+    // Get piece and destination square
+    int from = move.get_from();
+    int to = move.get_to();
+    
+    if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
+    
+    Piece piece = pos.board[from];
+    int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
+    
+    // Increase history score for this piece-to-square combination
+    search_history[piece_index][to] += depth * depth;  // Deeper moves get higher bonus
+}
+
+// Update killer moves when move causes beta cutoff (4:37)  
+void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
+    if (move.move == 0 || depth < 0 || depth >= MAX_DEPTH) return;
+    
+    // Only store non-capture moves as killers
+    if (!move.is_capture()) {
+        // If this move isn't already first killer, shift and add
+        if (search_killers[depth][0].move != move.move) {
+            search_killers[depth][1] = search_killers[depth][0];  // Second = old first
+            search_killers[depth][0] = move;                      // First = new move
+        }
+    }
+}
+
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
     nodes_searched = 0;
     should_stop = false;
+    
+    // Clear search tables for new search (VICE tutorial approach)
+    clear_search_tables();
     
     S_MOVE best_move;
     best_move.move = 0;
