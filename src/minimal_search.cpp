@@ -180,6 +180,11 @@ bool MinimalEngine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
     return pv_table.probe_move(position_key, move);
 }
 
+// Get PV line for display (Part 53)
+int MinimalEngine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]) {
+    return pv_table.get_pv_line(pos, depth, pv_array);
+}
+
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
@@ -222,15 +227,26 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             // Store best move in PV table (VICE tutorial approach)
             store_pv_move(pos.zobrist_key, depth_best_move);
             
-            // UCI output
+            // UCI output with full PV line (Part 53)
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - start_time).count();
+            
+            // Get PV line from table
+            S_MOVE pv_array[MAX_DEPTH];
+            int pv_moves = get_pv_line(pos, depth, pv_array);
             
             std::cout << "info depth " << depth 
                      << " score cp " << best_score 
                      << " nodes " << nodes_searched 
                      << " time " << elapsed
-                     << " pv " << move_to_uci(best_move) << std::endl;
+                     << " pv ";
+            
+            // Print full PV line
+            for (int i = 0; i < pv_moves; ++i) {
+                std::cout << move_to_uci(pv_array[i]);
+                if (i < pv_moves - 1) std::cout << " ";
+            }
+            std::cout << std::endl;
         }
         
         if (time_up()) break;
