@@ -107,7 +107,7 @@ int main() {
             
         } else if (command == "go") {
             MinimalLimits limits;
-            limits.max_depth = 6;
+            limits.max_depth = 10;  // Allow deeper search for time-based games
             limits.max_time_ms = 5000;
             limits.infinite = false;
             
@@ -122,16 +122,26 @@ int main() {
                 } else if (param == "wtime" || param == "btime") {
                     int time_ms;
                     iss >> time_ms;
-                    // Ultra-conservative time management like the main engine
-                    limits.max_time_ms = time_ms / 20;
+                    
+                    // Improved time management based on game length
+                    if (time_ms >= 1800000) {      // 30+ minutes: classical
+                        limits.max_time_ms = time_ms / 25;  // ~40 moves
+                    } else if (time_ms >= 600000) { // 10-30 minutes: rapid  
+                        limits.max_time_ms = time_ms / 35;  // ~50 moves
+                    } else if (time_ms >= 180000) { // 3-10 minutes: blitz
+                        limits.max_time_ms = time_ms / 50;  // ~60 moves
+                    } else {                        // <3 minutes: bullet
+                        limits.max_time_ms = time_ms / 80;  // ~80 moves
+                    }
+                    
+                    // Minimum 100ms per move, no maximum cap
+                    limits.max_time_ms = std::max(100, limits.max_time_ms);
                 }
             }
             
-            // Ensure we don't search too deep or too long
+            // Ensure we don't search too deep but allow full time usage
             limits.max_depth = std::min(limits.max_depth, 10);
-            if (!limits.infinite) {
-                limits.max_time_ms = std::min(limits.max_time_ms, 10000);
-            }
+            // Removed hard time cap - let 25% threshold handle time management
             
             S_MOVE best_move = engine.search(pos, limits);
             std::cout << "bestmove " << engine.move_to_uci(best_move) << std::endl;
