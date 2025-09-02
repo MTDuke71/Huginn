@@ -155,7 +155,7 @@ std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
     return result;
 }
 
-// Simple repetition detection - VICE tutorial style
+// Simple repetition detection - VICE tutorial style (made static as per Part 55)
 bool MinimalEngine::isRepetition(const Position& pos) {
     // Start from when fifty move rule was last reset (tutorial optimization)
     int start_index = static_cast<int>(pos.move_history.size()) - pos.halfmove_clock;
@@ -303,6 +303,170 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     }
     
     return best_move;
+}
+
+// VICE Part 55 - Search Function Definitions
+// This implements the core search infrastructure following the VICE tutorial:
+// - evalPosition: Position evaluation function 
+// - checkup: Time management and GUI interrupt checking
+// - clearForSearch: Initialize search tables before new search
+// - AlphaBeta: Core recursive search with alpha-beta pruning
+// - quiescence: Search only captures to handle horizon effect
+
+// Position evaluation (0:34) - Returns score from current side's perspective
+int MinimalEngine::evalPosition(const Position& pos) {
+    // For now, use the existing evaluate function
+    return evaluate(pos);
+}
+
+// Check time limits and GUI interrupts (1:34)
+void MinimalEngine::checkup(SearchInfo& info) {
+    // Check if we should stop due to time limit
+    if (info.quit || info.stopped) return;
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
+    
+    // Check time limit (if not infinite search)
+    if (!info.infinite) {
+        // Simple time management - stop if we've used our allocated time
+        int time_limit_ms = 5000; // Default 5 seconds for now
+        if (elapsed.count() >= time_limit_ms) {
+            info.stopped = true;
+        }
+    }
+    
+    // Increment node count
+    info.nodes++;
+}
+
+// Clear search tables and PV before new search (2:25)
+void MinimalEngine::clearForSearch(MinimalEngine& engine) {
+    // Clear search tables
+    engine.clear_search_tables();
+    
+    // Clear PV table
+    engine.pv_table.clear();
+}
+
+// Core AlphaBeta search function (2:58)
+int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull) {
+    // Check for early exit conditions
+    if (depth == 0) {
+        return quiescence(pos, alpha, beta, info);  // Enter quiescence search at leaf nodes
+    }
+    
+    // Periodically check time and node limits
+    if ((info.nodes & 2047) == 0) {  // Check every 2048 nodes
+        checkup(info);
+    }
+    
+    if (info.stopped || info.quit) {
+        return 0;
+    }
+    
+    // Check for repetition
+    if (isRepetition(pos)) {
+        return 0; // Draw score
+    }
+    
+    // Generate all legal moves
+    S_MOVELIST move_list;
+    generate_legal_moves_enhanced(pos, move_list);
+    
+    // No legal moves (checkmate or stalemate)
+    if (move_list.count == 0) {
+        int king_sq = pos.king_sq[int(pos.side_to_move)];
+        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
+            return -29000 + (info.max_depth - depth); // Checkmate, prefer quicker mates
+        } else {
+            return 0; // Stalemate
+        }
+    }
+    
+    int best_score = -30000;
+    
+    // Try each move
+    for (int i = 0; i < move_list.count; ++i) {
+        if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+        
+        int score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true);
+        pos.TakeMove();
+        
+        if (info.stopped || info.quit) {
+            return 0;
+        }
+        
+        if (score > best_score) {
+            best_score = score;
+            if (score > alpha) {
+                alpha = score;
+                if (alpha >= beta) {
+                    // Beta cutoff - update killer moves and history
+                    update_killer_moves(move_list.moves[i], depth);
+                    break;
+                }
+            }
+        }
+    }
+    
+    return best_score;
+}
+
+// Quiescence search to handle horizon effect (4:40)
+int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info) {
+    // Periodically check time
+    if ((info.nodes & 2047) == 0) {
+        checkup(info);
+    }
+    
+    if (info.stopped || info.quit) {
+        return 0;
+    }
+    
+    // Stand pat - evaluate current position
+    int stand_pat = evalPosition(pos);
+    
+    // Beta cutoff on stand pat
+    if (stand_pat >= beta) {
+        return beta;
+    }
+    
+    // Alpha improvement
+    if (stand_pat > alpha) {
+        alpha = stand_pat;
+    }
+    
+    // Generate only capture moves for quiescence
+    S_MOVELIST move_list;
+    generate_legal_moves_enhanced(pos, move_list);  // For now, generate all moves
+    
+    // Filter to only captures (simplified for now)
+    for (int i = 0; i < move_list.count; ++i) {
+        S_MOVE move = move_list.moves[i];
+        
+        // Only search captures in quiescence
+        if (!move.is_capture()) continue;
+        
+        if (pos.MakeMove(move) != 1) continue; // Skip illegal moves
+        
+        int score = -quiescence(pos, -beta, -alpha, info);
+        pos.TakeMove();
+        
+        if (info.stopped || info.quit) {
+            return 0;
+        }
+        
+        if (score >= beta) {
+            return beta; // Beta cutoff
+        }
+        
+        if (score > alpha) {
+            alpha = score;
+        }
+    }
+    
+    return alpha;
 }
 
 } // namespace Huginn
