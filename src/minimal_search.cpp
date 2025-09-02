@@ -2,6 +2,7 @@
 #include "evaluation.hpp"
 #include "chess_types.hpp"
 #include "attack_detection.hpp"
+#include "board120.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -34,7 +35,7 @@ int MinimalEngine::evaluate(const Position& pos) {
         }
         
         // Convert square120 to square64 for piece-square tables
-        int sq64 = square120_to_64(sq);
+        int sq64 = MAILBOX_MAPS.to64[sq];
         if (sq64 < 0) continue; // Invalid square
         
         // Get piece-square table value
@@ -68,18 +69,6 @@ int MinimalEngine::evaluate(const Position& pos) {
 }
 
 // Helper functions for evaluation (Part 56)
-// Convert square120 to square64 format
-int MinimalEngine::square120_to_64(int sq120) {
-    if (sq120 < 21 || sq120 > 98) return -1; // Off board
-    
-    int file = (sq120 % 10) - 1;
-    int rank = (sq120 / 10) - 2;
-    
-    if (file < 0 || file > 7 || rank < 0 || rank > 7) return -1;
-    
-    return rank * 8 + file;
-}
-
 // Mirror square for black pieces (flip vertically)
 int MinimalEngine::mirror_square_64(int sq64) {
     if (sq64 < 0 || sq64 > 63) return sq64;
