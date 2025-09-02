@@ -57,6 +57,10 @@ public:  // Make members public for easier access
     // Simple material evaluation
     int evaluate(const Position& pos);
     
+    // Helper functions for evaluation (Part 56)
+    static int square120_to_64(int sq120);
+    static int mirror_square_64(int sq64);
+    
     // Basic alpha-beta search
     int alpha_beta(Position& pos, int depth, int alpha, int beta);
     

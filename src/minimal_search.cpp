@@ -8,10 +8,10 @@
 namespace Huginn {
 
 int MinimalEngine::evaluate(const Position& pos) {
-    // Simple material counting only
-    int material = 0;
+    // VICE Part 56: Basic Evaluation with piece-square tables
+    int score = 0;
     
-    // Count material for both sides using the existing piece values
+    // Count material and add piece-square table values for both sides
     for (int sq = 21; sq <= 98; ++sq) {
         if (pos.board[sq] == Piece::Offboard) continue;
         
@@ -21,26 +21,69 @@ int MinimalEngine::evaluate(const Position& pos) {
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        int value = 0;
+        // Material values (same as before)
+        int material_value = 0;
         switch (piece_type) {
-            case PieceType::Pawn:   value = 100; break;
-            case PieceType::Knight: value = 300; break;
-            case PieceType::Bishop: value = 300; break;
-            case PieceType::Rook:   value = 500; break;
-            case PieceType::Queen:  value = 900; break;
-            case PieceType::King:   value = 0; break; // King has no material value
-            default: value = 0; break;
+            case PieceType::Pawn:   material_value = 100; break;
+            case PieceType::Knight: material_value = 300; break;
+            case PieceType::Bishop: material_value = 300; break;
+            case PieceType::Rook:   material_value = 500; break;
+            case PieceType::Queen:  material_value = 900; break;
+            case PieceType::King:   material_value = 0; break; // King has no material value
+            default: material_value = 0; break;
         }
         
+        // Convert square120 to square64 for piece-square tables
+        int sq64 = square120_to_64(sq);
+        if (sq64 < 0) continue; // Invalid square
+        
+        // Get piece-square table value
+        int pst_value = 0;
+        if (piece_color == Color::Black) {
+            sq64 = mirror_square_64(sq64); // Mirror for black pieces
+        }
+        
+        switch (piece_type) {
+            case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[sq64]; break;
+            case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[sq64]; break;
+            case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[sq64]; break;
+            case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[sq64]; break;
+            case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[sq64]; break;
+            case PieceType::King:   pst_value = EvalParams::KING_TABLE[sq64]; break;
+            default: pst_value = 0; break;
+        }
+        
+        // Add material + piece-square value for this piece
+        int piece_value = material_value + pst_value;
+        
         if (piece_color == Color::White) {
-            material += value;
+            score += piece_value;
         } else {
-            material -= value;
+            score -= piece_value;
         }
     }
     
-    // Return from current side's perspective
-    return (pos.side_to_move == Color::White) ? material : -material;
+    // Return from current side's perspective (negate if black to move)
+    return (pos.side_to_move == Color::White) ? score : -score;
+}
+
+// Helper functions for evaluation (Part 56)
+// Convert square120 to square64 format
+int MinimalEngine::square120_to_64(int sq120) {
+    if (sq120 < 21 || sq120 > 98) return -1; // Off board
+    
+    int file = (sq120 % 10) - 1;
+    int rank = (sq120 / 10) - 2;
+    
+    if (file < 0 || file > 7 || rank < 0 || rank > 7) return -1;
+    
+    return rank * 8 + file;
+}
+
+// Mirror square for black pieces (flip vertically)
+int MinimalEngine::mirror_square_64(int sq64) {
+    if (sq64 < 0 || sq64 > 63) return sq64;
+    return ((7 - (sq64 / 8)) * 8) + (sq64 % 8);
 }
 
 bool MinimalEngine::time_up() const {
