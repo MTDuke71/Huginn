@@ -150,27 +150,22 @@ std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
     int from = move.get_from();
     int to = move.get_to();
     
-    // Convert square120 to file/rank
-    auto square120_to_file_rank = [](int sq120) -> std::pair<int, int> {
-        if (sq120 < 21 || sq120 > 98) return {-1, -1}; // Invalid
-        
-        int file = (sq120 % 10) - 1;
-        int rank = (sq120 / 10) - 2;
-        
-        if (file < 0 || file > 7 || rank < 0 || rank > 7) return {-1, -1};
-        
-        return {file, rank};
-    };
+    // Use existing FILE_RANK_LOOKUPS instead of custom conversion
+    File from_file = file_of(from);
+    Rank from_rank = rank_of(from);
+    File to_file = file_of(to);
+    Rank to_rank = rank_of(to);
     
-    auto [from_file, from_rank] = square120_to_file_rank(from);
-    auto [to_file, to_rank] = square120_to_file_rank(to);
+    // Check for invalid squares
+    if (from_file == File::None || to_file == File::None || 
+        from_rank == Rank::None || to_rank == Rank::None) {
+        return "0000";
+    }
     
-    if (from_file < 0 || to_file < 0) return "0000";
-    
-    result += char('a' + from_file);
-    result += char('1' + from_rank);
-    result += char('a' + to_file);
-    result += char('1' + to_rank);
+    result += char('a' + int(from_file));
+    result += char('1' + int(from_rank));
+    result += char('a' + int(to_file));
+    result += char('1' + int(to_rank));
     
     // Add promotion piece if applicable
     if (move.is_promotion()) {
