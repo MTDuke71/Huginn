@@ -396,12 +396,26 @@ void MinimalEngine::checkup(SearchInfo& info) {
 }
 
 // Clear search tables and PV before new search (2:25)
-void MinimalEngine::clearForSearch(MinimalEngine& engine) {
-    // Clear search tables
+// VICE Part 57 - Clear To Search: Prepare engine for clean search
+void MinimalEngine::clearForSearch(MinimalEngine& engine, SearchInfo& info) {
+    // Clear the history and killers arrays (0:57)
     engine.clear_search_tables();
     
-    // Clear PV table
+    // Clear the principal variation (PV) table (2:17)
     engine.pv_table.clear();
+    
+    // Reset the ply counter to zero (2:21)
+    info.ply = 0;
+    
+    // Initialize start_time, set stop to zero, and reset nodes count (2:58)
+    info.start_time = std::chrono::steady_clock::now();
+    info.stopped = false;    // Set stop to zero (false)
+    info.quit = false;       // Reset quit flag as well
+    info.nodes = 0;          // Reset nodes count
+    
+    // Reset engine state for new search
+    engine.should_stop = false;     // Reset stop flag
+    engine.nodes_searched = 0;      // Reset nodes count
 }
 
 // Core AlphaBeta search function (2:58)
@@ -522,6 +536,44 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     }
     
     return alpha;
+}
+
+// VICE-style search function demonstrating proper use of clearForSearch (Part 57)
+S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
+    S_MOVE best_move;
+    best_move.move = 0;
+    
+    // VICE Part 57: Clear everything before starting search
+    clearForSearch(*this, info);
+    
+    // Set up search parameters
+    info.start_time = std::chrono::steady_clock::now();
+    
+    // Iterative deepening
+    for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
+        // Check if we should stop before starting new depth
+        if (info.stopped || info.quit) {
+            break;
+        }
+        
+        info.depth = current_depth;
+        
+        // Call the main AlphaBeta search
+        int score = AlphaBeta(pos, -30000, 30000, current_depth, info, true);
+        
+        // Try to get the best move from PV table
+        S_MOVE pv_move;
+        if (probe_pv_move(pos.zobrist_key, pv_move)) {
+            best_move = pv_move;
+        }
+        
+        // Basic search info output (VICE tutorial style)
+        std::cout << "info depth " << current_depth 
+                  << " score cp " << score 
+                  << " nodes " << info.nodes << std::endl;
+    }
+    
+    return best_move;
 }
 
 } // namespace Huginn

@@ -14,13 +14,14 @@ struct SearchInfo {
     std::chrono::steady_clock::time_point stop_time;   // When to stop search
     int depth;          // Current search depth
     int max_depth;      // Maximum depth to search
+    int ply;            // Current search ply (VICE Part 57)
     int movestogo;      // Moves until next time control
     bool infinite;      // Search until told to stop
     bool quit;          // Flag to quit search
     bool stopped;       // Flag indicating search was stopped
     uint64_t nodes;     // Nodes searched so far
     
-    SearchInfo() : depth(0), max_depth(10), movestogo(30), infinite(false), 
+    SearchInfo() : depth(0), max_depth(10), ply(0), movestogo(30), infinite(false), 
                    quit(false), stopped(false), nodes(0) {}
 };
 
@@ -88,11 +89,14 @@ public:  // Make members public for easier access
     void update_killer_moves(const S_MOVE& move, int depth);
     
     // VICE Part 55 - Search Function Definitions
-    static void checkup(SearchInfo& info);                    // Check time limits and GUI interrupts (1:34)
-    static void clearForSearch(MinimalEngine& engine);       // Clear search tables and PV (2:25)
+    static void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
+    static void clearForSearch(MinimalEngine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
     int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull);  // Core search (2:58)
     int quiescence(Position& pos, int alpha, int beta, SearchInfo& info);  // Quiescence search (4:40)
     int evalPosition(const Position& pos);                   // Position evaluation (0:34)
+    
+    // VICE-style search function that demonstrates clearForSearch usage (Part 57)
+    S_MOVE searchPosition(Position& pos, SearchInfo& info);
 };
 
 } // namespace Huginn

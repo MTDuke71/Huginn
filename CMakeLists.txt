@@ -462,3 +462,21 @@ else()
 endif()
 message(STATUS "Output directory: ${CMAKE_BINARY_DIR}/bin")
 message(STATUS "=====================================")
+
+# Test executable for VICE Part 57 - clearForSearch
+add_executable(test_clearforsearch 
+    test_clearforsearch.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_clearforsearch PRIVATE cxx_std_17)
+target_include_directories(test_clearforsearch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_clearforsearch PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
