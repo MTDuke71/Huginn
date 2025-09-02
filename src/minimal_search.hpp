@@ -20,12 +20,12 @@ struct SearchInfo {
     bool stopped;       // Flag indicating search was stopped
     uint64_t nodes;     // Nodes searched so far
     
-    SearchInfo() : depth(0), max_depth(6), movestogo(30), infinite(false), 
+    SearchInfo() : depth(0), max_depth(10), movestogo(30), infinite(false), 
                    quit(false), stopped(false), nodes(0) {}
 };
 
 struct MinimalLimits {
-    int max_depth = 6;
+    int max_depth = 10;  // Increased from 6 to 10 for deeper search when time allows
     int max_time_ms = 5000;
     bool infinite = false;
 };

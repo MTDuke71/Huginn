@@ -55,8 +55,8 @@ bool MinimalEngine::time_up() const {
 int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta) {
     nodes_searched++;
     
-    // Check time every 1000 nodes
-    if (nodes_searched % 1000 == 0 && time_up()) {
+    // Check time more frequently - every 512 nodes instead of 1000
+    if (nodes_searched % 512 == 0 && time_up()) {
         return alpha;
     }
     
@@ -244,9 +244,28 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     S_MOVE best_move;
     best_move.move = 0;
     
-    // Iterative deepening
+    // Iterative deepening with time budget estimation
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        // Check time before starting new depth
         if (time_up()) break;
+        
+        // Time budget estimation: if we've used more than half our time,
+        // and this isn't the first depth, be cautious about starting deeper search
+        if (depth > 1 && !limits.infinite) {
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+            auto remaining = limits.max_time_ms - elapsed.count();
+            
+            // If we have less than 25% of original time left, don't start new depth
+            if (remaining < limits.max_time_ms * 0.25) {
+                break;
+            }
+            
+            // If we have very little time left (less than 100ms), definitely stop
+            if (remaining < 100) {
+                break;
+            }
+        }
         
         S_MOVELIST move_list;
         generate_legal_moves_enhanced(pos, move_list);
@@ -258,11 +277,15 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
         depth_best_move.move = 0;
         
         for (int i = 0; i < move_list.count; ++i) {
+            // Check time more frequently during move loop
+            if (time_up()) break;
+            
             if (pos.MakeMove(move_list.moves[i]) != 1) continue;
             
             int score = -alpha_beta(pos, depth - 1, -30000, 30000);
             pos.TakeMove();
             
+            // Check time immediately after each move search
             if (time_up()) break;
             
             if (score > best_score) {
