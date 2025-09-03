@@ -64,6 +64,69 @@ int MinimalEngine::evaluate(const Position& pos) {
         }
     }
     
+    // Simple development bonus to discourage excessive pawn moves
+    // Count developed pieces (not on starting squares)
+    int white_development = 0;
+    int black_development = 0;
+    
+    // Check if knights are developed (not on b1/g1 for white, b8/g8 for black)
+    if (pos.board[22] != Piece::WhiteKnight) white_development += 10; // b1
+    if (pos.board[27] != Piece::WhiteKnight) white_development += 10; // g1
+    if (pos.board[92] != Piece::BlackKnight) black_development += 10; // b8
+    if (pos.board[97] != Piece::BlackKnight) black_development += 10; // g8
+    
+    // Check if bishops are developed (not on c1/f1 for white, c8/f8 for black)
+    if (pos.board[23] != Piece::WhiteBishop) white_development += 10; // c1
+    if (pos.board[26] != Piece::WhiteBishop) white_development += 10; // f1
+    if (pos.board[93] != Piece::BlackBishop) black_development += 10; // c8
+    if (pos.board[96] != Piece::BlackBishop) black_development += 10; // f8
+    
+    // Bonus for castling (king not on e1/e8)
+    if (pos.board[25] != Piece::WhiteKing) white_development += 20; // e1
+    if (pos.board[95] != Piece::BlackKing) black_development += 20; // e8
+    
+    score += white_development - black_development;
+    
+    // Center control bonus - encourage e4/d4 instead of e3/d3
+    // Give bonus for pawns controlling center squares
+    int center_bonus = 0;
+    
+    // Check for pawns attacking center (e4, e5, d4, d5)
+    if (pos.board[54] == Piece::WhitePawn) center_bonus += 30; // e4 - increased bonus
+    if (pos.board[53] == Piece::WhitePawn) center_bonus += 30; // d4 - increased bonus
+    if (pos.board[64] == Piece::BlackPawn) center_bonus -= 30; // e5  
+    if (pos.board[63] == Piece::BlackPawn) center_bonus -= 30; // d5
+    
+    score += center_bonus;
+    
+    // Opening principles: penalty for moving pawns off starting squares early
+    // This discourages excessive pawn pushes like h3, a3, h4, etc.
+    int pawn_penalty = 0;
+    
+    // Count pawns that have moved from starting positions
+    int white_pawn_moves = 0;
+    int black_pawn_moves = 0;
+    
+    // White starting pawns on rank 2 (squares 31-38)
+    for (int sq = 31; sq <= 38; ++sq) {
+        if (pos.board[sq] != Piece::WhitePawn) {
+            white_pawn_moves++;
+        }
+    }
+    
+    // Black starting pawns on rank 7 (squares 81-88)  
+    for (int sq = 81; sq <= 88; ++sq) {
+        if (pos.board[sq] != Piece::BlackPawn) {
+            black_pawn_moves++;
+        }
+    }
+    
+    // Penalty increases with number of pawn moves (discourage pawn-heavy openings)
+    if (white_pawn_moves > 2) pawn_penalty += (white_pawn_moves - 2) * 10;
+    if (black_pawn_moves > 2) pawn_penalty -= (black_pawn_moves - 2) * 10;
+    
+    score -= pawn_penalty;
+    
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
 }
