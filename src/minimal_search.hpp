@@ -91,7 +91,7 @@ public:  // Make members public for easier access
     // VICE Part 55 - Search Function Definitions
     static void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
     static void clearForSearch(MinimalEngine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
-    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull);  // Core search (2:58)
+    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);  // Core search (2:58)
     int quiescence(Position& pos, int alpha, int beta, SearchInfo& info);  // Quiescence search (4:40)
     int evalPosition(const Position& pos);                   // Position evaluation (0:34)
     

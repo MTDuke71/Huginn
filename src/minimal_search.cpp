@@ -272,6 +272,9 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     best_move.move = 0;
     
     // Iterative deepening with time budget estimation
+    // Two main benefits (VICE tutorial):
+    // 1. Time Management: Return best move found so far if time runs out (0:49)
+    // 2. Move Ordering Efficiency: PV and heuristics improve alpha-beta efficiency (1:49)
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
         // Check time before starting new depth
         if (time_up()) break;
@@ -386,8 +389,7 @@ void MinimalEngine::checkup(SearchInfo& info) {
         }
     }
     
-    // Increment node count
-    info.nodes++;
+    // Note: Node counting is done in AlphaBeta and quiescence functions
 }
 
 // Clear search tables and PV before new search (2:25)
@@ -414,7 +416,12 @@ void MinimalEngine::clearForSearch(MinimalEngine& engine, SearchInfo& info) {
 }
 
 // Core AlphaBeta search function (2:58)
-int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull) {
+int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot) {
+    // Increment node count for every position visited (except root calls)
+    if (!isRoot) {
+        info.nodes++;
+    }
+    
     // Check for early exit conditions
     if (depth == 0) {
         return quiescence(pos, alpha, beta, info);  // Enter quiescence search at leaf nodes
@@ -454,7 +461,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     for (int i = 0; i < move_list.count; ++i) {
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
-        int score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true);
+        int score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);  // Not a root call
         pos.TakeMove();
         
         if (info.stopped || info.quit) {
@@ -465,6 +472,10 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
             best_score = score;
             if (score > alpha) {
                 alpha = score;
+                
+                // Store best move in PV table (VICE tutorial style)
+                store_pv_move(pos.zobrist_key, move_list.moves[i]);
+                
                 if (alpha >= beta) {
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
@@ -479,6 +490,9 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
 
 // Quiescence search to handle horizon effect (4:40)
 int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info) {
+    // Increment node count for every position visited
+    info.nodes++;
+    
     // Periodically check time
     if ((info.nodes & 2047) == 0) {
         checkup(info);
@@ -533,7 +547,10 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     return alpha;
 }
 
-// VICE-style search function demonstrating proper use of clearForSearch (Part 57)
+// VICE-style iterative deepening search function (Part 58)
+// Implements the two main benefits of iterative deepening:
+// 1. Time Management: Return best move if time runs out (0:49)
+// 2. Move Ordering Efficiency: Use PV and heuristics from shallower searches (1:49)
 S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     S_MOVE best_move;
     best_move.move = 0;
@@ -544,28 +561,88 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
     
-    // Iterative deepening
+    // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
-        // Check if we should stop before starting new depth
+        // Check if we should stop before starting new depth (time management)
         if (info.stopped || info.quit) {
             break;
         }
         
         info.depth = current_depth;
         
-        // Call the main AlphaBeta search
-        int score = AlphaBeta(pos, -30000, 30000, current_depth, info, true);
+        // Store best move from previous iteration for move ordering
+        S_MOVE prev_best = best_move;
         
-        // Try to get the best move from PV table
-        S_MOVE pv_move;
-        if (probe_pv_move(pos.zobrist_key, pv_move)) {
-            best_move = pv_move;
+        // Root search: try all moves at root to find the best one
+        S_MOVELIST move_list;
+        generate_legal_moves_enhanced(pos, move_list);
+        
+        if (move_list.count == 0) break; // No legal moves
+        
+        int best_score = -30000;
+        S_MOVE depth_best_move;
+        depth_best_move.move = 0;
+        
+        // Try each move at the root
+        for (int i = 0; i < move_list.count; ++i) {
+            if (info.stopped || info.quit) break;
+            
+            if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+            
+            // Search this move
+            int score = -AlphaBeta(pos, -30000, 30000, current_depth - 1, info, true, true);  // isRoot = true
+            pos.TakeMove();
+            
+            if (info.stopped || info.quit) break;
+            
+            if (score > best_score) {
+                best_score = score;
+                depth_best_move = move_list.moves[i];
+            }
         }
         
-        // Basic search info output (VICE tutorial style)
+        // If search was interrupted, return previous best move (time management benefit)
+        if (info.stopped || info.quit) {
+            break;
+        }
+        
+        // Update best move for this iteration
+        if (depth_best_move.move != 0) {
+            best_move = depth_best_move;
+            // Store in PV table for next iteration's move ordering
+            store_pv_move(pos.zobrist_key, depth_best_move);
+        }
+        
+        // Calculate elapsed time for output
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
+        
+        // Get Principal Variation line from this depth (5:32)
+        S_MOVE pv_array[MAX_DEPTH];
+        int pv_moves = get_pv_line(pos, current_depth, pv_array);
+        
+        // Print results after each completed depth (3:03, 5:32)
         std::cout << "info depth " << current_depth 
-                  << " score cp " << score 
-                  << " nodes " << info.nodes << std::endl;
+                  << " score cp " << best_score 
+                  << " nodes " << info.nodes 
+                  << " time " << elapsed.count()
+                  << " pv ";
+        
+        // Print full Principal Variation
+        for (int i = 0; i < pv_moves; ++i) {
+            std::cout << move_to_uci(pv_array[i]);
+            if (i < pv_moves - 1) std::cout << " ";
+        }
+        std::cout << std::endl;
+        
+        // Time management: if we're getting close to time limit, consider stopping
+        if (!info.infinite && elapsed.count() > 3000) {  // If we've used 3+ seconds
+            // Only continue to next depth if we have reasonable time left
+            auto time_for_next_depth = elapsed.count() * 3;  // Estimate next depth takes 3x longer
+            if (time_for_next_depth > 5000) {  // Would exceed 5 second limit
+                break;
+            }
+        }
     }
     
     return best_move;

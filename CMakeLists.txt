@@ -480,3 +480,21 @@ target_include_directories(test_clearforsearch PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 set_target_properties(test_clearforsearch PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# Demo executable for iterative deepening showcase
+add_executable(demo_iterative_deepening 
+    demo_iterative_deepening.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(demo_iterative_deepening PRIVATE cxx_std_17)
+target_include_directories(demo_iterative_deepening PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(demo_iterative_deepening PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
