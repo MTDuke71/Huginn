@@ -8,6 +8,11 @@
 
 namespace Huginn {
 
+// VICE Constants
+const int INFINITE = 30000;
+const int MATE = 29000;
+// MAX_DEPTH is defined in pvtable.hpp
+
 // Search info structure - equivalent to S_SEARCHINFO from VICE tutorial (0:19)
 struct SearchInfo {
     std::chrono::steady_clock::time_point start_time;  // When search started
@@ -20,9 +25,10 @@ struct SearchInfo {
     bool quit;          // Flag to quit search
     bool stopped;       // Flag indicating search was stopped
     uint64_t nodes;     // Nodes searched so far
+    S_MOVE best_move;   // Best move found (VICE Part 58)
     
     SearchInfo() : depth(0), max_depth(10), ply(0), movestogo(30), infinite(false), 
-                   quit(false), stopped(false), nodes(0) {}
+                   quit(false), stopped(false), nodes(0), best_move() {}
 };
 
 struct MinimalLimits {
@@ -44,8 +50,8 @@ public:  // Make members public for easier access
     int search_history[13][120];
     
     // Search Killers array (4:37) - stores non-capture moves causing beta cutoff  
-    // [depth][killer_slot] - MAX_DEPTH levels, 2 killer moves per depth
-    S_MOVE search_killers[MAX_DEPTH][2];
+    // [depth][killer_slot] - 64 levels, 2 killer moves per depth
+    S_MOVE search_killers[64][2];
     
     // Constructor
     MinimalEngine() : pv_table(2) {
@@ -61,11 +67,12 @@ public:  // Make members public for easier access
     // Helper functions for evaluation (Part 56)
     static int mirror_square_64(int sq64);
     
-    // Basic alpha-beta search
-    int alpha_beta(Position& pos, int depth, int alpha, int beta);
+    // Basic alpha-beta search (VICE Part 58)
+    int alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull = true);
     
     // Time checking
     bool time_up() const;
+    void check_up(SearchInfo& info);
     
     S_MOVE search(Position pos, const MinimalLimits& limits);
     void stop() { should_stop = true; }
@@ -82,7 +89,7 @@ public:  // Make members public for easier access
     bool probe_pv_move(uint64_t position_key, S_MOVE& move) const;
     
     // Get PV line for display (Part 53)
-    int get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]);
+    int get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]);
     
     // Search history and killer move functions
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);

@@ -178,56 +178,94 @@ bool MinimalEngine::time_up() const {
     return elapsed.count() >= current_limits.max_time_ms;
 }
 
-int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta) {
+void MinimalEngine::check_up(SearchInfo& info) {
+    // VICE style time checking function
+    if (time_up()) {
+        info.stopped = true;
+    }
+}
+
+int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull) {
+    // VICE Part 58: Alpha-Beta Search Implementation
+    
+    // Check nodes searched for time management
+    if ((nodes_searched & 2047) == 0) {
+        check_up(info);
+    }
+    
     nodes_searched++;
     
-    // Check time more frequently - every 512 nodes instead of 1000
-    if (nodes_searched % 512 == 0 && time_up()) {
-        return alpha;
-    }
-    
-    // Check for repetition (VICE tutorial style)
-    if (isRepetition(pos)) {
-        return 0; // Draw score
-    }
-    
-    // Terminal node - evaluate position
+    // Base Case: If depth is 0, return evaluation (0:16, 0:51)
     if (depth == 0) {
         return evaluate(pos);
     }
     
-    // Generate all legal moves
+    // Draw Conditions: Check for draw by repetition or 50-move rule (1:54)
+    if (isRepetition(pos) || pos.halfmove_clock >= 100) {
+        return 0; // Draw score
+    }
+    
+    // Depth Limit: Return evaluation if search exceeds maximum depth (2:06)
+    if (info.ply >= 64) {
+        return evaluate(pos);
+    }
+    
+    // Generate all legal moves (3:40)
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
     
-    // No legal moves (checkmate or stalemate)
+    // Checkmate/Stalemate Detection: If no legal moves found (5:00)
     if (move_list.count == 0) {
-        // Check if king is in check to determine mate vs stalemate
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            return -29000 + (current_limits.max_depth - depth); // Checkmate, prefer quicker mates
+            // Checkmate: Return mate score adjusted by depth (prefer quicker mates)
+            return -MATE + info.ply;
         } else {
-            return 0; // Stalemate
+            // Stalemate: Return draw score
+            return 0;
         }
     }
     
-    int best_score = -30000;
+    int best_score = -INFINITE;
+    S_MOVE best_move = S_MOVE(); // Initialize to null move
     
-    // Try each move
+    // Move Loop: Iterate through all possible moves (3:40)
     for (int i = 0; i < move_list.count; ++i) {
-        if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+        if (pos.MakeMove(move_list.moves[i]) != 1) {
+            continue; // Skip illegal moves
+        }
         
-        int score = -alpha_beta(pos, depth - 1, -beta, -alpha);
+        info.ply++; // Increment ply for next level
+        
+        // Negamax Principle: Use negamax with flipped alpha-beta bounds (4:05)
+        int score = -alpha_beta(pos, depth - 1, -beta, -alpha, info, true);
+        
         pos.TakeMove();
+        info.ply--; // Decrement ply when backing up
         
-        if (time_up()) return alpha;
+        // Check if time is up
+        if (info.stopped) {
+            return 0;
+        }
         
+        // Update best score
         if (score > best_score) {
             best_score = score;
+            best_move = move_list.moves[i];
+            
+            // Alpha-Beta Pruning: Update alpha and check for beta cutoff (4:28)
             if (score > alpha) {
                 alpha = score;
+                
+                // Storing Best Move: Record best move if alpha improved (6:38)
+                if (info.ply == 0) {
+                    // At root level, store the best move found
+                    info.best_move = best_move;
+                }
+                
+                // Beta cutoff: Prune remaining moves (4:28)
                 if (alpha >= beta) {
-                    break; // Beta cutoff
+                    break; // Beta cutoff - remaining moves won't be better
                 }
             }
         }
@@ -302,7 +340,7 @@ void MinimalEngine::clear_search_tables() {
     }
     
     // Clear search killers array (4:37)
-    for (int depth = 0; depth < MAX_DEPTH; ++depth) {
+    for (int depth = 0; depth < 64; ++depth) {
         search_killers[depth][0] = S_MOVE();  // Clear first killer
         search_killers[depth][1] = S_MOVE();  // Clear second killer
     }
@@ -318,7 +356,7 @@ bool MinimalEngine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
 }
 
 // Get PV line for display (Part 53)
-int MinimalEngine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]) {
+int MinimalEngine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]) {
     return pv_table.get_pv_line(pos, depth, pv_array);
 }
 
@@ -341,7 +379,7 @@ void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& mov
 
 // Update killer moves when move causes beta cutoff (4:37)  
 void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
-    if (move.move == 0 || depth < 0 || depth >= MAX_DEPTH) return;
+    if (move.move == 0 || depth < 0 || depth >= 64) return;
     
     // Only store non-capture moves as killers
     if (!move.is_capture()) {
@@ -406,7 +444,12 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             
             if (pos.MakeMove(move_list.moves[i]) != 1) continue;
             
-            int score = -alpha_beta(pos, depth - 1, -30000, 30000);
+            // Create temporary SearchInfo for this search
+            SearchInfo temp_info;
+            temp_info.ply = 0;
+            temp_info.stopped = false;
+            
+            int score = -alpha_beta(pos, depth - 1, -INFINITE, INFINITE, temp_info, true);
             pos.TakeMove();
             
             // Check time immediately after each move search
@@ -429,7 +472,7 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
                 std::chrono::steady_clock::now() - start_time).count();
             
             // Get PV line from table
-            S_MOVE pv_array[MAX_DEPTH];
+            S_MOVE pv_array[64];
             int pv_moves = get_pv_line(pos, depth, pv_array);
             
             std::cout << "info depth " << depth 
@@ -712,7 +755,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
         
         // Get Principal Variation line from this depth (5:32)
-        S_MOVE pv_array[MAX_DEPTH];
+        S_MOVE pv_array[64];
         int pv_moves = get_pv_line(pos, current_depth, pv_array);
         
         // Print results after each completed depth (3:03, 5:32)
