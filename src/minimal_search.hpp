@@ -24,11 +24,16 @@ struct SearchInfo {
     bool infinite;      // Search until told to stop
     bool quit;          // Flag to quit search
     bool stopped;       // Flag indicating search was stopped
+    bool depth_only;    // UCI depth command - bypass time management
     uint64_t nodes;     // Nodes searched so far
     S_MOVE best_move;   // Best move found (VICE Part 58)
     
+    // VICE Part 60: Move ordering statistics (0:13)
+    uint64_t fh;        // Fail high count (beta cutoffs)
+    uint64_t fhf;       // Fail high first (beta cutoff on first move)
+    
     SearchInfo() : depth(0), max_depth(10), ply(0), movestogo(30), infinite(false), 
-                   quit(false), stopped(false), nodes(0), best_move() {}
+                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0) {}
 };
 
 struct MinimalLimits {

@@ -498,6 +498,71 @@ add_executable(demo_iterative_deepening
 )
 target_compile_features(demo_iterative_deepening PRIVATE cxx_std_17)
 target_include_directories(demo_iterative_deepening PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set_target_properties(demo_iterative_deepening PROPERTIES
+# Test for FEN parsing
+add_executable(test_fen 
+    debug/test_fen.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_fen PRIVATE cxx_std_17)
+target_include_directories(test_fen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# Debug WAC.1 search issue
+add_executable(debug_wac1 
+    debug/debug_wac1.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(debug_wac1 PRIVATE cxx_std_17)
+target_include_directories(debug_wac1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# Test UCI depth command (bypass time management)
+add_executable(test_uci_depth 
+    debug/test_uci_depth.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_uci_depth PRIVATE cxx_std_17)
+target_include_directories(test_uci_depth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_uci_depth PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 60: Basic Search Testing with move ordering statistics
+add_executable(test_vice_part60 
+    debug/test_vice_part60.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_vice_part60 PRIVATE cxx_std_17)
+target_include_directories(test_vice_part60 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_vice_part60 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 60: Basic Search Testing
+add_executable(test_basic_search test_basic_search.cpp ${HUGINN_MINIMAL_SOURCES})
+target_compile_features(test_basic_search PRIVATE cxx_std_17)
+target_include_directories(test_basic_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_basic_search PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )

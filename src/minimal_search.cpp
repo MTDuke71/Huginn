@@ -265,6 +265,11 @@ int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, Sea
                 
                 // Beta cutoff: Prune remaining moves (4:28)
                 if (alpha >= beta) {
+                    // VICE Part 60: Track fail high statistics (0:13)
+                    info.fh++; // Increment fail high count
+                    if (i == 0) {
+                        info.fhf++; // Fail high first (first move caused beta cutoff)
+                    }
                     break; // Beta cutoff - remaining moves won't be better
                 }
             }
@@ -514,14 +519,22 @@ void MinimalEngine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
     
+    // Skip time management if this is a depth-only search (UCI go depth command)
+    if (info.depth_only) return;
+    
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
     
     // Check time limit (if not infinite search)
     if (!info.infinite) {
-        // Simple time management - stop if we've used our allocated time
-        int time_limit_ms = 5000; // Default 5 seconds for now
-        if (elapsed.count() >= time_limit_ms) {
+        // Use SearchInfo stop_time if available, otherwise fall back to default
+        auto stop_time = info.stop_time;
+        if (stop_time == std::chrono::steady_clock::time_point{}) {
+            // No stop_time set, use default 5 seconds
+            stop_time = info.start_time + std::chrono::milliseconds(5000);
+        }
+        
+        if (now >= stop_time) {
             info.stopped = true;
         }
     }
@@ -614,6 +627,12 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                 store_pv_move(pos.zobrist_key, move_list.moves[i]);
                 
                 if (alpha >= beta) {
+                    // VICE Part 60: Track fail high statistics (0:13)
+                    info.fh++; // Increment fail high count
+                    if (i == 0) {
+                        info.fhf++; // Fail high first (first move caused beta cutoff)
+                    }
+                    
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
                     break;
@@ -773,7 +792,8 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         std::cout << std::endl;
         
         // Time management: if we're getting close to time limit, consider stopping
-        if (!info.infinite && elapsed.count() > 3000) {  // If we've used 3+ seconds
+        // Skip this if depth_only is set (UCI go depth command)
+        if (!info.infinite && !info.depth_only && elapsed.count() > 3000) {  // If we've used 3+ seconds
             // Only continue to next depth if we have reasonable time left
             auto time_for_next_depth = elapsed.count() * 3;  // Estimate next depth takes 3x longer
             if (time_for_next_depth > 5000) {  // Would exceed 5 second limit
