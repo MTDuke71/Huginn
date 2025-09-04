@@ -868,19 +868,16 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
         alpha = stand_pat;
     }
     
-    // Generate only capture moves for quiescence
+    // VICE Part 65: Generate only capture moves for quiescence search
     S_MOVELIST move_list;
-    generate_legal_moves_enhanced(pos, move_list);  // For now, generate all moves
+    generate_all_caps(pos, move_list);  // Only captures - more efficient than filtering
     
-    // Filter to only captures (simplified for now)
+    // Search all capture moves
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, -1);  // No depth in quiescence
         
         S_MOVE move = move_list.moves[i];
-        
-        // Only search captures in quiescence
-        if (!move.is_capture()) continue;
         
         if (pos.MakeMove(move) != 1) continue; // Skip illegal moves
         

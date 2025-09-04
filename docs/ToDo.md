@@ -247,6 +247,13 @@
   - [ ] Hash table size configuration
 
 ### **Search Optimizations**
+- [ ] **Quiescence Search Depth Limiting**
+  - [ ] **Issue**: Current quiescence search has no depth limit - continues until no captures remain
+  - [ ] **Risk**: Stack overflow on very long capture sequences, unpredictable performance on pathological positions
+  - [ ] **Solution**: Add MAX_QUIESCENCE_DEPTH limit (typically 8-12 plies) with proper depth tracking
+  - [ ] **Enhancements**: Consider delta pruning for clearly losing captures, SEE (Static Exchange Evaluation)
+  - [ ] **Statistics**: Add quiescence depth tracking to search info for analysis
+  - [ ] **Benefits**: Predictable performance, stack safety, while maintaining tactical accuracy
 - [ ] **Move Ordering Enhancements**
   - [ ] Counter-move heuristic
   - [ ] Internal iterative deepening for PV nodes without hash move

@@ -118,7 +118,11 @@ void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us);
 void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, PieceType piece_type, const int* directions, int num_directions);
 
 // Enhanced legal move generation with better performance
+// Main move generation function  
 void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list);
+
+// VICE Part 65: Generate only capture moves for quiescence search
+void generate_all_caps(Position& pos, S_MOVELIST& list);
 
 // =============================================================================
 // BACKWARD COMPATIBILITY LAYER - Legacy MoveList interface

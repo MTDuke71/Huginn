@@ -167,6 +167,30 @@ void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list) {
     }
 }
 
+// VICE Part 65: Generate only capture moves for quiescence search
+void generate_all_caps(Position& pos, S_MOVELIST& list) {
+    S_MOVELIST all_moves;
+    generate_all_moves(pos, all_moves);
+    
+    list.count = 0;  // Direct clear
+    
+    // Work on a copy to avoid modifying the input position
+    Position temp_pos = pos;
+    
+    // Filter to only capture moves and check legality
+    for (int i = 0; i < all_moves.size(); ++i) {
+        S_MOVE move = all_moves[i];
+        
+        // Only include captures (including en passant)
+        if (move.is_capture()) {
+            if (temp_pos.MakeMove(move) == 1) {
+                list.add_capture_move(move, pos);  // Legal capture move
+                temp_pos.TakeMove();
+            }
+        }
+    }
+}
+
 // =============================================================================
 // BACKWARD COMPATIBILITY IMPLEMENTATIONS
 // =============================================================================
