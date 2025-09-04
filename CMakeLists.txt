@@ -757,6 +757,24 @@ set_target_properties(test_pick_move_comparison PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+# VICE Part 64: Move Ordering Test
+add_executable(test_move_ordering 
+    debug/test_move_ordering.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_move_ordering PRIVATE cxx_std_17)
+target_include_directories(test_move_ordering PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_move_ordering PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # ======================================
 # CTest Registration
 # ======================================
@@ -773,9 +791,12 @@ add_test(NAME test_legacy_warning COMMAND test_legacy_warning)
 add_test(NAME test_pick_move COMMAND test_pick_move)
 add_test(NAME test_pick_move_comparison COMMAND test_pick_move_comparison)
 
+# VICE Part 64 Tests  
+add_test(NAME test_move_ordering COMMAND test_move_ordering)
+
 # Set test properties
 set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
-                     test_legacy_warning test_pick_move test_pick_move_comparison
+                     test_legacy_warning test_pick_move test_pick_move_comparison test_move_ordering
     PROPERTIES
     TIMEOUT 120  # 2 minutes timeout for each test
 )
