@@ -401,8 +401,3 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     is_searching = false;
 }
 
-
-std::string UCIInterface::move_to_uci(const S_MOVE& move) {
-    // Use MinimalEngine's move_to_uci implementation  
-    return search_engine->move_to_uci(move);
-}

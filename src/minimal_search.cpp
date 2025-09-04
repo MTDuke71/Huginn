@@ -204,110 +204,6 @@ std::string MinimalEngine::format_uci_score(int score) const {
     }
 }
 
-int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull) {
-    // VICE Part 58: Alpha-Beta Search Implementation
-    
-    // Warning: Legacy search function called
-    static bool legacy_warning_shown = false;
-    if (!legacy_warning_shown) {
-        std::cout << "INFO: Legacy alpha_beta() function called - consider using AlphaBeta() instead\n";
-        legacy_warning_shown = true;
-    }
-    
-    // Check nodes searched for time management
-    if ((nodes_searched & 2047) == 0) {
-        check_up(info);
-    }
-    
-    nodes_searched++;
-    
-    // Base Case: If depth is 0, return evaluation (0:16, 0:51)
-    if (depth == 0) {
-        return evaluate(pos);
-    }
-    
-    // Draw Conditions: Check for draw by repetition or 50-move rule (1:54)
-    if (isRepetition(pos) || pos.halfmove_clock >= 100) {
-        return 0; // Draw score
-    }
-    
-    // Depth Limit: Return evaluation if search exceeds maximum depth (2:06)
-    if (info.ply >= 64) {
-        return evaluate(pos);
-    }
-    
-    // Generate all legal moves (3:40)
-    S_MOVELIST move_list;
-    generate_legal_moves_enhanced(pos, move_list);
-    
-    // Checkmate/Stalemate Detection: If no legal moves found (5:00)
-    if (move_list.count == 0) {
-        int king_sq = pos.king_sq[int(pos.side_to_move)];
-        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            // Checkmate: Return mate score adjusted by depth (prefer quicker mates)
-            return -MATE + info.ply;
-        } else {
-            // Stalemate: Return draw score
-            return 0;
-        }
-    }
-    
-    int best_score = -INFINITE;
-    S_MOVE best_move = S_MOVE(); // Initialize to null move
-    
-    // Move Loop: Iterate through all possible moves (3:40)
-    for (int i = 0; i < move_list.count; ++i) {
-        // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos);
-        
-        if (pos.MakeMove(move_list.moves[i]) != 1) {
-            continue; // Skip illegal moves
-        }
-        
-        info.ply++; // Increment ply for next level
-        
-        // Negamax Principle: Use negamax with flipped alpha-beta bounds (4:05)
-        int score = -alpha_beta(pos, depth - 1, -beta, -alpha, info, true);
-        
-        pos.TakeMove();
-        info.ply--; // Decrement ply when backing up
-        
-        // Check if time is up
-        if (info.stopped) {
-            return 0;
-        }
-        
-        // Update best score
-        if (score > best_score) {
-            best_score = score;
-            best_move = move_list.moves[i];
-            
-            // Alpha-Beta Pruning: Update alpha and check for beta cutoff (4:28)
-            if (score > alpha) {
-                alpha = score;
-                
-                // Storing Best Move: Record best move if alpha improved (6:38)
-                if (info.ply == 0) {
-                    // At root level, store the best move found
-                    info.best_move = best_move;
-                }
-                
-                // Beta cutoff: Prune remaining moves (4:28)
-                if (alpha >= beta) {
-                    // VICE Part 60: Track fail high statistics (0:13)
-                    info.fh++; // Increment fail high count
-                    if (i == 0) {
-                        info.fhf++; // Fail high first (first move caused beta cutoff)
-                    }
-                    break; // Beta cutoff - remaining moves won't be better
-                }
-            }
-        }
-    }
-    
-    return best_score;
-}
-
 std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
     if (move.move == 0) return "0000";
     
@@ -466,19 +362,6 @@ void MinimalEngine::init_mvv_lva() {
             }
         }
     }
-    
-    // Debug: Print MVV-LVA table (as shown in VICE tutorial)
-    std::cout << "MVV-LVA Scores:\n";
-    std::cout << "       None  Pawn Knight Bishop  Rook Queen  King\n";
-    for (int victim = 0; victim < 7; victim++) {
-        const char* victim_names[] = {"None", "Pawn", "Knight", "Bishop", "Rook", "Queen", "King"};
-        std::cout << victim_names[victim] << ": ";
-        for (int attacker = 0; attacker < 7; attacker++) {
-            std::cout << std::setw(6) << mvv_lva_scores[victim][attacker] << " ";
-        }
-        std::cout << "\n";
-    }
-    std::cout << std::endl;
 }
 
 // Get MVV-LVA score for a capture move

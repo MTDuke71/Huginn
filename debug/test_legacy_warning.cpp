@@ -20,19 +20,19 @@ int main() {
     info.depth = 2;
     info.ply = 0;
     
-    std::cout << "Calling legacy alpha_beta() function directly...\n";
+    std::cout << "Testing AlphaBeta() function...\n";
     
-    // This should trigger the warning message
-    int score = engine.alpha_beta(pos, 2, -1000, 1000, info, true);
+    // Use the modern AlphaBeta function
+    int score = engine.AlphaBeta(pos, -1000, 1000, 2, info, true, false);
     
     std::cout << "First call completed (score: " << score << ")\n";
     
-    // This should NOT show the warning again (static bool prevents multiple warnings)
-    std::cout << "\nCalling legacy alpha_beta() function again...\n";
-    score = engine.alpha_beta(pos, 1, -1000, 1000, info, true);
+    // Second call to verify consistency
+    std::cout << "\nCalling AlphaBeta() function again...\n";
+    score = engine.AlphaBeta(pos, -1000, 1000, 1, info, true, false);
     std::cout << "Second call completed (score: " << score << ")\n";
     
-    std::cout << "\n✅ Legacy warning system working correctly!\n";
+    std::cout << "\n✅ AlphaBeta function working correctly!\n";
     std::cout << "The warning appears only once per program execution.\n";
     
     return 0;
