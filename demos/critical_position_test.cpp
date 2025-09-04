@@ -20,6 +20,9 @@ int main() {
     S_MOVELIST legal_moves;
     generate_legal_moves_enhanced(pos, legal_moves);
     
+    // Use stable MinimalEngine for evaluation (avoiding crash-prone HybridEvaluator)
+    Huginn::MinimalEngine engine;
+    
     S_MOVE best_move;
     int best_eval = -999999;
     
@@ -28,7 +31,7 @@ int main() {
         Position temp_pos = pos;
         temp_pos.make_move_with_undo(move);
         
-        int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+        int eval = -engine.evalPosition(temp_pos);  // Use stable MinimalEngine evaluation
         
         if (eval > best_eval) {
             best_eval = eval;
