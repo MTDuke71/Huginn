@@ -355,7 +355,7 @@ if(GTEST_FOUND)
         ${TEST_SOURCES}
         ${ENGINE_SOURCES}
         src/evaluation.cpp
-        src/search.cpp
+        src/minimal_search.cpp
     )
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
@@ -442,7 +442,7 @@ foreach(demo_name ${DEMO_NAMES})
             ${demo_source}
             ${demo_sources}
             src/evaluation.cpp
-            src/search.cpp
+            src/minimal_search.cpp
         INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
