@@ -276,7 +276,7 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/attack_detection.cpp
     src/position.cpp
     src/evaluation.cpp
-    src/search.cpp
+    src/minimal_search.cpp
 )
 
 # ---- Huginn 1.1 - Main Executable ----
@@ -648,39 +648,6 @@ set_target_properties(deep_search_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Arena Equivalent Search Test
-add_executable(arena_equivalent_test 
-    debug/arena_equivalent_test.cpp
-    ${COMMON_SOURCES}
-    src/position.cpp
-    src/evaluation.cpp
-    src/search.cpp
-    src/movegen_enhanced.cpp
-    src/board.cpp
-    src/attack_detection.cpp
-)
-target_compile_features(arena_equivalent_test PRIVATE cxx_std_17)
-target_include_directories(arena_equivalent_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set_target_properties(arena_equivalent_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-# Arena Simple Search Test
-add_executable(arena_simple_test 
-    debug/arena_simple_test.cpp
-    ${COMMON_SOURCES}
-    src/position.cpp
-    src/evaluation.cpp
-    src/search.cpp
-    src/movegen_enhanced.cpp
-    src/board.cpp
-    src/attack_detection.cpp
-)
-target_compile_features(arena_simple_test PRIVATE cxx_std_17)
-target_include_directories(arena_simple_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set_target_properties(arena_simple_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
 
 # MVV-LVA Move Ordering Test
 add_executable(test_mvv_lva 
