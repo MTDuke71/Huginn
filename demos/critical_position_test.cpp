@@ -1,5 +1,5 @@
 #include "../src/evaluation.hpp"
-#include "../src/search.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>

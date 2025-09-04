@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include "../src/init.hpp"
-#include "../src/search.hpp"
+#include "../src/minimal_search.hpp"
 #include "../src/position.hpp"
 #include "../src/uci_utils.hpp"
 
@@ -39,7 +39,7 @@ private:
     void test_threefold_repetition_draw() {
         std::cout << "--- Test 1: Threefold Repetition Draw ---" << std::endl;
         
-        Huginn::SimpleEngine engine;
+        Huginn::MinimalEngine engine;
         Position rep_pos;
         rep_pos.set_from_fen("8/8/8/8/8/8/8/K6k w - - 0 1");
         
@@ -74,7 +74,7 @@ private:
     void test_perpetual_check() {
         std::cout << "--- Test 2: Perpetual Check Scenario ---" << std::endl;
         
-        Huginn::SimpleEngine engine;
+        Huginn::MinimalEngine engine;
         Position perp_pos;
         perp_pos.set_from_fen("8/8/8/8/8/8/8/K6k w - - 0 1");
         
@@ -99,7 +99,7 @@ private:
     void test_twofold_repetition_not_draw() {
         std::cout << "--- Test 3: Twofold Repetition (Not a Draw) ---" << std::endl;
         
-        Huginn::SimpleEngine engine;
+        Huginn::MinimalEngine engine;
         Position twofold_pos;
         twofold_pos.set_from_fen("8/8/8/8/8/8/8/K6k w - - 0 1");
         

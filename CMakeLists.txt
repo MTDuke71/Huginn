@@ -419,16 +419,16 @@ set(DEMO_NAMES
     critical_position_test
     timing_test
     perft6_huginn
-    repetition_detection_demo
+    # repetition_detection_demo  # Temporarily disabled - needs SimpleEngine API conversion
 )
 
 foreach(demo_name ${DEMO_NAMES})
     if(demo_name STREQUAL "perft_suite_demo")
         set(demo_source "perft/perft_suite_demo.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/pvtable.cpp)
     elseif(demo_name STREQUAL "perft_suite_vice")
         set(demo_source "perft/perft_suite_vice.cpp")
-        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp)
+        set(demo_sources ${COMMON_SOURCES} src/board.cpp src/debug.cpp src/pvtable.cpp)
     elseif(demo_name STREQUAL "self_play_tester")
         set(demo_source "demos/${demo_name}.cpp")
         set(demo_sources ${ENGINE_SOURCES} src/minimal_search.cpp src/pvtable.cpp)  # Add minimal search + PVTable for self-play
