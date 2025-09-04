@@ -107,7 +107,7 @@ int main() {
             
         } else if (command == "go") {
             MinimalLimits limits;
-            limits.max_depth = 10;  // Allow deeper search for time-based games
+            limits.max_depth = 25;  // Significantly increased for improved move ordering (was 10)
             limits.max_time_ms = 5000;
             limits.infinite = false;
             
@@ -139,8 +139,8 @@ int main() {
                 }
             }
             
-            // Ensure we don't search too deep but allow full time usage
-            limits.max_depth = std::min(limits.max_depth, 10);
+            // Allow much deeper searches with improved move ordering
+            limits.max_depth = std::min(limits.max_depth, 25);  // Increased from 10 to 25
             // Removed hard time cap - let 25% threshold handle time management
             
             S_MOVE best_move = engine.search(pos, limits);

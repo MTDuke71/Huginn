@@ -33,8 +33,8 @@ int main() {
     // Test engine initialization
     std::cout << "Testing engine initialization...\n";
     
-    // Test search with incremental depths
-    for (int depth = 1; depth <= 4; depth++) {
+    // Test search with incremental depths up to 8
+    for (int depth = 1; depth <= 8; depth++) {
         SearchInfo info;
         info.max_depth = depth;
         info.depth_only = true;  // Bypass time management

@@ -14,11 +14,12 @@ const int MATE = 29000;
 // MAX_DEPTH is defined in pvtable.hpp
 
 // Search info structure - equivalent to S_SEARCHINFO from VICE tutorial (0:19)
+// Contains runtime search state and statistics
 struct SearchInfo {
     std::chrono::steady_clock::time_point start_time;  // When search started
     std::chrono::steady_clock::time_point stop_time;   // When to stop search
     int depth;          // Current search depth
-    int max_depth;      // Maximum depth to search
+    int max_depth;      // Maximum depth to search (set from limits or manually in tests)
     int ply;            // Current search ply (VICE Part 57)
     int movestogo;      // Moves until next time control
     bool infinite;      // Search until told to stop
@@ -32,12 +33,14 @@ struct SearchInfo {
     uint64_t fh;        // Fail high count (beta cutoffs)
     uint64_t fhf;       // Fail high first (beta cutoff on first move)
     
-    SearchInfo() : depth(0), max_depth(10), ply(0), movestogo(30), infinite(false), 
+    SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
                    quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0) {}
 };
 
+// Search limits structure - external interface for setting search parameters
+// Used by UCI and main interface to configure search behavior
 struct MinimalLimits {
-    int max_depth = 10;  // Increased from 6 to 10 for deeper search when time allows
+    int max_depth = 25;  // Maximum search depth (copied to SearchInfo.max_depth)
     int max_time_ms = 5000;
     bool infinite = false;
 };

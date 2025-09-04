@@ -24,14 +24,14 @@ int main() {
     
     pos.set_from_fen("2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1");
     
-    // Search to depth 4 as mentioned in video (2:00)
+    // Search to depth 8 to showcase improved move ordering (was 4)
     info = SearchInfo();
-    info.max_depth = 4;
+    info.max_depth = 8;
     info.stopped = false;
     info.fh = 0;
     info.fhf = 0;
     
-    std::cout << "Searching to depth 4...\n";
+    std::cout << "Searching to depth 8...\n";
     S_MOVE best_move = engine.searchPosition(pos, info);
     
     std::cout << "\\nSearch Results:\n";
@@ -56,15 +56,15 @@ int main() {
         }
     }
     
-    // Test 2: Starting position at depth 4 (2:00)
-    std::cout << "\\n\\nTEST 2: Starting Position at Depth 4\n";
+    // Test 2: Starting position at depth 6 (increased from 4)
+    std::cout << "\\n\\nTEST 2: Starting Position at Depth 6\n";
     std::cout << "=====================================\n";
-    std::cout << "Testing with 'massive horizon effects' as mentioned in video\\n\\n";
+    std::cout << "Testing deeper search with improved move ordering\\n\\n";
     
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     info = SearchInfo();
-    info.max_depth = 4;
+    info.max_depth = 6;
     info.stopped = false;
     info.fh = 0;
     info.fhf = 0;
