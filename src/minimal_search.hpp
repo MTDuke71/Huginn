@@ -58,9 +58,15 @@ public:  // Make members public for easier access
     // [depth][killer_slot] - 64 levels, 2 killer moves per depth
     S_MOVE search_killers[64][2];
     
+    // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) table
+    // [victim][attacker] - prioritizes captures where weak pieces take strong pieces
+    // Higher scores = better captures (e.g., pawn takes queen = high score)
+    int mvv_lva_scores[7][7];  // 7 piece types (None=0, Pawn=1, Knight=2, Bishop=3, Rook=4, Queen=5, King=6)
+    
     // Constructor
     MinimalEngine() : pv_table(2) {
         clear_search_tables();
+        init_mvv_lva();
     }
     
     // Clear search tables
@@ -99,6 +105,12 @@ public:  // Make members public for easier access
     // Search history and killer move functions
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);
     void update_killer_moves(const S_MOVE& move, int depth);
+    
+    // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) functions
+    void init_mvv_lva();                                              // Initialize MVV-LVA scoring table
+    int get_mvv_lva_score(PieceType victim, PieceType attacker) const; // Get capture score
+    void order_moves(std::vector<S_MOVE>& moves, const Position& pos) const; // Order moves using MVV-LVA
+    void order_moves(S_MOVELIST& move_list, const Position& pos) const;      // Order moves in S_MOVELIST
     
     // VICE Part 55 - Search Function Definitions
     static void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)

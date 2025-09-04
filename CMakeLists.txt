@@ -566,3 +566,75 @@ target_include_directories(test_basic_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 set_target_properties(test_basic_search PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# MVV-LVA Move Ordering Test
+add_executable(test_mvv_lva 
+    debug/test_mvv_lva.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_mvv_lva PRIVATE cxx_std_17)
+target_include_directories(test_mvv_lva PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_mvv_lva PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# MVV-LVA Search Efficiency Test
+add_executable(test_mvv_lva_search 
+    debug/test_mvv_lva_search.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_mvv_lva_search PRIVATE cxx_std_17)
+target_include_directories(test_mvv_lva_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_mvv_lva_search PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Unified Search System Test
+add_executable(test_unified_search 
+    debug/test_unified_search.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_unified_search PRIVATE cxx_std_17)
+target_include_directories(test_unified_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_unified_search PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Legacy alpha_beta Warning Test
+add_executable(test_legacy_warning 
+    debug/test_legacy_warning.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_legacy_warning PRIVATE cxx_std_17)
+target_include_directories(test_legacy_warning PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_legacy_warning PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)

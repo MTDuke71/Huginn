@@ -5,6 +5,7 @@
 #include "board120.hpp"
 #include <iostream>
 #include <algorithm>
+#include <iomanip>  // For std::setw
 
 namespace Huginn {
 
@@ -188,6 +189,13 @@ void MinimalEngine::check_up(SearchInfo& info) {
 int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull) {
     // VICE Part 58: Alpha-Beta Search Implementation
     
+    // Warning: Legacy search function called
+    static bool legacy_warning_shown = false;
+    if (!legacy_warning_shown) {
+        std::cout << "INFO: Legacy alpha_beta() function called - consider using AlphaBeta() instead\n";
+        legacy_warning_shown = true;
+    }
+    
     // Check nodes searched for time management
     if ((nodes_searched & 2047) == 0) {
         check_up(info);
@@ -213,6 +221,9 @@ int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, Sea
     // Generate all legal moves (3:40)
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
+    
+    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
+    order_moves(move_list, pos);
     
     // Checkmate/Stalemate Detection: If no legal moves found (5:00)
     if (move_list.count == 0) {
@@ -396,6 +407,162 @@ void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
     }
 }
 
+// Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
+void MinimalEngine::init_mvv_lva() {
+    // Piece values for MVV-LVA (using standard values)
+    int piece_values[7] = {
+        0,    // None
+        100,  // Pawn
+        300,  // Knight  
+        350,  // Bishop
+        500,  // Rook
+        1000, // Queen
+        0     // King (should never be captured)
+    };
+    
+    // Initialize MVV-LVA scores
+    // Higher scores = better captures to search first
+    // Formula: (victim_value * 100) + (600 - attacker_value)
+    // This prioritizes: valuable victims + cheap attackers
+    for (int victim = 0; victim < 7; victim++) {
+        for (int attacker = 0; attacker < 7; attacker++) {
+            if (victim == 0) {
+                // No victim = not a capture
+                mvv_lva_scores[victim][attacker] = 0;
+            } else {
+                // Valuable victim + cheap attacker = high score
+                // Example: Pawn(100) takes Queen(1000) = (1000 * 100) + (600 - 100) = 100,500
+                // Example: Queen(1000) takes Pawn(100) = (100 * 100) + (600 - 1000) = 9,600
+                mvv_lva_scores[victim][attacker] = (piece_values[victim] * 100) + (600 - piece_values[attacker]);
+            }
+        }
+    }
+    
+    // Debug: Print MVV-LVA table (as shown in VICE tutorial)
+    std::cout << "MVV-LVA Scores:\n";
+    std::cout << "       None  Pawn Knight Bishop  Rook Queen  King\n";
+    for (int victim = 0; victim < 7; victim++) {
+        const char* victim_names[] = {"None", "Pawn", "Knight", "Bishop", "Rook", "Queen", "King"};
+        std::cout << victim_names[victim] << ": ";
+        for (int attacker = 0; attacker < 7; attacker++) {
+            std::cout << std::setw(6) << mvv_lva_scores[victim][attacker] << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << std::endl;
+}
+
+// Get MVV-LVA score for a capture move
+int MinimalEngine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
+    int victim_index = static_cast<int>(victim);
+    int attacker_index = static_cast<int>(attacker);
+    
+    // Bounds checking
+    if (victim_index < 0 || victim_index >= 7 || attacker_index < 0 || attacker_index >= 7) {
+        return 0;
+    }
+    
+    return mvv_lva_scores[victim_index][attacker_index];
+}
+
+// Order moves using MVV-LVA and other heuristics
+void MinimalEngine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const {
+    // Assign scores to each move for ordering
+    for (auto& move : moves) {
+        int score = 0;
+        
+        if (move.is_capture()) {
+            // Captures: Use MVV-LVA scoring
+            PieceType victim = move.get_captured();
+            
+            // Get the attacking piece type from the position
+            int from_sq = move.get_from();
+            Piece attacking_piece = pos.board[from_sq];
+            PieceType attacker = type_of(attacking_piece);
+            
+            score = get_mvv_lva_score(victim, attacker);
+            
+            // Bonus for en passant captures (always pawn takes pawn)
+            if (move.is_en_passant()) {
+                score += 10000;  // High priority for en passant
+            }
+            
+        } else if (move.is_promotion()) {
+            // Promotions: High priority, queen promotion highest
+            PieceType promoted = move.get_promoted();
+            switch (promoted) {
+                case PieceType::Queen:  score = 90000; break;
+                case PieceType::Rook:   score = 50000; break;
+                case PieceType::Bishop: score = 35000; break;
+                case PieceType::Knight: score = 30000; break;
+                default: score = 25000; break;
+            }
+            
+        } else {
+            // Quiet moves: Lower priority
+            // Could add killer moves, history heuristic here later
+            score = 1000;  // Base score for quiet moves
+        }
+        
+        move.score = score;
+    }
+    
+    // Sort moves by score (highest first)
+    std::sort(moves.begin(), moves.end(), [](const S_MOVE& a, const S_MOVE& b) {
+        return a.score > b.score;
+    });
+}
+
+// Order moves in S_MOVELIST using MVV-LVA and other heuristics
+void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
+    // Assign scores to each move for ordering
+    for (int i = 0; i < move_list.count; i++) {
+        S_MOVE& move = move_list.moves[i];
+        int score = 0;
+        
+        if (move.is_capture()) {
+            // Captures: Use MVV-LVA scoring
+            PieceType victim = move.get_captured();
+            
+            // Get the attacking piece type from the position
+            int from_sq = move.get_from();
+            Piece attacking_piece = pos.board[from_sq];
+            PieceType attacker = type_of(attacking_piece);
+            
+            score = get_mvv_lva_score(victim, attacker);
+            
+            // Bonus for en passant captures (always pawn takes pawn)
+            if (move.is_en_passant()) {
+                score += 10000;  // High priority for en passant
+            }
+            
+        } else if (move.is_promotion()) {
+            // Promotions: High priority, queen promotion highest
+            PieceType promoted = move.get_promoted();
+            switch (promoted) {
+                case PieceType::Queen:  score = 90000; break;
+                case PieceType::Rook:   score = 50000; break;
+                case PieceType::Bishop: score = 35000; break;
+                case PieceType::Knight: score = 30000; break;
+                default: score = 25000; break;
+            }
+            
+        } else {
+            // Quiet moves: Lower priority
+            // Could add killer moves, history heuristic here later
+            score = 1000;  // Base score for quiet moves
+        }
+        
+        move.score = score;
+    }
+    
+    // Sort moves by score (highest first) using C-style array sort
+    std::sort(&move_list.moves[0], &move_list.moves[move_list.count], 
+              [](const S_MOVE& a, const S_MOVE& b) {
+                  return a.score > b.score;
+              });
+}
+
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
@@ -407,6 +574,9 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     
     S_MOVE best_move;
     best_move.move = 0;
+    
+    // Use SearchInfo for consistent node counting
+    uint64_t total_nodes = 0;
     
     // Iterative deepening with time budget estimation
     // Two main benefits (VICE tutorial):
@@ -454,8 +624,12 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             temp_info.ply = 0;
             temp_info.stopped = false;
             
-            int score = -alpha_beta(pos, depth - 1, -INFINITE, INFINITE, temp_info, true);
+            // Use consistent VICE-style AlphaBeta search (not old alpha_beta)
+            int score = -AlphaBeta(pos, -INFINITE, INFINITE, depth - 1, temp_info, true, false);
             pos.TakeMove();
+            
+            // Accumulate nodes from this search
+            total_nodes += temp_info.nodes;
             
             // Check time immediately after each move search
             if (time_up()) break;
@@ -482,7 +656,7 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             
             std::cout << "info depth " << depth 
                      << " score cp " << best_score 
-                     << " nodes " << nodes_searched 
+                     << " nodes " << total_nodes 
                      << " time " << elapsed
                      << " pv ";
             
@@ -496,6 +670,9 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
         
         if (time_up()) break;
     }
+    
+    // Update nodes_searched for backward compatibility
+    nodes_searched = static_cast<int>(total_nodes);
     
     return best_move;
 }
@@ -595,6 +772,9 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
     
+    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
+    order_moves(move_list, pos);
+    
     // No legal moves (checkmate or stalemate)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
@@ -674,6 +854,9 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     // Generate only capture moves for quiescence
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);  // For now, generate all moves
+    
+    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
+    order_moves(move_list, pos);
     
     // Filter to only captures (simplified for now)
     for (int i = 0; i < move_list.count; ++i) {
