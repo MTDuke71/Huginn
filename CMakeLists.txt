@@ -347,6 +347,8 @@ if(GTEST_FOUND)
         test/test_pawn_optimization.cpp
         test/test_knight_optimization.cpp
         test/test_evaluation_symmetry.cpp
+    test/test_uci_time_and_stop_gtest.cpp
+    test/test_uci_time_param_gtest.cpp
     )
 
     add_executable(huginn_tests
@@ -788,6 +790,28 @@ add_test(NAME test_pick_move_comparison COMMAND test_pick_move_comparison)
 
 # VICE Part 64 Tests  
 add_test(NAME test_move_ordering COMMAND test_move_ordering)
+
+# UCI time allocation and stop integration test
+add_executable(test_uci_time_and_stop
+    test/test_uci_time_and_stop.cpp
+    src/minimal_search.cpp
+    src/uci.cpp
+    src/uci_utils.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_uci_time_and_stop PRIVATE cxx_std_17)
+target_include_directories(test_uci_time_and_stop PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_uci_time_and_stop PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_test(NAME test_uci_time_and_stop COMMAND test_uci_time_and_stop)
 
 # Set test properties
 set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 

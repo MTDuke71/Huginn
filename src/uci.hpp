@@ -19,6 +19,8 @@ private:
     std::unique_ptr<Huginn::MinimalEngine> search_engine;  // Changed from SimpleEngine
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
+    // Pointer to running SearchInfo so stop() can update it safely
+    std::atomic<Huginn::SearchInfo*> running_info{nullptr};
     bool debug_mode = false;
     int threads = 1; // Default to 1 thread to test for threading issues
     
@@ -45,6 +47,9 @@ public:
     
     // Main UCI loop - processes commands from stdin
     void run();
+
+    // Test helper: signal stop to the running search (mirrors UCI 'stop' command)
+    void signal_stop();
     
     // Send identification info
     void send_id();

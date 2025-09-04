@@ -120,7 +120,7 @@ public:  // Make members public for easier access
     int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth = -1) const;
     
     // VICE Part 55 - Search Function Definitions
-    static void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
+    void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
     static void clearForSearch(MinimalEngine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
     int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);  // Core search (2:58)
     int quiescence(Position& pos, int alpha, int beta, SearchInfo& info);  // Quiescence search (4:40)

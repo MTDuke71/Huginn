@@ -183,6 +183,21 @@ void MinimalEngine::check_up(SearchInfo& info) {
     // VICE style time checking function
     if (time_up()) {
         info.stopped = true;
+        return;
+    }
+
+    // Also respect the per-search stop_time provided via SearchInfo
+    auto now = std::chrono::steady_clock::now();
+    if (!info.infinite) {
+        auto stop_time = info.stop_time;
+        if (stop_time != std::chrono::steady_clock::time_point{}) {
+            if (now >= stop_time) info.stopped = true;
+        }
+    }
+
+    // If the engine's external should_stop flag has been set (via UCI stop), honor it
+    if (should_stop) {
+        info.stopped = true;
     }
 }
 
