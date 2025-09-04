@@ -10,13 +10,13 @@
 #include <memory>
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
-#include "search.hpp"
+#include "minimal_search.hpp"  // Changed from search.hpp
 
 // UCI (Universal Chess Interface) implementation for Huginn chess engine
 class UCIInterface {
 private:
     Position position;
-    std::unique_ptr<Huginn::SimpleEngine> search_engine;
+    std::unique_ptr<Huginn::MinimalEngine> search_engine;  // Changed from SimpleEngine
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     bool debug_mode = false;
@@ -41,7 +41,7 @@ public:
     void handle_setoption(const std::vector<std::string>& tokens);
     
     // Search for best move using the search engine
-    void search_best_move(const Huginn::SearchLimits& limits);
+    void search_best_move(const Huginn::MinimalLimits& limits);  // Changed from SearchLimits
 
 public:
     UCIInterface();

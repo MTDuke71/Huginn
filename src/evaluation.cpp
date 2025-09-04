@@ -344,12 +344,26 @@ int HybridEvaluator::evaluate_pawn_structure(const Position& pos) {
             if (is_passed_pawn(pos, sq120, Color::White)) {
                 score += EvalParams::PASSED_PAWN_BONUS[rank];
             }
+            
+            // Penalty for premature flank pawn moves in opening (a6, h6, a5, h5 for black)
+            if (get_game_phase(pos) == GamePhase::Opening) {
+                if ((file == 0 || file == 7) && rank >= 4) { // Advanced flank pawns
+                    score -= 15; // Penalty for premature flank advances
+                }
+            }
         } else {
             black_file_counts[file]++;
             
             // Passed pawn bonus  
             if (is_passed_pawn(pos, sq120, Color::Black)) {
                 score -= EvalParams::PASSED_PAWN_BONUS[7 - rank];
+            }
+            
+            // Penalty for premature flank pawn moves in opening
+            if (get_game_phase(pos) == GamePhase::Opening) {
+                if ((file == 0 || file == 7) && rank <= 3) { // Advanced flank pawns for black
+                    score += 15; // Penalty for premature flank advances
+                }
             }
         }
     }
@@ -534,8 +548,8 @@ int HybridEvaluator::evaluate(const Position& pos) {
         total_score += evaluate_king_safety(pos, phase);
     }
     
-    // Development evaluation (important in opening)
-    if (phase == GamePhase::Opening) {
+    // Development evaluation (important in opening and early middlegame)
+    if (phase == GamePhase::Opening || phase == GamePhase::Middlegame) {
         total_score += evaluate_development(pos, phase);
     }
     

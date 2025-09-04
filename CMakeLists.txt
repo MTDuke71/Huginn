@@ -265,6 +265,8 @@ set(ENGINE_SOURCES
     src/debug.cpp
     src/uci.cpp
     src/uci_utils.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
 )
 
 # ---- Performance Critical Sources (for assembly analysis) ----
@@ -281,7 +283,6 @@ set(PERFORMANCE_CRITICAL_SOURCES
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp
-        src/search.cpp
         src/evaluation.cpp
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
@@ -592,6 +593,92 @@ add_executable(debug_test_basic
 target_compile_features(debug_test_basic PRIVATE cxx_std_17)
 target_include_directories(debug_test_basic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(debug_test_basic PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Evaluation Analysis Tool
+add_executable(eval_analysis 
+    debug/eval_analysis.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/evaluation.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(eval_analysis PRIVATE cxx_std_17)
+target_include_directories(eval_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(eval_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Development vs Pawn Move Test
+add_executable(development_test 
+    debug/development_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/evaluation.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(development_test PRIVATE cxx_std_17)
+target_include_directories(development_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(development_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Deep Search Evaluation Test
+add_executable(deep_search_test 
+    debug/deep_search_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/evaluation.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(deep_search_test PRIVATE cxx_std_17)
+target_include_directories(deep_search_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(deep_search_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Arena Equivalent Search Test
+add_executable(arena_equivalent_test 
+    debug/arena_equivalent_test.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/evaluation.cpp
+    src/search.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(arena_equivalent_test PRIVATE cxx_std_17)
+target_include_directories(arena_equivalent_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(arena_equivalent_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Arena Simple Search Test
+add_executable(arena_simple_test 
+    debug/arena_simple_test.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/evaluation.cpp
+    src/search.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(arena_simple_test PRIVATE cxx_std_17)
+target_include_directories(arena_simple_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(arena_simple_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 

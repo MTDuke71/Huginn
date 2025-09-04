@@ -18,8 +18,8 @@ namespace Huginn {
 
 namespace EvalParams {
 
-inline constexpr int GAME_PHASE_OPENING_THRESHOLD = 24;
-inline constexpr int GAME_PHASE_MIDDLEGAME_THRESHOLD = 12;
+inline constexpr int GAME_PHASE_OPENING_THRESHOLD = 28;  // Stay in opening longer
+inline constexpr int GAME_PHASE_MIDDLEGAME_THRESHOLD = 16;  // More conservative transition
 
 inline constexpr int PAWN_VALUE = 100;
 inline constexpr int KNIGHT_VALUE = 300;
@@ -35,14 +35,14 @@ inline constexpr int KNIGHT_OUTPOST_BONUS = 25;
 inline constexpr int BISHOP_PAIR_BONUS = 50;
 inline constexpr int ROOK_OPEN_FILE_BONUS = 15;
 
-inline constexpr int ISOLATED_PAWN_PENALTY = 15;
-inline constexpr int DOUBLED_PAWN_PENALTY = 10;
+inline constexpr int ISOLATED_PAWN_PENALTY = 25;  // Increased penalty
+inline constexpr int DOUBLED_PAWN_PENALTY = 20;    // Increased penalty
 
 inline constexpr int MOBILITY_WEIGHT_DEFAULT = 5;
 inline constexpr int MOBILITY_WEIGHT_ENDGAME = 2;
 
-inline constexpr int DEVELOP_BONUS_DEFAULT = 15;
-inline constexpr int DEVELOP_BONUS_OPENING = 20;
+inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     // Much higher penalty for undevelopment
+inline constexpr int DEVELOP_BONUS_OPENING = 60;     // Strong opening development bonus
 inline constexpr int DEVELOP_BONUS_ENDGAME = 0;
 
 inline constexpr int KING_SHIELD_MULTIPLIER = 10;
@@ -52,10 +52,14 @@ inline constexpr int CASTLE_BONUS = 40;
 inline constexpr int STUCK_PENALTY = 20;
 
 inline constexpr std::array<int, 64> PAWN_TABLE = {
-    0,  0,  0,   0,  0,  0,   0,  0,  5,  10, 10, -20, -20, 10, 10, 5,
-    5,  -5, -10, 0,  0,  -10, -5, 5,  0,  0,  0,  20,  20,  0,  0,  0,
-    5,  5,  10,  25, 25, 10,  5,  5,  10, 10, 20, 30,  30,  20, 10, 10,
-    50, 50, 50,  50, 50, 50,  50, 50, 0,  0,  0,  0,   0,   0,  0,  0};
+    0,  0,  0,   0,  0,  0,   0,  0,  
+    5,  10, 10, -20, -20, 10, 10, 5,
+    5,  -5, -10, 0,  0,  -10, -5, 5,  
+    0,  0,  0,  25,  25,  0,  0,  0,  // Boosted central control
+    5,  5,  15,  30, 30, 15,  5,  5,  // Enhanced center value
+    10, 10, 25, 35,  35,  25, 10, 10, // Strong central advancement
+    50, 50, 50,  50, 50, 50,  50, 50, 
+    0,  0,  0,  0,   0,   0,  0,  0};
 
 inline constexpr std::array<int, 64> KNIGHT_TABLE = {
     -50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0,   0,   0,

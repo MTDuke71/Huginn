@@ -186,6 +186,24 @@ void MinimalEngine::check_up(SearchInfo& info) {
     }
 }
 
+std::string MinimalEngine::format_uci_score(int score) const {
+    // Convert engine score to proper UCI format
+    // MATE = 29000, so scores close to +/-MATE are mate scores
+    
+    if (score > MATE - 100) {
+        // Positive mate score: we are mating opponent
+        int mate_in = (MATE - score + 1) / 2;
+        return "mate " + std::to_string(mate_in);
+    } else if (score < -MATE + 100) {
+        // Negative mate score: we are being mated
+        int mate_in = -((-MATE - score + 1) / 2);
+        return "mate " + std::to_string(mate_in);
+    } else {
+        // Regular centipawn score
+        return "cp " + std::to_string(score);
+    }
+}
+
 int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull) {
     // VICE Part 58: Alpha-Beta Search Implementation
     
@@ -332,18 +350,29 @@ std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
 
 // Simple repetition detection - VICE tutorial style (made static as per Part 55)
 bool MinimalEngine::isRepetition(const Position& pos) {
-    // Start from when fifty move rule was last reset (tutorial optimization)
-    int start_index = static_cast<int>(pos.move_history.size()) - pos.halfmove_clock;
-    if (start_index < 0) start_index = 0;
+    // Conservative repetition detection to avoid false positives in mate searches
+    // Only check for repetition in actual game positions, not during deep search
     
-    // Look through history for matching position key
-    for (int index = start_index; index < static_cast<int>(pos.move_history.size()); ++index) {
-        if (pos.zobrist_key == pos.move_history[index].zobrist_key) {
-            return true; // Repetition found
+    // Don't check for repetition if move history is too short
+    if (pos.move_history.size() < 6) {
+        return false; // Need at least 6 plies for meaningful repetition check
+    }
+    
+    // Be very conservative - only detect clear 3-fold repetitions
+    uint64_t current_key = pos.zobrist_key;
+    int repetition_count = 1; // Count current position
+    
+    // Only check the last 12 moves to avoid false positives
+    int start_check = std::max(0, static_cast<int>(pos.move_history.size()) - 12);
+    
+    for (int index = start_check; index < static_cast<int>(pos.move_history.size()) - 1; ++index) {
+        if (current_key == pos.move_history[index].zobrist_key) {
+            repetition_count++;
         }
     }
     
-    return false; // No repetition
+    // Only return true for definite 3-fold repetition to be safe
+    return repetition_count >= 3;
 }
 
 // Clear search tables - reset history and killers
@@ -723,7 +752,7 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             int pv_moves = get_pv_line(pos, depth, pv_array);
             
             std::cout << "info depth " << depth 
-                     << " score cp " << best_score 
+                     << " score " << format_uci_score(best_score)
                      << " nodes " << total_nodes 
                      << " time " << elapsed
                      << " pv ";
@@ -1030,7 +1059,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         
         // Print results after each completed depth (3:03, 5:32)
         std::cout << "info depth " << current_depth 
-                  << " score cp " << best_score 
+                  << " score " << format_uci_score(best_score)
                   << " nodes " << info.nodes 
                   << " time " << elapsed.count()
                   << " pv ";

@@ -13,7 +13,7 @@ UCIInterface::UCIInterface() {
     position.set_startpos();
     
     // Initialize search engine
-    search_engine = std::make_unique<Huginn::SimpleEngine>();
+    search_engine = std::make_unique<Huginn::MinimalEngine>();  // Changed from SimpleEngine
 }
 
 void UCIInterface::run() {
@@ -204,11 +204,10 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     should_stop = false;
     
     // Parse search limits from go command
-    Huginn::SearchLimits limits;  // Uses defaults from SearchLimits struct
+    Huginn::MinimalLimits limits;  // Changed from SearchLimits
     limits.infinite = false;
-    limits.threads = 1; // Use 1 thread to test for threading issues
-    // limits.max_depth = 0 (unlimited depth by default from struct)
-    // limits.max_time_ms uses default from SearchLimits (10000ms)
+    // limits.max_depth = 25 (default from MinimalLimits struct)
+    // limits.max_time_ms = 5000 (default from MinimalLimits struct)
     
     if (debug_mode) {
         std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
@@ -224,10 +223,6 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         }
         else if (tokens[i] == "movetime" && i + 1 < tokens.size()) {
             limits.max_time_ms = std::stoi(tokens[i + 1]);
-            i++;
-        }
-        else if (tokens[i] == "nodes" && i + 1 < tokens.size()) {
-            limits.max_nodes = std::stoull(tokens[i + 1]);
             i++;
         }
         else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
@@ -295,7 +290,6 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         else if (tokens[i] == "infinite") {
             limits.infinite = true;
             limits.max_time_ms = 0; // No time limit
-            limits.max_nodes = UINT64_MAX; // No node limit
         }
     }
     
@@ -303,7 +297,6 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     if (depth_specified) {
         limits.infinite = true;
         limits.max_time_ms = 0; // No time limit for depth searches
-        limits.max_nodes = UINT64_MAX; // No node limit for depth searches
     }
     
     if (debug_mode) {
@@ -350,25 +343,28 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     }
 }
 
-void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
+void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // Changed from SearchLimits
     is_searching = true;
     
     // Reset the search engine
     search_engine->reset();
     
-    // Set thread count in limits
-    Huginn::SearchLimits modified_limits = limits;
-    modified_limits.threads = threads; // Use the UCI-configured thread count directly
+    // MinimalEngine uses a different search interface - searchPosition
+    Huginn::SearchInfo info;
+    info.max_depth = limits.max_depth;
+    info.stopped = false;
+    info.infinite = limits.infinite;
     
-    // Safety mechanism: ensure we always return a move within reasonable time
-    // Add 500ms buffer to account for search overhead
+    // Convert time limits
     auto search_start = std::chrono::high_resolution_clock::now();
-    auto max_search_time = std::chrono::milliseconds(modified_limits.max_time_ms + 500);
+    info.start_time = search_start;
+    info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
     
-    // Perform the search
+    // Perform the search using MinimalEngine interface
+    // Perform the search using MinimalEngine interface
     S_MOVE best_move;
     try {
-        best_move = search_engine->search(position, modified_limits);
+        best_move = search_engine->searchPosition(position, info);  // MinimalEngine method
     } catch (const std::exception& e) {
         std::cout << "info string Search threw exception: " << e.what() << std::endl;
         std::cout.flush();
@@ -388,30 +384,12 @@ void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
         }
     }
     
-    // Get search statistics
-    const auto& stats = search_engine->get_stats();
-    const auto& pv = search_engine->get_pv();
+    // MinimalEngine already outputs complete UCI info during search
+    // No need for additional summary output here
     
-    // Send final search info
-    std::cout << "info depth " << stats.max_depth_reached;
-    std::cout << " nodes " << stats.nodes_searched;
-    std::cout << " time " << stats.time_ms;
-    if (stats.time_ms > 0) {
-        std::cout << " nps " << (stats.nodes_searched * 1000) / stats.time_ms;
-    }
-    
-    // Add PV if available
-    if (pv.length > 0) {
-        std::cout << " pv";
-        for (int i = 0; i < pv.length; i++) {
-            std::cout << " " << Huginn::SimpleEngine::move_to_uci(pv.moves[i]);
-        }
-    }
-    std::cout << std::endl;
-    
-    // Send the best move - ALWAYS send something
+    // Send the best move - use MinimalEngine's move_to_uci
     if (best_move.move != 0) {
-        std::string uci_move = Huginn::SimpleEngine::move_to_uci(best_move);
+        std::string uci_move = search_engine->move_to_uci(best_move);  // MinimalEngine method
         std::cout << "bestmove " << uci_move << std::endl;
         std::cout.flush(); // Ensure immediate output
     } else {
@@ -425,6 +403,6 @@ void UCIInterface::search_best_move(const Huginn::SearchLimits& limits) {
 
 
 std::string UCIInterface::move_to_uci(const S_MOVE& move) {
-    // Use move_to_uci implementation
-    return Huginn::SimpleEngine::move_to_uci(move);
+    // Use MinimalEngine's move_to_uci implementation  
+    return search_engine->move_to_uci(move);
 }

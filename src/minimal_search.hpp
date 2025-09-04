@@ -88,6 +88,9 @@ public:  // Make members public for easier access
     bool time_up() const;
     void check_up(SearchInfo& info);
     
+    // UCI score formatting helper
+    std::string format_uci_score(int score) const;
+    
     S_MOVE search(Position pos, const MinimalLimits& limits);
     void stop() { should_stop = true; }
     void reset() { should_stop = false; nodes_searched = 0; }
