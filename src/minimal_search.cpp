@@ -69,21 +69,26 @@ int MinimalEngine::evaluate(const Position& pos) {
     int white_development = 0;
     int black_development = 0;
     
-    // Check if knights are developed (not on b1/g1 for white, b8/g8 for black)
-    if (pos.board[sq(File::B, Rank::R1)] != Piece::WhiteKnight) white_development += 50; // b1
-    if (pos.board[sq(File::G, Rank::R1)] != Piece::WhiteKnight) white_development += 50; // g1
-    if (pos.board[sq(File::B, Rank::R8)] != Piece::BlackKnight) black_development += 50; // b8
-    if (pos.board[sq(File::G, Rank::R8)] != Piece::BlackKnight) black_development += 50; // g8
+    // Using direct 120-square board indices (safer than sq() function calls)
+    // b1=22, g1=27, b8=92, g8=97 for knights
+    // c1=23, f1=26, c8=93, f8=96 for bishops  
+    // e1=25, e8=95 for kings
     
-    // Check if bishops are developed (not on c1/f1 for white, c8/f8 for black)
-    if (pos.board[sq(File::C, Rank::R1)] != Piece::WhiteBishop) white_development += 30; // c1
-    if (pos.board[sq(File::F, Rank::R1)] != Piece::WhiteBishop) white_development += 30; // f1
-    if (pos.board[sq(File::C, Rank::R8)] != Piece::BlackBishop) black_development += 30; // c8
-    if (pos.board[sq(File::F, Rank::R8)] != Piece::BlackBishop) black_development += 30; // f8
+    // Check if knights are developed (not on starting squares)
+    if (pos.board[22] != Piece::WhiteKnight) white_development += 50; // b1
+    if (pos.board[27] != Piece::WhiteKnight) white_development += 50; // g1
+    if (pos.board[92] != Piece::BlackKnight) black_development += 50; // b8
+    if (pos.board[97] != Piece::BlackKnight) black_development += 50; // g8
     
-    // Bonus for castling (king not on e1/e8)
-    if (pos.board[sq(File::E, Rank::R1)] != Piece::WhiteKing) white_development += 40; // e1
-    if (pos.board[sq(File::E, Rank::R8)] != Piece::BlackKing) black_development += 40; // e8
+    // Check if bishops are developed (not on starting squares)
+    if (pos.board[23] != Piece::WhiteBishop) white_development += 30; // c1
+    if (pos.board[26] != Piece::WhiteBishop) white_development += 30; // f1
+    if (pos.board[93] != Piece::BlackBishop) black_development += 30; // c8
+    if (pos.board[96] != Piece::BlackBishop) black_development += 30; // f8
+    
+    // Bonus for castling (king not on starting square)
+    if (pos.board[25] != Piece::WhiteKing) white_development += 40; // e1
+    if (pos.board[95] != Piece::BlackKing) black_development += 40; // e8
     
     score += white_development - black_development;
     
@@ -91,17 +96,18 @@ int MinimalEngine::evaluate(const Position& pos) {
     // Give bonus for pawns controlling center squares
     int center_bonus = 0;
     
-    // Check for pawns attacking center (e4, e5, d4, d5) - MASSIVE bonuses
-    if (pos.board[sq(File::E, Rank::R4)] == Piece::WhitePawn) center_bonus += 100; // e4
-    if (pos.board[sq(File::D, Rank::R4)] == Piece::WhitePawn) center_bonus += 100; // d4
-    if (pos.board[sq(File::E, Rank::R5)] == Piece::BlackPawn) center_bonus -= 100; // e5  
-    if (pos.board[sq(File::D, Rank::R5)] == Piece::BlackPawn) center_bonus -= 100; // d5
+    // Direct indices: e4=54, d4=53, e5=64, d5=65, e3=44, d3=43, e6=74, d6=75
+    // MASSIVE bonuses for 4th rank center pawns
+    if (pos.board[54] == Piece::WhitePawn) center_bonus += 100; // e4
+    if (pos.board[53] == Piece::WhitePawn) center_bonus += 100; // d4
+    if (pos.board[64] == Piece::BlackPawn) center_bonus -= 100; // e5  
+    if (pos.board[65] == Piece::BlackPawn) center_bonus -= 100; // d5
     
     // Small bonus for supporting center from 3rd rank
-    if (pos.board[sq(File::E, Rank::R3)] == Piece::WhitePawn) center_bonus += 20; // e3
-    if (pos.board[sq(File::D, Rank::R3)] == Piece::WhitePawn) center_bonus += 20; // d3
-    if (pos.board[sq(File::E, Rank::R6)] == Piece::BlackPawn) center_bonus -= 20; // e6
-    if (pos.board[sq(File::D, Rank::R6)] == Piece::BlackPawn) center_bonus -= 20; // d6
+    if (pos.board[44] == Piece::WhitePawn) center_bonus += 20; // e3
+    if (pos.board[43] == Piece::WhitePawn) center_bonus += 20; // d3
+    if (pos.board[74] == Piece::BlackPawn) center_bonus -= 20; // e6
+    if (pos.board[75] == Piece::BlackPawn) center_bonus -= 20; // d6
     
     score += center_bonus;
     
@@ -113,16 +119,16 @@ int MinimalEngine::evaluate(const Position& pos) {
     int white_pawn_moves = 0;
     int black_pawn_moves = 0;
     
-    // White starting pawns on rank 2 (a2-h2)
-    for (File f = File::A; f <= File::H; f = static_cast<File>(static_cast<int>(f) + 1)) {
-        if (pos.board[sq(f, Rank::R2)] != Piece::WhitePawn) {
+    // White starting pawns on rank 2 (a2=31, b2=32, ..., h2=38)
+    for (int sq = 31; sq <= 38; ++sq) {
+        if (pos.board[sq] != Piece::WhitePawn) {
             white_pawn_moves++;
         }
     }
     
-    // Black starting pawns on rank 7 (a7-h7)
-    for (File f = File::A; f <= File::H; f = static_cast<File>(static_cast<int>(f) + 1)) {
-        if (pos.board[sq(f, Rank::R7)] != Piece::BlackPawn) {
+    // Black starting pawns on rank 7 (a7=81, b7=82, ..., h7=88)
+    for (int sq = 81; sq <= 88; ++sq) {
+        if (pos.board[sq] != Piece::BlackPawn) {
             black_pawn_moves++;
         }
     }

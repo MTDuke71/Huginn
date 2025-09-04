@@ -1,4 +1,5 @@
 #include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"  // Add our minimal search engine!
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -135,6 +136,9 @@ private:
             return S_MOVE(); // No legal moves
         }
         
+        // Use our MinimalEngine with opening principles!
+        static Huginn::MinimalEngine engine;
+        
         S_MOVE best_move = legal_moves.moves[0];
         int best_eval = -999999;
         
@@ -142,7 +146,8 @@ private:
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(legal_moves.moves[i]);
             
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            // Use our enhanced evaluation with opening principles
+            int eval = -engine.evaluate(temp_pos);
             
             if (eval > best_eval) {
                 best_eval = eval;
