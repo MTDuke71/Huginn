@@ -112,6 +112,9 @@ public:  // Make members public for easier access
     void order_moves(std::vector<S_MOVE>& moves, const Position& pos) const; // Order moves using MVV-LVA
     void order_moves(S_MOVELIST& move_list, const Position& pos) const;      // Order moves in S_MOVELIST
     
+    // VICE Part 62: Move Picking - Pick best move from remaining moves
+    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos) const;
+    
     // VICE Part 55 - Search Function Definitions
     static void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
     static void clearForSearch(MinimalEngine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57

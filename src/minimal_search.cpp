@@ -222,9 +222,6 @@ int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, Sea
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
     
-    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
-    order_moves(move_list, pos);
-    
     // Checkmate/Stalemate Detection: If no legal moves found (5:00)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
@@ -242,6 +239,9 @@ int MinimalEngine::alpha_beta(Position& pos, int depth, int alpha, int beta, Sea
     
     // Move Loop: Iterate through all possible moves (3:40)
     for (int i = 0; i < move_list.count; ++i) {
+        // VICE Part 62: Pick best move from remaining moves
+        pick_next_move(move_list, i, pos);
+        
         if (pos.MakeMove(move_list.moves[i]) != 1) {
             continue; // Skip illegal moves
         }
@@ -563,6 +563,74 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
               });
 }
 
+// VICE Part 62: Pick Next Move - Select best move from remaining moves
+// This is more efficient than sorting all moves upfront
+int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos) const {
+    // For the first call (move_num == 0), score all moves
+    if (move_num == 0) {
+        // Score all moves for ordering
+        for (int i = 0; i < move_list.count; i++) {
+            S_MOVE& move = move_list.moves[i];
+            int score = 0;
+            
+            if (move.is_capture()) {
+                // Captures: Use MVV-LVA scoring
+                PieceType victim = move.get_captured();
+                
+                // Get the attacking piece type from the position
+                int from_sq = move.get_from();
+                Piece attacking_piece = pos.board[from_sq];
+                PieceType attacker = type_of(attacking_piece);
+                
+                score = get_mvv_lva_score(victim, attacker);
+                
+                // Bonus for en passant captures (always pawn takes pawn)
+                if (move.is_en_passant()) {
+                    score += 10000;  // High priority for en passant
+                }
+                
+            } else if (move.is_promotion()) {
+                // Promotions: High priority, queen promotion highest
+                PieceType promoted = move.get_promoted();
+                switch (promoted) {
+                    case PieceType::Queen:  score = 90000; break;
+                    case PieceType::Rook:   score = 50000; break;
+                    case PieceType::Bishop: score = 35000; break;
+                    case PieceType::Knight: score = 30000; break;
+                    default: score = 25000; break;
+                }
+                
+            } else {
+                // Quiet moves: Lower priority
+                // Could add killer moves, history heuristic here later
+                score = 1000;  // Base score for quiet moves
+            }
+            
+            move.score = score;
+        }
+    }
+    
+    // Find the best move from move_num onwards
+    int best_score = -1;
+    int best_index = move_num;
+    
+    for (int i = move_num; i < move_list.count; i++) {
+        if (move_list.moves[i].score > best_score) {
+            best_score = move_list.moves[i].score;
+            best_index = i;
+        }
+    }
+    
+    // Swap the best move to the current position
+    if (best_index != move_num) {
+        S_MOVE temp = move_list.moves[move_num];
+        move_list.moves[move_num] = move_list.moves[best_index];
+        move_list.moves[best_index] = temp;
+    }
+    
+    return best_score;
+}
+
 S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
@@ -772,9 +840,6 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
     
-    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
-    order_moves(move_list, pos);
-    
     // No legal moves (checkmate or stalemate)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
@@ -789,6 +854,9 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
+        // VICE Part 62: Pick best move from remaining moves
+        pick_next_move(move_list, i, pos);
+        
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
         int score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);  // Not a root call
@@ -855,11 +923,11 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);  // For now, generate all moves
     
-    // MVV-LVA Move Ordering: Sort captures by Most Valuable Victim, Least Valuable Attacker
-    order_moves(move_list, pos);
-    
     // Filter to only captures (simplified for now)
     for (int i = 0; i < move_list.count; ++i) {
+        // VICE Part 62: Pick best move from remaining moves
+        pick_next_move(move_list, i, pos);
+        
         S_MOVE move = move_list.moves[i];
         
         // Only search captures in quiescence

@@ -638,3 +638,39 @@ target_include_directories(test_legacy_warning PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 set_target_properties(test_legacy_warning PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# VICE Part 62: Pick Move Test - Move Ordering Improvement
+add_executable(test_pick_move 
+    debug/test_pick_move.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_pick_move PRIVATE cxx_std_17)
+target_include_directories(test_pick_move PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_pick_move PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 62: Pick Move Comparison Test
+add_executable(test_pick_move_comparison 
+    debug/test_pick_move_comparison.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_pick_move_comparison PRIVATE cxx_std_17)
+target_include_directories(test_pick_move_comparison PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_pick_move_comparison PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
