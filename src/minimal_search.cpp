@@ -477,16 +477,24 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
 
 // VICE Part 62: Pick Next Move - Select best move from remaining moves
 // This is more efficient than sorting all moves upfront
-int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos) const {
-    // For the first call (move_num == 0), score all moves
+int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth) const {
+    // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
+        // Get PV move for this position (if any)
+        S_MOVE pv_move;
+        bool has_pv_move = pv_table.probe_move(pos.zobrist_key, pv_move);
+        
         // Score all moves for ordering
         for (int i = 0; i < move_list.count; i++) {
             S_MOVE& move = move_list.moves[i];
             int score = 0;
             
-            if (move.is_capture()) {
-                // Captures: Use MVV-LVA scoring
+            // VICE Part 64: PV move gets highest priority (2,000,000)
+            if (has_pv_move && move.move == pv_move.move) {
+                score = 2000000;
+                
+            } else if (move.is_capture()) {
+                // VICE Part 64: Captures get 1,000,000 + MVV-LVA score
                 PieceType victim = move.get_captured();
                 
                 // Get the attacking piece type from the position
@@ -494,28 +502,52 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                 Piece attacking_piece = pos.board[from_sq];
                 PieceType attacker = type_of(attacking_piece);
                 
-                score = get_mvv_lva_score(victim, attacker);
+                score = 1000000 + get_mvv_lva_score(victim, attacker);
                 
                 // Bonus for en passant captures (always pawn takes pawn)
                 if (move.is_en_passant()) {
                     score += 10000;  // High priority for en passant
                 }
                 
-            } else if (move.is_promotion()) {
-                // Promotions: High priority, queen promotion highest
-                PieceType promoted = move.get_promoted();
-                switch (promoted) {
-                    case PieceType::Queen:  score = 90000; break;
-                    case PieceType::Rook:   score = 50000; break;
-                    case PieceType::Bishop: score = 35000; break;
-                    case PieceType::Knight: score = 30000; break;
-                    default: score = 25000; break;
+            } else {
+                // Check for killer moves (non-captures only)
+                bool is_killer = false;
+                if (depth >= 0 && depth < 64) {
+                    // VICE Part 64: First killer = 900,000, Second killer = 800,000
+                    if (search_killers[depth][0].move == move.move) {
+                        score = 900000;
+                        is_killer = true;
+                    } else if (search_killers[depth][1].move == move.move) {
+                        score = 800000;
+                        is_killer = true;
+                    }
                 }
                 
-            } else {
-                // Quiet moves: Lower priority
-                // Could add killer moves, history heuristic here later
-                score = 1000;  // Base score for quiet moves
+                if (!is_killer) {
+                    if (move.is_promotion()) {
+                        // Promotions: High priority, queen promotion highest
+                        PieceType promoted = move.get_promoted();
+                        switch (promoted) {
+                            case PieceType::Queen:  score = 90000; break;
+                            case PieceType::Rook:   score = 50000; break;
+                            case PieceType::Bishop: score = 35000; break;
+                            case PieceType::Knight: score = 30000; break;
+                            default: score = 25000; break;
+                        }
+                    } else {
+                        // VICE Part 64: History heuristic for remaining quiet moves
+                        int from = move.get_from();
+                        int to = move.get_to();
+                        
+                        if (from >= 0 && from < 120 && to >= 0 && to < 120) {
+                            Piece piece = pos.board[from];
+                            int piece_index = static_cast<int>(piece) % 13;
+                            score = search_history[piece_index][to];  // History score
+                        } else {
+                            score = 1000;  // Base score for quiet moves
+                        }
+                    }
+                }
             }
             
             move.score = score;
@@ -767,7 +799,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos);
+        pick_next_move(move_list, i, pos, depth);
         
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
@@ -785,6 +817,11 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                 
                 // Store best move in PV table (VICE tutorial style)
                 store_pv_move(pos.zobrist_key, move_list.moves[i]);
+                
+                // VICE Part 64: Update history heuristic for non-capture moves that improve alpha
+                if (!move_list.moves[i].is_capture()) {
+                    update_search_history(pos, move_list.moves[i], depth);
+                }
                 
                 if (alpha >= beta) {
                     // VICE Part 60: Track fail high statistics (0:13)
@@ -838,7 +875,7 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     // Filter to only captures (simplified for now)
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos);
+        pick_next_move(move_list, i, pos, -1);  // No depth in quiescence
         
         S_MOVE move = move_list.moves[i];
         
