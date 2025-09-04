@@ -81,9 +81,6 @@ public:  // Make members public for easier access
     // Helper functions for evaluation (Part 56)
     static int mirror_square_64(int sq64);
     
-    // Basic alpha-beta search (VICE Part 58)
-    int alpha_beta(Position& pos, int depth, int alpha, int beta, SearchInfo& info, bool doNull = true);
-    
     // Time checking
     bool time_up() const;
     void check_up(SearchInfo& info);

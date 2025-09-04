@@ -25,9 +25,6 @@ private:
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
 public:
     
-    // Convert our internal move to UCI string format
-    std::string move_to_uci(const S_MOVE& move);
-    
     // Split string by whitespace
     std::vector<std::string> split_string(const std::string& str);
     
