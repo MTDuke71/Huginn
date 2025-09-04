@@ -599,6 +599,8 @@ set_target_properties(debug_test_basic PROPERTIES
 # Evaluation Analysis Tool
 add_executable(eval_analysis 
     debug/eval_analysis.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
     ${COMMON_SOURCES}
     src/position.cpp
     src/evaluation.cpp

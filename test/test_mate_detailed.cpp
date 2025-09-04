@@ -1,8 +1,9 @@
 #include "src/position.hpp"
 #include "../src/evaluation.hpp"
 #include "src/movegen_enhanced.hpp"
-#include "../src/search.hpp"
+#include "../src/minimal_search.hpp"
 #include "src/attack_detection.hpp"
+#include "src/init.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -11,9 +12,9 @@ void analyze_position_detailed(Position pos, const std::string& description) {
     std::cout << "FEN: " << pos.to_fen() << std::endl;
     std::cout << "Side to move: " << (pos.side_to_move == Color::White ? "White" : "Black") << std::endl;
     
-    // Basic evaluation using hybrid evaluator
-    Huginn::HybridEvaluator evaluator;
-    int total_eval = evaluator.evaluate(pos);
+    // Basic evaluation using stable MinimalEngine
+    Huginn::MinimalEngine engine;
+    int total_eval = engine.evalPosition(pos);
     std::cout << "Total Evaluation: " << total_eval << " cp" << std::endl;
     
     // Check if king is in check
@@ -51,10 +52,10 @@ void analyze_position_detailed(Position pos, const std::string& description) {
         
         bool delivers_mate = (opponent_moves.count == 0 && opp_in_check);
         
-        Huginn::HybridEvaluator eval_after_move;
-        int eval_after = -eval_after_move.evaluate(temp_pos);
+        Huginn::MinimalEngine eval_engine;
+        int eval_after = -eval_engine.evalPosition(temp_pos);
         
-        std::cout << "  " << (i+1) << ". " << Huginn::SimpleEngine::move_to_uci(legal_moves.moves[i]) 
+        std::cout << "  " << (i+1) << ". " << engine.move_to_uci(legal_moves.moves[i]) 
                   << " -> eval: " << eval_after << " cp";
         
         if (delivers_mate) {
@@ -82,8 +83,10 @@ void test_simple_mate_position() {
     S_MOVELIST moves;
     generate_legal_moves_enhanced(simple_mate, moves);
     
+    Huginn::MinimalEngine engine;
+    
     for (int i = 0; i < moves.count; ++i) {
-        std::string move_str = Huginn::SimpleEngine::move_to_uci(moves.moves[i]);
+        std::string move_str = engine.move_to_uci(moves.moves[i]);
         if (move_str == "h1h8") {
             std::cout << "\nFound Qh8 move! Testing it..." << std::endl;
             Position after_mate = simple_mate;
@@ -98,9 +101,14 @@ void test_simple_mate_position() {
 int main() {
     std::cout << "=== DETAILED MATE ANALYSIS ===" << std::endl;
     
+    // Initialize the engine
+    Huginn::init();
+    
     // Test 1: Original problematic position
     Position pos1;
     pos1.set_startpos();
+    
+    Huginn::MinimalEngine engine;
     
     std::vector<std::string> moves = {
         "d2d4", "f7f6", "e2e4", "e8f7", "g1f3", "e7e6", "f1d3", "h7h6", 
@@ -114,7 +122,7 @@ int main() {
         
         bool move_found = false;
         for (int i = 0; i < legal_moves.count; ++i) {
-            std::string uci_move = Huginn::SimpleEngine::move_to_uci(legal_moves.moves[i]);
+            std::string uci_move = engine.move_to_uci(legal_moves.moves[i]);
             if (uci_move == move_str) {
                 pos1.make_move_with_undo(legal_moves.moves[i]);
                 move_found = true;

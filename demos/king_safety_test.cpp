@@ -1,4 +1,4 @@
-#include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -7,18 +7,21 @@ int main() {
     std::cout << "Testing King Safety Evaluation\n";
     std::cout << "==============================\n\n";
     
+    // Initialize engine
+    Huginn::MinimalEngine engine;
+    
     // Test position with king on g6 (from the game)
     Position pos1;
     pos1.set_from_fen("r1bqkbnr/ppp3pp/2P2pk1/8/2BP4/5N2/PPP2PPP/R1BQK2R b KQkq - 0 7");
     
-    int eval1 = Huginn::HybridEvaluator::evaluate(pos1);
+    int eval1 = engine.evalPosition(pos1);
     std::cout << "Position with Black king on g6: " << eval1 << "cp\n";
     
     // Test similar position but with king safely on e8  
     Position pos2;
     pos2.set_from_fen("r1bqkbnr/ppp3pp/2P5/8/2BP4/5N2/PPP2PPP/R1BQK2R b KQkq - 0 7");
     
-    int eval2 = Huginn::HybridEvaluator::evaluate(pos2);
+    int eval2 = engine.evalPosition(pos2);
     std::cout << "Position with Black king on e8: " << eval2 << "cp\n";
     
     std::cout << "\nDifference: " << (eval1 - eval2) << "cp\n";

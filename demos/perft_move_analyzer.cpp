@@ -1,4 +1,4 @@
-#include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -71,6 +71,8 @@ public:
     }
     
 private:
+    Huginn::MinimalEngine engine;  // Engine for evaluation
+    
     void analyze_position_recursive(Position& pos, int depth, 
                                    std::map<std::string, MoveStats>& move_patterns,
                                    const std::string& move_sequence) {
@@ -87,7 +89,7 @@ private:
             temp_pos.make_move_with_undo(move);
             
             // Evaluate position
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            int eval = -engine.evalPosition(temp_pos);
             
             // Create move notation
             std::string move_notation = square_to_notation(move.get_from()) + 

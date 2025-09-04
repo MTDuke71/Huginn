@@ -1,4 +1,4 @@
-#include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -6,6 +6,9 @@
 int main() {
     std::cout << "Testing Basic King Walking Detection\n";
     std::cout << "====================================\n\n";
+    
+    // Initialize engine
+    Huginn::MinimalEngine engine;
     
     // Test the exact position from the game log
     std::cout << "1. Testing after 1.Nf3 f6:\n";
@@ -26,7 +29,7 @@ int main() {
         if (from == sq(File::F, Rank::R7) && to == sq(File::F, Rank::R6)) {
             Position temp_pos = pos1;
             temp_pos.make_move_with_undo(move);
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            int eval = -engine.evalPosition(temp_pos);
             std::cout << "f6 move evaluation: " << eval << "cp\n";
             temp_pos.undo_move();
             break;
@@ -51,7 +54,7 @@ int main() {
         if (from == sq(File::E, Rank::R8) && to == sq(File::E, Rank::R7)) {
             Position temp_pos = pos2;
             temp_pos.make_move_with_undo(move);
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            int eval = -engine.evalPosition(temp_pos);
             std::cout << "Ke7 move evaluation: " << eval << "cp\n";
             temp_pos.undo_move();
             break;

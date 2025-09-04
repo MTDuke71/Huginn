@@ -1,4 +1,4 @@
-#include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -9,6 +9,9 @@
 int main() {
     std::cout << "Testing f6 Move Evaluation\n";
     std::cout << "=========================\n\n";
+    
+    // Initialize engine
+    Huginn::MinimalEngine engine;
     
     // Test position after 1.Nf3 (Black to move)
     Position pos;
@@ -35,13 +38,13 @@ int main() {
     std::cout << std::setw(12) << "Move" << std::setw(15) << "Evaluation" << std::setw(12) << "Penalty" << std::endl;
     std::cout << std::string(39, '-') << std::endl;
     
-    int baseline_eval = Huginn::HybridEvaluator::evaluate(pos);
+    int baseline_eval = engine.evalPosition(pos);
     
     for (const auto& test : test_moves) {
         Position test_pos;
         test_pos.set_from_fen(test.fen);
         
-        int eval = Huginn::HybridEvaluator::evaluate(test_pos);
+        int eval = engine.evalPosition(test_pos);
         int penalty = eval - baseline_eval;
         
         std::cout << std::setw(12) << test.move_name 

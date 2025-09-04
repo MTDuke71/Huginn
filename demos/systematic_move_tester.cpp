@@ -1,4 +1,4 @@
-#include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -27,6 +27,7 @@ struct MoveResult {
 class MoveEvaluationTester {
 private:
     std::vector<TestPosition> test_positions;
+    Huginn::MinimalEngine engine;  // Engine for evaluation
     
     std::string square_to_notation(int sq) {
         if (sq < 21 || sq > 98) return "invalid";
@@ -95,7 +96,7 @@ private:
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(move);
             
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            int eval = -engine.evalPosition(temp_pos);
             
             MoveResult result;
             result.from = move.get_from();

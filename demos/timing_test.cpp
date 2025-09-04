@@ -28,14 +28,16 @@ int main() {
             break;
         }
         
-        // Find best move (same logic as self-play tester)
+        // Find best move using stable MinimalEngine evaluation
         S_MOVE best_move = legal_moves.moves[0];
         int best_eval = -999999;
+        
+        Huginn::MinimalEngine engine;
         
         for (int i = 0; i < legal_moves.count; ++i) {
             Position temp_pos = pos;
             temp_pos.make_move_with_undo(legal_moves.moves[i]);
-            int eval = -Huginn::HybridEvaluator::evaluate(temp_pos);
+            int eval = -engine.evalPosition(temp_pos);
             
             if (eval > best_eval) {
                 best_eval = eval;

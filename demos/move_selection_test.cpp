@@ -1,4 +1,5 @@
 #include "../src/evaluation.hpp"
+#include "../src/minimal_search.hpp"
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include <iostream>
@@ -11,8 +12,9 @@ int main() {
     Position start_pos;
     start_pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
-    // Get baseline evaluation from White's perspective  
-    int baseline_eval = Huginn::HybridEvaluator::evaluate(start_pos);
+    // Get baseline evaluation from White's perspective using stable MinimalEngine
+    Huginn::MinimalEngine engine;
+    int baseline_eval = engine.evalPosition(start_pos);
     std::cout << "Starting position evaluation: " << baseline_eval << "cp (White's perspective)\n\n";
     
     std::cout << "WHITE OPENING MOVES (Starting Position)\n";
@@ -26,7 +28,7 @@ int main() {
         Position temp_pos = start_pos;
         temp_pos.make_move_with_undo(move);
         
-        int eval = Huginn::HybridEvaluator::evaluate(temp_pos);
+        int eval = engine.evalPosition(temp_pos);
         // Convert all evaluations to White's perspective for comparison
         int eval_from_white_perspective = (temp_pos.side_to_move == Color::White) ? eval : -eval;
         int baseline_from_white_perspective = (start_pos.side_to_move == Color::White) ? baseline_eval : -baseline_eval;
@@ -39,7 +41,7 @@ int main() {
             std::cout << "CLASSIC: e2-e4 = " << eval_change << "cp change (King's Pawn) [pos=" << eval << "cp]\n";
             
             // Debug breakdown for e2-e4
-            int pos_change = Huginn::HybridEvaluator::evaluate(temp_pos) - Huginn::HybridEvaluator::evaluate(start_pos);
+            int pos_change = engine.evalPosition(temp_pos) - engine.evalPosition(start_pos);
             // Individual component evaluation not exposed in unified evaluator
             std::cout << "  -> Positional change: " << pos_change << "cp (unified evaluation)\n";
         }
@@ -47,7 +49,7 @@ int main() {
             std::cout << "CLASSIC: d2-d4 = " << eval_change << "cp change (Queen's Pawn) [pos=" << eval << "cp]\n";
             
             // Debug breakdown for d2-d4
-            int pos_change = Huginn::HybridEvaluator::evaluate(temp_pos) - Huginn::HybridEvaluator::evaluate(start_pos);
+            int pos_change = engine.evalPosition(temp_pos) - engine.evalPosition(start_pos);
             // Individual component evaluation not exposed in unified evaluator
             std::cout << "  -> Positional change: " << pos_change << "cp (unified evaluation)\n";
         }
@@ -93,7 +95,7 @@ int main() {
         Position temp_pos = pos;
         temp_pos.make_move_with_undo(move);
         
-        int eval = -Huginn::HybridEvaluator::evaluate(temp_pos); // Negative because it's opponent's eval
+        int eval = -engine.evalPosition(temp_pos); // Negative because it's opponent's eval
         
         int from = move.get_from();
         int to = move.get_to();
