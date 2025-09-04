@@ -362,19 +362,6 @@ void MinimalEngine::init_mvv_lva() {
             }
         }
     }
-    
-    // Debug: Print MVV-LVA table (as shown in VICE tutorial)
-    std::cout << "MVV-LVA Scores:\n";
-    std::cout << "       None  Pawn Knight Bishop  Rook Queen  King\n";
-    for (int victim = 0; victim < 7; victim++) {
-        const char* victim_names[] = {"None", "Pawn", "Knight", "Bishop", "Rook", "Queen", "King"};
-        std::cout << victim_names[victim] << ": ";
-        for (int attacker = 0; attacker < 7; attacker++) {
-            std::cout << std::setw(6) << mvv_lva_scores[victim][attacker] << " ";
-        }
-        std::cout << "\n";
-    }
-    std::cout << std::endl;
 }
 
 // Get MVV-LVA score for a capture move

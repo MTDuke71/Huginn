@@ -16,9 +16,6 @@ PVTable::PVTable(size_t size_mb) {
     
     // Initialize by clearing (tutorial shows this in init)
     clear();
-    
-    std::cout << "PV Table initialized: " << table_size << " entries, " 
-              << memory_usage_mb() << " MB" << std::endl;
 }
 
 // Clear the table - set all keys and moves to zero (6:04 in tutorial)
