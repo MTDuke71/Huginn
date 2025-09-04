@@ -560,10 +560,38 @@ set_target_properties(test_vice_part60 PROPERTIES
 )
 
 # VICE Part 60: Basic Search Testing
-add_executable(test_basic_search test_basic_search.cpp ${HUGINN_MINIMAL_SOURCES})
+add_executable(test_basic_search 
+    test_basic_search.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
 target_compile_features(test_basic_search PRIVATE cxx_std_17)
 target_include_directories(test_basic_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(test_basic_search PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug test for basic search issues
+add_executable(debug_test_basic 
+    debug_test_basic.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(debug_test_basic PRIVATE cxx_std_17)
+target_include_directories(debug_test_basic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_test_basic PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
@@ -673,4 +701,27 @@ target_compile_features(test_pick_move_comparison PRIVATE cxx_std_17)
 target_include_directories(test_pick_move_comparison PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(test_pick_move_comparison PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# ======================================
+# CTest Registration
+# ======================================
+# Register all test executables with CTest
+
+# Core Tests
+add_test(NAME test_basic_search COMMAND test_basic_search)
+add_test(NAME test_mvv_lva COMMAND test_mvv_lva)
+add_test(NAME test_mvv_lva_search COMMAND test_mvv_lva_search) 
+add_test(NAME test_unified_search COMMAND test_unified_search)
+add_test(NAME test_legacy_warning COMMAND test_legacy_warning)
+
+# VICE Part 62 Tests
+add_test(NAME test_pick_move COMMAND test_pick_move)
+add_test(NAME test_pick_move_comparison COMMAND test_pick_move_comparison)
+
+# Set test properties
+set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
+                     test_legacy_warning test_pick_move test_pick_move_comparison
+    PROPERTIES
+    TIMEOUT 120  # 2 minutes timeout for each test
 )

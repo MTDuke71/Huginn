@@ -19,10 +19,10 @@ int main() {
     // Test 1: WAC1 - Mate in 3 position (4:04, 5:16)
     std::cout << "TEST 1: WAC1 - Mate in 3 Position\n";
     std::cout << "==================================\n";
-    std::cout << "FEN: 2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -\n";
+    std::cout << "FEN: 2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1\n";
     std::cout << "Expected: Qg6+ or similar forcing move leading to mate\n\n";
     
-    pos.set_from_fen("2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -");
+    pos.set_from_fen("2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1");
     
     // Search to depth 4 as mentioned in video (2:00)
     info = SearchInfo();
