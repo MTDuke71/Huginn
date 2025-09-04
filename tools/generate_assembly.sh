@@ -52,7 +52,6 @@ cp src/bitboard.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/movegen_enhanced.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/attack_detection.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/position.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
-cp src/evaluation.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/search.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/hybrid_evaluation.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
 cp src/simple_search.cpp "$ANALYSIS_DIR/cpp/" 2>/dev/null
@@ -82,7 +81,6 @@ echo "- bitboard.cpp/.s           (Bit manipulation)"
 echo "- movegen_enhanced.cpp/.s   (Move generation)"
 echo "- attack_detection.cpp/.s   (Attack calculations)"
 echo "- position.cpp/.s           (Position management)"
-echo "- evaluation.cpp/.s         (Position evaluation)"
 echo "- search.cpp/.s             (Search algorithm)"
 echo "- hybrid_evaluation.cpp/.s  (Advanced evaluation)"
 echo

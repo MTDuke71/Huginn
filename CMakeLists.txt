@@ -275,7 +275,6 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/position.cpp
-    src/evaluation.cpp
     src/minimal_search.cpp
 )
 
@@ -283,7 +282,6 @@ set(PERFORMANCE_CRITICAL_SOURCES
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp
-        src/evaluation.cpp
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -352,10 +350,9 @@ if(GTEST_FOUND)
     )
 
     add_executable(huginn_tests
-        ${TEST_SOURCES}
-        ${ENGINE_SOURCES}
-        src/evaluation.cpp
-        src/minimal_search.cpp
+    ${TEST_SOURCES}
+    ${ENGINE_SOURCES}
+    src/minimal_search.cpp
     )
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
@@ -441,7 +438,6 @@ foreach(demo_name ${DEMO_NAMES})
         SOURCES
             ${demo_source}
             ${demo_sources}
-            src/evaluation.cpp
             src/minimal_search.cpp
         INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -603,7 +599,6 @@ add_executable(eval_analysis
     src/pvtable.cpp
     ${COMMON_SOURCES}
     src/position.cpp
-    src/evaluation.cpp
     src/movegen_enhanced.cpp
     src/board.cpp
     src/attack_detection.cpp
@@ -621,7 +616,6 @@ add_executable(development_test
     src/pvtable.cpp
     ${COMMON_SOURCES}
     src/position.cpp
-    src/evaluation.cpp
     src/movegen_enhanced.cpp
     src/board.cpp
     src/attack_detection.cpp
@@ -639,7 +633,6 @@ add_executable(deep_search_test
     src/pvtable.cpp
     ${COMMON_SOURCES}
     src/position.cpp
-    src/evaluation.cpp
     src/movegen_enhanced.cpp
     src/board.cpp
     src/attack_detection.cpp

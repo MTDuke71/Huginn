@@ -111,36 +111,6 @@ enum class GamePhase {
     Middlegame,
     Endgame
 };
-
-class HybridEvaluator {
-public:
-    // Main evaluation function
-    static int evaluate(const Position& pos);
-    
-    // Helper functions
-    static GamePhase get_game_phase(const Position& pos);
-    static int mirror_square(int sq64);
-    static int square120_to_64(int sq120);
-    static int square64_to_120(int sq64);
-    
-private:
-    // Evaluation components
-    static int evaluate_material(const Position& pos, GamePhase phase);
-    static int evaluate_piece_square_tables(const Position& pos, GamePhase phase);
-    static int evaluate_pawn_structure(const Position& pos);
-    static int evaluate_piece_activity(const Position& pos, GamePhase phase);
-    static int evaluate_king_safety(const Position& pos, GamePhase phase);
-    static int evaluate_development(const Position& pos, GamePhase phase);
-    static int evaluate_mobility(const Position& pos, GamePhase phase);
-    
-    // Helper functions for specific evaluations
-    static bool is_passed_pawn(const Position& pos, int sq120, Color color);
-    static bool is_isolated_pawn(const Position& pos, int sq120, Color color);
-    static bool is_doubled_pawn(const Position& pos, int sq120, Color color);
-    static bool is_knight_outpost(const Position& pos, int sq120, Color color);
-    static bool is_open_file(const Position& pos, int file);
-    static int count_king_attackers(const Position& pos, int king_sq, Color attacking_color);
-    static int count_developed_pieces(const Position& pos, Color color);
-};
+// HybridEvaluator removed: keep EvalParams and GamePhase for MinimalEngine
 
 } // namespace Huginn

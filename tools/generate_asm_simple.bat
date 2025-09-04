@@ -14,7 +14,7 @@ echo Generating assembly for performance-critical files...
 echo.
 
 :: Define files to process
-set FILES=bitboard movegen_enhanced attack_detection position evaluation search
+set FILES=bitboard movegen_enhanced attack_detection position search
 
 :: Copy include paths from successful build
 set INCLUDES=/I"src" /I"src"
@@ -70,7 +70,6 @@ echo - bitboard.cpp/.asm        (Bit manipulation)
 echo - movegen_enhanced.cpp/.asm (Move generation)
 echo - attack_detection.cpp/.asm (Attack calculations)
 echo - position.cpp/.asm        (Position management)
-echo - evaluation.cpp/.asm      (Position evaluation)
 echo - search.cpp/.asm          (Search algorithm)
 echo - hybrid_evaluation.cpp/.asm (Advanced evaluation)
 echo.

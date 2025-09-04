@@ -57,7 +57,6 @@ copy "src\bitboard.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\movegen_enhanced.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\attack_detection.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\position.cpp" "%ANALYSIS_DIR%\cpp\" >nul
-copy "src\evaluation.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\search.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\hybrid_evaluation.cpp" "%ANALYSIS_DIR%\cpp\" >nul
 copy "src\simple_search.cpp" "%ANALYSIS_DIR%\cpp\" >nul
@@ -87,7 +86,6 @@ echo - bitboard.cpp/.asm        (Bit manipulation)
 echo - movegen_enhanced.cpp/.asm (Move generation)
 echo - attack_detection.cpp/.asm (Attack calculations)
 echo - position.cpp/.asm        (Position management)
-echo - evaluation.cpp/.asm      (Position evaluation)
 echo - search.cpp/.asm          (Search algorithm)
 echo - hybrid_evaluation.cpp/.asm (Advanced evaluation)
 echo.
