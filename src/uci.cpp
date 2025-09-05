@@ -141,22 +141,53 @@ std::vector<std::string> UCIInterface::split_string(const std::string& str) {
 
 void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     if (tokens.size() < 2) return;
+    
     size_t move_index = 0;
-    if (tokens[1] == "startpos") { position.set_startpos(); move_index = 2; }
+    
+    if (tokens[1] == "startpos") {
+        position.set_startpos();
+        move_index = 2;
+    }
     else if (tokens[1] == "fen") {
-        if (tokens.size() < 8) return;
+        if (tokens.size() < 3) return; // Need at least "position fen [something]"
+        
+        // Build FEN string from tokens until we find "moves" or reach end
         std::string fen;
-        for (size_t i = 2; i < 8 && i < tokens.size(); ++i) { if (i > 2) fen += ' '; fen += tokens[i]; }
-        if (!position.set_from_fen(fen)) { if (debug_mode) std::cout << "info string Invalid FEN: " << fen << std::endl; return; }
-        move_index = 8;
+        size_t i = 2;
+        while (i < tokens.size() && tokens[i] != "moves") {
+            if (i > 2) fen += ' ';
+            fen += tokens[i];
+            i++;
+        }
+        
+        if (fen.empty()) {
+            if (debug_mode) std::cout << "info string Empty FEN string" << std::endl;
+            return;
+        }
+        
+        if (!position.set_from_fen(fen)) {
+            if (debug_mode) std::cout << "info string Invalid FEN: " << fen << std::endl;
+            return;
+        }
+        
+        move_index = i; // Points to "moves" or end of tokens
+    }
+    else {
+        if (debug_mode) std::cout << "info string Unknown position type: " << tokens[1] << std::endl;
+        return;
     }
 
+    // Process moves if present
     if (move_index < tokens.size() && tokens[move_index] == "moves") {
         for (size_t i = move_index + 1; i < tokens.size(); ++i) {
             S_MOVE move = parse_uci_move(tokens[i], position);
             if (move.move != 0) {
-                if (position.MakeMove(move) != 1) { if (debug_mode) std::cout << "info string Illegal move: " << tokens[i] << std::endl; }
-            } else if (debug_mode) { std::cout << "info string Invalid move: " << tokens[i] << std::endl; }
+                if (position.MakeMove(move) != 1) {
+                    if (debug_mode) std::cout << "info string Illegal move: " << tokens[i] << std::endl;
+                }
+            } else if (debug_mode) {
+                std::cout << "info string Invalid move: " << tokens[i] << std::endl;
+            }
         }
     }
 
