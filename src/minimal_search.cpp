@@ -787,6 +787,18 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         return quiescence(pos, alpha, beta, info);  // Enter quiescence search at leaf nodes
     }
     
+    // VICE Part 76: In check extension (3:01)
+    // If the side to move is in check, extend the search depth by 1
+    // This helps prevent the engine from getting checkmated by forcing sequences
+    bool in_check = false;
+    int king_sq = pos.king_sq[int(pos.side_to_move)];
+    if (king_sq >= 0) {
+        in_check = SqAttacked(king_sq, pos, !pos.side_to_move);
+        if (in_check) {
+            depth++; // Extend search depth when in check
+        }
+    }
+    
     // Periodically check time and node limits
     if ((info.nodes & 2047) == 0) {  // Check every 2048 nodes
         checkup(info);
