@@ -266,6 +266,7 @@ set(ENGINE_SOURCES
     src/uci.cpp
     src/uci_utils.cpp
     src/minimal_search.cpp
+    src/input_checking.cpp
     src/pvtable.cpp
 )
 
@@ -351,6 +352,7 @@ if(GTEST_FOUND)
     test/test_uci_time_param_gtest.cpp
     test/test_uci_position_parsing.cpp
     test/test_uci_go_parsing.cpp
+    test/test_input_checking.cpp
     )
 
     add_executable(huginn_tests

@@ -3,6 +3,7 @@
 #include "chess_types.hpp"
 #include "attack_detection.hpp"
 #include "board120.hpp"
+#include "input_checking.hpp"
 #include <iostream>
 #include <algorithm>
 #include <iomanip>  // For std::setw
@@ -722,6 +723,11 @@ int MinimalEngine::evalPosition(const Position& pos) {
 void MinimalEngine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
+    
+    // VICE Part 70: Check for GUI input during search (3:23)
+    if (input_is_waiting()) {
+        read_input(info);
+    }
     
     // Skip time management if this is a depth-only search (UCI go depth command)
     if (info.depth_only) return;
