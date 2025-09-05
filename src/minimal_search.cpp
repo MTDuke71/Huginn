@@ -795,17 +795,16 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     if (info.stopped || info.quit) {
         return 0;
     }
-    
-    // Check for repetition
-    if (isRepetition(pos)) {
-        return 0; // Draw score
-    }
-    
-    // Generate all legal moves
+
+    // Generate all legal moves first
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
     
-    // No legal moves (checkmate or stalemate)
+    // Check for repetition - but only after we ensure we have moves to try
+    // This prevents returning draw score at root before storing any PV move (VICE fix)
+    if (!isRoot && isRepetition(pos)) {
+        return 0; // Draw score
+    }    // No legal moves (checkmate or stalemate)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
