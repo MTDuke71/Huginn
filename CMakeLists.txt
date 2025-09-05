@@ -350,6 +350,7 @@ if(GTEST_FOUND)
     test/test_uci_time_and_stop_gtest.cpp
     test/test_uci_time_param_gtest.cpp
     test/test_uci_position_parsing.cpp
+    test/test_uci_go_parsing.cpp
     )
 
     add_executable(huginn_tests
