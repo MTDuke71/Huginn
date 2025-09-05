@@ -12,6 +12,9 @@
 #include "movegen_enhanced.hpp"
 #include "minimal_search.hpp"  // Changed from search.hpp
 
+// UCI constants following VICE Part 67 recommendations
+constexpr int UCI_INPUT_BUFFER_SIZE = 400 * 6; // Large buffer for GUI commands
+
 // UCI (Universal Chess Interface) implementation for Huginn chess engine
 class UCIInterface {
 private:

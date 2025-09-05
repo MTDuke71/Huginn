@@ -16,6 +16,10 @@ UCIInterface::UCIInterface() {
 }
 
 void UCIInterface::run() {
+    // Set stdin and stdout to unbuffered mode for immediate GUI communication
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    
     std::string line;
     while (std::getline(std::cin, line)) {
         if (line.empty()) continue;
@@ -50,10 +54,18 @@ void UCIInterface::run() {
             if (debug_mode) std::cout << "info string New game started" << std::endl;
         }
         else if (command == "position") {
-            handle_position(tokens);
+            try {
+                handle_position(tokens);
+            } catch (const std::exception& e) {
+                if (debug_mode) std::cout << "info string Error in position command: " << e.what() << std::endl;
+            }
         }
         else if (command == "go") {
-            handle_go(tokens);
+            try {
+                handle_go(tokens);
+            } catch (const std::exception& e) {
+                if (debug_mode) std::cout << "info string Error in go command: " << e.what() << std::endl;
+            }
         }
         else if (command == "d") {
             // Debug display
@@ -95,6 +107,7 @@ void UCIInterface::run() {
                 info_ptr->stop_time = std::chrono::high_resolution_clock::now();
                 info_ptr->stopped = true;
             }
+            std::cout.flush(); // Ensure immediate response to GUI
         }
         else if (command == "ponderhit") {
             if (debug_mode) std::cout << "info string Ponder hit" << std::endl;
