@@ -259,6 +259,8 @@ set(COMMON_SOURCES
     src/chess_types.cpp
     src/evaluation.cpp
     src/input_checking.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
 )
 
 set(ENGINE_SOURCES
@@ -866,6 +868,16 @@ add_executable(isolated_pawn_demo
 target_compile_features(isolated_pawn_demo PRIVATE cxx_std_17)
 target_include_directories(isolated_pawn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(isolated_pawn_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(mirror_board_demo 
+    demos/mirror_board_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(mirror_board_demo PRIVATE cxx_std_17)
+target_include_directories(mirror_board_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(mirror_board_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 

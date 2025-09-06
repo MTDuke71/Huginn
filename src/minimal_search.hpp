@@ -81,6 +81,10 @@ public:  // Make members public for easier access
     // Helper functions for evaluation (Part 56)
     static int mirror_square_64(int sq64);
     
+    // VICE Tutorial: Mirror Board function for evaluation testing
+    // Creates a mirrored copy of the position for symmetry testing
+    Position mirrorBoard(const Position& pos);
+    
     // Time checking
     bool time_up() const;
     void check_up(SearchInfo& info);

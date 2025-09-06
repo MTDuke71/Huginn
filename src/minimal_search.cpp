@@ -10,6 +10,34 @@
 
 namespace Huginn {
 
+// VICE Tutorial: Mirror arrays for evaluation symmetry testing
+// mirror64: maps 64-square indices to their vertical mirror (rank 1 <-> rank 8)
+static const int mirror64[64] = {
+    56, 57, 58, 59, 60, 61, 62, 63,  // rank 1 -> rank 8
+    48, 49, 50, 51, 52, 53, 54, 55,  // rank 2 -> rank 7
+    40, 41, 42, 43, 44, 45, 46, 47,  // rank 3 -> rank 6
+    32, 33, 34, 35, 36, 37, 38, 39,  // rank 4 -> rank 5
+    24, 25, 26, 27, 28, 29, 30, 31,  // rank 5 -> rank 4
+    16, 17, 18, 19, 20, 21, 22, 23,  // rank 6 -> rank 3
+     8,  9, 10, 11, 12, 13, 14, 15,  // rank 7 -> rank 2
+     0,  1,  2,  3,  4,  5,  6,  7   // rank 8 -> rank 1
+};
+
+// Function to swap piece colors using the bit-packed Piece enum
+Piece swapPieceColor(Piece piece) {
+    if (piece == Piece::None || piece == Piece::Offboard) return piece;
+    
+    // Extract color and piece type
+    Color color = color_of(piece);
+    PieceType type = type_of(piece);
+    
+    // Flip the color
+    Color new_color = (color == Color::White) ? Color::Black : Color::White;
+    
+    // Create the new piece with flipped color
+    return make_piece(new_color, type);
+}
+
 int MinimalEngine::evaluate(const Position& pos) {
     // VICE Part 56: Basic Evaluation with piece-square tables
     int score = 0;
@@ -233,6 +261,66 @@ int MinimalEngine::evaluate(const Position& pos) {
 int MinimalEngine::mirror_square_64(int sq64) {
     if (sq64 < 0 || sq64 > 63) return sq64;
     return ((7 - (sq64 / 8)) * 8) + (sq64 % 8);
+}
+
+// VICE Tutorial: Mirror Board function for evaluation testing
+// Creates a mirrored copy of the position for symmetry testing
+Position MinimalEngine::mirrorBoard(const Position& pos) {
+    Position mirrored_pos;
+    
+    // Clear the board first
+    for (int sq = 0; sq < 120; ++sq) {
+        mirrored_pos.board[sq] = pos.board[sq] == Piece::Offboard ? Piece::Offboard : Piece::None;
+    }
+    
+    // Mirror all pieces on the board
+    for (int sq = 21; sq <= 98; ++sq) {
+        if (pos.board[sq] == Piece::Offboard || pos.board[sq] == Piece::None) continue;
+        
+        // Convert 120-square to 64-square, mirror it, then back to 120-square
+        int sq64 = MAILBOX_MAPS.to64[sq];
+        if (sq64 < 0) continue; // Invalid square
+        
+        int mirrored_sq64 = mirror64[sq64];
+        int mirrored_sq120 = MAILBOX_MAPS.to120[mirrored_sq64];
+        
+        // Swap the piece color using the proper function
+        Piece original_piece = pos.board[sq];
+        mirrored_pos.board[mirrored_sq120] = swapPieceColor(original_piece);
+    }
+    
+    // Flip the side to move
+    mirrored_pos.side_to_move = (pos.side_to_move == Color::White) ? Color::Black : Color::White;
+    
+    // Mirror castling permissions
+    mirrored_pos.castling_rights = 0;
+    if (pos.castling_rights & CASTLE_WK) mirrored_pos.castling_rights |= CASTLE_BK;
+    if (pos.castling_rights & CASTLE_WQ) mirrored_pos.castling_rights |= CASTLE_BQ;
+    if (pos.castling_rights & CASTLE_BK) mirrored_pos.castling_rights |= CASTLE_WK;
+    if (pos.castling_rights & CASTLE_BQ) mirrored_pos.castling_rights |= CASTLE_WQ;
+    
+    // Mirror en passant square
+    if (pos.ep_square >= 0) {
+        int ep_sq64 = MAILBOX_MAPS.to64[pos.ep_square];
+        if (ep_sq64 >= 0) {
+            int mirrored_ep_sq64 = mirror64[ep_sq64];
+            mirrored_pos.ep_square = MAILBOX_MAPS.to120[mirrored_ep_sq64];
+        } else {
+            mirrored_pos.ep_square = -1;
+        }
+    } else {
+        mirrored_pos.ep_square = -1;
+    }
+    
+    // Copy other fields
+    mirrored_pos.halfmove_clock = pos.halfmove_clock;
+    mirrored_pos.fullmove_number = pos.fullmove_number;
+    
+    // Rebuild derived state for the mirrored position
+    mirrored_pos.rebuild_counts();
+    mirrored_pos.update_zobrist_key();
+    
+    return mirrored_pos;
 }
 
 bool MinimalEngine::time_up() const {
