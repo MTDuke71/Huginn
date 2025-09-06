@@ -144,14 +144,16 @@
         {
             "name": "msvc-x64-debug",
             "configurePreset": "msvc-x64-debug",
-            "displayName": "Build MSVC x64 Debug"
+            "displayName": "Build MSVC x64 Debug",
+            "jobs": 24
         },
         {
             "name": "msvc-x64-release",
             "configurePreset": "msvc-x64-release",
             "displayName": "Build MSVC x64 Release",
             "configuration": "Release",
-            "targets": ["ALL_BUILD"]
+            "targets": ["ALL_BUILD"],
+            "jobs": 24
         },
         {
             "name": "msvc-x64-release-asm",
