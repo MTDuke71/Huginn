@@ -818,6 +818,57 @@ set_target_properties(test_uci_time_and_stop PROPERTIES
 
 add_test(NAME test_uci_time_and_stop COMMAND test_uci_time_and_stop)
 
+# ---- Pawn Mask Demo Executables ----
+add_executable(simple_pawn_demo 
+    demos/simple_pawn_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(simple_pawn_demo PRIVATE cxx_std_17)
+target_include_directories(simple_pawn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(simple_pawn_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(pawn_mask_demo 
+    demos/pawn_mask_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_mask_demo PRIVATE cxx_std_17)
+target_include_directories(pawn_mask_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_mask_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(pawn_mask_analysis 
+    demos/pawn_mask_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_mask_analysis PRIVATE cxx_std_17)
+target_include_directories(pawn_mask_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_mask_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(key_square_demo 
+    demos/key_square_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(key_square_demo PRIVATE cxx_std_17)
+target_include_directories(key_square_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(key_square_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(isolated_pawn_demo 
+    demos/isolated_pawn_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(isolated_pawn_demo PRIVATE cxx_std_17)
+target_include_directories(isolated_pawn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(isolated_pawn_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Set test properties
 set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
                      test_legacy_warning test_pick_move test_pick_move_comparison test_move_ordering
