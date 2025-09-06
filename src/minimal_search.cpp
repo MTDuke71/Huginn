@@ -56,11 +56,11 @@ int MinimalEngine::evaluate(const Position& pos) {
         int material_value = 0;
         switch (piece_type) {
             case PieceType::Pawn:   material_value = 100; break;
-            case PieceType::Knight: material_value = 325; break;
-            case PieceType::Bishop: material_value = 325; break;
-            case PieceType::Rook:   material_value = 550; break;
-            case PieceType::Queen:  material_value = 1000; break;
-            case PieceType::King:   material_value = 0; break; // King has no material value
+            case PieceType::Knight: material_value = 320; break;
+            case PieceType::Bishop: material_value = 330; break;
+            case PieceType::Rook:   material_value = 500; break;
+            case PieceType::Queen:  material_value = 900; break;
+            case PieceType::King:   material_value = 20000; break;
             default: material_value = 0; break;
         }
         
@@ -70,17 +70,15 @@ int MinimalEngine::evaluate(const Position& pos) {
         
         // Get piece-square table value
         int pst_value = 0;
-        if (piece_color == Color::Black) {
-            sq64 = mirror_square_64(sq64); // Mirror for black pieces
-        }
+        int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
         
         switch (piece_type) {
-            case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[sq64]; break;
-            case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[sq64]; break;
-            case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[sq64]; break;
-            case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[sq64]; break;
-            case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[sq64]; break;
-            case PieceType::King:   pst_value = EvalParams::KING_TABLE[sq64]; break;
+            case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
+            case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
+            case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
+            case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
+            case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
+            case PieceType::King:   pst_value = EvalParams::KING_TABLE[table_index]; break;
             default: pst_value = 0; break;
         }
         
@@ -94,106 +92,13 @@ int MinimalEngine::evaluate(const Position& pos) {
         }
     }
     
-    // === COMMENTED OUT: All Advanced Evaluation Features ===
-    // We're building up evaluation step by step, starting with just Material + PST
-    
-    /*
-    // Simple development bonus to discourage excessive pawn moves
-    // Count developed pieces (not on starting squares)
-    int white_development = 0;
-    int black_development = 0;
-    
-    // Using direct 120-square board indices (safer than sq() function calls)
-    // b1=22, g1=27, b8=92, g8=97 for knights
-    // c1=23, f1=26, c8=93, f8=96 for bishops  
-    // e1=25, e8=95 for kings
-    
-    // Check if knights are developed (not on starting squares)
-    if (pos.board[22] != Piece::WhiteKnight) white_development += 50; // b1
-    if (pos.board[27] != Piece::WhiteKnight) white_development += 50; // g1
-    if (pos.board[92] != Piece::BlackKnight) black_development += 50; // b8
-    if (pos.board[97] != Piece::BlackKnight) black_development += 50; // g8
-    
-    // Check if bishops are developed (not on starting squares)
-    if (pos.board[23] != Piece::WhiteBishop) white_development += 30; // c1
-    if (pos.board[26] != Piece::WhiteBishop) white_development += 30; // f1
-    if (pos.board[93] != Piece::BlackBishop) black_development += 30; // c8
-    if (pos.board[96] != Piece::BlackBishop) black_development += 30; // f8
-    
-    // Bonus for castling (king not on starting square)
-    if (pos.board[25] != Piece::WhiteKing) white_development += 40; // e1
-    if (pos.board[95] != Piece::BlackKing) black_development += 40; // e8
-    
-    score += white_development - black_development;
-    
-    // Center control bonus - encourage e4/d4 instead of e3/d3
-    // Give bonus for pawns controlling center squares
-    int center_bonus = 0;
-    
-    // Direct indices: e4=54, d4=53, e5=64, d5=65, e3=44, d3=43, e6=74, d6=75
-    // MASSIVE bonuses for 4th rank center pawns
-    if (pos.board[54] == Piece::WhitePawn) center_bonus += 100; // e4
-    if (pos.board[53] == Piece::WhitePawn) center_bonus += 100; // d4
-    if (pos.board[64] == Piece::BlackPawn) center_bonus -= 100; // e5  
-    if (pos.board[65] == Piece::BlackPawn) center_bonus -= 100; // d5
-    
-    // Small bonus for supporting center from 3rd rank
-    if (pos.board[44] == Piece::WhitePawn) center_bonus += 20; // e3
-    if (pos.board[43] == Piece::WhitePawn) center_bonus += 20; // d3
-    if (pos.board[74] == Piece::BlackPawn) center_bonus -= 20; // e6
-    if (pos.board[75] == Piece::BlackPawn) center_bonus -= 20; // d6
-    
-    score += center_bonus;
-    
-    // Opening principles: penalty for moving pawns off starting squares early
-    // This discourages excessive pawn pushes like h3, a3, h4, etc.
-    int pawn_penalty = 0;
-    
-    // Count pawns that have moved from starting positions
-    int white_pawn_moves = 0;
-    
-    // White starting pawns on rank 2 (a2=31, b2=32, ..., h2=38)
-    for (int sq = 31; sq <= 38; ++sq) {
-        if (pos.board[sq] != Piece::WhitePawn) {
-            white_pawn_moves++;
-        }
-    }
-    
-    // Black starting pawns on rank 7 (a7=81, b7=82, ..., h7=88)
-    for (int sq = 81; sq <= 88; ++sq) {
-        if (pos.board[sq] != Piece::BlackPawn) {
-            black_pawn_moves++;
-        }
-    }
-    
-    // Penalty increases with number of pawn moves (discourage pawn-heavy openings)
-    // MASSIVE penalties to prevent 16-move pawn marathons!
-    if (white_pawn_moves > 2) {
-        int excess = white_pawn_moves - 2;
-        pawn_penalty += excess * 50 + (excess * excess * 25); // Exponential penalty!
-    }
-    if (black_pawn_moves > 2) {
-        int excess = black_pawn_moves - 2;
-        pawn_penalty -= excess * 50 + (excess * excess * 25); // Exponential penalty!
-    }
-    
-    // Additional tempo penalty: heavily discourage undeveloped pieces in mid-game
-    // If we have many pawn moves but no piece development, apply severe penalty
-    int tempo_penalty = 0;
-    if (white_pawn_moves >= 4 && white_development < 50) {
-        tempo_penalty += 200; // Huge penalty for pawn-heavy, piece-light positions
-    }
-    if (black_pawn_moves >= 4 && black_development < 50) {
-        tempo_penalty -= 200; // Huge penalty for pawn-heavy, piece-light positions
-    }
-    
-    score -= tempo_penalty;
-    
-    score -= pawn_penalty;
-    
-    // VICE Part 77: Add pawn structure evaluation using bitboard masks (4:11)
-    // Evaluate passed pawns and isolated pawns
+    // VICE Part 80: Enhanced pawn structure evaluation with pre-computed masks
+    // Evaluate isolated pawns (2:13, 3:07) and passed pawns (2:21, 4:25)
     int pawn_structure_score = 0;
+    
+    // Get bitboards for efficient pawn structure analysis
+    uint64_t white_pawns = pos.get_white_pawns();
+    uint64_t black_pawns = pos.get_black_pawns();
     
     // Check all pawns for isolated and passed pawn characteristics
     for (int sq64 = 0; sq64 < 64; ++sq64) {
@@ -201,62 +106,37 @@ int MinimalEngine::evaluate(const Position& pos) {
         Piece piece = pos.board[sq120];
         
         if (piece == Piece::WhitePawn) {
-            // Check for isolated pawn
             int file = sq64 % 8;
-            uint64_t white_pawns = pos.get_white_pawns();
-            uint64_t adjacent_files_mask = EvalParams::ISOLATED_PAWN_MASKS[file];
-            if ((white_pawns & adjacent_files_mask) == 0) {
+            int rank = sq64 / 8;
+            
+            // Check for isolated pawn using pre-computed masks (3:07)
+            if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file]) == 0) {
                 pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
             }
             
-            // Check for passed pawn
-            int rank = sq64 / 8;
-            uint64_t black_pawns = pos.get_black_pawns();
-            uint64_t passed_mask = 0ULL;
-            
-            // Create mask for squares that must be clear for white pawn to be passed
-            for (int r = rank + 1; r <= 7; ++r) {
-                passed_mask |= (1ULL << (r * 8 + file)); // Same file
-                if (file > 0) passed_mask |= (1ULL << (r * 8 + file - 1)); // Left adjacent
-                if (file < 7) passed_mask |= (1ULL << (r * 8 + file + 1)); // Right adjacent
-            }
-            
-            if ((black_pawns & passed_mask) == 0) {
+            // Check for passed pawn using pre-computed masks (4:25)
+            if ((black_pawns & EvalParams::WHITE_PASSED_PAWN_MASKS[sq64]) == 0) {
                 pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank];
             }
             
         } else if (piece == Piece::BlackPawn) {
-            // Check for isolated pawn
             int file = sq64 % 8;
-            uint64_t black_pawns = pos.get_black_pawns();
-            uint64_t adjacent_files_mask = EvalParams::ISOLATED_PAWN_MASKS[file];
-            if ((black_pawns & adjacent_files_mask) == 0) {
+            int rank = sq64 / 8;
+            
+            // Check for isolated pawn using pre-computed masks  
+            if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file]) == 0) {
                 pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY; // Penalty for black
             }
             
-            // Check for passed pawn
-            int rank = sq64 / 8;
-            uint64_t white_pawns = pos.get_white_pawns();
-            uint64_t passed_mask = 0ULL;
-            
-            // Create mask for squares that must be clear for black pawn to be passed
-            for (int r = rank - 1; r >= 0; --r) {
-                passed_mask |= (1ULL << (r * 8 + file)); // Same file
-                if (file > 0) passed_mask |= (1ULL << (r * 8 + file - 1)); // Left adjacent
-                if (file < 7) passed_mask |= (1ULL << (r * 8 + file + 1)); // Right adjacent
-            }
-            
-            if ((white_pawns & passed_mask) == 0) {
-                int mirror_rank = 7 - rank; // Mirror rank for black
+            // Check for passed pawn using pre-computed masks
+            if ((white_pawns & EvalParams::BLACK_PASSED_PAWN_MASKS[sq64]) == 0) {
+                int mirror_rank = 7 - rank; // Mirror rank for black (rank increases as black advances)
                 pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank]; // Bonus for black
             }
         }
     }
     
     score += pawn_structure_score;
-    */
-    
-    // === END COMMENTED OUT FEATURES ===
     
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
@@ -327,6 +207,31 @@ Position MinimalEngine::mirrorBoard(const Position& pos) {
     mirrored_pos.update_zobrist_key();
     
     return mirrored_pos;
+}
+
+// VICE Part 80: Mirror evaluation test for debugging symmetry issues
+// Tests if evaluation is symmetric when board is mirrored (0:15, 0:31)
+void MinimalEngine::MirrorAvailTest(const Position& pos) {
+    std::cout << "\n=== Mirror Evaluation Test ===" << std::endl;
+    
+    // Evaluate original position
+    int eval1 = evalPosition(pos);
+    std::cout << "Original position eval: " << eval1 << " cp" << std::endl;
+    
+    // Create mirrored position and evaluate
+    Position mirrored = mirrorBoard(pos);
+    int eval2 = evalPosition(mirrored);
+    std::cout << "Mirrored position eval: " << eval2 << " cp" << std::endl;
+    
+    // The evaluations should be equal for symmetric evaluation function
+    if (eval1 == eval2) {
+        std::cout << "✓ PASS: Evaluation is symmetric!" << std::endl;
+    } else {
+        std::cout << "✗ FAIL: Evaluation asymmetry detected!" << std::endl;
+        std::cout << "Difference: " << abs(eval1 - eval2) << " cp" << std::endl;
+        std::cout << "This indicates a bug in the evaluation function." << std::endl;
+    }
+    std::cout << "=========================" << std::endl;
 }
 
 bool MinimalEngine::time_up() const {

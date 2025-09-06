@@ -483,3 +483,71 @@ target_include_directories(test_position_parsing PRIVATE ${CMAKE_CURRENT_SOURCE_
 set_target_properties(test_position_parsing PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# VICE Part 80 Demo - Enhanced evaluation with isolated/passed pawns and mirror test
+add_executable(test_part80_demo 
+    test_part80_demo.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_part80_demo PRIVATE cxx_std_17)
+target_include_directories(test_part80_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_part80_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug mirror test failure
+add_executable(debug_mirror_test 
+    debug_mirror_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(debug_mirror_test PRIVATE cxx_std_17)
+target_include_directories(debug_mirror_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_mirror_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Test symmetric evaluation only
+add_executable(test_symmetric_eval 
+    test_symmetric_eval.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_symmetric_eval PRIVATE cxx_std_17)
+target_include_directories(test_symmetric_eval PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_symmetric_eval PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Mirror evaluation test for all positions in mirror.epd
+add_executable(mirror_eval_test 
+    mirror_eval_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(mirror_eval_test PRIVATE cxx_std_17)
+target_include_directories(mirror_eval_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(mirror_eval_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)

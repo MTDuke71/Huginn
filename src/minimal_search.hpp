@@ -85,6 +85,9 @@ public:  // Make members public for easier access
     // Creates a mirrored copy of the position for symmetry testing
     Position mirrorBoard(const Position& pos);
     
+    // VICE Part 80: Mirror evaluation test for debugging symmetry issues
+    void MirrorAvailTest(const Position& pos);
+    
     // Time checking
     bool time_up() const;
     void check_up(SearchInfo& info);

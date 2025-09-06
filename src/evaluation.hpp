@@ -35,7 +35,7 @@ inline constexpr int KNIGHT_OUTPOST_BONUS = 25;
 inline constexpr int BISHOP_PAIR_BONUS = 50;
 inline constexpr int ROOK_OPEN_FILE_BONUS = 15;
 
-inline constexpr int ISOLATED_PAWN_PENALTY = 25;  // Increased penalty
+inline constexpr int ISOLATED_PAWN_PENALTY = 10;  // VICE Part 80: Matches original VICE value
 inline constexpr int DOUBLED_PAWN_PENALTY = 20;    // Increased penalty
 
 inline constexpr int MOBILITY_WEIGHT_DEFAULT = 5;
@@ -118,7 +118,7 @@ inline constexpr std::array<int, 64> KING_TABLE_ENDGAME = {
     -50, -10, 0,  0,  0,  0,  -10, -50};
 
 inline constexpr std::array<int, 8> PASSED_PAWN_BONUS = {0,  5,  10,  20,
-                                                         35, 60, 100, 0};
+                                                         35, 60, 100, 200};
 
 // VICE Part 77: Evaluation masks for pawn structure analysis (2:00)
 // These bitboards help identify passed pawns and isolated pawns
