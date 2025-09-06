@@ -337,6 +337,7 @@ if(GTEST_FOUND)
         test/test_incremental_updates.cpp
         test/test_zobrist_incremental.cpp
         test/test_material_tracking.cpp
+        test/test_debug_validation.cpp
         test/test_fen_generation.cpp
         test/test_sq_attacked.cpp
         test/test_sq_attacked_performance.cpp
@@ -429,8 +430,6 @@ endif()
 message(STATUS "Output directory: ${CMAKE_BINARY_DIR}/bin")
 message(STATUS "=====================================")
 
-# ---- Essential Test Executables ----
-
 # Test executable for VICE Part 57 - clearForSearch
 add_executable(test_clearforsearch 
     test_clearforsearch.cpp
@@ -467,19 +466,478 @@ set_target_properties(test_basic_search PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Test position parsing
-add_executable(test_position_parsing 
-    test_position_parsing.cpp
+# Debug test for basic search issues
+add_executable(debug_test_basic 
+    debug_test_basic.cpp
     src/minimal_search.cpp
     src/pvtable.cpp
     ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
     src/board.cpp
     src/position.cpp
     src/attack_detection.cpp
     src/debug.cpp
 )
-target_compile_features(test_position_parsing PRIVATE cxx_std_17)
-target_include_directories(test_position_parsing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set_target_properties(test_position_parsing PROPERTIES
+target_compile_features(debug_test_basic PRIVATE cxx_std_17)
+target_include_directories(debug_test_basic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_test_basic PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Evaluation Analysis Tool
+add_executable(eval_analysis 
+    debug/eval_analysis.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(eval_analysis PRIVATE cxx_std_17)
+target_include_directories(eval_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(eval_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Development vs Pawn Move Test
+add_executable(development_test 
+    debug/development_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(development_test PRIVATE cxx_std_17)
+target_include_directories(development_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(development_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Deep Search Evaluation Test
+add_executable(deep_search_test 
+    debug/deep_search_test.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/position.cpp
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/attack_detection.cpp
+)
+target_compile_features(deep_search_test PRIVATE cxx_std_17)
+target_include_directories(deep_search_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(deep_search_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+
+# MVV-LVA Move Ordering Test
+add_executable(test_mvv_lva 
+    debug/test_mvv_lva.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_mvv_lva PRIVATE cxx_std_17)
+target_include_directories(test_mvv_lva PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_mvv_lva PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# MVV-LVA Search Efficiency Test
+add_executable(test_mvv_lva_search 
+    debug/test_mvv_lva_search.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_mvv_lva_search PRIVATE cxx_std_17)
+target_include_directories(test_mvv_lva_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_mvv_lva_search PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Unified Search System Test
+add_executable(test_unified_search 
+    debug/test_unified_search.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_unified_search PRIVATE cxx_std_17)
+target_include_directories(test_unified_search PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_unified_search PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Legacy alpha_beta Warning Test
+add_executable(test_legacy_warning 
+    debug/test_legacy_warning.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_legacy_warning PRIVATE cxx_std_17)
+target_include_directories(test_legacy_warning PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_legacy_warning PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 62: Pick Move Test - Move Ordering Improvement
+add_executable(test_pick_move 
+    debug/test_pick_move.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_pick_move PRIVATE cxx_std_17)
+target_include_directories(test_pick_move PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_pick_move PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 62: Pick Move Comparison Test
+add_executable(test_pick_move_comparison 
+    debug/test_pick_move_comparison.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_pick_move_comparison PRIVATE cxx_std_17)
+target_include_directories(test_pick_move_comparison PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_pick_move_comparison PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 64: Move Ordering Test
+add_executable(test_move_ordering 
+    debug/test_move_ordering.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_move_ordering PRIVATE cxx_std_17)
+target_include_directories(test_move_ordering PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_move_ordering PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# ======================================
+# CTest Registration
+# ======================================
+# Register all test executables with CTest
+
+# Core Tests
+add_test(NAME test_basic_search COMMAND test_basic_search)
+add_test(NAME test_mvv_lva COMMAND test_mvv_lva)
+add_test(NAME test_mvv_lva_search COMMAND test_mvv_lva_search) 
+add_test(NAME test_unified_search COMMAND test_unified_search)
+add_test(NAME test_legacy_warning COMMAND test_legacy_warning)
+
+# VICE Part 62 Tests
+add_test(NAME test_pick_move COMMAND test_pick_move)
+add_test(NAME test_pick_move_comparison COMMAND test_pick_move_comparison)
+
+# VICE Part 64 Tests  
+add_test(NAME test_move_ordering COMMAND test_move_ordering)
+
+# UCI time allocation and stop integration test
+add_executable(test_uci_time_and_stop
+    test/test_uci_time_and_stop.cpp
+    src/minimal_search.cpp
+    src/uci.cpp
+    src/uci_utils.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/movegen_enhanced.cpp
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_uci_time_and_stop PRIVATE cxx_std_17)
+target_include_directories(test_uci_time_and_stop PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_uci_time_and_stop PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_test(NAME test_uci_time_and_stop COMMAND test_uci_time_and_stop)
+
+# ---- Pawn Mask Demo Executables ----
+add_executable(simple_pawn_demo 
+    demos/simple_pawn_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(simple_pawn_demo PRIVATE cxx_std_17)
+target_include_directories(simple_pawn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(simple_pawn_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(pawn_mask_demo 
+    demos/pawn_mask_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_mask_demo PRIVATE cxx_std_17)
+target_include_directories(pawn_mask_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_mask_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(pawn_mask_analysis 
+    demos/pawn_mask_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_mask_analysis PRIVATE cxx_std_17)
+target_include_directories(pawn_mask_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_mask_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(key_square_demo 
+    demos/key_square_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(key_square_demo PRIVATE cxx_std_17)
+target_include_directories(key_square_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(key_square_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(isolated_pawn_demo 
+    demos/isolated_pawn_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(isolated_pawn_demo PRIVATE cxx_std_17)
+target_include_directories(isolated_pawn_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(isolated_pawn_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(mirror_board_demo 
+    demos/mirror_board_demo.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(mirror_board_demo PRIVATE cxx_std_17)
+target_include_directories(mirror_board_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(mirror_board_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(asymmetry_investigation 
+    demos/asymmetry_investigation.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(asymmetry_investigation PRIVATE cxx_std_17)
+target_include_directories(asymmetry_investigation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(asymmetry_investigation PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(eval_breakdown 
+    demos/eval_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(eval_breakdown PRIVATE cxx_std_17)
+target_include_directories(eval_breakdown PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(eval_breakdown PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Piece-Square Table asymmetry investigation
+add_executable(pst_investigation 
+    demos/pst_investigation.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pst_investigation PRIVATE cxx_std_17)
+target_include_directories(pst_investigation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pst_investigation PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Fixed mirror board test
+add_executable(fixed_mirror_test 
+    demos/fixed_mirror_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(fixed_mirror_test PRIVATE cxx_std_17)
+target_include_directories(fixed_mirror_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(fixed_mirror_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Evaluation symmetry test
+add_executable(symmetry_test 
+    demos/symmetry_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(symmetry_test PRIVATE cxx_std_17)
+target_include_directories(symmetry_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(symmetry_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE tutorial claim validation test
+add_executable(vice_claim_test 
+    demos/vice_claim_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_claim_test PRIVATE cxx_std_17)
+target_include_directories(vice_claim_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_claim_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE claim detailed analysis
+add_executable(vice_claim_analysis 
+    demos/vice_claim_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_claim_analysis PRIVATE cxx_std_17)
+target_include_directories(vice_claim_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_claim_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Symmetric openings test
+add_executable(symmetric_openings_test 
+    demos/symmetric_openings_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(symmetric_openings_test PRIVATE cxx_std_17)
+target_include_directories(symmetric_openings_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(symmetric_openings_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# No center control test
+add_executable(no_center_control_test 
+    demos/no_center_control_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(no_center_control_test PRIVATE cxx_std_17)
+target_include_directories(no_center_control_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(no_center_control_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Precise VICE test with center control toggle
+add_executable(precise_vice_test 
+    demos/precise_vice_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(precise_vice_test PRIVATE cxx_std_17)
+target_include_directories(precise_vice_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(precise_vice_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Center control analysis
+add_executable(center_control_analysis 
+    demos/center_control_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(center_control_analysis PRIVATE cxx_std_17)
+target_include_directories(center_control_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(center_control_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug pawns positions
+add_executable(debug_pawns 
+    demos/debug_pawns.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(debug_pawns PRIVATE cxx_std_17)
+target_include_directories(debug_pawns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_pawns PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Pawn table comparison
+add_executable(pawn_table_comparison 
+    demos/pawn_table_comparison.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_table_comparison PRIVATE cxx_std_17)
+target_include_directories(pawn_table_comparison PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_table_comparison PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE discrepancy analysis
+add_executable(vice_discrepancy_analysis 
+    demos/vice_discrepancy_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_discrepancy_analysis PRIVATE cxx_std_17)
+target_include_directories(vice_discrepancy_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_discrepancy_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 56 compatible test
+add_executable(vice_part56_test 
+    demos/vice_part56_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_part56_test PRIVATE cxx_std_17)
+target_include_directories(vice_part56_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_part56_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Minimal PST Test (Standalone, no dependencies)
+add_executable(vice_minimal_pst_test 
+    demos/vice_minimal_pst_test.c
+)
+set_target_properties(vice_minimal_pst_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Set test properties
+set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
+                     test_legacy_warning test_pick_move test_pick_move_comparison test_move_ordering
+    PROPERTIES
+    TIMEOUT 120  # 2 minutes timeout for each test
 )
