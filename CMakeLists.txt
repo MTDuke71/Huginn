@@ -257,6 +257,8 @@ set(COMMON_SOURCES
     src/move.cpp
     src/board120.cpp
     src/chess_types.cpp
+    src/evaluation.cpp
+    src/input_checking.cpp
 )
 
 set(ENGINE_SOURCES
@@ -266,7 +268,6 @@ set(ENGINE_SOURCES
     src/uci.cpp
     src/uci_utils.cpp
     src/minimal_search.cpp
-    src/input_checking.cpp
     src/pvtable.cpp
 )
 

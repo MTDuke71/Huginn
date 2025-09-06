@@ -1,6 +1,7 @@
 // init.cpp
 #include "init.hpp"
 #include "zobrist.hpp"
+#include "evaluation.hpp"  // For VICE Part 78 mask initialization
 // Add other includes here as more subsystems are added
 // #include "bitboard.hpp"  // if bitboard needs initialization
 
@@ -16,12 +17,8 @@ namespace Huginn {
         // Initialize Zobrist hashing tables
         Zobrist::init_zobrist();
         
-        // TODO: Add other subsystem initializations here as needed:
-        // - Attack tables for move generation
-        // - Evaluation tables  
-        // - Opening book
-        // - Endgame tablebase paths
-        // - Search parameters
+        // Initialize evaluation masks (VICE Part 78)
+        EvalParams::init_evaluation_masks();
         
         initialized = true;
     }

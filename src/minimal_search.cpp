@@ -160,6 +160,70 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     score -= pawn_penalty;
     
+    // VICE Part 77: Add pawn structure evaluation using bitboard masks (4:11)
+    // Evaluate passed pawns and isolated pawns
+    int pawn_structure_score = 0;
+    
+    // Check all pawns for isolated and passed pawn characteristics
+    for (int sq64 = 0; sq64 < 64; ++sq64) {
+        int sq120 = (sq64 / 8 + 2) * 10 + (sq64 % 8 + 1);
+        Piece piece = pos.board[sq120];
+        
+        if (piece == Piece::WhitePawn) {
+            // Check for isolated pawn
+            int file = sq64 % 8;
+            uint64_t white_pawns = pos.get_white_pawns();
+            uint64_t adjacent_files_mask = EvalParams::ISOLATED_PAWN_MASKS[file];
+            if ((white_pawns & adjacent_files_mask) == 0) {
+                pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
+            }
+            
+            // Check for passed pawn
+            int rank = sq64 / 8;
+            uint64_t black_pawns = pos.get_black_pawns();
+            uint64_t passed_mask = 0ULL;
+            
+            // Create mask for squares that must be clear for white pawn to be passed
+            for (int r = rank + 1; r <= 7; ++r) {
+                passed_mask |= (1ULL << (r * 8 + file)); // Same file
+                if (file > 0) passed_mask |= (1ULL << (r * 8 + file - 1)); // Left adjacent
+                if (file < 7) passed_mask |= (1ULL << (r * 8 + file + 1)); // Right adjacent
+            }
+            
+            if ((black_pawns & passed_mask) == 0) {
+                pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank];
+            }
+            
+        } else if (piece == Piece::BlackPawn) {
+            // Check for isolated pawn
+            int file = sq64 % 8;
+            uint64_t black_pawns = pos.get_black_pawns();
+            uint64_t adjacent_files_mask = EvalParams::ISOLATED_PAWN_MASKS[file];
+            if ((black_pawns & adjacent_files_mask) == 0) {
+                pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY; // Penalty for black
+            }
+            
+            // Check for passed pawn
+            int rank = sq64 / 8;
+            uint64_t white_pawns = pos.get_white_pawns();
+            uint64_t passed_mask = 0ULL;
+            
+            // Create mask for squares that must be clear for black pawn to be passed
+            for (int r = rank - 1; r >= 0; --r) {
+                passed_mask |= (1ULL << (r * 8 + file)); // Same file
+                if (file > 0) passed_mask |= (1ULL << (r * 8 + file - 1)); // Left adjacent
+                if (file < 7) passed_mask |= (1ULL << (r * 8 + file + 1)); // Right adjacent
+            }
+            
+            if ((white_pawns & passed_mask) == 0) {
+                int mirror_rank = 7 - rank; // Mirror rank for black
+                pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank]; // Bonus for black
+            }
+        }
+    }
+    
+    score += pawn_structure_score;
+    
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
 }
