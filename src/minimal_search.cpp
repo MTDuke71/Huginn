@@ -138,6 +138,64 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     score += pawn_structure_score;
     
+    // VICE Part 81: Open and semi-open file bonuses for rooks and queens
+    // Evaluate rooks and queens on open files (no pawns) or semi-open files (no own pawns)
+    int file_bonus_score = 0;
+    
+    uint64_t all_pawns = white_pawns | black_pawns;
+    
+    // Evaluate all squares for rooks and queens
+    for (int sq = 21; sq <= 98; ++sq) {
+        if (pos.board[sq] == Piece::Offboard || pos.board[sq] == Piece::None) continue;
+        
+        Piece piece = pos.board[sq];
+        int sq64 = MAILBOX_MAPS.to64[sq];
+        if (sq64 < 0) continue; // Invalid square
+        
+        int file = sq64 % 8; // File A=0, B=1, ..., H=7
+        uint64_t file_mask = EvalParams::FILE_MASKS[file];
+        
+        if (piece == Piece::WhiteRook) {
+            // Check for open file (no pawns from either side)
+            if ((all_pawns & file_mask) == 0) {
+                file_bonus_score += EvalParams::ROOK_OPEN_FILE_BONUS;
+            }
+            // Check for semi-open file (no white pawns on this file)
+            else if ((white_pawns & file_mask) == 0) {
+                file_bonus_score += EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
+            }
+        } else if (piece == Piece::BlackRook) {
+            // Check for open file (no pawns from either side)
+            if ((all_pawns & file_mask) == 0) {
+                file_bonus_score -= EvalParams::ROOK_OPEN_FILE_BONUS;
+            }
+            // Check for semi-open file (no black pawns on this file)
+            else if ((black_pawns & file_mask) == 0) {
+                file_bonus_score -= EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
+            }
+        } else if (piece == Piece::WhiteQueen) {
+            // Check for open file (no pawns from either side)
+            if ((all_pawns & file_mask) == 0) {
+                file_bonus_score += EvalParams::QUEEN_OPEN_FILE_BONUS;
+            }
+            // Check for semi-open file (no white pawns on this file)
+            else if ((white_pawns & file_mask) == 0) {
+                file_bonus_score += EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
+            }
+        } else if (piece == Piece::BlackQueen) {
+            // Check for open file (no pawns from either side)
+            if ((all_pawns & file_mask) == 0) {
+                file_bonus_score -= EvalParams::QUEEN_OPEN_FILE_BONUS;
+            }
+            // Check for semi-open file (no black pawns on this file)
+            else if ((black_pawns & file_mask) == 0) {
+                file_bonus_score -= EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
+            }
+        }
+    }
+    
+    score += file_bonus_score;
+    
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
 }

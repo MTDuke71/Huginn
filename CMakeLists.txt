@@ -517,3 +517,54 @@ target_include_directories(mirror_eval_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/
 set_target_properties(mirror_eval_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# VICE Part 81 Test - Open and semi-open file bonuses
+add_executable(test_part81_openfiles 
+    test_part81_openfiles.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_part81_openfiles PRIVATE cxx_std_17)
+target_include_directories(test_part81_openfiles PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_part81_openfiles PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 81 Focused Test - File bonuses only
+add_executable(test_part81_focused 
+    test_part81_focused.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_part81_focused PRIVATE cxx_std_17)
+target_include_directories(test_part81_focused PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_part81_focused PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 81 Debug Test - Isolate file bonuses
+add_executable(test_part81_debug 
+    test_part81_debug.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_part81_debug PRIVATE cxx_std_17)
+target_include_directories(test_part81_debug PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_part81_debug PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)

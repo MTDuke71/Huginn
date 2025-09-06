@@ -33,7 +33,11 @@ inline constexpr int BLACK_KNIGHT_OUTPOST_MAX_RANK = 4;
 inline constexpr int KNIGHT_OUTPOST_BONUS = 25;
 
 inline constexpr int BISHOP_PAIR_BONUS = 50;
-inline constexpr int ROOK_OPEN_FILE_BONUS = 15;
+// VICE Part 81: Open and semi-open file bonuses for rooks and queens  
+inline constexpr int ROOK_OPEN_FILE_BONUS = 10;      // VICE value: RookOpenFile = 10
+inline constexpr int ROOK_SEMI_OPEN_FILE_BONUS = 5;  // VICE value: RookSemiOpenFile = 5
+inline constexpr int QUEEN_OPEN_FILE_BONUS = 5;      // VICE value: QueenOpenFile = 5
+inline constexpr int QUEEN_SEMI_OPEN_FILE_BONUS = 3; // VICE value: QueenSemiOpenFile = 3
 
 inline constexpr int ISOLATED_PAWN_PENALTY = 10;  // VICE Part 80: Matches original VICE value
 inline constexpr int DOUBLED_PAWN_PENALTY = 20;    // Increased penalty
