@@ -881,6 +881,59 @@ set_target_properties(mirror_board_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+add_executable(asymmetry_investigation 
+    demos/asymmetry_investigation.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(asymmetry_investigation PRIVATE cxx_std_17)
+target_include_directories(asymmetry_investigation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(asymmetry_investigation PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(eval_breakdown 
+    demos/eval_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(eval_breakdown PRIVATE cxx_std_17)
+target_include_directories(eval_breakdown PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(eval_breakdown PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Piece-Square Table asymmetry investigation
+add_executable(pst_investigation 
+    demos/pst_investigation.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pst_investigation PRIVATE cxx_std_17)
+target_include_directories(pst_investigation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pst_investigation PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Fixed mirror board test
+add_executable(fixed_mirror_test 
+    demos/fixed_mirror_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(fixed_mirror_test PRIVATE cxx_std_17)
+target_include_directories(fixed_mirror_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(fixed_mirror_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Evaluation symmetry test
+add_executable(symmetry_test 
+    demos/symmetry_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(symmetry_test PRIVATE cxx_std_17)
+target_include_directories(symmetry_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(symmetry_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Set test properties
 set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
                      test_legacy_warning test_pick_move test_pick_move_comparison test_move_ordering
