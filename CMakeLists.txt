@@ -934,6 +934,124 @@ set_target_properties(symmetry_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+# VICE tutorial claim validation test
+add_executable(vice_claim_test 
+    demos/vice_claim_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_claim_test PRIVATE cxx_std_17)
+target_include_directories(vice_claim_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_claim_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE claim detailed analysis
+add_executable(vice_claim_analysis 
+    demos/vice_claim_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_claim_analysis PRIVATE cxx_std_17)
+target_include_directories(vice_claim_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_claim_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Symmetric openings test
+add_executable(symmetric_openings_test 
+    demos/symmetric_openings_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(symmetric_openings_test PRIVATE cxx_std_17)
+target_include_directories(symmetric_openings_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(symmetric_openings_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# No center control test
+add_executable(no_center_control_test 
+    demos/no_center_control_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(no_center_control_test PRIVATE cxx_std_17)
+target_include_directories(no_center_control_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(no_center_control_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Precise VICE test with center control toggle
+add_executable(precise_vice_test 
+    demos/precise_vice_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(precise_vice_test PRIVATE cxx_std_17)
+target_include_directories(precise_vice_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(precise_vice_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Center control analysis
+add_executable(center_control_analysis 
+    demos/center_control_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(center_control_analysis PRIVATE cxx_std_17)
+target_include_directories(center_control_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(center_control_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug pawns positions
+add_executable(debug_pawns 
+    demos/debug_pawns.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(debug_pawns PRIVATE cxx_std_17)
+target_include_directories(debug_pawns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_pawns PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Pawn table comparison
+add_executable(pawn_table_comparison 
+    demos/pawn_table_comparison.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(pawn_table_comparison PRIVATE cxx_std_17)
+target_include_directories(pawn_table_comparison PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(pawn_table_comparison PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE discrepancy analysis
+add_executable(vice_discrepancy_analysis 
+    demos/vice_discrepancy_analysis.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_discrepancy_analysis PRIVATE cxx_std_17)
+target_include_directories(vice_discrepancy_analysis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_discrepancy_analysis PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 56 compatible test
+add_executable(vice_part56_test 
+    demos/vice_part56_test.cpp
+    ${COMMON_SOURCES}
+)
+target_compile_features(vice_part56_test PRIVATE cxx_std_17)
+target_include_directories(vice_part56_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(vice_part56_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Minimal PST Test (Standalone, no dependencies)
+add_executable(vice_minimal_pst_test 
+    demos/vice_minimal_pst_test.c
+)
+set_target_properties(vice_minimal_pst_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Set test properties
 set_tests_properties(test_basic_search test_mvv_lva test_mvv_lva_search test_unified_search 
                      test_legacy_warning test_pick_move test_pick_move_comparison test_move_ordering

@@ -52,14 +52,14 @@ int MinimalEngine::evaluate(const Position& pos) {
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        // Material values (same as before)
+        // Material values (VICE-compatible)
         int material_value = 0;
         switch (piece_type) {
             case PieceType::Pawn:   material_value = 100; break;
-            case PieceType::Knight: material_value = 300; break;
-            case PieceType::Bishop: material_value = 300; break;
-            case PieceType::Rook:   material_value = 500; break;
-            case PieceType::Queen:  material_value = 900; break;
+            case PieceType::Knight: material_value = 325; break;
+            case PieceType::Bishop: material_value = 325; break;
+            case PieceType::Rook:   material_value = 550; break;
+            case PieceType::Queen:  material_value = 1000; break;
             case PieceType::King:   material_value = 0; break; // King has no material value
             default: material_value = 0; break;
         }
@@ -94,6 +94,10 @@ int MinimalEngine::evaluate(const Position& pos) {
         }
     }
     
+    // === COMMENTED OUT: All Advanced Evaluation Features ===
+    // We're building up evaluation step by step, starting with just Material + PST
+    
+    /*
     // Simple development bonus to discourage excessive pawn moves
     // Count developed pieces (not on starting squares)
     int white_development = 0;
@@ -147,7 +151,6 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     // Count pawns that have moved from starting positions
     int white_pawn_moves = 0;
-    int black_pawn_moves = 0;
     
     // White starting pawns on rank 2 (a2=31, b2=32, ..., h2=38)
     for (int sq = 31; sq <= 38; ++sq) {
@@ -251,6 +254,9 @@ int MinimalEngine::evaluate(const Position& pos) {
     }
     
     score += pawn_structure_score;
+    */
+    
+    // === END COMMENTED OUT FEATURES ===
     
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;

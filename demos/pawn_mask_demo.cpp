@@ -99,8 +99,13 @@ void demo_pawn_masks() {
         
         // Analysis
         std::cout << "\nAnalysis for " << square_name << ":\n";
-        std::cout << "- White mask covers " << __builtin_popcountll(white_mask) << " squares\n";
-        std::cout << "- Black mask covers " << __builtin_popcountll(black_mask) << " squares\n";
+        // Manual popcount for cross-platform compatibility
+        int white_count = 0;
+        for (uint64_t temp = white_mask; temp; temp >>= 1) if (temp & 1) white_count++;
+        int black_count = 0;
+        for (uint64_t temp = black_mask; temp; temp >>= 1) if (temp & 1) black_count++;
+        std::cout << "- White mask covers " << white_count << " squares\n";
+        std::cout << "- Black mask covers " << black_count << " squares\n";
         
         int file = sq64 % 8;
         int rank = sq64 / 8;
@@ -154,8 +159,13 @@ void interactive_mode() {
         print_bitboard(white_mask, "White pawn passed mask");
         print_bitboard(black_mask, "Black pawn passed mask");
         
-        std::cout << "White mask bits: " << __builtin_popcountll(white_mask) << "\n";
-        std::cout << "Black mask bits: " << __builtin_popcountll(black_mask) << "\n";
+        // Manual popcount for cross-platform compatibility  
+        int white_count = 0;
+        for (uint64_t temp = white_mask; temp; temp >>= 1) if (temp & 1) white_count++;
+        int black_count = 0;
+        for (uint64_t temp = black_mask; temp; temp >>= 1) if (temp & 1) black_count++;
+        std::cout << "White mask bits: " << white_count << "\n";
+        std::cout << "Black mask bits: " << black_count << "\n";
     }
 }
 
