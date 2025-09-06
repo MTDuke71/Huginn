@@ -1,7 +1,7 @@
 // Mirror evaluation test for all positions in mirror.epd
-#include "src/position.hpp"
-#include "src/minimal_search.hpp"
-#include "src/init.hpp"
+#include "../src/position.hpp"
+#include "../src/minimal_search.hpp"
+#include "../src/init.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -38,7 +38,7 @@ int main() {
     }
     
     // Open output file
-    std::ofstream output_file("mirror_eval_results.txt");
+    std::ofstream output_file("mirror_test/mirror_eval_results.txt");
     if (!output_file.is_open()) {
         std::cerr << "Error: Could not create output file!" << std::endl;
         return 1;
@@ -128,7 +128,7 @@ int main() {
     std::cout << "Total positions: " << position_count << std::endl;
     std::cout << "Symmetric: " << symmetric_count << std::endl;
     std::cout << "Asymmetric: " << asymmetric_count << std::endl;
-    std::cout << "Results written to: mirror_eval_results.txt" << std::endl;
+    std::cout << "Results written to: mirror_test/mirror_eval_results.txt" << std::endl;
     
     epd_file.close();
     output_file.close();

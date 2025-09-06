@@ -503,7 +503,7 @@ set_target_properties(test_part80_demo PROPERTIES
 
 # Mirror evaluation test for all positions in mirror.epd
 add_executable(mirror_eval_test 
-    mirror_eval_test.cpp
+    mirror_test/mirror_eval_test.cpp
     src/minimal_search.cpp
     src/pvtable.cpp
     ${COMMON_SOURCES}
