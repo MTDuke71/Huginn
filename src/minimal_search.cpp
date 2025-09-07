@@ -47,7 +47,7 @@ int MinimalEngine::evaluate(const Position& pos) {
     // VICE Part 56: Basic Evaluation with piece-square tables
     int score = 0;
     
-    // Calculate total material for endgame detection
+    // Track material for endgame detection (exclude kings)
     int white_material = 0;
     int black_material = 0;
     
@@ -92,10 +92,10 @@ int MinimalEngine::evaluate(const Position& pos) {
         
         // VICE Part 82: Use different king tables based on material (3:56)
         if (piece_type == PieceType::King) {
-            // Determine if we're in endgame based on opponent's material
-            bool is_endgame = (piece_color == Color::White) ? 
-                (black_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD) :
-                (white_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
+            // Determine if we're in endgame based on total material on board
+            // This ensures symmetry - same total material = same table for both sides
+            int total_material = white_material + black_material;
+            bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
             
             if (is_endgame) {
                 pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
@@ -350,12 +350,16 @@ void MinimalEngine::MirrorAvailTest(const Position& pos) {
     int eval2 = evalPosition(mirrored);
     std::cout << "Mirrored position eval: " << eval2 << " cp" << std::endl;
     
+    // Since mirrorBoard flips the side to move, we need to negate eval2 
+    // to compare from the same perspective
+    int eval2_corrected = -eval2;
+    
     // The evaluations should be equal for symmetric evaluation function
-    if (eval1 == eval2) {
+    if (eval1 == eval2_corrected) {
         std::cout << "✓ PASS: Evaluation is symmetric!" << std::endl;
     } else {
         std::cout << "✗ FAIL: Evaluation asymmetry detected!" << std::endl;
-        std::cout << "Difference: " << abs(eval1 - eval2) << " cp" << std::endl;
+        std::cout << "Difference: " << abs(eval1 - eval2_corrected) << " cp" << std::endl;
         std::cout << "This indicates a bug in the evaluation function." << std::endl;
     }
     std::cout << "=========================" << std::endl;

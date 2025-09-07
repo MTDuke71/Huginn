@@ -14,7 +14,27 @@ if(WIN32)
         # Force CMake to not use any non-Windows paths
         set(CMAKE_FIND_ROOT_PATH "")
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
+        set(CMAKE_FIND_ROOT# Test endgame threshold calculation
+add_executable(test_endgame_threshold 
+    test_endgame_threshold.cpp
+    src/evaluation.cpp
+)
+target_compile_features(test_endgame_threshold PRIVATE cxx_std_17)
+target_include_directories(test_endgame_threshold PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_endgame_threshold PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Test table values
+add_executable(test_table_values 
+    test_table_values.cpp
+    src/evaluation.cpp
+)
+target_compile_features(test_table_values PRIVATE cxx_std_17)
+target_include_directories(test_table_values PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_table_values PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)_LIBRARY NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
         
@@ -566,6 +586,51 @@ add_executable(test_part81_debug
 target_compile_features(test_part81_debug PRIVATE cxx_std_17)
 target_include_directories(test_part81_debug PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(test_part81_debug PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Test king table symmetry
+add_executable(test_king_symmetry 
+    test_king_symmetry.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_king_symmetry PRIVATE cxx_std_17)
+target_include_directories(test_king_symmetry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_king_symmetry PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Test endgame threshold calculation
+add_executable(test_endgame_threshold 
+    test_endgame_threshold.cpp
+    src/evaluation.cpp
+)
+target_compile_features(test_endgame_threshold PRIVATE cxx_std_17)
+target_include_directories(test_endgame_threshold PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_endgame_threshold PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug mirror evaluation issues
+add_executable(debug_mirror_eval 
+    debug_mirror_eval.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(debug_mirror_eval PRIVATE cxx_std_17)
+target_include_directories(debug_mirror_eval PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_mirror_eval PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 

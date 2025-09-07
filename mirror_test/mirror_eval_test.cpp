@@ -81,8 +81,12 @@ int main() {
             Position mirrored = engine.mirrorBoard(pos);
             int eval2 = engine.evalPosition(mirrored);
             
+            // Since mirrorBoard flips the side to move, we need to negate eval2
+            // to compare from the same perspective
+            int eval2_corrected = -eval2;
+            
             // Calculate difference
-            int diff = eval1 - eval2;
+            int diff = eval1 - eval2_corrected;
             bool is_symmetric = (diff == 0);
             
             if (is_symmetric) {
@@ -94,7 +98,7 @@ int main() {
             // Write to output file
             output_file << std::setw(8) << position_count << " | ";
             output_file << std::setw(13) << eval1 << " | ";
-            output_file << std::setw(13) << eval2 << " | ";
+            output_file << std::setw(13) << eval2_corrected << " | ";
             output_file << std::setw(10) << diff << " | ";
             output_file << (is_symmetric ? "PASS" : "FAIL") << std::endl;
             

@@ -108,9 +108,9 @@ inline constexpr std::array<int, 64> QUEEN_TABLE = {
 // VICE Part 82: King position evaluation tables
 // KingO[64] - Opening/middlegame king table (encourages castling and back rank safety)
 inline constexpr std::array<int, 64> KING_TABLE = {
-    0,   5,   5,   -10, -10, 0,   10,  5,
+    -5,  -10, -10, -10, -10, -10, -10, -5,
+    -10, -10, -10, -10, -10, -10, -10, -10,
     -30, -30, -30, -30, -30, -30, -30, -30,
-    -50, -50, -50, -50, -50, -50, -50, -50,
     -70, -70, -70, -70, -70, -70, -70, -70,
     -70, -70, -70, -70, -70, -70, -70, -70,
     -70, -70, -70, -70, -70, -70, -70, -70,
@@ -119,14 +119,14 @@ inline constexpr std::array<int, 64> KING_TABLE = {
 
 // KingE[64] - Endgame king table (encourages centralization)
 inline constexpr std::array<int, 64> KING_TABLE_ENDGAME = {
-    -50, -10, 0,  0,  0,  0,  -10, -50,
-    -10, 0,   10, 10, 10, 10, 0,   -10,
-    0,   10,  20, 20, 20, 20, 10,  0,
-    0,   10,  20, 40, 40, 20, 10,  0,
-    0,   10,  20, 40, 40, 20, 10,  0,
-    0,   10,  20, 20, 20, 20, 10,  0,
-    -10, 0,   10, 10, 10, 10, 0,   -10,
-    -50, -10, 0,  0,  0,  0,  -10, -50};
+    -50, 0,   0,   0,   0,   0,   0,   -50,
+    0,   20,  20,  20,  20,  20,  20,  0,
+    0,   20,  40,  40,  40,  40,  20,  0,
+    0,   20,  40,  50,  50,  40,  20,  0,
+    0,   20,  40,  50,  50,  40,  20,  0,
+    0,   20,  40,  40,  40,  40,  20,  0,
+    -20, 0,   20,  20,  20,  20,  0,   -20,
+    -50, -20, 0,   0,   0,   0,   -20, -50};
 
 inline constexpr std::array<int, 8> PASSED_PAWN_BONUS = {0,  5,  10,  20,
                                                          35, 60, 100, 200};
