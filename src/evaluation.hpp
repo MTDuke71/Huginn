@@ -49,9 +49,10 @@ inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     // Much higher penalty for 
 inline constexpr int DEVELOP_BONUS_OPENING = 60;     // Strong opening development bonus
 inline constexpr int DEVELOP_BONUS_ENDGAME = 0;
 
-// VICE Part 82: Material draw detection and king evaluation 
-// Endgame threshold: approximately equivalent to Rook + 2 Knights + 2 Pawns (about 1300)
-inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1300;
+// VICE Part 82/83: Material draw detection and king evaluation 
+// Endgame threshold: approximately equivalent to Rook + Knight + Bishop (about 1150)
+// Lowered from 1300 to prevent engine from sacrificing material to force draws
+inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 
 inline constexpr int KING_SHIELD_MULTIPLIER = 10;
 inline constexpr int KING_ATTACK_PENALTY = 15;

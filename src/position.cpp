@@ -531,3 +531,66 @@ void Position::TakeMove() {
     // The atomic operations automatically handle piece position changes via XOR
     zobrist_key = undo.zobrist_key;
 }
+
+// VICE Part 83: Null move functions for null move pruning
+void Position::MakeNullMove() {
+    // Create undo entry for null move
+    if (ply >= static_cast<int>(move_history.size())) {
+        move_history.resize(ply + 1);
+    }
+    
+    S_UNDO& undo = move_history[ply];
+    
+    // Store current state for undo
+    undo.move = S_MOVE();  // Empty move for null move
+    undo.castling_rights = castling_rights;
+    undo.ep_square = ep_square;
+    undo.halfmove_clock = halfmove_clock;
+    undo.zobrist_key = zobrist_key;
+    
+    // Clear en passant if it was set
+    if (ep_square != -1) {
+        zobrist_key ^= Zobrist::EpFile[ep_square % 10 - 1];  // File index
+        ep_square = -1;
+    }
+    
+    // Switch side to move
+    side_to_move = !side_to_move;
+    zobrist_key ^= Zobrist::Side;
+    
+    // Increment ply
+    ++ply;
+    
+    // Increment halfmove clock (null move doesn't reset it)
+    ++halfmove_clock;
+    
+    // Increment fullmove number if black just moved
+    if (side_to_move == Color::White) {
+        ++fullmove_number;
+    }
+}
+
+void Position::TakeNullMove() {
+    // Must have at least one move to undo
+    DEBUG_ASSERT(ply > 0, "Cannot take null move when ply is 0");
+    
+    // Decrement ply first
+    --ply;
+    
+    DEBUG_ASSERT(ply >= 0, "Invalid ply after null move undo");
+    DEBUG_ASSERT(ply < static_cast<int>(move_history.size()), "Ply exceeds move_history size in null move undo");
+    
+    S_UNDO& undo = move_history[ply];
+    
+    // Restore position state
+    castling_rights = undo.castling_rights;
+    ep_square = undo.ep_square;
+    halfmove_clock = undo.halfmove_clock;
+    zobrist_key = undo.zobrist_key;
+    
+    // Flip side to move back
+    side_to_move = !side_to_move;
+    if (side_to_move == Color::Black) {
+        --fullmove_number;
+    }
+}

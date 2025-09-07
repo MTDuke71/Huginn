@@ -25,6 +25,11 @@ private:
     std::vector<TTEntry> table;
     size_t size_mask;  // For fast modulo (size must be power of 2)
     
+    // Statistics tracking
+    mutable uint64_t hits = 0;      // Successful probes
+    mutable uint64_t misses = 0;    // Failed probes  
+    uint64_t writes = 0;            // Store operations
+    
 public:
     explicit TranspositionTable(size_t size_mb = 64) {
         // Calculate number of entries for given size in MB
@@ -51,10 +56,12 @@ public:
         entry.depth = depth;
         entry.node_type = node_type;
         entry.best_move = best_move;
+        
+        writes++;  // Track write operations
     }
     
     // Probe transposition table for position
-    bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) {
+    bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
         size_t index = zobrist_key & size_mask;
         const TTEntry& entry = table[index];
         
@@ -63,8 +70,10 @@ public:
             depth = entry.depth;
             node_type = entry.node_type;
             best_move = entry.best_move;
+            hits++;  // Track successful probes
             return true;
         }
+        misses++;  // Track failed probes
         return false;
     }
     
@@ -73,6 +82,8 @@ public:
         for (auto& entry : table) {
             entry = TTEntry();
         }
+        // Reset statistics
+        hits = misses = writes = 0;
     }
     
     // Get table utilization statistics
@@ -85,4 +96,19 @@ public:
     }
     
     size_t get_size() const { return table.size(); }
+    
+    // Get statistics
+    uint64_t get_hits() const { return hits; }
+    uint64_t get_misses() const { return misses; }
+    uint64_t get_writes() const { return writes; }
+    uint64_t get_total_probes() const { return hits + misses; }
+    double get_hit_rate() const { 
+        uint64_t total = get_total_probes();
+        return total > 0 ? double(hits) / total : 0.0; 
+    }
+    
+    // Clear statistics only
+    void clear_stats() {
+        hits = misses = writes = 0;
+    }
 };

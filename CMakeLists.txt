@@ -501,6 +501,91 @@ set_target_properties(test_part80_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+# VICE Part 83 Demo - Null move pruning demonstration
+add_executable(demo_null_move 
+    demo_null_move.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(demo_null_move PRIVATE cxx_std_17)
+target_include_directories(demo_null_move PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(demo_null_move PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Debug null move conditions
+add_executable(debug_null_move 
+    debug_null_move.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(debug_null_move PRIVATE cxx_std_17)
+target_include_directories(debug_null_move PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(debug_null_move PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Test null move conditions
+add_executable(test_null_conditions 
+    test_null_conditions.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_null_conditions PRIVATE cxx_std_17)
+target_include_directories(test_null_conditions PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_null_conditions PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# VICE Part 84 Demo - Transposition table demonstration
+add_executable(demo_transposition_table 
+    demo_transposition_table.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(demo_transposition_table PRIVATE cxx_std_17)
+target_include_directories(demo_transposition_table PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(demo_transposition_table PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Simple TT Demo - Clear hit/write statistics 
+add_executable(simple_tt_demo 
+    simple_tt_demo.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(simple_tt_demo PRIVATE cxx_std_17)
+target_include_directories(simple_tt_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(simple_tt_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Mirror evaluation test for all positions in mirror.epd
 add_executable(mirror_eval_test 
     mirror_test/mirror_eval_test.cpp

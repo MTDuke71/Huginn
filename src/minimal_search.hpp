@@ -4,6 +4,7 @@
 #include "move.hpp"
 #include "movegen_enhanced.hpp"
 #include "pvtable.hpp"
+#include "transposition_table.hpp"
 #include <chrono>
 
 namespace Huginn {
@@ -33,8 +34,11 @@ struct SearchInfo {
     uint64_t fh;        // Fail high count (beta cutoffs)
     uint64_t fhf;       // Fail high first (beta cutoff on first move)
     
+    // VICE Part 83: Null move pruning statistics
+    uint64_t null_cut;  // Null move cutoffs
+    
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
-                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0) {}
+                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0) {}
 };
 
 // Search limits structure - external interface for setting search parameters
@@ -52,6 +56,7 @@ public:  // Make members public for easier access
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
+    TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
     
     // Search History array (3:55) - stores scores for moves that improved alpha
     // [piece][to_square] - 13 piece types, 120 squares (mailbox)
@@ -67,7 +72,7 @@ public:  // Make members public for easier access
     int mvv_lva_scores[7][7];  // 7 piece types (None=0, Pawn=1, Knight=2, Bishop=3, Rook=4, Queen=5, King=6)
     
     // Constructor
-    MinimalEngine() : pv_table(2) {
+    MinimalEngine() : pv_table(2), tt_table(64) {  // 64MB transposition table
         clear_search_tables();
         init_mvv_lva();
     }
@@ -128,6 +133,9 @@ public:  // Make members public for easier access
     // VICE Part 62: Move Picking - Pick best move from remaining moves  
     // VICE Part 64: Enhanced with PV move, killer moves, and history heuristic
     int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth = -1) const;
+    
+    // VICE Part 84: Transposition table statistics
+    void print_tt_stats() const;
     
     // VICE Part 55 - Search Function Definitions
     void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)

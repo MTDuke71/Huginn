@@ -2,7 +2,7 @@ Mirror Evaluation Test Results
 =============================
 Position | Original Eval | Mirrored Eval | Difference | Status
 ---------|---------------|---------------|------------|--------
-       1 |            30 |            30 |          0 | PASS
+       1 |            80 |            80 |          0 | PASS
          FEN: 1qr3k1/p2nbppp/bp2p3/3p4/3P4/1P2PNP1/P2Q1PBP/1N2R1K1 b - - 0 1
 
        2 |            27 |            27 |          0 | PASS
@@ -17,7 +17,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
        5 |           -25 |           -25 |          0 | PASS
          FEN: 2brr1k1/ppq2ppp/2pb1n2/8/3NP3/2P2P2/P1Q2BPP/1R1R1BK1 w - - 0 1
 
-       6 |            20 |            20 |          0 | PASS
+       6 |            70 |            70 |          0 | PASS
          FEN: 2kr2nr/1pp3pp/p1pb4/4p2b/4P1P1/5N1P/PPPN1P2/R1B1R1K1 b - - 0 1
 
        7 |           -15 |           -15 |          0 | PASS
@@ -44,13 +44,13 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       14 |             5 |             5 |          0 | PASS
          FEN: 3q1rk1/3rbppp/ppbppn2/1N6/2P1P3/BP6/P1B1QPPP/R3R1K1 w - - 0 1
 
-      15 |            17 |            17 |          0 | PASS
+      15 |            67 |            67 |          0 | PASS
          FEN: 3r1rk1/p1q4p/1pP1ppp1/2n1b1B1/2P5/6P1/P1Q2PBP/1R3RK1 w - - 0 1
 
       16 |           -13 |           -13 |          0 | PASS
          FEN: 3r2k1/2q2p1p/5bp1/p1pP4/PpQ5/1P3NP1/5PKP/3R4 b - - 0 1
 
-      17 |           -25 |           -25 |          0 | PASS
+      17 |            25 |            25 |          0 | PASS
          FEN: 3r2k1/p1q1npp1/3r1n1p/2p1p3/4P2B/P1P2Q1P/B4PP1/1R2R1K1 w - - 0 1
 
       18 |           200 |           200 |          0 | PASS
@@ -65,7 +65,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       21 |           -30 |           -30 |          0 | PASS
          FEN: 3rk2r/1bq2pp1/2pb1n1p/p3pP2/P1B1P3/8/1P2QBPP/2RN1R1K b k - 0 1
 
-      22 |           -80 |           -80 |          0 | PASS
+      22 |          -130 |          -130 |          0 | PASS
          FEN: 3rkb1r/pppb1pp1/4n2p/2p5/3NN3/1P5P/PBP2PP1/3RR1K1 w - - 0 1
 
       23 |           -15 |           -15 |          0 | PASS
@@ -83,10 +83,10 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       27 |           -20 |           -20 |          0 | PASS
          FEN: 5r2/pp1b1kpp/8/2pPp3/2P1p2P/4P1r1/PPRKB1P1/6R1 b - - 0 1
 
-      28 |            15 |            15 |          0 | PASS
+      28 |           -35 |           -35 |          0 | PASS
          FEN: 6k1/1R5p/r2p2p1/2pN2B1/2bb4/P7/1P1K2PP/8 w - - 0 1
 
-      29 |            25 |            25 |          0 | PASS
+      29 |            75 |            75 |          0 | PASS
          FEN: 6k1/pp1q1pp1/2nBp1bp/P2pP3/3P4/8/1P2BPPP/2Q3K1 w - - 0 1
 
       30 |           -70 |           -70 |          0 | PASS
@@ -110,7 +110,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       36 |            48 |            48 |          0 | PASS
          FEN: r1b1k2r/ppq1bppp/2n5/2N1p3/8/2P1B1P1/P3PPBP/R2Q1RK1 b kq - 0 1
 
-      37 |           -15 |           -15 |          0 | PASS
+      37 |           -65 |           -65 |          0 | PASS
          FEN: r1b1kb1r/pp2qppp/2pp4/8/4nP2/2N2N2/PPPP2PP/R1BQK2R w KQkq - 0 1
 
       38 |            25 |            25 |          0 | PASS
@@ -125,13 +125,13 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       41 |            50 |            50 |          0 | PASS
          FEN: r1b2rk1/pp2ppbp/2n2np1/2q5/5B2/1BN1PN2/PP3PPP/2RQK2R w K - 0 1
 
-      42 |            70 |            70 |          0 | PASS
+      42 |            20 |            20 |          0 | PASS
          FEN: r1b2rk1/pp4pp/1q1Nppn1/2n4B/1P3P2/2B2RP1/P6P/R2Q3K b - - 0 1
 
       43 |            65 |            65 |          0 | PASS
          FEN: r1b2rk1/ppp1qppp/1b1n4/8/B2n4/3NN3/PPPP1PPP/R1BQK2R w KQ - 0 1
 
-      44 |            30 |            30 |          0 | PASS
+      44 |           -20 |           -20 |          0 | PASS
          FEN: r1b2rk1/ppq1bppp/2p1pn2/8/2NP4/2N1P3/PP2BPPP/2RQK2R w K - 0 1
 
       45 |            35 |            35 |          0 | PASS
@@ -140,7 +140,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       46 |            83 |            83 |          0 | PASS
          FEN: r1bq1rk1/1p2ppbp/p2p1np1/6B1/2P1P3/2N5/PP1QBPPP/R3K2R w KQ - 0 1
 
-      47 |            -2 |            -2 |          0 | PASS
+      47 |           -52 |           -52 |          0 | PASS
          FEN: r1bq1rk1/1p3ppp/p1np4/3Np1b1/2B1P3/P7/1PP2PPP/RN1QK2R w KQ - 0 1
 
       48 |            23 |            23 |          0 | PASS
@@ -161,7 +161,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       53 |            12 |            12 |          0 | PASS
          FEN: r1bq1rk1/pp3ppp/2n1pn2/2p5/1bBP4/2N1PN2/PP3PPP/R1BQ1RK1 w - - 0 1
 
-      54 |            -2 |            -2 |          0 | PASS
+      54 |            48 |            48 |          0 | PASS
          FEN: r1bq1rk1/pp3ppp/2n2n2/3p4/8/P1NB4/1PP2PPP/R1BQK2R w KQ - 0 1
 
       55 |           -45 |           -45 |          0 | PASS
@@ -176,13 +176,13 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       58 |             5 |             5 |          0 | PASS
          FEN: r1bqk2r/2ppbppp/p1n2n2/1p2p3/4P3/1B3N2/PPPPQPPP/RNB2RK1 b kq - 0 1
 
-      59 |            -3 |            -3 |          0 | PASS
+      59 |            47 |            47 |          0 | PASS
          FEN: r1bqk2r/5ppp/p1np4/1p1Np1b1/4P3/2P5/PPN2PPP/R2QKB1R b KQkq - 0 1
 
       60 |            17 |            17 |          0 | PASS
          FEN: r1bqk2r/bp3ppp/p1n1pn2/3p4/1PP5/P1N1PN2/1B3PPP/R2QKB1R b KQkq - 0 1
 
-      61 |           -50 |           -50 |          0 | PASS
+      61 |             0 |             0 |          0 | PASS
          FEN: r1bqk2r/p2pppbp/2p3pn/2p5/4P3/2P2N2/PP1P1PPP/RNBQR1K1 b kq - 0 1
 
       62 |             3 |             3 |          0 | PASS
@@ -203,7 +203,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       67 |           100 |           100 |          0 | PASS
          FEN: r1bqk2r/ppp2ppp/2nb4/3np3/8/PP2P3/1BQP1PPP/RN2KBNR b KQkq - 0 1
 
-      68 |            23 |            23 |          0 | PASS
+      68 |            73 |            73 |          0 | PASS
          FEN: r1bqk2r/ppp2ppp/3b4/4p3/8/1PPP1N2/2PB1PPP/R2Q1RK1 b kq - 0 1
 
       69 |             5 |             5 |          0 | PASS
@@ -242,7 +242,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       80 |            55 |            55 |          0 | PASS
          FEN: r2q1rk1/1b1nbpp1/pp2pn1p/8/2BN3B/2N1P3/PP2QPPP/2R2RK1 w - - 0 1
 
-      81 |           160 |           160 |          0 | PASS
+      81 |           110 |           110 |          0 | PASS
          FEN: r2q1rk1/1b3ppp/4pn2/1pP5/1b6/2NBPN2/1PQ2PPP/R3K2R w KQ - 0 1
 
       82 |            77 |            77 |          0 | PASS
@@ -254,7 +254,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       84 |           -35 |           -35 |          0 | PASS
          FEN: r2q1rk1/pppb1pbp/2np1np1/4p3/2P5/P1NPPNP1/1P3PBP/R1BQK2R w KQ - 0 1
 
-      85 |            12 |            12 |          0 | PASS
+      85 |            62 |            62 |          0 | PASS
          FEN: r2qk2r/1b1n1ppp/4pn2/p7/1pPP4/3BPN2/1B3PPP/R2QK2R w KQkq - 0 1
 
       86 |            10 |            10 |          0 | PASS
@@ -278,7 +278,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
       92 |            -2 |            -2 |          0 | PASS
          FEN: r2qkb1r/pp2nppp/1np1p3/4Pb2/3P4/PB3N2/1P3PPP/RNBQ1RK1 b kq - 0 1
 
-      93 |            23 |            23 |          0 | PASS
+      93 |           -27 |           -27 |          0 | PASS
          FEN: r2qkb1r/pp3ppp/2bppn2/8/2PQP3/2N2N2/PP3PPP/R1B1K2R w KQkq - 0 1
 
       94 |            15 |            15 |          0 | PASS
@@ -302,7 +302,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      100 |            15 |            15 |          0 | PASS
          FEN: r3k2r/pp2pp1p/6p1/2nP4/1R2PB2/4PK2/P5PP/5bNR w kq - 0 1
 
-     101 |             0 |             0 |          0 | PASS
+     101 |           -50 |           -50 |          0 | PASS
          FEN: r3k2r/ppp1bppp/2n5/3n4/3PB3/8/PP3PPP/RNB1R1K1 b kq - 0 1
 
      102 |           -55 |           -55 |          0 | PASS
@@ -317,10 +317,10 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      105 |            25 |            25 |          0 | PASS
          FEN: r3nrk1/pp2qpb1/3p1npp/2pPp3/2P1P2N/2N3Pb/PP1BBP1P/R2Q1RK1 w - - 0 1
 
-     106 |           142 |           142 |          0 | PASS
+     106 |           192 |           192 |          0 | PASS
          FEN: r3r1k1/1pqn1pbp/p2p2p1/2nP2B1/P1P1P3/2NB3P/5PP1/R2QR1K1 w - - 0 1
 
-     107 |           -30 |           -30 |          0 | PASS
+     107 |            20 |            20 |          0 | PASS
          FEN: r3r1k1/pp1q1ppp/2p5/P2n1p2/1b1P4/1B2PP2/1PQ3PP/R1B2RK1 w - - 0 1
 
      108 |           -28 |           -28 |          0 | PASS
@@ -329,7 +329,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      109 |           -50 |           -50 |          0 | PASS
          FEN: r3rbk1/p2b1p2/5p1p/1q1p4/N7/6P1/PP1BPPBP/3Q1RK1 w - - 0 1
 
-     110 |             0 |             0 |          0 | PASS
+     110 |           -50 |           -50 |          0 | PASS
          FEN: r4r1k/pp1bq1b1/n2p2p1/2pPp1Np/2P4P/P1N1BP2/1P1Q2P1/2KR3R w - - 0 1
 
      111 |            32 |            32 |          0 | PASS
@@ -341,7 +341,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      113 |            20 |            20 |          0 | PASS
          FEN: r4rk1/pp2qpp1/2pRb2p/4P3/2p5/2Q1PN2/PP3PPP/4K2R w K - 0 1
 
-     114 |             2 |             2 |          0 | PASS
+     114 |           -48 |           -48 |          0 | PASS
          FEN: r7/3rq1kp/2p1bpp1/p1Pnp3/2B4P/PP4P1/1B1RQP2/2R3K1 b - - 0 1
 
      115 |           -70 |           -70 |          0 | PASS
@@ -350,7 +350,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      116 |             3 |             3 |          0 | PASS
          FEN: rn1q1rk1/p4pbp/bp1p1np1/2pP4/8/P1N2NP1/1PQ1PPBP/R1B1K2R w KQ - 0 1
 
-     117 |            12 |            12 |          0 | PASS
+     117 |           -38 |           -38 |          0 | PASS
          FEN: rn1q1rk1/pb3p2/1p5p/3n2P1/3p4/P4P2/1P1Q1BP1/R3KBNR b KQ - 0 1
 
      118 |            57 |            57 |          0 | PASS
@@ -362,7 +362,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      120 |           -15 |           -15 |          0 | PASS
          FEN: rn1qkbnr/pp1b1ppp/8/1Bpp4/3P4/8/PPPNQPPP/R1B1K1NR b KQkq - 0 1
 
-     121 |            12 |            12 |          0 | PASS
+     121 |           -38 |           -38 |          0 | PASS
          FEN: rn1qr1k1/pb3p2/1p5p/3n2P1/3p4/P4P2/1P1QNBP1/R3KB1R b KQ - 0 1
 
      122 |            20 |            20 |          0 | PASS
@@ -371,7 +371,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      123 |            78 |            78 |          0 | PASS
          FEN: rn3rk1/1bqp1ppp/p3pn2/8/Nb1NP3/4B3/PP2BPPP/R2Q1RK1 w - - 0 1
 
-     124 |            15 |            15 |          0 | PASS
+     124 |            65 |            65 |          0 | PASS
          FEN: rn3rk1/pbp1qppp/1p1ppn2/8/2PP4/P1Q2NP1/1P2PPBP/R1B1K2R w KQ - 0 1
 
      125 |           -35 |           -35 |          0 | PASS
@@ -380,7 +380,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      126 |            55 |            55 |          0 | PASS
          FEN: rnb2rk1/ppq1ppbp/6p1/2p5/3PP3/2P2N2/P3BPPP/1RBQK2R w K - 0 1
 
-     127 |            37 |            37 |          0 | PASS
+     127 |            87 |            87 |          0 | PASS
          FEN: rnbq1rk1/5ppp/p3pn2/1p6/2BP4/P1P2N2/5PPP/R1BQ1RK1 w - - 0 1
 
      128 |            70 |            70 |          0 | PASS
@@ -401,7 +401,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
      133 |           -30 |           -30 |          0 | PASS
          FEN: rnbqr1k1/pp1p1ppp/5n2/3Pb3/1P6/P1N3P1/4NPBP/R1BQK2R w KQ - 0 1
 
-     134 |            35 |            35 |          0 | PASS
+     134 |            85 |            85 |          0 | PASS
          FEN: rnq1nrk1/pp3pbp/6p1/3p4/3P4/5N2/PP2BPPP/R1BQK2R w KQ - 0 1
 
 

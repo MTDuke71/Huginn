@@ -214,11 +214,22 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     score += file_bonus_score;
     
+    // VICE Part 83: Bishop pair bonus
+    int white_bishops = pos.pCount[int(Color::White)][int(PieceType::Bishop)];
+    int black_bishops = pos.pCount[int(Color::Black)][int(PieceType::Bishop)];
+    
+    if (white_bishops >= 2) {
+        score += EvalParams::BISHOP_PAIR_BONUS;
+    }
+    if (black_bishops >= 2) {
+        score -= EvalParams::BISHOP_PAIR_BONUS;
+    }
+    
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
 }
 
-// VICE Part 82: Material draw detection (2:03)
+// VICE Part 82/83: Material draw detection - Fixed to be more conservative
 // Checks if the position is a theoretical draw based on insufficient material
 bool MinimalEngine::MaterialDraw(const Position& pos) {
     // Use efficient piece count arrays instead of looping through all squares
@@ -231,29 +242,31 @@ bool MinimalEngine::MaterialDraw(const Position& pos) {
     int white_knights = pos.pCount[int(Color::White)][int(PieceType::Knight)];
     int black_knights = pos.pCount[int(Color::Black)][int(PieceType::Knight)];
     
-    // VICE MaterialDraw logic: No rooks or queens present
-    if (white_rooks == 0 && black_rooks == 0 && white_queens == 0 && black_queens == 0) {
-        // Only bishops and knights remain
-        if (white_bishops == 0 && black_bishops == 0) {
-            // Only knights: Less than 3 knights per side is insufficient
-            if (white_knights < 3 && black_knights < 3) {
-                return true;
-            }
-        } else if (white_knights == 0 && black_knights == 0) {
-            // Only bishops: Difference of less than 2 bishops is insufficient
-            if (abs(white_bishops - black_bishops) < 2) {
-                return true;
-            }
-        } else if ((white_knights < 3 && white_bishops == 0) || (white_bishops == 1 && white_knights == 0)) {
-            // White has insufficient attacking material
-            if ((black_knights < 3 && black_bishops == 0) || (black_bishops == 1 && black_knights == 0)) {
-                // Both sides have insufficient attacking material
-                return true;
-            }
-        }
+    // If either side has rooks or queens, not a draw
+    if (white_rooks > 0 || black_rooks > 0 || white_queens > 0 || black_queens > 0) {
+        return false;
     }
     
-    return false; // Not a material draw
+    // Only minor pieces remain (bishops and knights)
+    int white_pieces = white_bishops + white_knights;
+    int black_pieces = black_bishops + black_knights;
+    
+    // Classic insufficient material cases:
+    // 1. K vs K
+    if (white_pieces == 0 && black_pieces == 0) {
+        return true;
+    }
+    
+    // 2. K+N vs K or K+B vs K
+    if ((white_pieces <= 1 && black_pieces == 0) || (black_pieces <= 1 && white_pieces == 0)) {
+        return true;
+    }
+    
+    // 3. K+B vs K+B with bishops on same color squares (more complex, skip for now)
+    // 4. K+N vs K+N is generally drawn but can have winning positions
+    
+    // Be conservative - only claim draw for the most obvious cases
+    return false;
 }
 
 // Helper functions for evaluation (Part 56)
@@ -677,6 +690,12 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
 int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
+        // VICE Part 84: Check for transposition table move (highest priority)
+        int tt_score;
+        uint8_t tt_depth, tt_node_type; 
+        uint32_t tt_best_move;
+        bool has_tt_move = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
+        
         // Get PV move for this position (if any)
         S_MOVE pv_move;
         bool has_pv_move = pv_table.probe_move(pos.zobrist_key, pv_move);
@@ -686,8 +705,12 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
             S_MOVE& move = move_list.moves[i];
             int score = 0;
             
-            // VICE Part 64: PV move gets highest priority (2,000,000)
-            if (has_pv_move && move.move == pv_move.move) {
+            // VICE Part 84: TT move gets absolute highest priority (3,000,000)
+            if (has_tt_move && move.move == static_cast<int>(tt_best_move)) {
+                score = 3000000;
+                
+            // VICE Part 64: PV move gets second highest priority (2,000,000)
+            } else if (has_pv_move && move.move == pv_move.move) {
                 score = 2000000;
                 
             } else if (move.is_capture()) {
@@ -963,6 +986,31 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         info.nodes++;
     }
     
+    // VICE Part 84: Transposition Table Probe
+    // Check if we've already searched this position to sufficient depth
+    int tt_score;
+    uint8_t tt_depth, tt_node_type;
+    uint32_t tt_best_move;
+    bool tt_hit = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
+    
+    if (tt_hit && tt_depth >= depth && !isRoot) {
+        // Adjust mate scores to current ply (VICE Part 84: 5:13)
+        if (tt_score > MATE - 1000) {
+            tt_score -= info.ply;
+        } else if (tt_score < -MATE + 1000) {
+            tt_score += info.ply;
+        }
+        
+        // Use transposition table score if it provides exact bounds (6:01)
+        if (tt_node_type == TTEntry::EXACT) {
+            return tt_score;  // Exact score
+        } else if (tt_node_type == TTEntry::LOWER_BOUND && tt_score >= beta) {
+            return beta;  // Beta cutoff
+        } else if (tt_node_type == TTEntry::UPPER_BOUND && tt_score <= alpha) {
+            return alpha;  // Alpha cutoff  
+        }
+    }
+    
     // Check for early exit conditions
     if (depth == 0) {
         return quiescence(pos, alpha, beta, info);  // Enter quiescence search at leaf nodes
@@ -988,6 +1036,45 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     if (info.stopped || info.quit) {
         return 0;
     }
+    
+    // VICE Part 83: Null Move Pruning
+    // Only try null move if:
+    // 1. We're allowed to do null move (doNull = true)
+    // 2. Not in check (zugzwang safety)
+    // 3. Not at root level
+    // 4. Depth is sufficient (at least 4 for R=3 reduction)
+    // 5. Side to move has non-pawn material (big pieces)
+    const int NULL_MOVE_REDUCTION = 3;  // R = 3, VICE standard
+    const int MIN_NULL_MOVE_DEPTH = 4;  // Minimum depth to try null move
+    
+    if (doNull && !in_check && !isRoot && depth >= MIN_NULL_MOVE_DEPTH && 
+        pos.has_non_pawn_material(pos.side_to_move)) {
+        
+        // DEBUG: Uncomment to see null move attempts
+        // std::cout << "Trying null move at depth " << depth << std::endl;
+        
+        // Make null move (give opponent a free move)
+        pos.MakeNullMove();
+        
+        // Search with reduced depth and narrow window around beta
+        int null_score = -AlphaBeta(pos, -beta, -beta + 1, depth - 1 - NULL_MOVE_REDUCTION, info, false, false);
+        
+        // Undo null move
+        pos.TakeNullMove();
+        
+        // Check if we should stop
+        if (info.stopped || info.quit) {
+            return 0;
+        }
+        
+        // If null move search shows position is already too good (>= beta), 
+        // then our actual moves should easily beat beta - prune this node
+        if (null_score >= beta) {
+            // Null move cutoff - this position is too good for the opponent
+            info.null_cut++; // Track null move cutoffs for statistics
+            return beta;
+        }
+    }
 
     // Generate all legal moves first
     S_MOVELIST move_list;
@@ -1008,6 +1095,8 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     }
     
     int best_score = -30000;
+    S_MOVE best_move;  // Track best move for transposition table storage
+    best_move.move = 0;
     
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
@@ -1025,6 +1114,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         
         if (score > best_score) {
             best_score = score;
+            best_move = move_list.moves[i];  // Track best move for TT storage
             if (score > alpha) {
                 alpha = score;
                 
@@ -1051,6 +1141,26 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
     
+    // VICE Part 84: Store result in transposition table (6:38)
+    uint8_t node_type;
+    if (best_score <= alpha) {
+        node_type = TTEntry::UPPER_BOUND;  // All moves failed low (upper bound)
+    } else if (best_score >= beta) {
+        node_type = TTEntry::LOWER_BOUND;  // Beta cutoff (lower bound) 
+    } else {
+        node_type = TTEntry::EXACT;        // Exact score within alpha-beta window
+    }
+    
+    // Adjust mate scores for storage (VICE Part 84: 5:13)
+    int store_score = best_score;
+    if (store_score > MATE - 1000) {
+        store_score += info.ply;
+    } else if (store_score < -MATE + 1000) {
+        store_score -= info.ply;
+    }
+    
+    tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
+
     return best_score;
 }
 
@@ -1155,8 +1265,8 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             
             if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
             
-            // Search this move
-            int score = -AlphaBeta(pos, -30000, 30000, current_depth - 1, info, true, true);  // isRoot = true
+            // Search this move - isRoot = false for non-root recursive calls
+            int score = -AlphaBeta(pos, -30000, 30000, current_depth - 1, info, true, false);
             pos.TakeMove();
             
             if (info.stopped || info.quit) break;
@@ -1192,6 +1302,9 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                   << " score " << format_uci_score(best_score)
                   << " nodes " << info.nodes 
                   << " time " << elapsed.count()
+                  << " nullcut " << info.null_cut
+                  << " tthits " << tt_table.get_hits()
+                  << " ttwrites " << tt_table.get_writes()
                   << " pv ";
         
         // Print full Principal Variation
@@ -1213,6 +1326,27 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     }
     
     return best_move;
+}
+
+// VICE Part 84: Print transposition table statistics
+void MinimalEngine::print_tt_stats() const {
+    uint64_t hits = tt_table.get_hits();
+    uint64_t misses = tt_table.get_misses();
+    uint64_t writes = tt_table.get_writes();
+    uint64_t total_probes = hits + misses;
+    double hit_rate = tt_table.get_hit_rate();
+    double utilization = tt_table.get_utilization();
+    
+    std::cout << std::endl;
+    std::cout << "=== Transposition Table Statistics ===" << std::endl;
+    std::cout << "Table size: " << tt_table.get_size() << " entries" << std::endl;
+    std::cout << "Total probes: " << total_probes << std::endl;
+    std::cout << "Hits: " << hits << std::endl;
+    std::cout << "Misses: " << misses << std::endl;
+    std::cout << "Writes: " << writes << std::endl;
+    std::cout << "Hit rate: " << std::fixed << std::setprecision(1) << (hit_rate * 100.0) << "%" << std::endl;
+    std::cout << "Table utilization: " << std::fixed << std::setprecision(1) << (utilization * 100.0) << "%" << std::endl;
+    std::cout << "=======================================" << std::endl;
 }
 
 } // namespace Huginn
