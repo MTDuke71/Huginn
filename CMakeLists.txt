@@ -568,3 +568,20 @@ target_include_directories(test_part81_debug PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 set_target_properties(test_part81_debug PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# VICE Part 82 test: Material draw detection and king evaluation tables  
+add_executable(test_part82_material_draw 
+    test_part82_material_draw.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(test_part82_material_draw PRIVATE cxx_std_17)
+target_include_directories(test_part82_material_draw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(test_part82_material_draw PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)

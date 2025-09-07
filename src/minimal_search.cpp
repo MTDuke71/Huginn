@@ -39,8 +39,17 @@ Piece swapPieceColor(Piece piece) {
 }
 
 int MinimalEngine::evaluate(const Position& pos) {
+    // VICE Part 82: Check for material draw first (2:03)
+    if (pos.get_white_pawns() == 0 && pos.get_black_pawns() == 0 && MaterialDraw(pos)) {
+        return 0; // Return draw score for insufficient material
+    }
+    
     // VICE Part 56: Basic Evaluation with piece-square tables
     int score = 0;
+    
+    // Calculate total material for endgame detection
+    int white_material = 0;
+    int black_material = 0;
     
     // Count material and add piece-square table values for both sides
     for (int sq = 21; sq <= 98; ++sq) {
@@ -64,6 +73,15 @@ int MinimalEngine::evaluate(const Position& pos) {
             default: material_value = 0; break;
         }
         
+        // Track material for endgame detection (exclude kings)
+        if (piece_type != PieceType::King) {
+            if (piece_color == Color::White) {
+                white_material += material_value;
+            } else {
+                black_material += material_value;
+            }
+        }
+        
         // Convert square120 to square64 for piece-square tables
         int sq64 = MAILBOX_MAPS.to64[sq];
         if (sq64 < 0) continue; // Invalid square
@@ -72,14 +90,27 @@ int MinimalEngine::evaluate(const Position& pos) {
         int pst_value = 0;
         int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
         
-        switch (piece_type) {
-            case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
-            case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
-            case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
-            case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
-            case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
-            case PieceType::King:   pst_value = EvalParams::KING_TABLE[table_index]; break;
-            default: pst_value = 0; break;
+        // VICE Part 82: Use different king tables based on material (3:56)
+        if (piece_type == PieceType::King) {
+            // Determine if we're in endgame based on opponent's material
+            bool is_endgame = (piece_color == Color::White) ? 
+                (black_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD) :
+                (white_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
+            
+            if (is_endgame) {
+                pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
+            } else {
+                pst_value = EvalParams::KING_TABLE[table_index];
+            }
+        } else {
+            switch (piece_type) {
+                case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
+                case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
+                case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
+                case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
+                case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
+                default: pst_value = 0; break;
+            }
         }
         
         // Add material + piece-square value for this piece
@@ -198,6 +229,44 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     // Return from current side's perspective (negate if black to move)
     return (pos.side_to_move == Color::White) ? score : -score;
+}
+
+// VICE Part 82: Material draw detection (2:03)
+// Checks if the position is a theoretical draw based on insufficient material
+bool MinimalEngine::MaterialDraw(const Position& pos) {
+    // Use efficient piece count arrays instead of looping through all squares
+    int white_rooks = pos.pCount[int(Color::White)][int(PieceType::Rook)];
+    int black_rooks = pos.pCount[int(Color::Black)][int(PieceType::Rook)];
+    int white_queens = pos.pCount[int(Color::White)][int(PieceType::Queen)];
+    int black_queens = pos.pCount[int(Color::Black)][int(PieceType::Queen)];
+    int white_bishops = pos.pCount[int(Color::White)][int(PieceType::Bishop)];
+    int black_bishops = pos.pCount[int(Color::Black)][int(PieceType::Bishop)];
+    int white_knights = pos.pCount[int(Color::White)][int(PieceType::Knight)];
+    int black_knights = pos.pCount[int(Color::Black)][int(PieceType::Knight)];
+    
+    // VICE MaterialDraw logic: No rooks or queens present
+    if (white_rooks == 0 && black_rooks == 0 && white_queens == 0 && black_queens == 0) {
+        // Only bishops and knights remain
+        if (white_bishops == 0 && black_bishops == 0) {
+            // Only knights: Less than 3 knights per side is insufficient
+            if (white_knights < 3 && black_knights < 3) {
+                return true;
+            }
+        } else if (white_knights == 0 && black_knights == 0) {
+            // Only bishops: Difference of less than 2 bishops is insufficient
+            if (abs(white_bishops - black_bishops) < 2) {
+                return true;
+            }
+        } else if ((white_knights < 3 && white_bishops == 0) || (white_bishops == 1 && white_knights == 0)) {
+            // White has insufficient attacking material
+            if ((black_knights < 3 && black_bishops == 0) || (black_bishops == 1 && black_knights == 0)) {
+                // Both sides have insufficient attacking material
+                return true;
+            }
+        }
+    }
+    
+    return false; // Not a material draw
 }
 
 // Helper functions for evaluation (Part 56)

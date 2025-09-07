@@ -49,6 +49,10 @@ inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     // Much higher penalty for 
 inline constexpr int DEVELOP_BONUS_OPENING = 60;     // Strong opening development bonus
 inline constexpr int DEVELOP_BONUS_ENDGAME = 0;
 
+// VICE Part 82: Material draw detection and king evaluation 
+// Endgame threshold: approximately equivalent to Rook + 2 Knights + 2 Pawns (about 1300)
+inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1300;
+
 inline constexpr int KING_SHIELD_MULTIPLIER = 10;
 inline constexpr int KING_ATTACK_PENALTY = 15;
 
@@ -101,8 +105,10 @@ inline constexpr std::array<int, 64> QUEEN_TABLE = {
     0,   0,   5,   5,  5,  5,   0,   -5,  -10, 5,   5,   5,  5,  5,   0,   -10,
     -10, 0,   5,   0,  0,  0,   0,   -10, -20, -10, -10, -5, -5, -10, -10, -20};
 
+// VICE Part 82: King position evaluation tables
+// KingO[64] - Opening/middlegame king table (encourages castling and back rank safety)
 inline constexpr std::array<int, 64> KING_TABLE = {
-    0,  5,   5,   -10, -10, 0,   10,  5,
+    0,   5,   5,   -10, -10, 0,   10,  5,
     -30, -30, -30, -30, -30, -30, -30, -30,
     -50, -50, -50, -50, -50, -50, -50, -50,
     -70, -70, -70, -70, -70, -70, -70, -70,
@@ -111,6 +117,7 @@ inline constexpr std::array<int, 64> KING_TABLE = {
     -70, -70, -70, -70, -70, -70, -70, -70,
     -70, -70, -70, -70, -70, -70, -70, -70};
 
+// KingE[64] - Endgame king table (encourages centralization)
 inline constexpr std::array<int, 64> KING_TABLE_ENDGAME = {
     -50, -10, 0,  0,  0,  0,  -10, -50,
     -10, 0,   10, 10, 10, 10, 0,   -10,

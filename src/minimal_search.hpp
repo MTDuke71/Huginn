@@ -81,6 +81,9 @@ public:  // Make members public for easier access
     // Helper functions for evaluation (Part 56)
     static int mirror_square_64(int sq64);
     
+    // VICE Part 82: Material draw detection (2:03)
+    static bool MaterialDraw(const Position& pos);
+    
     // VICE Tutorial: Mirror Board function for evaluation testing
     // Creates a mirrored copy of the position for symmetry testing
     Position mirrorBoard(const Position& pos);
