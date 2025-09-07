@@ -47,11 +47,12 @@ int MinimalEngine::evaluate(const Position& pos) {
     // VICE Part 56: Basic Evaluation with piece-square tables
     int score = 0;
     
-    // Track material for endgame detection (exclude kings)
-    int white_material = 0;
-    int black_material = 0;
+    // VICE Part 82: Use pre-existing material tracking for endgame detection
+    // This is much more efficient than manually counting material
+    int total_material = pos.get_total_material();
+    bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
     
-    // Count material and add piece-square table values for both sides
+    // SECOND PASS: Evaluate all pieces using pre-calculated endgame status
     for (int sq = 21; sq <= 98; ++sq) {
         if (pos.board[sq] == Piece::Offboard) continue;
         
@@ -73,15 +74,6 @@ int MinimalEngine::evaluate(const Position& pos) {
             default: material_value = 0; break;
         }
         
-        // Track material for endgame detection (exclude kings)
-        if (piece_type != PieceType::King) {
-            if (piece_color == Color::White) {
-                white_material += material_value;
-            } else {
-                black_material += material_value;
-            }
-        }
-        
         // Convert square120 to square64 for piece-square tables
         int sq64 = MAILBOX_MAPS.to64[sq];
         if (sq64 < 0) continue; // Invalid square
@@ -90,13 +82,8 @@ int MinimalEngine::evaluate(const Position& pos) {
         int pst_value = 0;
         int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
         
-        // VICE Part 82: Use different king tables based on material (3:56)
+        // VICE Part 82: Use different king tables based on pre-calculated material
         if (piece_type == PieceType::King) {
-            // Determine if we're in endgame based on total material on board
-            // This ensures symmetry - same total material = same table for both sides
-            int total_material = white_material + black_material;
-            bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
-            
             if (is_endgame) {
                 pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
             } else {

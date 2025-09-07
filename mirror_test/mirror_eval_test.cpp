@@ -81,9 +81,9 @@ int main() {
             Position mirrored = engine.mirrorBoard(pos);
             int eval2 = engine.evalPosition(mirrored);
             
-            // Since mirrorBoard flips the side to move, we need to negate eval2
-            // to compare from the same perspective
-            int eval2_corrected = -eval2;
+            // For symmetric evaluation, both positions should evaluate to the same
+            // value from their respective side's perspective (no correction needed)
+            int eval2_corrected = eval2;
             
             // Calculate difference
             int diff = eval1 - eval2_corrected;
