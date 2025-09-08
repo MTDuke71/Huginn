@@ -396,20 +396,29 @@ void MinimalEngine::check_up(SearchInfo& info) {
     }
 }
 
-std::string MinimalEngine::format_uci_score(int score) const {
+std::string MinimalEngine::format_uci_score(int score, Color side_to_move) const {
     // Convert engine score to proper UCI format
-    // MATE = 29000, so scores close to +/-MATE are mate scores
+    // UCI specification: 
+    // - cp <x>: score from engine's point of view in centipawns
+    // - mate <y>: mate in y MOVES (not plies). If engine is getting mated, use negative y
     
+    // The search returns scores from the side-to-move's perspective:
+    // - Positive score means side-to-move is winning
+    // - Negative score means side-to-move is losing
+    
+    // MATE = 29000, so scores close to +/-MATE are mate scores
     if (score > MATE - 100) {
-        // Positive mate score: we are mating opponent
-        int mate_in = (MATE - score + 1) / 2;
-        return "mate " + std::to_string(mate_in);
+        // Positive mate score: side_to_move (engine) is mating opponent
+        int mate_in_plies = MATE - score;
+        int mate_in_moves = (mate_in_plies + 1) / 2;  // Convert plies to moves
+        return "mate " + std::to_string(mate_in_moves);
     } else if (score < -MATE + 100) {
-        // Negative mate score: we are being mated
-        int mate_in = -((-MATE - score + 1) / 2);
-        return "mate " + std::to_string(mate_in);
+        // Negative mate score: side_to_move (engine) is being mated
+        int mate_in_plies = MATE + score;  // score is negative, so this is MATE - abs(score)
+        int mate_in_moves = (mate_in_plies + 1) / 2;  // Convert plies to moves
+        return "mate -" + std::to_string(mate_in_moves);  // Negative because engine is being mated
     } else {
-        // Regular centipawn score
+        // Regular centipawn score from engine's perspective
         return "cp " + std::to_string(score);
     }
 }
@@ -887,7 +896,7 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             int pv_moves = get_pv_line(pos, depth, pv_array);
             
             std::cout << "info depth " << depth 
-                     << " score " << format_uci_score(best_score)
+                     << " score " << format_uci_score(best_score, pos.side_to_move)
                      << " nodes " << total_nodes 
                      << " time " << elapsed
                      << " pv ";
@@ -1088,7 +1097,9 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            return -29000 + (info.max_depth - depth); // Checkmate, prefer quicker mates
+            // Checkmate: side_to_move is mated
+            // Return negative score with distance information
+            return -MATE + (info.max_depth - depth); // Negative = loss, distance = plies to mate
         } else {
             return 0; // Stalemate
         }
@@ -1308,7 +1319,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         
         // Print results after each completed depth (3:03, 5:32)
         std::cout << "info depth " << current_depth 
-                  << " score " << format_uci_score(best_score)
+                  << " score " << format_uci_score(best_score, pos.side_to_move)
                   << " nodes " << info.nodes 
                   << " time " << elapsed.count()
                   << " nullcut " << info.null_cut
