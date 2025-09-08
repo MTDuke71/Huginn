@@ -3,15 +3,6 @@
 #include "board120.hpp"
 #include "chess_types.hpp"
 
-// Move encoding bit layout (25 bits total in int move):
-// Bits 0-6:   from square (7 bits, 0-127, supports 120-square notation)
-// Bits 7-13:  to square (7 bits, 0-127, supports 120-square notation)  
-// Bits 14-17: captured piece type (4 bits, 0-15, PieceType enum)
-// Bit 18:     en passant capture flag (1 bit)
-// Bit 19:     pawn start (double push) flag (1 bit)
-// Bits 20-23: promoted piece type (4 bits, 0-15, PieceType enum)
-// Bit 24:     castle move flag (1 bit)
-
 // Bitmasks for move encoding/decoding
 constexpr int MOVE_FROM_MASK     = 0x0000007F;  // Bits 0-6
 constexpr int MOVE_TO_MASK       = 0x00003F80;  // Bits 7-13
@@ -22,13 +13,13 @@ constexpr int MOVE_PROMOTED_MASK = 0x00F00000;  // Bits 20-23
 constexpr int MOVE_CASTLE        = 0x01000000;  // Bit 24
 
 // Bit shift positions
-constexpr int MOVE_FROM_SHIFT     = 0;
-constexpr int MOVE_TO_SHIFT       = 7;
-constexpr int MOVE_CAPTURED_SHIFT = 14;
-constexpr int MOVE_ENPASSANT_SHIFT = 18;
-constexpr int MOVE_PAWNSTART_SHIFT = 19;
-constexpr int MOVE_PROMOTED_SHIFT = 20;
-constexpr int MOVE_CASTLE_SHIFT   = 24;
+constexpr int MOVE_FROM_SHIFT       = 0;
+constexpr int MOVE_TO_SHIFT         = 7;
+constexpr int MOVE_CAPTURED_SHIFT   = 14;
+constexpr int MOVE_ENPASSANT_SHIFT  = 18;
+constexpr int MOVE_PAWNSTART_SHIFT  = 19;
+constexpr int MOVE_PROMOTED_SHIFT   = 20;
+constexpr int MOVE_CASTLE_SHIFT     = 24;
 
 // Forward declaration
 struct S_MOVE;
