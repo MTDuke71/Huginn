@@ -1,3 +1,27 @@
+/**
+ * @brief Determines if a given square is attacked by any piece of the specified color.
+ *
+ * This function checks whether the square `sq` is attacked by any piece of `attacking_color`
+ * in the given `pos` (Position). It uses optimized piece lists if available for performance,
+ * but falls back to a full board scan if the piece lists are not maintained (e.g., after
+ * direct board setup).
+ *
+ * The function checks for attacks from all piece types:
+ *   - Pawns: Checks pawn attack patterns based on color.
+ *   - Knights: Checks all possible knight jumps.
+ *   - Kings: Checks adjacent squares for king attacks.
+ *   - Rooks and Queens: Checks rank and file sliding attacks.
+ *   - Bishops and Queens: Checks diagonal sliding attacks.
+ *
+ * The function first determines if piece lists are available and valid. If not, it performs
+ * a direct scan of the board for attackers. Otherwise, it uses the piece lists for each type
+ * for efficient attack detection.
+ *
+ * @param sq The square to check for attacks (typically 0..119 in mailbox representation).
+ * @param pos The current board position.
+ * @param attacking_color The color of the potential attackers (Color::White or Color::Black).
+ * @return true if the square is attacked by any piece of the given color, false otherwise.
+ */
 #include "attack_detection.hpp"
 
 // Main attack detection function moved from header for better compilation times
@@ -139,7 +163,7 @@ bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     
     // 1. Check pawns using piece list (most common attackers)
     int pawn_count = pos.pCount[color_idx][int(PieceType::Pawn)];
-    for (int i = 0; i < pawn_count; ++i) {
+    // 1. Check pawns using piece list (most common attackers; this order is intentional for performance and matches typical chess attack patterns)
         int pawn_sq = pos.pList[color_idx][int(PieceType::Pawn)][i];
         if (pawn_attacks_square(pawn_sq, sq, attacking_color)) {
             return true;
@@ -189,6 +213,7 @@ bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
             return true;
         }
     }
-    
-    return false; // No attacks found
+    // No attacks found in optimized mode
+    return false;
+}
 }
