@@ -5,6 +5,18 @@
 #include "movegen_enhanced.hpp"
 #include <fstream>
 
+/**
+ * @brief Constructs a new UCIInterface instance and initializes the chess engine.
+ *
+ * This constructor performs the essential initialization steps for the UCI interface:
+ * - Initializes the Huginn chess engine core systems
+ * - Sets the position to the standard starting position
+ * - Creates a MinimalEngine instance for search operations
+ * - Loads the opening book if enabled
+ *
+ * The constructor ensures the engine is ready to receive UCI commands immediately
+ * after instantiation.
+ */
 UCIInterface::UCIInterface() {
     // Initialize the chess engine
     Huginn::init();
@@ -21,6 +33,30 @@ UCIInterface::UCIInterface() {
     }
 }
 
+/**
+ * @brief Main UCI command processing loop that handles communication with chess GUIs.
+ *
+ * This function implements the UCI (Universal Chess Interface) protocol by reading commands
+ * from stdin and processing them appropriately. It sets up unbuffered I/O for immediate
+ * communication with chess GUIs and continuously processes commands until a "quit" command
+ * is received.
+ *
+ * Supported UCI commands include:
+ * - uci: Engine identification and initialization
+ * - debug: Toggle debug mode for verbose output
+ * - isready: Engine readiness confirmation
+ * - setoption: Configure engine parameters
+ * - register: Registration handling (not required)
+ * - ucinewgame: Start a new game
+ * - position: Set board position from FEN or moves
+ * - go: Start search with specified parameters
+ * - d: Debug display of current position
+ * - stop: Halt current search
+ * - ponderhit: Ponder mode hit confirmation
+ * - quit: Exit the engine
+ *
+ * @note All commands are processed with error handling and optional debug output.
+ */
 void UCIInterface::run() {
     // Set stdin and stdout to unbuffered mode for immediate GUI communication
     setvbuf(stdin, NULL, _IONBF, 0);
@@ -127,11 +163,29 @@ void UCIInterface::run() {
     }
 }
 
+/**
+ * @brief Sends engine identification information to the GUI.
+ *
+ * This function outputs the required UCI identification strings that inform the chess GUI
+ * about the engine's name and author. This information is displayed in the GUI and used
+ * for engine selection and tournament management.
+ */
 void UCIInterface::send_id() {
     std::cout << "id name Huginn 1.1" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
+/**
+ * @brief Sends available engine options to the GUI for configuration.
+ *
+ * This function declares the configurable options that the chess GUI can modify to
+ * customize engine behavior. Each option includes its type, default value, and valid
+ * range where applicable. The options include:
+ * - Threads: Number of search threads (1-64)
+ * - Ponder: Enable/disable pondering mode
+ * - OwnBook: Enable/disable opening book usage
+ * - BookFile: Path to the opening book file
+ */
 void UCIInterface::send_options() {
     std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
@@ -139,6 +193,16 @@ void UCIInterface::send_options() {
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
 }
 
+/**
+ * @brief Splits a string into tokens separated by whitespace.
+ *
+ * This utility function tokenizes UCI command strings for easier parsing. It handles
+ * multiple consecutive spaces and returns a vector of individual words/parameters
+ * that can be processed by command handlers.
+ *
+ * @param str The input string to tokenize.
+ * @return A vector of strings containing the individual tokens.
+ */
 std::vector<std::string> UCIInterface::split_string(const std::string& str) {
     std::vector<std::string> tokens;
     std::istringstream iss(str);
@@ -147,7 +211,18 @@ std::vector<std::string> UCIInterface::split_string(const std::string& str) {
     return tokens;
 }
 
-void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
+/**
+ * @brief Handles the UCI "position" command to set up the chess position.
+ *
+ * This function processes the position command which can specify either a starting
+ * position ("startpos") or a custom FEN string ("fen"). It also handles any
+ * subsequent moves that should be played from the given position. The moves
+ * parameter contains moves in algebraic notation that are applied sequentially.
+ *
+ * @param parts Vector containing the tokenized position command parts.
+ *              Expected format: ["position", "startpos"|"fen", [fen_string], "moves", move1, move2, ...]
+ */
+void UCIInterface::handle_position(const std::vector<std::string>& parts) {
     if (tokens.size() < 2) return;
     
     size_t move_index = 0;
@@ -202,6 +277,18 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     if (debug_mode) std::cout << "info string Position set, FEN: " << position.to_fen() << std::endl;
 }
 
+/**
+ * @brief Handles the "go" command from the UCI protocol, parsing search parameters and starting the search.
+ *
+ * This function interprets the tokens from a UCI "go" command, extracting search parameters such as depth, movetime,
+ * time controls (wtime, btime, winc, binc, movestogo), and infinite search mode. It sets up the search limits accordingly,
+ * applying logic for classical, increment, and sudden death time controls, and ensures safe time allocation.
+ * After parsing and configuring the search parameters, it initiates the search for the best move.
+ *
+ * @param tokens A vector of strings representing the tokenized "go" command and its parameters.
+ *
+ * @note If debug_mode is enabled, detailed info about parsing and parameter selection is printed to std::cout.
+ */
 void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     if (debug_mode) std::cout << "info string Starting search" << std::endl;
     should_stop = false;
@@ -355,6 +442,17 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     search_best_move(limits);
 }
 
+/**
+ * @brief Handles UCI "setoption" commands to configure engine parameters.
+ *
+ * This function processes setoption commands that modify engine configuration
+ * during UCI communication. It parses option names and values, applying them
+ * to the appropriate engine settings. Common options include hash table size,
+ * threads, and various engine-specific parameters.
+ *
+ * @param tokens Vector containing the tokenized setoption command parts.
+ *               Expected format: ["setoption", "name", option_name, "value", option_value]
+ */
 void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     if (tokens.size() < 4) return; // Need at least "setoption name X value Y"
     
@@ -419,6 +517,18 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     }
 }
 
+/**
+ * @brief Initiates the best move search with specified time and depth limits.
+ *
+ * This function starts the chess engine's search process to find the best move
+ * from the current position. It configures the search with time controls,
+ * depth limits, and other parameters, then begins the search process. The
+ * search runs in the background and communicates results via UCI protocol.
+ *
+ * @param limits Search constraints including time controls, depth limits,
+ *               and other search parameters that control how long and deep
+ *               the engine should search.
+ */
 void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // Changed from SearchLimits
     is_searching = true;
     
@@ -481,6 +591,15 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     is_searching = false;
 }
 
+/**
+ * @brief Loads the opening book from various possible file locations.
+ *
+ * This function attempts to load a Polyglot opening book file for the chess
+ * engine. It searches through multiple potential file paths including user-
+ * specified locations, current directory, and common installation directories.
+ * The opening book provides the engine with known good opening moves to
+ * improve early game performance.
+ */
 void UCIInterface::load_opening_book() {
     if (!search_engine) return;
     
@@ -525,6 +644,14 @@ void UCIInterface::load_opening_book() {
     }
 }
 
+/**
+ * @brief Signals the search engine to stop the current search operation.
+ *
+ * This function immediately terminates any ongoing search process when
+ * the "stop" UCI command is received. It sets the stop flag, notifies
+ * the search engine to halt, and records the stop time for accurate
+ * performance tracking. This ensures responsive control from chess GUIs.
+ */
 void UCIInterface::signal_stop() {
     should_stop = true;
     if (search_engine) search_engine->stop();

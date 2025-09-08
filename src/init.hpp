@@ -1,11 +1,24 @@
 // init.hpp
 #pragma once
 
+/**
+ * @namespace Huginn
+ * @brief Contains core initialization functions for the Huginn engine.
+ */
 namespace Huginn {
-    // Initialize all engine subsystems
-    // Call once at program startup before using any engine functionality
+
+/**
+ * @brief Initializes all engine subsystems.
+ * 
+ * This function must be called once at program startup before using any engine functionality.
+ * It sets up all necessary subsystems required for the engine to operate correctly.
+ */
     void init();
     
-    // Check if engine has been properly initialized
+/**
+ * @brief Checks if the engine has been properly initialized.
+ * 
+ * @return true if the engine has been initialized, false otherwise.
+ */
     bool is_initialized();
 } // namespace Huginn
