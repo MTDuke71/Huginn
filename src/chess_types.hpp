@@ -237,3 +237,21 @@ namespace CastlingLookup {
         return current_rights & CASTLING_MASK[from_sq] & CASTLING_MASK[to_sq];
     }
 }
+
+// ---------- Piece Utility Functions ----------
+// Extract piece type from colored piece
+constexpr inline PieceType get_piece_type(Piece piece) {
+    return PieceType(uint8_t(piece) & 0x07);  // Lower 3 bits contain type
+}
+
+// Extract color from colored piece
+constexpr inline Color get_piece_color(Piece piece) {
+    return Color((uint8_t(piece) >> 3) & 0x01);  // Bit 3 contains color
+}
+
+// Check if square is valid (on-board)
+constexpr inline bool is_valid_square(int square) {
+    return square >= 0 && square < 120 && 
+           (square % 10) >= 1 && (square % 10) <= 8 &&
+           (square / 10) >= 2 && (square / 10) <= 9;
+}

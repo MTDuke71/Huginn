@@ -5,6 +5,7 @@
 #include "movegen_enhanced.hpp"
 #include "pvtable.hpp"
 #include "transposition_table.hpp"
+#include "polyglot_book.hpp"
 #include <chrono>
 
 namespace Huginn {
@@ -57,6 +58,7 @@ public:  // Make members public for easier access
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
     TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
+    PolyglotBook opening_book;    // VICE Part 85: Polyglot opening book for opening moves
     
     // Search History array (3:55) - stores scores for moves that improved alpha
     // [piece][to_square] - 13 piece types, 120 squares (mailbox)
@@ -136,6 +138,12 @@ public:  // Make members public for easier access
     
     // VICE Part 84: Transposition table statistics
     void print_tt_stats() const;
+    
+    // VICE Part 85: Opening book functions
+    bool load_opening_book(const std::string& book_path);
+    S_MOVE get_book_move(const Position& pos) const;
+    bool is_in_opening_book(const Position& pos) const;
+    void print_book_moves(const Position& pos) const;
     
     // VICE Part 55 - Search Function Definitions
     void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)

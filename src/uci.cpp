@@ -3,6 +3,7 @@
 #include "board120.hpp"
 #include "uci_utils.hpp"
 #include "movegen_enhanced.hpp"
+#include <fstream>
 
 UCIInterface::UCIInterface() {
     // Initialize the chess engine
@@ -13,6 +14,11 @@ UCIInterface::UCIInterface() {
     
     // Initialize search engine
     search_engine = std::make_unique<Huginn::MinimalEngine>();  // Changed from SimpleEngine
+    
+    // Load opening book if enabled
+    if (own_book) {
+        load_opening_book();
+    }
 }
 
 void UCIInterface::run() {
@@ -129,6 +135,8 @@ void UCIInterface::send_id() {
 void UCIInterface::send_options() {
     std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
+    std::cout << "option name OwnBook type check default true" << std::endl;
+    std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
 }
 
 std::vector<std::string> UCIInterface::split_string(const std::string& str) {
@@ -379,6 +387,35 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
                 std::cout << "info string Ponder set to " << (ponder ? "true" : "false") << " (not supported)" << std::endl;
             }
         }
+        else if (option_name == "OwnBook") {
+            bool new_own_book = (option_value == "true");
+            if (new_own_book != own_book) {
+                own_book = new_own_book;
+                if (own_book) {
+                    load_opening_book();
+                } else {
+                    // Disable book by clearing it
+                    if (search_engine) {
+                        search_engine->opening_book.clear();
+                    }
+                    if (debug_mode) {
+                        std::cout << "info string Opening book disabled" << std::endl;
+                    }
+                }
+            }
+            if (debug_mode) {
+                std::cout << "info string OwnBook set to " << (own_book ? "true" : "false") << std::endl;
+            }
+        }
+        else if (option_name == "BookFile") {
+            book_file = option_value;
+            if (own_book) {
+                load_opening_book();  // Reload with new file
+            }
+            if (debug_mode) {
+                std::cout << "info string BookFile set to " << book_file << std::endl;
+            }
+        }
     }
 }
 
@@ -442,6 +479,50 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     }
     
     is_searching = false;
+}
+
+void UCIInterface::load_opening_book() {
+    if (!search_engine) return;
+    
+    // Try multiple possible paths for the book file
+    std::vector<std::string> possible_paths = {
+        book_file,                       // User-specified path
+        "src/performance.bin",           // From project root
+        "performance.bin",               // Same directory as executable
+        "../../../src/performance.bin", // From release bin directory to project src
+        "../../src/performance.bin"     // From debug bin directory to project src
+    };
+    
+    std::string found_path;
+    bool found = false;
+    
+    for (const auto& path : possible_paths) {
+        std::ifstream test_file(path);
+        if (test_file.good()) {
+            found_path = path;
+            found = true;
+            break;
+        }
+    }
+    
+    if (found) {
+        if (search_engine->load_opening_book(found_path)) {
+            if (debug_mode) {
+                std::cout << "info string Opening book loaded: " << found_path << std::endl;
+            }
+        } else {
+            if (debug_mode) {
+                std::cout << "info string Failed to load opening book: " << found_path << std::endl;
+            }
+        }
+    } else {
+        if (debug_mode) {
+            std::cout << "info string Opening book file not found. Tried:" << std::endl;
+            for (const auto& path : possible_paths) {
+                std::cout << "info string   " << path << std::endl;
+            }
+        }
+    }
 }
 
 void UCIInterface::signal_stop() {

@@ -1231,6 +1231,15 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     S_MOVE best_move;
     best_move.move = 0;
     
+    // VICE Part 85: Check opening book first
+    if (opening_book.is_book_loaded() && opening_book.has_book_moves(pos)) {
+        S_MOVE book_move = opening_book.get_book_move(pos);
+        if (book_move.move != 0) {
+            std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
+            return book_move;
+        }
+    }
+    
     // VICE Part 57: Clear everything before starting search
     clearForSearch(*this, info);
     
@@ -1347,6 +1356,41 @@ void MinimalEngine::print_tt_stats() const {
     std::cout << "Hit rate: " << std::fixed << std::setprecision(1) << (hit_rate * 100.0) << "%" << std::endl;
     std::cout << "Table utilization: " << std::fixed << std::setprecision(1) << (utilization * 100.0) << "%" << std::endl;
     std::cout << "=======================================" << std::endl;
+}
+
+// VICE Part 85: Opening book functions
+bool MinimalEngine::load_opening_book(const std::string& book_path) {
+    return opening_book.load_book(book_path);
+}
+
+S_MOVE MinimalEngine::get_book_move(const Position& pos) const {
+    return opening_book.get_book_move(pos);
+}
+
+bool MinimalEngine::is_in_opening_book(const Position& pos) const {
+    return opening_book.has_book_moves(pos);
+}
+
+void MinimalEngine::print_book_moves(const Position& pos) const {
+    auto book_moves = opening_book.get_all_book_moves(pos);
+    
+    if (book_moves.empty()) {
+        std::cout << "No book moves available for this position." << std::endl;
+        return;
+    }
+    
+    std::cout << "Opening book moves:" << std::endl;
+    uint32_t total_weight = 0;
+    for (const auto& [move, weight] : book_moves) {
+        total_weight += weight;
+    }
+    
+    for (const auto& [move, weight] : book_moves) {
+        double percentage = (double(weight) / total_weight) * 100.0;
+        std::cout << "  " << move_to_uci(move) 
+                  << " (weight: " << weight 
+                  << ", " << std::fixed << std::setprecision(1) << percentage << "%)" << std::endl;
+    }
 }
 
 } // namespace Huginn

@@ -27,6 +27,10 @@ private:
     bool debug_mode = false;
     int threads = 1; // Default to 1 thread to test for threading issues
     
+    // Opening book settings
+    bool own_book = true;  // Enable opening book by default
+    std::string book_file = "src/performance.bin";  // Default book file path
+    
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
 public:
     
@@ -44,6 +48,9 @@ public:
     
     // Search for best move using the search engine
     void search_best_move(const Huginn::MinimalLimits& limits);  // Changed from SearchLimits
+    
+    // Load opening book
+    void load_opening_book();
 
 public:
     UCIInterface();

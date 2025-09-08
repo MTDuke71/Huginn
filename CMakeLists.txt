@@ -198,6 +198,7 @@ function(add_huginn_executable target_name)
     cmake_parse_arguments(ARG "" "" "SOURCES;INCLUDE_DIRS" ${ARGN})
     
     add_executable(${target_name} ${ARG_SOURCES})
+
     target_compile_features(${target_name} PRIVATE cxx_std_17)
     target_link_libraries(${target_name} PRIVATE Threads::Threads)
     
@@ -261,6 +262,7 @@ set(COMMON_SOURCES
     src/input_checking.cpp
     src/minimal_search.cpp
     src/pvtable.cpp
+    src/polyglot_book.cpp
 )
 
 set(ENGINE_SOURCES
@@ -586,6 +588,23 @@ set_target_properties(simple_tt_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+# VICE Part 85 Demo - Opening book demonstration
+add_executable(demo_opening_book 
+    demo_opening_book.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(demo_opening_book PRIVATE cxx_std_17)
+target_include_directories(demo_opening_book PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(demo_opening_book PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Mirror evaluation test for all positions in mirror.epd
 add_executable(mirror_eval_test 
     mirror_test/mirror_eval_test.cpp
@@ -668,5 +687,23 @@ add_executable(test_part82_material_draw
 target_compile_features(test_part82_material_draw PRIVATE cxx_std_17)
 target_include_directories(test_part82_material_draw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(test_part82_material_draw PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Tool: run_book_demo - Load a Polyglot book and print moves
+add_executable(run_book_demo 
+    tools/run_book_demo.cpp
+    src/minimal_search.cpp
+    src/pvtable.cpp
+    src/polyglot_book.cpp
+    ${COMMON_SOURCES}
+    src/board.cpp
+    src/position.cpp
+    src/attack_detection.cpp
+    src/debug.cpp
+)
+target_compile_features(run_book_demo PRIVATE cxx_std_17)
+target_include_directories(run_book_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(run_book_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
