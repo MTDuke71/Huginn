@@ -129,76 +129,76 @@ namespace SlidingPieceOptimizations {
      * Alternative implementation using macro unrolling
      * Provides balance between performance and code maintainability
      */
-    #define GENERATE_SLIDING_RAY(direction) \
-        for (int to = from + (direction); IS_PLAYABLE(to); to += (direction)) { \
-            Piece target = pos.at(to); \
-            if (target == Piece::None) { \
-                list.add_quiet_move(make_move(from, to)); \
-            } else { \
-                if (color_of(target) == !us) { \
-                    list.add_capture_move(make_capture(from, to, type_of(target)), pos); \
-                } \
-                break; \
-            } \
-        }
+    // #define GENERATE_SLIDING_RAY(direction) \
+    //     for (int to = from + (direction); IS_PLAYABLE(to); to += (direction)) { \
+    //         Piece target = pos.at(to); \
+    //         if (target == Piece::None) { \
+    //             list.add_quiet_move(make_move(from, to)); \
+    //         } else { \
+    //             if (color_of(target) == !us) { \
+    //                 list.add_capture_move(make_capture(from, to, type_of(target)), pos); \
+    //             } \
+    //             break; \
+    //         } \
+    //     }
 
-    inline void generate_bishop_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
-        int piece_count = pos.pCount[int(us)][int(PieceType::Bishop)];
-        if (piece_count == 0) return;
+    // inline void generate_bishop_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
+    //     int piece_count = pos.pCount[int(us)][int(PieceType::Bishop)];
+    //     if (piece_count == 0) return;
         
-        const auto& bishop_list = pos.pList[int(us)][int(PieceType::Bishop)];
+    //     const auto& bishop_list = pos.pList[int(us)][int(PieceType::Bishop)];
         
-        for (int i = 0; i < piece_count; ++i) {
-            int from = bishop_list[i];
-            if (from == -1) continue;
+    //     for (int i = 0; i < piece_count; ++i) {
+    //         int from = bishop_list[i];
+    //         if (from == -1) continue;
             
-            GENERATE_SLIDING_RAY(NE);
-            GENERATE_SLIDING_RAY(NW);
-            GENERATE_SLIDING_RAY(SE);
-            GENERATE_SLIDING_RAY(SW);
-        }
-    }
+    //         GENERATE_SLIDING_RAY(NE);
+    //         GENERATE_SLIDING_RAY(NW);
+    //         GENERATE_SLIDING_RAY(SE);
+    //         GENERATE_SLIDING_RAY(SW);
+    //     }
+    // }
 
-    inline void generate_rook_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
-        int piece_count = pos.pCount[int(us)][int(PieceType::Rook)];
-        if (piece_count == 0) return;
+    // inline void generate_rook_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
+    //     int piece_count = pos.pCount[int(us)][int(PieceType::Rook)];
+    //     if (piece_count == 0) return;
         
-        const auto& rook_list = pos.pList[int(us)][int(PieceType::Rook)];
+    //     const auto& rook_list = pos.pList[int(us)][int(PieceType::Rook)];
         
-        for (int i = 0; i < piece_count; ++i) {
-            int from = rook_list[i];
-            if (from == -1) continue;
+    //     for (int i = 0; i < piece_count; ++i) {
+    //         int from = rook_list[i];
+    //         if (from == -1) continue;
             
-            GENERATE_SLIDING_RAY(NORTH);
-            GENERATE_SLIDING_RAY(SOUTH);
-            GENERATE_SLIDING_RAY(EAST);
-            GENERATE_SLIDING_RAY(WEST);
-        }
-    }
+    //         GENERATE_SLIDING_RAY(NORTH);
+    //         GENERATE_SLIDING_RAY(SOUTH);
+    //         GENERATE_SLIDING_RAY(EAST);
+    //         GENERATE_SLIDING_RAY(WEST);
+    //     }
+    // }
 
-    inline void generate_queen_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
-        int piece_count = pos.pCount[int(us)][int(PieceType::Queen)];
-        if (piece_count == 0) return;
+    // inline void generate_queen_moves_macro(const Position& pos, S_MOVELIST& list, Color us) {
+    //     int piece_count = pos.pCount[int(us)][int(PieceType::Queen)];
+    //     if (piece_count == 0) return;
         
-        const auto& queen_list = pos.pList[int(us)][int(PieceType::Queen)];
+    //     const auto& queen_list = pos.pList[int(us)][int(PieceType::Queen)];
         
-        for (int i = 0; i < piece_count; ++i) {
-            int from = queen_list[i];
-            if (from == -1) continue;
+    //     for (int i = 0; i < piece_count; ++i) {
+    //         int from = queen_list[i];
+    //         if (from == -1) continue;
             
-            // All eight directions
-            GENERATE_SLIDING_RAY(NORTH);
-            GENERATE_SLIDING_RAY(SOUTH);
-            GENERATE_SLIDING_RAY(EAST);
-            GENERATE_SLIDING_RAY(WEST);
-            GENERATE_SLIDING_RAY(NE);
-            GENERATE_SLIDING_RAY(NW);
-            GENERATE_SLIDING_RAY(SE);
-            GENERATE_SLIDING_RAY(SW);
-        }
-    }
+    //         // All eight directions
+    //         GENERATE_SLIDING_RAY(NORTH);
+    //         GENERATE_SLIDING_RAY(SOUTH);
+    //         GENERATE_SLIDING_RAY(EAST);
+    //         GENERATE_SLIDING_RAY(WEST);
+    //         GENERATE_SLIDING_RAY(NE);
+    //         GENERATE_SLIDING_RAY(NW);
+    //         GENERATE_SLIDING_RAY(SE);
+    //         GENERATE_SLIDING_RAY(SW);
+    //     }
+    // }
 
-    #undef GENERATE_SLIDING_RAY
+    // #undef GENERATE_SLIDING_RAY
 
     /**
      * Combined sliding piece generation that can handle multiple piece types
