@@ -1,3 +1,32 @@
+/**
+ * @file zobrist.hpp
+ * @brief Zobrist hashing utilities for chess positions.
+ *
+ * This header defines the Zobrist namespace, which provides functions and tables
+ * for generating and managing Zobrist hashes used to uniquely identify chess positions.
+ * 
+ * Zobrist hashing is a technique for efficiently computing a unique hash for a chess
+ * position, taking into account piece placement, side to move, castling rights, and
+ * en-passant possibilities.
+ *
+ * Globals:
+ * - Piece[PIECE_NB][120]: Zobrist keys for each piece type on each square (0..119).
+ * - Side: Zobrist key for the side to move.
+ * - Castle[16]: Zobrist keys for each possible castling rights combination (0..15).
+ * - EpFile[8]: Zobrist keys for en-passant files (a..h).
+ * - Initialized: Flag indicating whether the Zobrist tables have been initialized.
+ *
+ * Functions:
+ * - void init_zobrist(std::uint64_t seed = 0x9E3779B97F4A7C15ULL):
+ *     Initializes the Zobrist tables with pseudo-random values using SplitMix64.
+ *     Should be called once before using Zobrist hashing.
+ * - U64 compute(const Position& b):
+ *     Computes the Zobrist hash for the given chess position.
+ *
+ * @note The SplitMix64 PRNG is used for fast and high-quality random number generation.
+ * @note The Piece table uses 120 squares for direct indexing (including off-board squares).
+ * @note Forward declaration of Position is used to avoid circular dependencies.
+ */
 #pragma once
 #include <cstdint>
 #include "chess_types.hpp"
