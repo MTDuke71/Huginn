@@ -567,6 +567,17 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
         return;
     }
     
+    // VICE Part 100: Check for book moves first (synchronous)
+    if (search_engine->opening_book.is_book_loaded() && search_engine->opening_book.has_book_moves(position)) {
+        S_MOVE book_move = search_engine->opening_book.get_book_move(position);
+        if (book_move.move != 0) {
+            std::cout << "info string Found book move: " << search_engine->move_to_uci(book_move) << std::endl;
+            std::cout << "bestmove " << search_engine->move_to_uci(book_move) << std::endl;
+            std::cout.flush();
+            return;
+        }
+    }
+    
     // Don't start new search if one is already running
     if (thread_manager->is_searching()) {
         if (debug_mode) std::cout << "info string Search already in progress" << std::endl;
@@ -587,7 +598,7 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     info.start_time = search_start;
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
     
-    // Start search in separate thread (VICE Part 100)
+    // Start search in separate thread (VICE Part 100) - only for non-book moves
     // Main thread returns to UCI input listening
     auto completion_callback = [this]() {
         this->is_searching = false;

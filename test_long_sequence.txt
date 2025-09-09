@@ -1,0 +1,10 @@
+uci
+position startpos
+go depth 1
+position startpos moves c2c4
+go depth 1
+position startpos moves c2c4 g8f6
+go depth 1
+position startpos moves c2c4 g8f6 d2d3
+go depth 1
+quit

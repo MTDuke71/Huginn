@@ -1246,14 +1246,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     S_MOVE best_move;
     best_move.move = 0;
     
-    // VICE Part 85: Check opening book first
-    if (opening_book.is_book_loaded() && opening_book.has_book_moves(pos)) {
-        S_MOVE book_move = opening_book.get_book_move(pos);
-        if (book_move.move != 0) {
-            std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
-            return book_move;
-        }
-    }
+    // Note: Book moves are now handled in UCI thread for better threading performance
     
     // VICE Part 57: Clear everything before starting search
     clearForSearch(*this, info);
