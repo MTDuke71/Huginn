@@ -1,3 +1,24 @@
+/**
+ * @file uci.cpp
+ * @brief Implements the UCI (Universal Chess Interface) protocol for the Huginn chess engine.
+ *
+ * This file contains the implementation of the UCIInterface class, which manages communication
+ * between the Huginn chess engine and chess GUIs using the UCI protocol. It handles command
+ * parsing, engine initialization, position setup, search operations, option management, and
+ * opening book loading. The interface supports all standard UCI commands, robust error handling,
+ * and debug output for engine development and integration.
+ *
+ * Key features:
+ * - Full UCI protocol support (uci, isready, setoption, position, go, stop, quit, etc.)
+ * - Flexible position setup from FEN or move list
+ * - Time management for various time controls (classical, increment, sudden death)
+ * - Opening book loading from multiple possible file locations
+ * - Debug mode for verbose engine communication
+ * - Thread and option management for engine configuration
+ *
+ * @author MTDuke71
+ * @version 1.1
+ */
 #include "uci.hpp"
 #include "init.hpp"
 #include "board120.hpp"
@@ -219,10 +240,10 @@ std::vector<std::string> UCIInterface::split_string(const std::string& str) {
  * subsequent moves that should be played from the given position. The moves
  * parameter contains moves in algebraic notation that are applied sequentially.
  *
- * @param parts Vector containing the tokenized position command parts.
+ * @param tokens Vector containing the tokenized position command parts.
  *              Expected format: ["position", "startpos"|"fen", [fen_string], "moves", move1, move2, ...]
  */
-void UCIInterface::handle_position(const std::vector<std::string>& parts) {
+void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     if (tokens.size() < 2) return;
     
     size_t move_index = 0;

@@ -163,8 +163,7 @@ bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     
     // 1. Check pawns using piece list (most common attackers)
     int pawn_count = pos.pCount[color_idx][int(PieceType::Pawn)];
-    // 1. Check pawns using piece list (most common attackers; this order is intentional for performance and matches typical chess attack patterns)
-        int pawn_sq = pos.pList[color_idx][int(PieceType::Pawn)][i];
+    for (int i = 0; i < pawn_count; ++i) {        int pawn_sq = pos.pList[color_idx][int(PieceType::Pawn)][i];
         if (pawn_attacks_square(pawn_sq, sq, attacking_color)) {
             return true;
         }
@@ -216,4 +215,4 @@ bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
     // No attacks found in optimized mode
     return false;
 }
-}
+
