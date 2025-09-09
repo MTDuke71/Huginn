@@ -409,3 +409,11 @@ else()
     message(STATUS "Tests disabled - GTest not found")
 endif()
 
+# Add a simple test for VICE compliance verification
+add_executable(test_vice_compliance test_vice_compliance.cpp)
+set_target_properties(test_vice_compliance PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
+

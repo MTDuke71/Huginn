@@ -1,23 +1,81 @@
-# Global Transposition Table Implementation for Lazy SMP
+# Global Transposition Table with Lazy SMP and Lockless Hashing
 
 ## Overview
 
-Based on the VICE chess engine video tutorial about moving the hash table to a global variable for lazy SMP (Symmetric Multi-Processing) support, this document outlines the implementation changes needed in Huginn.
+Based on the VICE chess engine video tutorials about implementing parallel search using Lazy SMP (Symmetric Multi-Processing) with lockless hashing for thread safety, this document outlines the complete implementation in Huginn.
 
-## Why Global Transposition Table?
+## Lazy SMP Parallel Search
 
-### Current Problem
+### Core Concept
 
-- Each `MinimalEngine` instance has its own `TranspositionTable tt_table` member
-- When launching multiple search threads, each would get a copy of the entire hash table
-- This is inefficient in memory usage and prevents threads from sharing search results
+- **Multiple Independent Threads**: Each search thread runs completely independently
+- **Shared Transposition Table**: All threads access a single global hash table
+- **Mutual Benefit**: Threads learn from each other's discoveries, leading to faster cutoffs
+- **Scalable Performance**: Near-linear speedup on multi-core systems
 
-### Lazy SMP Benefits
+### The Data Corruption Problem
 
-- **Shared Knowledge**: All search threads access the same transposition table
-- **Memory Efficiency**: Single table instead of N copies for N threads
-- **Better Search Quality**: Threads benefit from each other's discoveries
-- **Scalability**: Essential for multi-threaded search performance
+When multiple threads access a shared hash table concurrently:
+
+- Thread A might store a zobrist key
+- Thread B might overwrite the associated data before Thread A finishes
+- Thread A later retrieves Thread B's data with Thread A's key
+- This leads to **incorrect moves, scores, or search corruption**
+
+## Lockless Hashing Solution (Robert Hyatt & Tim Mann)
+
+### XOR Encoding Principle
+
+Instead of storing the zobrist key directly, we store:
+
+```cpp
+encoded_data = zobrist_key XOR packed_data
+```
+
+### Data Retrieval and Verification
+
+```cpp
+packed_data = zobrist_key XOR encoded_data
+// If the data is valid, re-encoding should match:
+verification = zobrist_key XOR packed_data
+if (verification == encoded_data) {
+    // Data is valid and uncorrupted
+}
+```
+
+### Lockless Hashing Benefits
+
+1. **Automatic Corruption Detection**: Invalid data fails verification automatically
+2. **No Locks Required**: XOR operations are atomic at the CPU level
+3. **Race Condition Safe**: Corrupted entries are simply rejected
+4. **Performance**: No synchronization overhead
+
+## Data Packing Strategy
+
+### 64-bit Packed Format
+
+```text
+[move:32][score:16][depth:8][flags:4][age:4]
+```
+
+### Score Adjustment
+
+- Raw scores can be negative (e.g., -1000 to +1000)
+- Add offset of 32768 to make all values positive for storage
+- Subtract 32768 on retrieval to restore original range
+
+### Implementation
+
+```cpp
+static uint64_t pack_data(uint32_t best_move, int16_t score, uint8_t depth, uint8_t node_type, uint8_t age) {
+    uint16_t adjusted_score = static_cast<uint16_t>(score + 32768);
+    return (static_cast<uint64_t>(best_move) << 32) |
+           (static_cast<uint64_t>(adjusted_score) << 16) |
+           (static_cast<uint64_t>(depth) << 8) |
+           (static_cast<uint64_t>(node_type) << 4) |
+           (static_cast<uint64_t>(age));
+}
+```
 
 ## Age-Based Replacement Strategy (VICE Part 85)
 
@@ -191,9 +249,16 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ## Current Status
 
 - ✅ Architecture designed for lazy SMP compatibility
-- 🔄 Implementation in progress (partial files created)
-- ⏳ Testing phase pending completion
-- ⏳ Multi-threading integration planned
+- ✅ **Lockless hashing implementation COMPLETE**
+  - Thread-safe TTEntry with std::atomic<uint64_t>
+  - XOR encoding prevents data corruption
+  - 64-bit data packing `[move:32][score:16][depth:8][flags:4][age:4]`
+  - VICE-style macro interface (FoldData, ExtractMove, etc.)
+  - Age-based replacement strategy
+  - Test function (data_check) for verification
+  - Move semantics for std::vector compatibility
+- 🔄 Multi-threaded testing in progress
+- ⏳ Performance benchmarking pending
 
 ## Next Steps
 

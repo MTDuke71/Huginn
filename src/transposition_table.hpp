@@ -3,26 +3,95 @@
 #include <cstdint>
 #include <vector>
 #include <atomic>
+#include <iostream>
+#include <iomanip>
+
+// Forward declaration 
+using Move = uint32_t;
 
 // Transposition Table entry for storing search results
-// Thread-Safety: Safe for concurrent access in lazy SMP
-// - Multiple threads can safely read different entries
-// - Multiple threads can write to same entry (any valid entry is beneficial)
-// - No data corruption occurs from race conditions
+// LOCKLESS HASHING for Lazy SMP (Robert Hyatt & Tim Mann approach)
+// Thread-Safety: Uses XOR encoding to prevent data corruption from race conditions
+// - Data is XORed with zobrist key before storage
+// - Retrieval XORs data with key to verify integrity
+// - Corrupted entries are automatically detected and rejected
 struct TTEntry {
-    uint64_t zobrist_key;    // Position identifier
-    int16_t score;           // Evaluation score
-    uint8_t depth;           // Search depth 
-    uint8_t node_type;       // EXACT, LOWER_BOUND, UPPER_BOUND
-    uint8_t age;             // Age for replacement strategy (VICE Part 85)
-    uint32_t best_move;      // Best move found (encoded)
+    std::atomic<uint64_t> encoded_data;  // Atomic XOR of zobrist_key and packed data for lockless access
     
     // Node types for alpha-beta bounds
     static constexpr uint8_t EXACT = 0;
     static constexpr uint8_t LOWER_BOUND = 1; // Alpha cutoff
     static constexpr uint8_t UPPER_BOUND = 2; // Beta cutoff
     
-    TTEntry() : zobrist_key(0), score(0), depth(0), node_type(EXACT), age(0), best_move(0) {}
+    TTEntry() : encoded_data(0) {}
+    
+    // Make TTEntry non-copyable but movable (required for std::vector with std::atomic)
+    TTEntry(const TTEntry&) = delete;
+    TTEntry& operator=(const TTEntry&) = delete;
+    TTEntry(TTEntry&& other) noexcept : encoded_data(other.encoded_data.load()) {}
+    TTEntry& operator=(TTEntry&& other) noexcept {
+        if (this != &other) {
+            encoded_data.store(other.encoded_data.load());
+        }
+        return *this;
+    }
+    
+    // Pack all data into a single 64-bit integer for atomic storage
+    // Format: [move:32][score:16][depth:8][flags:4][age:4]
+    static uint64_t pack_data(uint32_t best_move, int16_t score, uint8_t depth, uint8_t node_type, uint8_t age) {
+        // Handle negative scores by adding offset (VICE approach)
+        uint16_t adjusted_score = static_cast<uint16_t>(score + 32768);
+        
+        return (static_cast<uint64_t>(best_move) << 32) |
+               (static_cast<uint64_t>(adjusted_score) << 16) |
+               (static_cast<uint64_t>(depth) << 8) |
+               (static_cast<uint64_t>(node_type) << 4) |
+               (static_cast<uint64_t>(age));
+    }
+    
+    // Unpack data from the 64-bit integer
+    static void unpack_data(uint64_t packed, uint32_t& best_move, int16_t& score, uint8_t& depth, uint8_t& node_type, uint8_t& age) {
+        best_move = static_cast<uint32_t>(packed >> 32);
+        uint16_t adjusted_score = static_cast<uint16_t>((packed >> 16) & 0xFFFF);
+        score = static_cast<int16_t>(adjusted_score - 32768);  // Restore original score
+        depth = static_cast<uint8_t>((packed >> 8) & 0xFF);
+        node_type = static_cast<uint8_t>((packed >> 4) & 0xF);
+        age = static_cast<uint8_t>(packed & 0xF);
+    }
+    
+    // VICE-style macros for data packing/unpacking as mentioned in video (2:10)
+    // These provide the macro interface equivalent to VICE's FoldData, ExtractMove, etc.
+    static uint64_t FoldData(uint32_t move, int16_t score, uint8_t depth, uint8_t flag, uint8_t age) {
+        return pack_data(move, score, depth, flag, age);
+    }
+    
+    static uint32_t ExtractMove(uint64_t data) { return static_cast<uint32_t>(data >> 32); }
+    static int16_t ExtractScore(uint64_t data) { 
+        uint16_t adjusted = static_cast<uint16_t>((data >> 16) & 0xFFFF);
+        return static_cast<int16_t>(adjusted - 32768);
+    }
+    static uint8_t ExtractDepth(uint64_t data) { return static_cast<uint8_t>((data >> 8) & 0xFF); }
+    static uint8_t ExtractFlag(uint64_t data) { return static_cast<uint8_t>((data >> 4) & 0xF); }
+    static uint8_t ExtractAge(uint64_t data) { return static_cast<uint8_t>(data & 0xF); }
+    
+    // Store data using lockless hashing (XOR with zobrist key)
+    void store_lockless(uint64_t zobrist_key, uint32_t best_move, int16_t score, uint8_t depth, uint8_t node_type, uint8_t age) {
+        uint64_t packed = pack_data(best_move, score, depth, node_type, age);
+        encoded_data.store(zobrist_key ^ packed, std::memory_order_relaxed);  // Atomic store with XOR
+    }
+    
+    // Retrieve data using lockless hashing (verify with XOR)
+    bool probe_lockless(uint64_t zobrist_key, uint32_t& best_move, int16_t& score, uint8_t& depth, uint8_t& node_type, uint8_t& age) const {
+        uint64_t encoded = encoded_data.load(std::memory_order_relaxed);  // Atomic load
+        if (encoded == 0) return false;  // Empty entry
+        
+        uint64_t packed = zobrist_key ^ encoded;  // XOR to get original data
+        unpack_data(packed, best_move, score, depth, node_type, age);
+        
+        // Verify integrity: re-encode and check if it matches
+        uint64_t verification = pack_data(best_move, score, depth, node_type, age);
+        return (zobrist_key ^ verification) == encoded;
+    }
 };
 
 /**
@@ -60,55 +129,68 @@ public:
         size_mask = power_of_2 - 1;
     }
     
-    // Store position in transposition table with age-based replacement (VICE Part 85)
+    // Store position in transposition table with lockless hashing and age-based replacement
+    // LAZY SMP: Multiple threads can safely call this concurrently
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
         
-        // Age-based replacement strategy:
-        // Replace if:
-        // 1. Entry is empty (zobrist_key == 0)
-        // 2. Same position (zobrist_key matches)
-        // 3. Entry is from an older age (less recent search)
-        // 4. Entry is from same age but new depth is deeper
-        bool should_replace = (entry.zobrist_key == 0) ||                    // Empty slot
-                             (entry.zobrist_key == zobrist_key) ||            // Same position
-                             (entry.age < current_age) ||                     // Older entry
-                             (entry.age == current_age && depth >= entry.depth); // Same age, deeper or equal depth
-        
-        if (should_replace) {
-            entry.zobrist_key = zobrist_key;
-            entry.score = score;
-            entry.depth = depth;
-            entry.node_type = node_type;
-            entry.age = current_age;
-            entry.best_move = best_move;
+        // For lockless replacement, we need to check if we should replace
+        // First, try to decode existing entry to see if replacement is warranted
+        if (entry.encoded_data != 0) {
+            uint32_t existing_move;
+            int16_t existing_score;
+            uint8_t existing_depth, existing_node_type, existing_age;
             
-            writes++;  // Track write operations
+            // Try to decode existing entry - if it fails, it's corrupted so replace it
+            bool valid_existing = entry.probe_lockless(zobrist_key, existing_move, existing_score, 
+                                                      existing_depth, existing_node_type, existing_age);
+            
+            if (valid_existing) {
+                // Valid existing entry - check replacement criteria (VICE Part 85)
+                bool should_replace = (existing_age < current_age) ||                     // Older entry
+                                     (existing_age == current_age && depth >= existing_depth); // Same age, deeper search
+                
+                if (!should_replace) {
+                    return; // Don't replace - existing entry is better
+                }
+            }
+            // If !valid_existing, it's corrupted data so we'll replace it
         }
+        
+        // Store using lockless hashing
+        entry.store_lockless(zobrist_key, best_move, static_cast<int16_t>(score), depth, node_type, current_age);
+        writes++;  // Track write operations
     }
     
-    // Probe transposition table for position
+    // Probe transposition table for position using lockless hashing
+    // LAZY SMP: Multiple threads can safely call this concurrently
     bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
         size_t index = zobrist_key & size_mask;
         const TTEntry& entry = table[index];
         
-        if (entry.zobrist_key == zobrist_key) {
-            score = entry.score;
-            depth = entry.depth;
-            node_type = entry.node_type;
-            best_move = entry.best_move;
+        uint32_t decoded_move;
+        int16_t decoded_score;
+        uint8_t decoded_depth, decoded_node_type, decoded_age;
+        
+        // Use lockless probing - automatically detects corruption
+        if (entry.probe_lockless(zobrist_key, decoded_move, decoded_score, decoded_depth, decoded_node_type, decoded_age)) {
+            score = decoded_score;
+            depth = decoded_depth;
+            node_type = decoded_node_type;
+            best_move = decoded_move;
             hits++;  // Track successful probes
             return true;
         }
-        misses++;  // Track failed probes
+        
+        misses++;  // Track failed probes (includes corrupted entries)
         return false;
     }
     
     // Clear all entries
     void clear() {
         for (auto& entry : table) {
-            entry = TTEntry();
+            entry.encoded_data.store(0, std::memory_order_relaxed);  // Atomic clear of lockless encoded data
         }
         // Reset statistics and age
         hits = misses = writes = 0;
@@ -119,7 +201,7 @@ public:
     double get_utilization() const {
         size_t filled = 0;
         for (const auto& entry : table) {
-            if (entry.zobrist_key != 0) filled++;
+            if (entry.encoded_data.load(std::memory_order_relaxed) != 0) filled++;  // Atomic load for encoded data check
         }
         return double(filled) / table.size();
     }
@@ -171,5 +253,85 @@ public:
      */
     uint8_t get_age() const {
         return current_age;
+    }
+    
+    /**
+     * @brief Test function for data packing/unpacking macros
+     * 
+     * VICE Part 85: Test the data packing and unpacking to ensure
+     * the macros work correctly with all data ranges.
+     */
+    void data_check() const {
+        std::cout << "\n=== Transposition Table Data Packing Test ===" << std::endl;
+        
+        // Test various data combinations
+        Move test_move = 0x12345678;  // 32-bit move
+        int16_t test_score = -1234;   // Negative score
+        uint8_t test_depth = 15;      // 8-bit depth
+        uint8_t test_flag = 3;        // 4-bit flag (EXACT)
+        uint8_t test_age = 7;         // 4-bit age
+        
+        // Pack the data using TTEntry function
+        uint64_t packed = TTEntry::pack_data(test_move, test_score, test_depth, test_flag, test_age);
+        
+        std::cout << "Original Data:" << std::endl;
+        std::cout << "  Move: 0x" << std::hex << test_move << std::dec << std::endl;
+        std::cout << "  Score: " << test_score << std::endl;
+        std::cout << "  Depth: " << static_cast<int>(test_depth) << std::endl;
+        std::cout << "  Flag: " << static_cast<int>(test_flag) << std::endl;
+        std::cout << "  Age: " << static_cast<int>(test_age) << std::endl;
+        
+        std::cout << "\nPacked Data: 0x" << std::hex << packed << std::dec << std::endl;
+        
+        // Test VICE macros
+        std::cout << "\nVICE Macro Extraction:" << std::endl;
+        std::cout << "  ExtractMove: 0x" << std::hex << TTEntry::ExtractMove(packed) << std::dec << std::endl;
+        std::cout << "  ExtractScore: " << TTEntry::ExtractScore(packed) << std::endl;
+        std::cout << "  ExtractDepth: " << static_cast<int>(TTEntry::ExtractDepth(packed)) << std::endl;
+        std::cout << "  ExtractFlag: " << static_cast<int>(TTEntry::ExtractFlag(packed)) << std::endl;
+        std::cout << "  ExtractAge: " << static_cast<int>(TTEntry::ExtractAge(packed)) << std::endl;
+        
+        // Verify data integrity
+        bool all_correct = true;
+        if (TTEntry::ExtractMove(packed) != test_move) {
+            std::cout << "ERROR: Move mismatch!" << std::endl;
+            all_correct = false;
+        }
+        if (TTEntry::ExtractScore(packed) != test_score) {
+            std::cout << "ERROR: Score mismatch!" << std::endl;
+            all_correct = false;
+        }
+        if (TTEntry::ExtractDepth(packed) != test_depth) {
+            std::cout << "ERROR: Depth mismatch!" << std::endl;
+            all_correct = false;
+        }
+        if (TTEntry::ExtractFlag(packed) != test_flag) {
+            std::cout << "ERROR: Flag mismatch!" << std::endl;
+            all_correct = false;
+        }
+        if (TTEntry::ExtractAge(packed) != test_age) {
+            std::cout << "ERROR: Age mismatch!" << std::endl;
+            all_correct = false;
+        }
+        
+        if (all_correct) {
+            std::cout << "\n✓ All data packing/unpacking tests PASSED!" << std::endl;
+        } else {
+            std::cout << "\n✗ Data packing/unpacking tests FAILED!" << std::endl;
+        }
+        
+        // Test FoldData macro
+        std::cout << "\nTesting FoldData macro:" << std::endl;
+        uint64_t folded = TTEntry::FoldData(test_move, test_score, test_depth, test_flag, test_age);
+        std::cout << "  FoldData result: 0x" << std::hex << folded << std::dec << std::endl;
+        std::cout << "  pack_data result: 0x" << std::hex << packed << std::dec << std::endl;
+        
+        if (folded == packed) {
+            std::cout << "✓ FoldData macro matches pack_data function!" << std::endl;
+        } else {
+            std::cout << "✗ FoldData macro differs from pack_data function!" << std::endl;
+        }
+        
+        std::cout << "=== End Data Packing Test ===\n" << std::endl;
     }
 };

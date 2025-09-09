@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+
+# Create a simple test executable for data checking
+add_executable(test_data_check test_data_check.cpp src/global_transposition_table.cpp)
+target_include_directories(test_data_check PRIVATE .)
