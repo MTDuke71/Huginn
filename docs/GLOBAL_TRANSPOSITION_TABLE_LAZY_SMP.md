@@ -7,11 +7,13 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ## Why Global Transposition Table?
 
 ### Current Problem
+
 - Each `MinimalEngine` instance has its own `TranspositionTable tt_table` member
 - When launching multiple search threads, each would get a copy of the entire hash table
 - This is inefficient in memory usage and prevents threads from sharing search results
 
 ### Lazy SMP Benefits
+
 - **Shared Knowledge**: All search threads access the same transposition table
 - **Memory Efficiency**: Single table instead of N copies for N threads
 - **Better Search Quality**: Threads benefit from each other's discoveries
@@ -20,11 +22,13 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ## Age-Based Replacement Strategy (VICE Part 85)
 
 ### Principal Variation Problem
+
 - Hash table collisions can cause newer, shallower entries to overwrite deeper, relevant entries
 - This leads to truncated principal variations in engine output
 - Affects search quality and move ordering efficiency
 
 ### Age Solution
+
 - Added `age` field to `TTEntry` structure
 - Age increments for each new search, resets for new games
 - Replacement logic prioritizes:
@@ -34,6 +38,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
   4. Same age but deeper search depth
 
 ### Benefits
+
 - **Complete PVs**: Prevents premature overwriting of valuable hash entries
 - **Better Move Ordering**: Preserves deeper search results for move ordering
 - **Performance Gain**: Small improvement from better hash table utilization
@@ -43,6 +48,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ### Phase 1: Global Table Infrastructure
 
 1. **Create Global Table Manager**
+
    ```cpp
    // global_transposition_table.hpp
    namespace Huginn {
@@ -54,6 +60,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
    ```
 
 2. **Thread-Safe Table Design**
+
    ```cpp
    class TranspositionTable {
        // Note: In lazy SMP, multiple threads may write to same entry
@@ -66,6 +73,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ### Phase 2: Engine Refactoring
 
 1. **Remove Instance Variable**
+
    ```cpp
    class MinimalEngine {
    private:
@@ -77,6 +85,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
    ```
 
 2. **Update All References**
+
    ```cpp
    // Before:
    tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
@@ -88,6 +97,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ### Phase 3: Initialization Integration
 
 1. **Engine Startup**
+
    ```cpp
    void init() {
        Zobrist::init_zobrist();
@@ -98,6 +108,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
    ```
 
 2. **Engine Shutdown**
+
    ```cpp
    void cleanup() {
        cleanup_global_transposition_table();
@@ -108,6 +119,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ### Phase 4: Multi-Threading Preparation
 
 1. **Lazy SMP Structure**
+
    ```cpp
    class LazySMP {
        std::vector<std::thread> search_threads;
@@ -129,12 +141,14 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ## Files Modified
 
 ### New Files
+
 - `src/global_transposition_table.hpp` - Global table interface
 - `src/global_transposition_table.cpp` - Global table implementation
 
 ### Modified Files
+
 - `src/minimal_search.hpp` - Remove tt_table member, add include
-- `src/minimal_search.cpp` - Replace all tt_table.* with get_transposition_table().*
+- `src/minimal_search.cpp` - Replace all tt_table.*with get_transposition_table().*
 - `src/init.hpp` - Add cleanup() function declaration
 - `src/init.cpp` - Add global table initialization and cleanup
 - `src/transposition_table.hpp` - Add thread-safety comments
@@ -142,6 +156,7 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 ## Thread Safety Considerations
 
 ### Safe Operations
+
 - **Reads**: Multiple threads can safely read from different table entries
 - **Writes**: Multiple threads writing to the same entry is acceptable in lazy SMP
   - Any valid entry provides search benefit
@@ -149,17 +164,20 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
   - Race conditions don't corrupt data structure
 
 ### Statistics Accuracy
+
 - Hit/miss counters will be approximate in multi-threaded environment
 - This is acceptable as statistics are primarily for tuning, not correctness
 
 ## Performance Impact
 
 ### Expected Benefits
+
 - **Memory**: Reduces memory usage from N×table_size to 1×table_size
 - **Cache**: Better cache utilization from shared table
 - **Search Quality**: Threads learn from each other's work
 
 ### Minimal Overhead
+
 - Function call overhead for get_transposition_table() is negligible
 - Global access is faster than member access through indirection
 
