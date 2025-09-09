@@ -18,6 +18,7 @@ Based on testing with the perft suite demo (quick test mode):
 ## Prerequisites
 
 ### 1. Install WSL2 with Ubuntu
+
 ```powershell
 # Install WSL2 (if not already installed)
 wsl --install -d Ubuntu
@@ -27,6 +28,7 @@ wsl --update
 ```
 
 ### 2. Install Build Tools in WSL
+
 ```bash
 # Update package list
 sudo apt update
@@ -45,6 +47,7 @@ cmake --version
 ## Building Native Linux Version in WSL
 
 ### 1. Configure the Build
+
 ```bash
 cd /mnt/d/repos/Huginn_New/Huginn
 mkdir -p build/wsl-gcc-release
@@ -57,6 +60,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 ```
 
 ### 2. Build the Project
+
 ```bash
 # Clean build
 make clean
@@ -69,6 +73,7 @@ make -j4 perft_suite_demo
 ```
 
 ### 3. Test the Build
+
 ```bash
 # Run performance test
 cd /mnt/d/repos/Huginn_New/Huginn
@@ -78,7 +83,9 @@ echo '1' | ./build/wsl-gcc-release/bin/perft_suite_demo
 ## Cross-Compiling Windows Executable with MinGW-w64
 
 ### 1. Create Toolchain File
+
 Create `mingw-toolchain.cmake`:
+
 ```cmake
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)
@@ -96,6 +103,7 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-flto -s -pthread -static-libgcc -static-lib
 ```
 
 ### 2. Configure Cross-Compilation Build
+
 ```bash
 cd /mnt/d/repos/Huginn_New/Huginn
 mkdir -p build/mingw-w64-release
@@ -108,6 +116,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../../mingw-toolchain.cmake \
 ```
 
 ### 3. Build Windows Executable
+
 ```bash
 # Build the Windows .exe
 make -j4 perft_suite_demo
@@ -121,6 +130,7 @@ x86_64-w64-mingw32-objdump -p bin/perft_suite_demo.exe | grep 'DLL Name'
 ```
 
 ### 4. Test on Windows
+
 ```powershell
 # Copy to Windows and test
 Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite_demo.exe
@@ -129,17 +139,22 @@ Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite_demo.exe
 ## Troubleshooting
 
 ### Threading Issues
+
 If you encounter mutex/threading errors, ensure you're using the posix variant:
+
 - Use `x86_64-w64-mingw32-g++-posix` instead of `x86_64-w64-mingw32-g++`
 - Add `-pthread` flag to both compile and link options
 
 ### Performance Considerations
+
 - WSL adds overhead compared to native builds
 - Cross-compiled executables perform similarly to WSL native builds
 - For best performance, use MSVC toolchain directly on Windows
 
 ### CMake Configuration
+
 The project automatically detects GCC and applies appropriate optimizations:
+
 ```cmake
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using GCC compiler")
@@ -160,11 +175,13 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 ## Build Artifacts
 
 ### WSL Linux Build
+
 - Location: `build/wsl-gcc-release/bin/`
 - Executable: `perft_suite_demo` (Linux ELF)
 - Size: ~90KB (stripped)
 
 ### MinGW-w64 Windows Build
+
 - Location: `build/mingw-w64-release/bin/`
 - Executable: `perft_suite_demo.exe` (Windows PE32+)
 - Size: ~1.1MB (statically linked)
@@ -175,6 +192,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 While WSL provides a convenient way to use GCC toolchain on Windows, the performance results show that **MSVC remains the preferred toolchain** for the Huginn chess engine on Windows, delivering significantly better performance (28.6s vs 58.1s) for the same workload.
 
 The WSL/GCC builds are useful for:
+
 - Cross-platform compatibility testing
 - Leveraging GCC-specific features or optimizations
 - Development environments where MSVC is not available
