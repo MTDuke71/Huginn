@@ -5,6 +5,7 @@ This directory contains development and analysis tools for the Huginn chess engi
 ## Files
 
 ### Assembly Analysis
+
 - **`generate_asm.ps1`** - Generates assembly output for key source files to analyze compiler optimizations
 
 ## Usage
@@ -24,7 +25,7 @@ The assembly generation script processes key source files and outputs human-read
 ### Assembly Analysis Workflow
 
 1. Make code changes
-2. Run `.\tools\generate_asm.ps1` 
+2. Run `.\tools\generate_asm.ps1`
 3. Compare generated assembly before/after changes
 4. Analyze optimization effectiveness at the assembly level
 
