@@ -92,6 +92,42 @@ struct TTEntry {
         uint64_t verification = pack_data(best_move, score, depth, node_type, age);
         return (zobrist_key ^ verification) == encoded;
     }
+    
+    /**
+     * @brief VICE verifyEntrySMP function (1:58 in video)
+     * 
+     * Verifies that the SMP data can be reconstructed correctly and that
+     * the SMP_key matches the expected value after XORing position key with data.
+     * This function is crucial for debugging parallel processing.
+     * 
+     * @param zobrist_key The position key to verify against
+     * @return true if entry is valid and data can be reconstructed correctly
+     */
+    bool verifyEntrySMP(uint64_t zobrist_key) const {
+        uint64_t encoded = encoded_data.load(std::memory_order_relaxed);
+        if (encoded == 0) return false;  // Empty entry, nothing to verify
+        
+        // Extract the packed data by XORing with key (this is the SMP_data equivalent)
+        uint64_t packed_data = zobrist_key ^ encoded;
+        
+        // Reconstruct data from packed format
+        uint32_t move;
+        int16_t score;
+        uint8_t depth, flag, age;
+        unpack_data(packed_data, move, score, depth, flag, age);
+        
+        // Re-pack the data to verify integrity
+        uint64_t reconstructed_data = pack_data(move, score, depth, flag, age);
+        
+        // Verify that reconstructed data matches original packed data
+        if (reconstructed_data != packed_data) {
+            return false;  // Data corruption detected
+        }
+        
+        // Verify that the SMP_key (encoded) matches expected value
+        uint64_t expected_encoded = zobrist_key ^ reconstructed_data;
+        return (expected_encoded == encoded);
+    }
 };
 
 /**
@@ -161,6 +197,14 @@ public:
         // Store using lockless hashing
         entry.store_lockless(zobrist_key, best_move, static_cast<int16_t>(score), depth, node_type, current_age);
         writes++;  // Track write operations
+        
+        // VICE Part 85: Verify the entry was stored correctly (4:27 in video)
+        // This verification is crucial for debugging parallel processing
+        if (!entry.verifyEntrySMP(zobrist_key)) {
+            // This should never happen if our lockless hashing is working correctly
+            // If it does, it indicates a bug in our storage mechanism
+            std::cerr << "ERROR: Failed to verify hash entry after storage!" << std::endl;
+        }
     }
     
     // Probe transposition table for position using lockless hashing
@@ -175,6 +219,15 @@ public:
         
         // Use lockless probing - automatically detects corruption
         if (entry.probe_lockless(zobrist_key, decoded_move, decoded_score, decoded_depth, decoded_node_type, decoded_age)) {
+            // VICE Part 85: Additional verification check (6:16 in video)
+            // Double-check the entry integrity for debugging parallel processing
+            if (!entry.verifyEntrySMP(zobrist_key)) {
+                // If verification fails, treat as a miss even though probe_lockless succeeded
+                // This catches any subtle corruption issues
+                misses++;
+                return false;
+            }
+            
             score = decoded_score;
             depth = decoded_depth;
             node_type = decoded_node_type;
@@ -330,6 +383,33 @@ public:
             std::cout << "✓ FoldData macro matches pack_data function!" << std::endl;
         } else {
             std::cout << "✗ FoldData macro differs from pack_data function!" << std::endl;
+        }
+        
+        // Test VICE verifyEntrySMP function as shown in video (1:58)
+        std::cout << "\nTesting VICE verifyEntrySMP function:" << std::endl;
+        
+        // Create a test entry with known data
+        TTEntry test_entry;
+        uint64_t test_zobrist = 0xABCDEF1234567890ULL;
+        
+        // Store test data
+        test_entry.store_lockless(test_zobrist, test_move, test_score, test_depth, test_flag, test_age);
+        
+        // Verify the entry
+        bool verify_result = test_entry.verifyEntrySMP(test_zobrist);
+        if (verify_result) {
+            std::cout << "✓ verifyEntrySMP validation PASSED!" << std::endl;
+        } else {
+            std::cout << "✗ verifyEntrySMP validation FAILED!" << std::endl;
+        }
+        
+        // Test with wrong key (should fail)
+        uint64_t wrong_key = test_zobrist + 1;
+        bool wrong_verify = test_entry.verifyEntrySMP(wrong_key);
+        if (!wrong_verify) {
+            std::cout << "✓ verifyEntrySMP correctly detects wrong key!" << std::endl;
+        } else {
+            std::cout << "✗ verifyEntrySMP failed to detect wrong key!" << std::endl;
         }
         
         std::cout << "=== End Data Packing Test ===\n" << std::endl;

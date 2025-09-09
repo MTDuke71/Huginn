@@ -1,0 +1,5 @@
+uci
+setoption name OwnBook value false
+position startpos moves e2e4 c7c5 g1f3 d7d6 f1b5 c8d7 b5d7 b8d7 e1g1 g8f6 f1e1 e7e6 c2c3 f8e7 d2d4 c5d4 c3d4 e8g8 b1c3 a7a6 h2h3 b7b5 c1g5 d8c7
+go depth 6
+quit

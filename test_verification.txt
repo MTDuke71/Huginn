@@ -1,0 +1,3 @@
+uci
+go depth 5
+quit
