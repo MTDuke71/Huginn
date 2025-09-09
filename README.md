@@ -1,7 +1,16 @@
 # Hug> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength!  
 _Huginn: Odin's Thought, in Every Move_
 
-![Huginn Logo](images/Huginn.png)
+![Huginn Logo]### Option B: Use vcpkg for GoogleTest
+```powershell
+# Install vcpkg (if not already installed)
+vcpkg install gtest:x64-windows
+```
+Then in `CMakeLists.txt`:
+```cmake
+find_package(GTest CONFIG REQUIRED)
+target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main if you omit test_main.cpp
+```uginn.png)
 
 ## Acknowledgments
 
@@ -10,33 +19,46 @@ Huginn was inspired by and built upon the foundation of the **VICE Chess Engine*
 You can find the original VICE engine and instructional video series on YouTube: [VICE Chess Engine Playlist](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
 
 
-## MSYS2 UCRT64 C++ Build Instructions
+## MSVC Build Instructions (Visual Studio 2022)
 
 ### Prerequisites
-1. Install MSYS2: https://www.msys2.org/
-2. Open **MSYS2 MinGW UCRT64** shell (not the plain MSYS shell).
-3. Update & install toolchain:
-   ```sh
-   pacman -Syu
-   pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain cmake ninja
-   ```
+1. **Visual Studio 2022** with C++ workload installed
+2. **CMake 3.22+** (included with Visual Studio or install separately)
+3. **Git** for version control
 
-### Build (CMake + Ninja)
-```sh
-# In the MSYS2 MinGW UCRT64 shell
-cd /d/repos/Huginn
-mkdir -p build
-cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
+### Quick Start
+```powershell
+# Open a PowerShell terminal or Visual Studio Developer Command Prompt
+cd d:\repos\Huginn_New\Huginn
+
+# Configure using CMake preset (Release build)
+cmake --preset msvc-x64-release
+
+# Build all targets
+cmake --build build/msvc-x64-release --config Release
+
+# Or build specific targets
+cmake --build build/msvc-x64-release --config Release --target huginn
+cmake --build build/msvc-x64-release --config Release --target huginn_tests
 ```
 
-### Run the program
-```sh
-# UCI Chess Engine (for chess GUIs)
-./build/huginn.exe
+### Alternative: Use VS Code
+1. Open the project folder in VS Code
+2. Install the **CMake Tools** extension
+3. Select the `msvc-x64-release` preset
+4. Build using **Ctrl+Shift+P** → "CMake: Build"
 
-# Position Display Demo
-./build/huginn_demo.exe
+### Run the Programs
+```powershell
+# Main UCI Chess Engine
+.\build\msvc-x64-release\bin\Release\huginn.exe
+
+# Run all tests
+.\build\msvc-x64-release\bin\Release\huginn_tests.exe
+
+# Mirror evaluation test (symmetric evaluation verification)
+cd mirror_test
+.\run_mirror_test.ps1
 ```
 
 ## Features
@@ -109,17 +131,22 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **sq_attacked_demo.exe**: Attack detection visualization showing piece attack patterns and blocking
 
 ### Running Tests (CTest)
-```sh
-# Build test binary
-cmake --build build --target huginn_tests
-# Run tests
-ctest --test-dir build --output-on-failure -V
+```powershell
+# Build test binary (from project root)
+cmake --build build/msvc-x64-release --config Release --target huginn_tests
+
+# Run tests with CTest
+cd build/msvc-x64-release
+ctest --config Release --output-on-failure -V
+
+# Run specific test patterns
+ctest --config Release -R "perft|position"
 ```
 
 ### Convenience: `check` target
 After the first configure, you can just:
-```sh
-cmake --build build --target check
+```powershell
+cmake --build build/msvc-x64-release --config Release --target check
 ```
 > This builds `huginn_tests` and then runs `ctest`.
 
@@ -127,12 +154,11 @@ cmake --build build --target check
 
 ## GoogleTest Options
 
-### Option A: Vendored (recommended for Windows/MinGW)
+### Option A: Vendored (recommended for MSVC)
 - Add googletest source at `external/googletest/`.
 - In your top-level `CMakeLists.txt`:
   ```cmake
   # Vendored googletest
-  set(gtest_disable_pthreads ON CACHE BOOL "" FORCE)  # robust on MinGW
   add_subdirectory(external/googletest)
 
   enable_testing()
@@ -174,24 +200,28 @@ target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main
 
 ---
 
-## PowerShell (alternate workflow)
-If you prefer PowerShell outside MSYS2:
+## Alternative PowerShell Workflow
+For direct PowerShell usage with MSVC:
 
 ```powershell
 # Clean build
-Remove-Item -Recurse -Force build
-cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
-cmake --build build --target huginn
-cmake --build build --target huginn_tests
-ctest --test-dir build -C Debug --output-on-failure -V
+Remove-Item -Recurse -Force build/msvc-x64-release
+cmake --preset msvc-x64-release
+cmake --build build/msvc-x64-release --config Release --target huginn
+cmake --build build/msvc-x64-release --config Release --target huginn_tests
+
+# Run tests
+cd build/msvc-x64-release
+ctest --config Release --output-on-failure -V
 ```
 
 ---
 
 ## Notes & Tips
-- **Generator**: Using Ninja keeps toolchains consistent and avoids Visual Studio/MinGW mismatches.
-- **Cleaning**: If builds get weird, delete the build dir and reconfigure.
-  - MSYS2: `rm -rf build`
+- **CMake Presets**: The project uses CMake presets for consistent builds across environments.
+- **Cleaning**: If builds get weird, delete the build directory and reconfigure.
+  - PowerShell: `Remove-Item -Recurse -Force build/msvc-x64-release`
+  - Command Prompt: `rmdir /s build\msvc-x64-release`
   - PowerShell: `Remove-Item -Recurse -Force build`
 - **Where to add tests**: `test/*.cpp` (not `src/`). Targets: `huginn` (app) and `huginn_tests` (tests).
 - **Debug asserts**: Enable in Debug builds; they’re your defensive-programming guardrails.
