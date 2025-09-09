@@ -336,7 +336,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 depth_specified = true;
                 if (debug_mode) std::cout << "info string Parsed depth: " << limits.max_depth << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid depth value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -347,7 +347,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 limits.max_time_ms = movetime;
                 if (debug_mode) std::cout << "info string Parsed movetime: " << movetime << "ms" << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid movetime value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -357,7 +357,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 wtime = std::stoi(tokens[i + 1]);
                 if (debug_mode) std::cout << "info string Parsed wtime: " << wtime << "ms" << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid wtime value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -367,7 +367,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 btime = std::stoi(tokens[i + 1]);
                 if (debug_mode) std::cout << "info string Parsed btime: " << btime << "ms" << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid btime value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -377,7 +377,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 winc = std::stoi(tokens[i + 1]);
                 if (debug_mode) std::cout << "info string Parsed winc: " << winc << "ms" << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid winc value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -387,7 +387,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 binc = std::stoi(tokens[i + 1]);
                 if (debug_mode) std::cout << "info string Parsed binc: " << binc << "ms" << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid binc value: " << tokens[i + 1] << std::endl;
                 i++;
             }
@@ -397,7 +397,7 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 movestogo = std::stoi(tokens[i + 1]);
                 if (debug_mode) std::cout << "info string Parsed movestogo: " << movestogo << std::endl;
                 i++;
-            } catch (const std::exception& e) {
+            } catch (const std::exception&) {
                 if (debug_mode) std::cout << "info string Invalid movestogo value: " << tokens[i + 1] << std::endl;
                 i++;
             }
