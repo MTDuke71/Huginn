@@ -1,12 +1,16 @@
-# Hug> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength!  
-_Huginn: Odin's Thought, in Every Move_
+# Hug> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength  
+
+## Huginn: Odin's Thought, in Every Move
 
 ![Huginn Logo]### Option B: Use vcpkg for GoogleTest
+
 ```powershell
 # Install vcpkg (if not already installed)
 vcpkg install gtest:x64-windows
 ```
+
 Then in `CMakeLists.txt`:
+
 ```cmake
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main if you omit test_main.cpp
@@ -42,13 +46,15 @@ cmake --build build/msvc-x64-release --config Release --target huginn
 cmake --build build/msvc-x64-release --config Release --target huginn_tests
 ```
 
-### Alternative: Use VS Code
+## Alternative: Use VS Code
+
 1. Open the project folder in VS Code
 2. Install the **CMake Tools** extension
 3. Select the `msvc-x64-release` preset
 4. Build using **Ctrl+Shift+P** → "CMake: Build"
 
 ### Run the Programs
+
 ```powershell
 # Main UCI Chess Engine
 .\build\msvc-x64-release\bin\Release\huginn.exe
@@ -64,6 +70,7 @@ cd mirror_test
 ## Features
 
 ### UCI Chess Engine
+
 - **Complete UCI Protocol**: Compatible with Arena, Fritz, ChessBase, and all UCI chess GUIs
 - **Hybrid Evaluation System**: Advanced evaluation combining Engine2's bitboard analysis with mailbox position representation
 - **Single-threaded Alpha-Beta Search**: Robust search with quiescence, iterative deepening, and move ordering
@@ -72,6 +79,7 @@ cd mirror_test
 - **Game Phase Detection**: Opening/middlegame/endgame evaluation adjustments for optimal play strength
 
 ### Chess Engine Architecture
+
 - **Hybrid Evaluation Engine**: Combines advanced bitboard evaluation techniques with mailbox position representation
 - **Comprehensive Position Analysis**: Material counting, pawn structure, piece activity, king safety, and mobility evaluation
 - **Game Phase Awareness**: Dynamic evaluation adjustments based on opening/middlegame/endgame detection
@@ -83,6 +91,7 @@ cd mirror_test
 - **Piece List Optimization**: Fast piece iteration without board scanning (up to 10 pieces per type)
 
 ### Move System
+
 - **Dual Move Implementation**: Both VICE Tutorial (MakeMove/TakeMove) and Huginn (make_move_with_undo) systems
 - **VICE Tutorial Videos #41-42**: Complete implementation of standard chess programming move making/unmaking
 - **Performance Advantage**: VICE approach is 1.55x faster with 54.6% higher node throughput
@@ -93,6 +102,7 @@ cd mirror_test
 - **Position Hashing**: Zobrist hashing for transposition tables
 
 ### Development Tools
+
 - **Debug Assertions**: Detailed error reporting with file/line information when DEBUG defined
 - **Comprehensive Testing**: 183+ test cases covering all major components including FEN generation
 - **Position Validation**: Multi-layer integrity checking with castling validation and FEN round-trip verification
@@ -110,6 +120,7 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **[✅ Validation Systems](docs/DEBUG_VALIDATION.md)** - Testing and validation documentation
 
 ### Quick Links
+
 - [Performance Analysis](docs/DECODE_MOVE_ANALYSIS.md) - Why micro-optimizations translate to real performance
 - [Optimization History](docs/DECODE_MOVE_REMOVAL.md) - Recent modernization improvements  
 - [Implementation Details](docs/BITBOARD_IMPLEMENTATION.md) - Technical implementation guides
@@ -117,11 +128,13 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **FEN Support**: Complete bidirectional FEN parsing and generation with validation
 
 ### Performance Optimizations
+
 - **Zero Copy Operations**: Direct array access and bit manipulation
 - **Fast Piece Location**: O(1) piece finding via piece lists
 - **Efficient Memory Layout**: Compact data structures and minimal indirection
 
 ### Demo Applications
+
 - **huginn.exe**: Main chess engine application (v1.1) with hybrid evaluation and single-threaded search
 - **huginn_legacy.exe**: Original engine preserved for comparison and regression testing
 - **huginn_v1.1.exe**: Versioned copy of the main chess engine
@@ -131,6 +144,7 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 - **sq_attacked_demo.exe**: Attack detection visualization showing piece attack patterns and blocking
 
 ### Running Tests (CTest)
+
 ```powershell
 # Build test binary (from project root)
 cmake --build build/msvc-x64-release --config Release --target huginn_tests
@@ -144,10 +158,13 @@ ctest --config Release -R "perft|position"
 ```
 
 ### Convenience: `check` target
+
 After the first configure, you can just:
+
 ```powershell
 cmake --build build/msvc-x64-release --config Release --target check
 ```
+
 > This builds `huginn_tests` and then runs `ctest`.
 
 ---
@@ -155,8 +172,10 @@ cmake --build build/msvc-x64-release --config Release --target check
 ## GoogleTest Options
 
 ### Option A: Vendored (recommended for MSVC)
+
 - Add googletest source at `external/googletest/`.
 - In your top-level `CMakeLists.txt`:
+
   ```cmake
   # Vendored googletest
   add_subdirectory(external/googletest)
@@ -187,10 +206,13 @@ cmake --build build/msvc-x64-release --config Release --target check
   ```
 
 ### Option B: Use MSYS2’s packaged googletest
+
 ```sh
 pacman -S --needed mingw-w64-ucrt-x86_64-gtest
 ```
+
 Then in `CMakeLists.txt`:
+
 ```cmake
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main if you omit test_main.cpp
@@ -201,6 +223,7 @@ target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main
 ---
 
 ## Alternative PowerShell Workflow
+
 For direct PowerShell usage with MSVC:
 
 ```powershell
@@ -218,6 +241,7 @@ ctest --config Release --output-on-failure -V
 ---
 
 ## Notes & Tips
+
 - **CMake Presets**: The project uses CMake presets for consistent builds across environments.
 - **Cleaning**: If builds get weird, delete the build directory and reconfigure.
   - PowerShell: `Remove-Item -Recurse -Force build/msvc-x64-release`
