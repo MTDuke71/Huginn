@@ -703,7 +703,7 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
         int tt_score;
         uint8_t tt_depth, tt_node_type; 
         uint32_t tt_best_move;
-        bool has_tt_move = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
+        bool has_tt_move = get_transposition_table().probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
         
         // Get PV move for this position (if any)
         S_MOVE pv_move;
@@ -1000,7 +1000,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     int tt_score;
     uint8_t tt_depth, tt_node_type;
     uint32_t tt_best_move;
-    bool tt_hit = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
+    bool tt_hit = get_transposition_table().probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
     
     if (tt_hit && tt_depth >= depth && !isRoot) {
         // Adjust mate scores to current ply (VICE Part 84: 5:13)
@@ -1170,7 +1170,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         store_score -= info.ply;
     }
     
-    tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
+    get_transposition_table().store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
 
     return best_score;
 }
@@ -1323,8 +1323,8 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                   << " nodes " << info.nodes 
                   << " time " << elapsed.count()
                   << " nullcut " << info.null_cut
-                  << " tthits " << tt_table.get_hits()
-                  << " ttwrites " << tt_table.get_writes()
+                  << " tthits " << get_transposition_table().get_hits()
+                  << " ttwrites " << get_transposition_table().get_writes()
                   << " pv ";
         
         // Print full Principal Variation
@@ -1350,16 +1350,16 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
 
 // VICE Part 84: Print transposition table statistics
 void MinimalEngine::print_tt_stats() const {
-    uint64_t hits = tt_table.get_hits();
-    uint64_t misses = tt_table.get_misses();
-    uint64_t writes = tt_table.get_writes();
+    uint64_t hits = get_transposition_table().get_hits();
+    uint64_t misses = get_transposition_table().get_misses();
+    uint64_t writes = get_transposition_table().get_writes();
     uint64_t total_probes = hits + misses;
-    double hit_rate = tt_table.get_hit_rate();
-    double utilization = tt_table.get_utilization();
+    double hit_rate = get_transposition_table().get_hit_rate();
+    double utilization = get_transposition_table().get_utilization();
     
     std::cout << std::endl;
     std::cout << "=== Transposition Table Statistics ===" << std::endl;
-    std::cout << "Table size: " << tt_table.get_size() << " entries" << std::endl;
+    std::cout << "Table size: " << get_transposition_table().get_size() << " entries" << std::endl;
     std::cout << "Total probes: " << total_probes << std::endl;
     std::cout << "Hits: " << hits << std::endl;
     std::cout << "Misses: " << misses << std::endl;

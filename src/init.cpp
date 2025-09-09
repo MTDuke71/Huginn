@@ -2,6 +2,7 @@
 #include "init.hpp"
 #include "zobrist.hpp"
 #include "evaluation.hpp"
+#include "global_transposition_table.hpp"
 
 namespace Huginn {
     
@@ -24,7 +25,28 @@ namespace Huginn {
         // Initialize evaluation masks
         EvalParams::init_evaluation_masks();
         
+        // Initialize global transposition table (64MB default)
+        // Note: Moved to global for lazy SMP multi-threading support
+        init_global_transposition_table(64);
+        
         initialized = true;
+    }
+
+    /**
+     * @brief Cleans up all engine subsystems.
+     * 
+     * This function should be called at program shutdown to properly clean up resources.
+     * It's safe to call this multiple times.
+     */
+    void cleanup() {
+        if (!initialized) {
+            return;  // Not initialized, nothing to clean up
+        }
+        
+        // Clean up global transposition table
+        cleanup_global_transposition_table();
+        
+        initialized = false;
     }
 
     /**

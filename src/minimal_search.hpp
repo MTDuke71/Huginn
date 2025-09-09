@@ -5,6 +5,7 @@
 #include "movegen_enhanced.hpp"
 #include "pvtable.hpp"
 #include "transposition_table.hpp"
+#include "global_transposition_table.hpp"
 #include "polyglot_book.hpp"
 #include <chrono>
 
@@ -57,7 +58,7 @@ public:  // Make members public for easier access
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
-    TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
+    // Note: Transposition table moved to global for lazy SMP support
     PolyglotBook opening_book;    // VICE Part 85: Polyglot opening book for opening moves
     
     // Search History array (3:55) - stores scores for moves that improved alpha
@@ -74,7 +75,7 @@ public:  // Make members public for easier access
     int mvv_lva_scores[7][7];  // 7 piece types (None=0, Pawn=1, Knight=2, Bishop=3, Rook=4, Queen=5, King=6)
     
     // Constructor
-    MinimalEngine() : pv_table(2), tt_table(64) {  // 64MB transposition table
+    MinimalEngine() : pv_table(2) {  // Global transposition table used instead of instance member
         clear_search_tables();
         init_mvv_lva();
     }

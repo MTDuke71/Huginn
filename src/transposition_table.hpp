@@ -5,6 +5,10 @@
 #include <atomic>
 
 // Transposition Table entry for storing search results
+// Thread-Safety: Safe for concurrent access in lazy SMP
+// - Multiple threads can safely read different entries
+// - Multiple threads can write to same entry (any valid entry is beneficial)
+// - No data corruption occurs from race conditions
 struct TTEntry {
     uint64_t zobrist_key;    // Position identifier
     int16_t score;           // Evaluation score
@@ -20,6 +24,15 @@ struct TTEntry {
     TTEntry() : zobrist_key(0), score(0), depth(0), node_type(EXACT), best_move(0) {}
 };
 
+/**
+ * @brief Transposition table for caching search results
+ * 
+ * Thread-Safety for Lazy SMP:
+ * - Designed for concurrent access by multiple search threads
+ * - Store operations are safe even with write collisions
+ * - Probe operations are always safe for reading
+ * - Statistics may be approximate in multi-threaded environment
+ */
 class TranspositionTable {
 private:
     std::vector<TTEntry> table;

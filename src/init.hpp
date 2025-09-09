@@ -16,6 +16,14 @@ namespace Huginn {
     void init();
     
 /**
+ * @brief Cleans up all engine subsystems.
+ * 
+ * This function should be called at program shutdown to properly clean up resources.
+ * It's safe to call this multiple times.
+ */
+    void cleanup();
+    
+/**
  * @brief Checks if the engine has been properly initialized.
  * 
  * @return true if the engine has been initialized, false otherwise.

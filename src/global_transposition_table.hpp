@@ -1,0 +1,37 @@
+#pragma once
+
+#include "transposition_table.hpp"
+#include <memory>
+
+namespace Huginn {
+    // Global transposition table instance for lazy SMP
+    extern std::unique_ptr<TranspositionTable> g_transposition_table;
+    
+    /**
+     * @brief Initialize the global transposition table
+     * @param size_mb Size of the table in megabytes (default: 64MB)
+     * 
+     * This creates a single shared transposition table that all search threads
+     * can access. This is essential for lazy SMP where multiple threads share
+     * search results through a common hash table.
+     */
+    void init_global_transposition_table(size_t size_mb = 64);
+    
+    /**
+     * @brief Get reference to the global transposition table
+     * @return Reference to the global transposition table
+     * @throws std::runtime_error if table hasn't been initialized
+     * 
+     * This function provides thread-safe access to the global table.
+     * All MinimalEngine instances should use this instead of their own table.
+     */
+    TranspositionTable& get_transposition_table();
+    
+    /**
+     * @brief Clean up the global transposition table
+     * 
+     * Safely destroys the global table and releases memory.
+     * Should be called during engine shutdown.
+     */
+    void cleanup_global_transposition_table();
+}

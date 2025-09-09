@@ -263,6 +263,7 @@ set(COMMON_SOURCES
     src/minimal_search.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
+    src/global_transposition_table.cpp
 )
 
 set(ENGINE_SOURCES
