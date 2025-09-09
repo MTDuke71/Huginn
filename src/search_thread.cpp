@@ -5,7 +5,15 @@
 
 namespace Huginn {
     
-    bool SearchThreadManager::start_search(const Position& pos, const SearchInfo& info) {
+    bool SearchThreadManager::start_search(const Position& pos, const SearchInfo& info, std::function<void()> callback) {
+        // Clean up any completed previous search thread
+        if (search_thread && !search_running.load()) {
+            if (search_thread->joinable()) {
+                search_thread->join();
+            }
+            search_thread.reset();
+        }
+        
         // Don't start new search if one is already running
         if (search_running.load()) {
             return false;
@@ -16,6 +24,7 @@ namespace Huginn {
         // Copy search parameters
         search_position = pos;
         search_info = info;
+        completion_callback = callback;
         
         // Reset search state
         engine->reset();
@@ -71,16 +80,15 @@ namespace Huginn {
                 manager->search_info
             );
             
-            // Output best move if search completed normally
-            if (!manager->engine->should_stop) {
-                std::cout << "bestmove ";
-                if (best_move.move != 0) {
-                    std::cout << manager->engine->move_to_uci(best_move);
-                } else {
-                    std::cout << "0000";  // No legal moves (checkmate/stalemate)
-                }
-                std::cout << std::endl;
+            // Output best move (always output, regardless of stop condition)
+            std::cout << "bestmove ";
+            if (best_move.move != 0) {
+                std::cout << manager->engine->move_to_uci(best_move);
+            } else {
+                std::cout << "0000";  // No legal moves (checkmate/stalemate)
             }
+            std::cout << std::endl;
+            std::cout.flush();  // Ensure immediate output
             
         } catch (const std::exception& e) {
             std::cerr << "Search thread error: " << e.what() << std::endl;
@@ -88,5 +96,10 @@ namespace Huginn {
         
         // Mark search as completed
         manager->search_running.store(false);
+        
+        // Call completion callback if provided
+        if (manager->completion_callback) {
+            manager->completion_callback();
+        }
     }
 }

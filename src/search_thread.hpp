@@ -6,6 +6,7 @@
 #include <mutex>
 #include <atomic>
 #include <memory>
+#include <functional>
 
 namespace Huginn {
     /**
@@ -27,6 +28,9 @@ namespace Huginn {
         Position search_position;
         SearchInfo search_info;
         
+        // Callback for search completion
+        std::function<void()> completion_callback;
+        
     public:
         SearchThreadManager(MinimalEngine* eng) : engine(eng) {}
         
@@ -42,7 +46,7 @@ namespace Huginn {
          * - Passes position and search info to thread
          * - Main thread returns to UCI input listening
          */
-        bool start_search(const Position& pos, const SearchInfo& info);
+        bool start_search(const Position& pos, const SearchInfo& info, std::function<void()> callback = nullptr);
         
         /**
          * @brief Stop search and wait for thread completion
@@ -58,6 +62,19 @@ namespace Huginn {
          * @brief Check if search is currently running
          */
         bool is_searching() const { return search_running.load(); }
+        
+        /**
+         * @brief Wait for search to complete (non-blocking check)
+         * @return true if search is still running, false if completed
+         */
+        bool wait_for_completion_check() {
+            if (!search_running.load() && search_thread && search_thread->joinable()) {
+                search_thread->join();
+                search_thread.reset();
+                return false; // Search completed
+            }
+            return search_running.load(); // Still running
+        }
         
         /**
          * @brief Search thread function (VICE Part 100)

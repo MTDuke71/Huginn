@@ -1,0 +1,5 @@
+uci
+setoption name OwnBook value false
+position startpos
+go depth 1
+quit

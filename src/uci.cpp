@@ -589,12 +589,17 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     
     // Start search in separate thread (VICE Part 100)
     // Main thread returns to UCI input listening
-    if (!thread_manager->start_search(position, info)) {
+    auto completion_callback = [this]() {
+        this->is_searching = false;
+    };
+    
+    if (!thread_manager->start_search(position, info, completion_callback)) {
         std::cout << "info string Failed to start search thread" << std::endl;
         std::cout << "bestmove 0000" << std::endl;
         is_searching = false;
     }
     // Note: bestmove output is handled by the search thread itself
+    // is_searching will be updated when thread completes
 }
 
 /**
