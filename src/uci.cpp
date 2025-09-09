@@ -49,6 +49,9 @@ UCIInterface::UCIInterface() {
     // Initialize search engine
     search_engine = std::make_unique<Huginn::MinimalEngine>();  // Changed from SimpleEngine
     
+    // VICE Part 100: Initialize thread manager for input/search separation
+    thread_manager = std::make_unique<Huginn::SearchThreadManager>(search_engine.get());
+    
     // Load opening book if enabled
     if (own_book) {
         load_opening_book();
@@ -166,6 +169,10 @@ void UCIInterface::run() {
             }
         }
         else if (command == "stop") {
+            // VICE Part 100: Stop search thread and wait for completion
+            if (thread_manager) {
+                thread_manager->stop_search();
+            }
             should_stop = true;
             search_engine->stop();
             Huginn::SearchInfo* info_ptr = running_info.load();
@@ -554,12 +561,22 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
  *               the engine should search.
  */
 void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // Changed from SearchLimits
+    // VICE Part 100: Use thread manager for search
+    if (!thread_manager) {
+        std::cout << "bestmove 0000" << std::endl;
+        return;
+    }
+    
+    // Don't start new search if one is already running
+    if (thread_manager->is_searching()) {
+        if (debug_mode) std::cout << "info string Search already in progress" << std::endl;
+        return;
+    }
+    
     is_searching = true;
+    should_stop = false;
     
-    // Reset the search engine
-    search_engine->reset();
-    
-    // MinimalEngine uses a different search interface - searchPosition
+    // Prepare search info
     Huginn::SearchInfo info;
     info.max_depth = limits.max_depth;
     info.stopped = false;
@@ -570,49 +587,14 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     info.start_time = search_start;
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
     
-    // Perform the search using MinimalEngine interface
-    // Perform the search using MinimalEngine interface
-    S_MOVE best_move;
-    // Publish pointer to running SearchInfo so 'stop' can update it
-    running_info.store(&info);
-    try {
-        best_move = search_engine->searchPosition(position, info);  // MinimalEngine method
-    } catch (const std::exception& e) {
-        std::cout << "info string Search threw exception: " << e.what() << std::endl;
-        std::cout.flush();
-        best_move.move = 0; // Set to invalid move to trigger fallback
-    } catch (...) {
-        std::cout << "info string Search threw unknown exception" << std::endl;
-        std::cout.flush();
-        best_move.move = 0; // Set to invalid move to trigger fallback
-    }
-    // Clear running_info pointer
-    running_info.store(nullptr);
-    
-    // Emergency fallback: if search took too long or returned no move, get any legal move
-    if (best_move.move == 0 || should_stop) {
-        S_MOVELIST moves;
-        generate_legal_moves_enhanced(position, moves);
-        if (moves.count > 0) {
-            best_move = moves.moves[0]; // Use first legal move as fallback
-        }
-    }
-    
-    // MinimalEngine already outputs complete UCI info during search
-    // No need for additional summary output here
-    
-    // Send the best move - use MinimalEngine's move_to_uci
-    if (best_move.move != 0) {
-        std::string uci_move = search_engine->move_to_uci(best_move);  // MinimalEngine method
-        std::cout << "bestmove " << uci_move << std::endl;
-        std::cout.flush(); // Ensure immediate output
-    } else {
-        // Last resort fallback - this should never happen
+    // Start search in separate thread (VICE Part 100)
+    // Main thread returns to UCI input listening
+    if (!thread_manager->start_search(position, info)) {
+        std::cout << "info string Failed to start search thread" << std::endl;
         std::cout << "bestmove 0000" << std::endl;
-        std::cout.flush(); // Ensure immediate output
+        is_searching = false;
     }
-    
-    is_searching = false;
+    // Note: bestmove output is handled by the search thread itself
 }
 
 /**
