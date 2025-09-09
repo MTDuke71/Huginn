@@ -10,12 +10,14 @@ This directory contains tools for testing evaluation function symmetry in the Hu
 ## Usage
 
 ### Quick Run (from mirror_test directory)
+
 ```powershell
 cd mirror_test
 .\run_mirror_test.ps1
 ```
 
 ### Manual Build and Run
+
 ```powershell
 # Build (from project root)
 cmake --build build/msvc-x64-release --config Release --target mirror_eval_test --parallel 24
@@ -30,6 +32,7 @@ cmake --build build/msvc-x64-release --config Release --target mirror_eval_test 
 - **`-Verbose`** - Show detailed build and test output
 
 ### Examples
+
 ```powershell
 cd mirror_test
 .\run_mirror_test.ps1                 # Standard run
@@ -51,12 +54,13 @@ The mirror evaluation test validates that the evaluation function is **symmetric
 ## Expected Results
 
 ✅ **All positions should PASS** (100% symmetric)
+
 - Original eval should equal mirrored eval for every position
 - Any FAIL indicates an asymmetric bug in the evaluation function
 
 ## Output Format
 
-```
+```txt
 Position | Original Eval | Mirrored Eval | Difference | Status
 ---------|---------------|---------------|------------|--------
        1 |            20 |            20 |          0 | PASS
@@ -67,6 +71,7 @@ Position | Original Eval | Mirrored Eval | Difference | Status
 ## VICE Part 80 Compliance
 
 Current implementation includes:
+
 - ✅ Material values (Pawn=100, Knight=320, Bishop=330, Rook=500, Queen=900, King=20000)
 - ✅ Piece-square tables (symmetric for both colors)
 - ✅ Isolated pawn penalties (-10cp using pre-computed masks)  
