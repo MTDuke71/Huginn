@@ -32,11 +32,11 @@ try {
     if ($Verbose) {
         & cmake --build "../build/msvc-x64-release" --config Release --target mirror_eval_test --parallel 24
     } else {
-        & cmake --build "../build/msvc-x64-release" --config Release --target mirror_eval_test --parallel 24 | Out-Null
+        & cmake --build "../build/msvc-x64-release" --config Release --target mirror_eval_test --parallel 24 2>&1 | Out-Null
     }
     
     if ($LASTEXITCODE -ne 0) {
-        throw "Build failed with exit code $LASTEXITCODE"
+        throw "Build failed with exit code $LASTEXITCODE. Try running 'cmake --build ../build/msvc-x64-release --config Release' first to ensure all dependencies are built."
     }
     Write-Host "   ✅ Build successful"
 

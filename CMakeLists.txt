@@ -293,6 +293,17 @@ add_huginn_executable(huginn
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# ---- Mirror Evaluation Test ----
+add_huginn_executable(mirror_eval_test
+    SOURCES
+        mirror_test/mirror_eval_test.cpp
+        ${COMMON_SOURCES}
+        src/minimal_search.cpp
+        src/pvtable.cpp
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # ---- Move Generation Profiler ----
 
 
