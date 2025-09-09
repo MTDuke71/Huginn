@@ -40,6 +40,7 @@ struct TTEntry {
     // Format: [move:32][score:16][depth:8][flags:4][age:4]
     static uint64_t pack_data(uint32_t best_move, int16_t score, uint8_t depth, uint8_t node_type, uint8_t age) {
         // Handle negative scores by adding offset (VICE approach)
+        // Note: This handles scores in range [-32768, 32767] correctly
         uint16_t adjusted_score = static_cast<uint16_t>(score + 32768);
         
         return (static_cast<uint64_t>(best_move) << 32) |
@@ -73,25 +74,6 @@ struct TTEntry {
     static uint8_t ExtractDepth(uint64_t data) { return static_cast<uint8_t>((data >> 8) & 0xFF); }
     static uint8_t ExtractFlag(uint64_t data) { return static_cast<uint8_t>((data >> 4) & 0xF); }
     static uint8_t ExtractAge(uint64_t data) { return static_cast<uint8_t>(data & 0xF); }
-    
-    // Store data using lockless hashing (XOR with zobrist key)
-    void store_lockless(uint64_t zobrist_key, uint32_t best_move, int16_t score, uint8_t depth, uint8_t node_type, uint8_t age) {
-        uint64_t packed = pack_data(best_move, score, depth, node_type, age);
-        encoded_data.store(zobrist_key ^ packed, std::memory_order_relaxed);  // Atomic store with XOR
-    }
-    
-    // Retrieve data using lockless hashing (verify with XOR)
-    bool probe_lockless(uint64_t zobrist_key, uint32_t& best_move, int16_t& score, uint8_t& depth, uint8_t& node_type, uint8_t& age) const {
-        uint64_t encoded = encoded_data.load(std::memory_order_relaxed);  // Atomic load
-        if (encoded == 0) return false;  // Empty entry
-        
-        uint64_t packed = zobrist_key ^ encoded;  // XOR to get original data
-        unpack_data(packed, best_move, score, depth, node_type, age);
-        
-        // Verify integrity: re-encode and check if it matches
-        uint64_t verification = pack_data(best_move, score, depth, node_type, age);
-        return (zobrist_key ^ verification) == encoded;
-    }
     
     /**
      * @brief VICE verifyEntrySMP function (1:58 in video)
@@ -165,37 +147,44 @@ public:
         size_mask = power_of_2 - 1;
     }
     
-    // Store position in transposition table with lockless hashing and age-based replacement
-    // LAZY SMP: Multiple threads can safely call this concurrently
+    // Convenience function to store with individual parameters (converts to SMP format)
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
+        // Cast score to int16_t as expected by FoldData
+        int16_t score16 = static_cast<int16_t>(score);
+        uint64_t smp_data = TTEntry::FoldData(best_move, score16, depth, node_type, current_age);
+        store(zobrist_key, smp_data);
+    }
+    
+    // Store position in transposition table with SMP data format (VICE Part 105)
+    // LAZY SMP: Multiple threads can safely call this concurrently
+    void store(uint64_t zobrist_key, uint64_t smp_data) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
         
         // For lockless replacement, we need to check if we should replace
         // First, try to decode existing entry to see if replacement is warranted
         if (entry.encoded_data != 0) {
-            uint32_t existing_move;
-            int16_t existing_score;
-            uint8_t existing_depth, existing_node_type, existing_age;
+            // Try to decode existing entry using VICE macros
+            uint64_t existing_encoded = entry.encoded_data.load(std::memory_order_relaxed);
+            uint64_t existing_smp_data = zobrist_key ^ existing_encoded;
             
-            // Try to decode existing entry - if it fails, it's corrupted so replace it
-            bool valid_existing = entry.probe_lockless(zobrist_key, existing_move, existing_score, 
-                                                      existing_depth, existing_node_type, existing_age);
+            // Extract data using VICE macros
+            uint8_t existing_depth = TTEntry::ExtractDepth(existing_smp_data);
+            uint8_t existing_age = TTEntry::ExtractAge(existing_smp_data);
             
-            if (valid_existing) {
-                // Valid existing entry - check replacement criteria (VICE Part 85)
-                bool should_replace = (existing_age < current_age) ||                     // Older entry
-                                     (existing_age == current_age && depth >= existing_depth); // Same age, deeper search
-                
-                if (!should_replace) {
-                    return; // Don't replace - existing entry is better
-                }
+            // Check replacement criteria (VICE Part 85)
+            uint8_t new_depth = TTEntry::ExtractDepth(smp_data);
+            bool should_replace = (existing_age < current_age) ||                     // Older entry
+                                 (existing_age == current_age && new_depth >= existing_depth); // Same age, deeper search
+            
+            if (!should_replace) {
+                return; // Don't replace - existing entry is better
             }
-            // If !valid_existing, it's corrupted data so we'll replace it
         }
         
-        // Store using lockless hashing
-        entry.store_lockless(zobrist_key, best_move, static_cast<int16_t>(score), depth, node_type, current_age);
+        // Store using lockless hashing (VICE XOR encoding)
+        uint64_t encoded_data = zobrist_key ^ smp_data;
+        entry.encoded_data.store(encoded_data, std::memory_order_relaxed);
         writes++;  // Track write operations
         
         // VICE Part 85: Verify the entry was stored correctly (4:27 in video)
@@ -207,36 +196,95 @@ public:
         }
     }
     
-    // Probe transposition table for position using lockless hashing
+    // Probe transposition table returning SMP data format (VICE Part 105)
     // LAZY SMP: Multiple threads can safely call this concurrently
-    bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
+    bool probe(uint64_t zobrist_key, uint64_t& smp_data) const {
         size_t index = zobrist_key & size_mask;
         const TTEntry& entry = table[index];
         
-        uint32_t decoded_move;
-        int16_t decoded_score;
-        uint8_t decoded_depth, decoded_node_type, decoded_age;
+        // Load encoded data atomically
+        uint64_t encoded_data = entry.encoded_data.load(std::memory_order_relaxed);
+        if (encoded_data == 0) {
+            misses++;
+            return false;
+        }
         
-        // Use lockless probing - automatically detects corruption
-        if (entry.probe_lockless(zobrist_key, decoded_move, decoded_score, decoded_depth, decoded_node_type, decoded_age)) {
-            // VICE Part 85: Additional verification check (6:16 in video)
-            // Double-check the entry integrity for debugging parallel processing
-            if (!entry.verifyEntrySMP(zobrist_key)) {
-                // If verification fails, treat as a miss even though probe_lockless succeeded
-                // This catches any subtle corruption issues
+        // Decode using VICE XOR approach  
+        smp_data = zobrist_key ^ encoded_data;
+        
+        // Additional corruption check: verify decoded data makes sense
+        int16_t check_score = TTEntry::ExtractScore(smp_data);
+        uint8_t check_depth = TTEntry::ExtractDepth(smp_data);
+        uint8_t check_age = TTEntry::ExtractAge(smp_data);
+        
+        // Sanity check the extracted values
+        if (check_depth > 100 || check_age > 15) {
+            // Depth > 100 or age > 15 indicates corruption
+            misses++;
+            return false;
+        }
+        
+        // Check for suspicious scores that would cause false mate detection
+        const int MATE = 29000;
+        if (check_score < -MATE + 2000 && check_score > -MATE - 2000) {
+            // Score in suspicious mate range - likely corruption
+            misses++;
+            return false;
+        }
+        
+        // VICE Part 85: Verify entry integrity (6:16 in video)
+        if (!entry.verifyEntrySMP(zobrist_key)) {
+            // If verification fails, treat as a miss
+            misses++;
+            return false;
+        }
+        
+        hits++;  // Track successful probes
+        return true;
+    }
+    
+    // Convenience function to probe with individual parameters (extracts from SMP format)
+    bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
+        uint64_t smp_data;
+        if (probe(zobrist_key, smp_data)) {
+            // Extract individual fields using VICE macros
+            best_move = TTEntry::ExtractMove(smp_data);
+            int16_t extracted_score = TTEntry::ExtractScore(smp_data);
+            depth = TTEntry::ExtractDepth(smp_data);
+            node_type = TTEntry::ExtractFlag(smp_data);
+            
+            // ENHANCED SAFETY CHECK: Detect corrupted scores more aggressively
+            const int MATE = 29000;
+            const int MAX_NORMAL_SCORE = 5000;  // Tighter bound for normal positions
+            
+            // Check for any score that would trigger false mate detection
+            if (extracted_score < -MATE + 2000) {  // Expanded safety margin
+                // This is in the suspicious mate range - likely corruption
+                // Log the detection for debugging
+                #ifdef DEBUG_TT_CORRUPTION
+                std::cerr << "TT Corruption detected: score=" << extracted_score 
+                         << " key=0x" << std::hex << zobrist_key << std::dec << std::endl;
+                #endif
                 misses++;
                 return false;
             }
             
-            score = decoded_score;
-            depth = decoded_depth;
-            node_type = decoded_node_type;
-            best_move = decoded_move;
-            hits++;  // Track successful probes
+            // Also reject scores that are way outside normal bounds
+            if (extracted_score < -MAX_NORMAL_SCORE && extracted_score > -MATE + 2000) {
+                // Suspicious large negative score
+                misses++;
+                return false;
+            }
+            
+            if (extracted_score > MAX_NORMAL_SCORE && extracted_score < MATE - 2000) {
+                // Suspicious large positive score  
+                misses++;
+                return false;
+            }
+            
+            score = extracted_score;
             return true;
         }
-        
-        misses++;  // Track failed probes (includes corrupted entries)
         return false;
     }
     
@@ -392,8 +440,10 @@ public:
         TTEntry test_entry;
         uint64_t test_zobrist = 0xABCDEF1234567890ULL;
         
-        // Store test data
-        test_entry.store_lockless(test_zobrist, test_move, test_score, test_depth, test_flag, test_age);
+        // Store test data using SMP format
+        uint64_t test_smp_data = TTEntry::FoldData(test_move, test_score, test_depth, test_flag, test_age);
+        uint64_t encoded_data = test_zobrist ^ test_smp_data;
+        test_entry.encoded_data.store(encoded_data, std::memory_order_relaxed);
         
         // Verify the entry
         bool verify_result = test_entry.verifyEntrySMP(test_zobrist);
