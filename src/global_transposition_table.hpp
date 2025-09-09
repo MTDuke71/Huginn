@@ -49,4 +49,12 @@ namespace Huginn {
      * Should be called when starting a new game.
      */
     void reset_tt_age();
+    
+    /**
+     * @brief Clear transposition table statistics for new game
+     * 
+     * Clears hit/miss/write counters while preserving hash entries.
+     * Should be called when starting a new game for accurate per-game statistics.
+     */
+    void clear_tt_stats();
 }

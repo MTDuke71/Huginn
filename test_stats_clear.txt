@@ -1,0 +1,8 @@
+uci
+setoption name OwnBook value false
+position startpos
+go depth 2
+ucinewgame
+position startpos
+go depth 2
+quit

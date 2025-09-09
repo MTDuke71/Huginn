@@ -1,0 +1,9 @@
+uci
+debug on
+setoption name OwnBook value false
+position startpos
+go depth 3
+ucinewgame
+position startpos
+go depth 3
+quit

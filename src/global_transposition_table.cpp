@@ -35,4 +35,10 @@ namespace Huginn {
             g_transposition_table->reset_age();
         }
     }
+    
+    void clear_tt_stats() {
+        if (g_transposition_table) {
+            g_transposition_table->clear_stats();
+        }
+    }
 }

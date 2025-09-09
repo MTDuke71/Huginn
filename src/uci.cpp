@@ -120,6 +120,8 @@ void UCIInterface::run() {
             search_engine->reset();
             // VICE Part 85: Reset age when starting new game
             Huginn::reset_tt_age();
+            // Clear transposition table statistics for new game
+            Huginn::clear_tt_stats();
             if (debug_mode) std::cout << "info string New game started" << std::endl;
         }
         else if (command == "position") {
