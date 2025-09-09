@@ -24,6 +24,7 @@
 #include "board120.hpp"
 #include "uci_utils.hpp"
 #include "movegen_enhanced.hpp"
+#include "global_transposition_table.hpp"
 #include <fstream>
 
 /**
@@ -250,6 +251,8 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     
     if (tokens[1] == "startpos") {
         position.set_startpos();
+        // VICE Part 85: Reset age when starting new game
+        Huginn::reset_tt_age();
         move_index = 2;
     }
     else if (tokens[1] == "fen") {

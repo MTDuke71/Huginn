@@ -34,4 +34,19 @@ namespace Huginn {
      * Should be called during engine shutdown.
      */
     void cleanup_global_transposition_table();
+    
+    /**
+     * @brief Increment age for new search (VICE Part 85)
+     * 
+     * Should be called at the start of each new search to improve
+     * replacement strategy and prevent truncated principal variations.
+     */
+    void increment_tt_age();
+    
+    /**
+     * @brief Reset age for new game (VICE Part 85)
+     * 
+     * Should be called when starting a new game.
+     */
+    void reset_tt_age();
 }

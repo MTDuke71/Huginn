@@ -23,4 +23,16 @@ namespace Huginn {
     void cleanup_global_transposition_table() {
         g_transposition_table.reset();
     }
+    
+    void increment_tt_age() {
+        if (g_transposition_table) {
+            g_transposition_table->increment_age();
+        }
+    }
+    
+    void reset_tt_age() {
+        if (g_transposition_table) {
+            g_transposition_table->reset_age();
+        }
+    }
 }

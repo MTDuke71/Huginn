@@ -14,6 +14,7 @@ struct TTEntry {
     int16_t score;           // Evaluation score
     uint8_t depth;           // Search depth 
     uint8_t node_type;       // EXACT, LOWER_BOUND, UPPER_BOUND
+    uint8_t age;             // Age for replacement strategy (VICE Part 85)
     uint32_t best_move;      // Best move found (encoded)
     
     // Node types for alpha-beta bounds
@@ -21,7 +22,7 @@ struct TTEntry {
     static constexpr uint8_t LOWER_BOUND = 1; // Alpha cutoff
     static constexpr uint8_t UPPER_BOUND = 2; // Beta cutoff
     
-    TTEntry() : zobrist_key(0), score(0), depth(0), node_type(EXACT), best_move(0) {}
+    TTEntry() : zobrist_key(0), score(0), depth(0), node_type(EXACT), age(0), best_move(0) {}
 };
 
 /**
@@ -37,6 +38,7 @@ class TranspositionTable {
 private:
     std::vector<TTEntry> table;
     size_t size_mask;  // For fast modulo (size must be power of 2)
+    uint8_t current_age = 0;  // Current age for replacement strategy (VICE Part 85)
     
     // Statistics tracking
     mutable uint64_t hits = 0;      // Successful probes
@@ -58,19 +60,32 @@ public:
         size_mask = power_of_2 - 1;
     }
     
-    // Store position in transposition table
+    // Store position in transposition table with age-based replacement (VICE Part 85)
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
         
-        // Always replace strategy (could implement depth-preferred later)
-        entry.zobrist_key = zobrist_key;
-        entry.score = score;
-        entry.depth = depth;
-        entry.node_type = node_type;
-        entry.best_move = best_move;
+        // Age-based replacement strategy:
+        // Replace if:
+        // 1. Entry is empty (zobrist_key == 0)
+        // 2. Same position (zobrist_key matches)
+        // 3. Entry is from an older age (less recent search)
+        // 4. Entry is from same age but new depth is deeper
+        bool should_replace = (entry.zobrist_key == 0) ||                    // Empty slot
+                             (entry.zobrist_key == zobrist_key) ||            // Same position
+                             (entry.age < current_age) ||                     // Older entry
+                             (entry.age == current_age && depth >= entry.depth); // Same age, deeper or equal depth
         
-        writes++;  // Track write operations
+        if (should_replace) {
+            entry.zobrist_key = zobrist_key;
+            entry.score = score;
+            entry.depth = depth;
+            entry.node_type = node_type;
+            entry.age = current_age;
+            entry.best_move = best_move;
+            
+            writes++;  // Track write operations
+        }
     }
     
     // Probe transposition table for position
@@ -95,8 +110,9 @@ public:
         for (auto& entry : table) {
             entry = TTEntry();
         }
-        // Reset statistics
+        // Reset statistics and age
         hits = misses = writes = 0;
+        current_age = 0;
     }
     
     // Get table utilization statistics
@@ -123,5 +139,37 @@ public:
     // Clear statistics only
     void clear_stats() {
         hits = misses = writes = 0;
+    }
+    
+    // VICE Part 85: Age management for better replacement strategy
+    
+    /**
+     * @brief Increment age for new search
+     * 
+     * Should be called at the start of each new search to mark entries
+     * from this search as more recent than previous searches.
+     */
+    void increment_age() {
+        current_age++;
+        // Prevent overflow (though 255 searches is quite a lot)
+        if (current_age == 0) current_age = 1;
+    }
+    
+    /**
+     * @brief Reset age for new game
+     * 
+     * Should be called when starting a new game to reset the age system.
+     */
+    void reset_age() {
+        current_age = 0;
+    }
+    
+    /**
+     * @brief Get current age
+     * 
+     * @return Current age value
+     */
+    uint8_t get_age() const {
+        return current_age;
     }
 };

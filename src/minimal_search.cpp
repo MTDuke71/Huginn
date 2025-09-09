@@ -813,6 +813,10 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
     // Clear search tables for new search (VICE tutorial approach)
     clear_search_tables();
     
+    // VICE Part 85: Increment age for better replacement strategy
+    // This prevents truncated principal variations by prioritizing recent searches
+    Huginn::increment_tt_age();
+    
     S_MOVE best_move;
     best_move.move = 0;
     

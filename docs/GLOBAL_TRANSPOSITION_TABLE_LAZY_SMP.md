@@ -17,6 +17,27 @@ Based on the VICE chess engine video tutorial about moving the hash table to a g
 - **Better Search Quality**: Threads benefit from each other's discoveries
 - **Scalability**: Essential for multi-threaded search performance
 
+## Age-Based Replacement Strategy (VICE Part 85)
+
+### Principal Variation Problem
+- Hash table collisions can cause newer, shallower entries to overwrite deeper, relevant entries
+- This leads to truncated principal variations in engine output
+- Affects search quality and move ordering efficiency
+
+### Age Solution
+- Added `age` field to `TTEntry` structure
+- Age increments for each new search, resets for new games
+- Replacement logic prioritizes:
+  1. Empty slots
+  2. Same position updates
+  3. Older age entries
+  4. Same age but deeper search depth
+
+### Benefits
+- **Complete PVs**: Prevents premature overwriting of valuable hash entries
+- **Better Move Ordering**: Preserves deeper search results for move ordering
+- **Performance Gain**: Small improvement from better hash table utilization
+
 ## Implementation Plan
 
 ### Phase 1: Global Table Infrastructure
