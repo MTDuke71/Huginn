@@ -115,6 +115,8 @@ void UCIInterface::run() {
         else if (command == "ucinewgame") {
             position.set_startpos();
             search_engine->reset();
+            // VICE Part 85: Reset age when starting new game
+            Huginn::reset_tt_age();
             if (debug_mode) std::cout << "info string New game started" << std::endl;
         }
         else if (command == "position") {
@@ -251,8 +253,6 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     
     if (tokens[1] == "startpos") {
         position.set_startpos();
-        // VICE Part 85: Reset age when starting new game
-        Huginn::reset_tt_age();
         move_index = 2;
     }
     else if (tokens[1] == "fen") {
