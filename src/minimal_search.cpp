@@ -1053,8 +1053,8 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     // 3. Not at root level
     // 4. Depth is sufficient (at least 4 for R=3 reduction)
     // 5. Side to move has non-pawn material (big pieces)
-    const int NULL_MOVE_REDUCTION = 3;  // R = 3, VICE standard
-    const int MIN_NULL_MOVE_DEPTH = 4;  // Minimum depth to try null move
+    const int NULL_MOVE_REDUCTION = 4;  // R = 4, more aggressive pruning
+    const int MIN_NULL_MOVE_DEPTH = 5;  // Minimum depth to try null move (increased for R=4)
     
     if (doNull && !in_check && !isRoot && depth >= MIN_NULL_MOVE_DEPTH && 
         pos.has_non_pawn_material(pos.side_to_move)) {
