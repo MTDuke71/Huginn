@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-09-10T10:46:29.261578",
+  "engine_path": "build/bin/Release/huginn.exe",
+  "positions": [
+    {
+      "name": "Starting Position",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "depth": 5,
+      "success": false,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    {
+      "name": "WAC.001 - White to Move",
+      "fen": "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1",
+      "depth": 6,
+      "success": false,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    {
+      "name": "Middlegame Position",
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      "depth": 5,
+      "success": false,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    {
+      "name": "King and Pawn Endgame",
+      "fen": "8/8/8/8/8/8/k1K5/8 w - - 0 1",
+      "depth": 8,
+      "success": false,
+      "error": "[WinError 2] The system cannot find the file specified"
+    }
+  ],
+  "summary": {
+    "total_nodes": 0,
+    "total_time_ms": 0,
+    "average_nps": 0
+  }
+}
