@@ -1022,7 +1022,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     
     // Check for early exit conditions
     if (depth == 0) {
-        return quiescence(pos, alpha, beta, info);  // Enter quiescence search at leaf nodes
+        return quiescence(pos, alpha, beta, info, 0);  // Enter quiescence search at leaf nodes
     }
     
     // VICE Part 76: In check extension (3:01)
@@ -1176,7 +1176,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
 }
 
 // Quiescence search to handle horizon effect (4:40)
-int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info) {
+int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth) {
+    // Quiescence depth limit to prevent stack overflow and improve performance
+    const int MAX_QUIESCENCE_DEPTH = 10;
+    
+    // If we've reached maximum quiescence depth, return stand pat evaluation
+    if (q_depth >= MAX_QUIESCENCE_DEPTH) {
+        return evalPosition(pos);
+    }
+    
     // Increment node count for every position visited
     info.nodes++;
     
@@ -1215,7 +1223,7 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
         
         if (pos.MakeMove(move) != 1) continue; // Skip illegal moves
         
-        int score = -quiescence(pos, -beta, -alpha, info);
+        int score = -quiescence(pos, -beta, -alpha, info, q_depth + 1);
         pos.TakeMove();
         
         if (info.stopped || info.quit) {
