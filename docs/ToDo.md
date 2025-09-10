@@ -53,12 +53,13 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
 
 ### **HIGH PRIORITY: Search & Performance Optimizations**
 
-- [ ] **Quiescence Search Depth Limiting**
-  - [ ] **Issue**: Current quiescence search has no depth limit - continues until no captures remain
-  - [ ] **Risk**: Stack overflow on very long capture sequences, unpredictable performance
-  - [ ] **Solution**: Add MAX_QUIESCENCE_DEPTH limit (typically 8-12 plies)
-  - [ ] **Enhancement**: Consider delta pruning for clearly losing captures
-  - [ ] **Benefit**: Predictable performance and stack safety while maintaining tactical accuracy
+- [x] **Quiescence Search Depth Limiting** ✅ **COMPLETED** 
+  - [x] **Issue**: Current quiescence search has no depth limit - continues until no captures remain
+  - [x] **Risk**: Stack overflow on very long capture sequences, unpredictable performance
+  - [x] **Solution**: Added MAX_QUIESCENCE_DEPTH limit (10 plies)
+  - [x] **Enhancement**: Depth check returns stand-pat evaluation when exceeded
+  - [x] **Benefit**: 2% performance improvement + predictable performance and stack safety
+  - [x] **Commit**: eb1b38e - See IMPROVEMENT_LOG.md for detailed metrics
 
 - [ ] **Move Ordering Enhancements**
   - [ ] Counter-move heuristic implementation
