@@ -69,8 +69,16 @@ public:
     uint16_t halfmove_clock{0};
     uint16_t fullmove_number{1};
     std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
+    
+    // Full bitboard representation for all piece types [Color][PieceType]
+    std::array<std::array<Bitboard, int(PieceType::_Count)>, 2> piece_bitboards{};
+    std::array<Bitboard, 2> color_bitboards{ 0, 0 }; // [White, Black] all pieces
+    Bitboard occupied_bitboard{ 0 }; // All pieces (White | Black)
+    
+    // Legacy pawn bitboards (maintained for compatibility)
     std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
     uint64_t all_pawns_bb{ 0 }; // Combined bitboard of all pawns (White | Black)
+    
     std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
     
@@ -270,11 +278,21 @@ public:
         set(from_square, Piece::None);
         set(to_square, piece);
         
-        // 3. Update pawn bitboards if moving a pawn
-        if (piece_type == PieceType::Pawn) {
-            int from_sq64 = MAILBOX_MAPS.to64[from_square];
-            int to_sq64 = MAILBOX_MAPS.to64[to_square];
-            if (from_sq64 >= 0 && to_sq64 >= 0) {
+        // 3. Update all bitboard representations
+        int from_sq64 = MAILBOX_MAPS.to64[from_square];
+        int to_sq64 = MAILBOX_MAPS.to64[to_square];
+        if (from_sq64 >= 0 && to_sq64 >= 0) {
+            // Update new full bitboard system
+            popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], from_sq64);
+            popBit(color_bitboards[size_t(piece_color)], from_sq64);
+            popBit(occupied_bitboard, from_sq64);
+            
+            setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], to_sq64);
+            setBit(color_bitboards[size_t(piece_color)], to_sq64);
+            setBit(occupied_bitboard, to_sq64);
+            
+            // Update legacy pawn bitboards for compatibility
+            if (piece_type == PieceType::Pawn) {
                 popBit(pawns_bb[size_t(piece_color)], from_sq64);
                 popBit(all_pawns_bb, from_sq64);
                 setBit(pawns_bb[size_t(piece_color)], to_sq64);
@@ -320,10 +338,16 @@ public:
         // 4. Update piece counters
         --piece_counts[size_t(piece_type)];
         
-        // 5. Update bitboards for pawns
-        if (piece_type == PieceType::Pawn) {
-            int sq64 = MAILBOX_MAPS.to64[square];
-            if (sq64 >= 0) {
+        // 5. Update all bitboard representations
+        int sq64 = MAILBOX_MAPS.to64[square];
+        if (sq64 >= 0) {
+            // Update new full bitboard system
+            popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
+            popBit(color_bitboards[size_t(piece_color)], sq64);
+            popBit(occupied_bitboard, sq64);
+            
+            // Update legacy pawn bitboards for compatibility
+            if (piece_type == PieceType::Pawn) {
                 popBit(pawns_bb[size_t(piece_color)], sq64);
                 popBit(all_pawns_bb, sq64);
             }
@@ -373,10 +397,16 @@ public:
         // 4. Update piece counters
         ++piece_counts[size_t(piece_type)];
         
-        // 5. Update bitboards for pawns
-        if (piece_type == PieceType::Pawn) {
-            int sq64 = MAILBOX_MAPS.to64[square];
-            if (sq64 >= 0) {
+        // 5. Update all bitboard representations
+        int sq64 = MAILBOX_MAPS.to64[square];
+        if (sq64 >= 0) {
+            // Update new full bitboard system
+            setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
+            setBit(color_bitboards[size_t(piece_color)], sq64);
+            setBit(occupied_bitboard, sq64);
+            
+            // Update legacy pawn bitboards for compatibility
+            if (piece_type == PieceType::Pawn) {
                 setBit(pawns_bb[size_t(piece_color)], sq64);
                 setBit(all_pawns_bb, sq64);
             }
@@ -715,5 +745,43 @@ public:
     
     uint64_t get_black_pawns() const {
         return pawns_bb[size_t(Color::Black)];
+    }
+    
+    // Full bitboard access functions for all piece types
+    Bitboard get_piece_bitboard(Color color, PieceType piece_type) const {
+        return piece_bitboards[size_t(color)][size_t(piece_type)];
+    }
+    
+    Bitboard get_color_bitboard(Color color) const {
+        return color_bitboards[size_t(color)];
+    }
+    
+    Bitboard get_occupied_bitboard() const {
+        return occupied_bitboard;
+    }
+    
+    // Convenience accessors for specific piece types
+    Bitboard get_pawns(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::Pawn)];
+    }
+    
+    Bitboard get_knights(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::Knight)];
+    }
+    
+    Bitboard get_bishops(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::Bishop)];
+    }
+    
+    Bitboard get_rooks(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::Rook)];
+    }
+    
+    Bitboard get_queens(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::Queen)];
+    }
+    
+    Bitboard get_kings(Color color) const {
+        return piece_bitboards[size_t(color)][size_t(PieceType::King)];
     }
 };

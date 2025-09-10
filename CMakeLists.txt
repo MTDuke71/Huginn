@@ -407,3 +407,5 @@ else()
     message(STATUS "Tests disabled - GTest not found")
 endif()
 
+# End of CMakeLists.txt
+

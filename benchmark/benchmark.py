@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 class HuginnBenchmark:
-    def __init__(self, engine_path="build/bin/Release/huginn.exe"):
+    def __init__(self, engine_path="../build/bin/Release/huginn.exe"):
         self.engine_path = engine_path
         self.test_positions = [
             # Standard opening position
