@@ -17,7 +17,7 @@
  * - Thread and option management for engine configuration
  *
  * @author MTDuke71
- * @version 1.1
+ * @version 1.2
  */
 #include "uci.hpp"
 #include "init.hpp"
@@ -192,7 +192,7 @@ void UCIInterface::run() {
  * for engine selection and tournament management.
  */
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 1.1" << std::endl;
+    std::cout << "id name Huginn 1.2" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
