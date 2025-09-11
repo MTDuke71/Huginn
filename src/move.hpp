@@ -215,12 +215,13 @@ struct S_MOVE {
      * @brief Check if this is a quiet (non-tactical) move
      * @return True if move has no special effects (no capture, promotion, castle, or en passant)
      * @note Quiet moves are typically ordered last in search algorithms
+     * @note Pawn double-pushes are considered quiet moves since they don't capture
      * @optimization Single bitwise operation checks all tactical flags at once
      */
     [[nodiscard]] constexpr bool is_quiet() const noexcept {
-        // All tactical move bits: capture, promotion, castle, en passant, pawn start
+        // All tactical move bits: capture, promotion, castle, en passant (but NOT pawn start)
         constexpr int TACTICAL_MASK = MOVE_CAPTURED_MASK | MOVE_PROMOTED_MASK | 
-                                    MOVE_CASTLE | MOVE_ENPASSANT | MOVE_PAWNSTART;
+                                    MOVE_CASTLE | MOVE_ENPASSANT;
         return (move & TACTICAL_MASK) == 0;
     }
     
