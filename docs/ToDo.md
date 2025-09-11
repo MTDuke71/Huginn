@@ -81,6 +81,14 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
   - [ ] **Storage**: Temporary per-search learning (120x120 move table, ~115KB memory)
   - [ ] **Integration**: High-priority scoring in move ordering (between hash moves and killers)
 
+- [ ] **Test Suite Production Code Path Alignment** 
+  - [ ] **Issue**: Tests use `make_move_with_undo()` convenience wrapper instead of production `MakeMove`/`TakeMove` methods
+  - [ ] **Risk**: Tests don't validate actual engine code paths that could have bugs in move legality detection and state restoration
+  - [ ] **Solution**: Refactor test files to use production `MakeMove`/`TakeMove` pattern with proper error handling
+  - [ ] **Benefits**: Tests will validate actual engine behavior, illegal move detection, and separate undo operations
+  - [ ] **Scope**: Update test_perft.cpp, test_zobrist_incremental.cpp, test_pawn_consolidated.cpp, test_mate_detailed.cpp
+  - [ ] **Pattern**: Replace `make_move_with_undo(move)` with `if (pos.MakeMove(move) == 1) { /* test */ pos.TakeMove(); }`
+
 - [ ] **Move Ordering Enhancements**
   - [x] ~~Counter-move heuristic implementation~~ **⬆️ PROMOTED TO HIGH PRIORITY ABOVE**
   - [ ] Enhanced history heuristic with aging mechanism
@@ -89,7 +97,7 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
 
 - [ ] **Search Optimizations**
   - [x] ~~Null move pruning (skip move to detect zugzwang)~~ **✅ ENHANCED: R=4 reduction (+1.4% performance)**
-  - [ ] Late move reductions (LMR) for unpromising moves
+  - [x] ~~Late move reductions (LMR) for unpromising moves~~ **✅ COMPLETED: Adaptive depth reduction with re-search**
   - [ ] Futility pruning (forward pruning in leaf nodes)
   - [ ] Razoring (reduce depth when evaluation is far below alpha)
 
