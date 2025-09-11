@@ -304,17 +304,6 @@ add_huginn_executable(mirror_eval_test
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# ---- LMR Performance Benchmark ----
-add_huginn_executable(lmr_benchmark
-    SOURCES
-        test_lmr_benchmark.cpp
-        ${ENGINE_SOURCES}
-        src/minimal_search.cpp
-        src/pvtable.cpp
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
 # ---- Move Generation Profiler ----
 
 

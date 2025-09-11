@@ -72,7 +72,7 @@ struct S_MOVE {
      * @brief Default constructor - creates an invalid/null move
      * @post move == 0 && score == 0
      */
-    S_MOVE() : move(0), score(0) {}
+    constexpr S_MOVE() : move(0), score(0) {}
     
     /**
      * @brief Constructor with full move specification
@@ -85,7 +85,7 @@ struct S_MOVE {
      * @param castle      True if this is a castling move
      * @post score == 0 (must be set separately for move ordering)
      */
-    S_MOVE(int from, int to, PieceType captured = PieceType::None, 
+    constexpr S_MOVE(int from, int to, PieceType captured = PieceType::None, 
            bool en_passant = false, bool pawn_start = false, 
            PieceType promoted = PieceType::None, bool castle = false) 
            : score(0) {
