@@ -14,9 +14,6 @@
 #include "msvc_optimizations.hpp"
 #include "zobrist.hpp"
 
-// Maximum search depth / game length (legacy constant - move_history now uses dynamic vector)
-#define MAXPLY 2048
-
 struct State {
     // Minimal saved state for unmake
     int ep_square;            // previous ep square
