@@ -1,0 +1,301 @@
+WAC Test Suite - Huginn Chess Engine
+Timestamp: 2025-09-11 18:07:57.097211
+Engine: ../build/bin/Release/huginn.exe
+Search time per position: 5 seconds
+Testing 10 positions
+
+
+============================================================
+Testing WAC.001
+FEN: 2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1
+Expected best moves: Qg6
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp -237 nodes 3713 time 3 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv f6g4
+<<< info depth 2 score cp -242 nodes 12354 time 8 nullcut 0 lmr 0/0 tthits 0 ttwrites 62 pv f6g4 f7f6
+<<< info depth 3 score cp -247 nodes 44402 time 31 nullcut 0 lmr 0/0 tthits 128 ttwrites 2276 pv e5c6 d6c6 f6h5
+<<< info depth 4 score mate 12 nodes 192526 time 108 nullcut 0 lmr 1868/537 tthits 6512 ttwrites 9724 pv g3g6 f7g6 e5g6
+<<< info depth 5 score mate 11 nodes 587672 time 322 nullcut 0 lmr 6485/1862 tthits 25044 ttwrites 38552 pv g3g6 f7g6 e5g6
+<<< info depth 6 score mate 11 nodes 2040885 time 1195 nullcut 0 lmr 24098/6242 tthits 100421 ttwrites 170460 pv g3g6 c8b8
+<<< info depth 7 score mate 11 nodes 7448831 time 4165 nullcut 356 lmr 106460/21966 tthits 377062 ttwrites 621828 pv g3g6 c8b8 e5f7 e6f7 g6h7
+<<< bestmove g3g6
+
+RESULT: PASS
+Engine move: g3g6
+Expected: Qg6
+
+============================================================
+Testing WAC.002
+FEN: 8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - 0 1
+Expected best moves: Rxb2
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 60 nodes 70 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv f6f7
+<<< info depth 2 score cp 55 nodes 679 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 16 pv c4c3 b2c3
+<<< info depth 3 score cp 55 nodes 2846 time 1 nullcut 0 lmr 0/0 tthits 25 ttwrites 244 pv c4c3 b2c3 b3c3
+<<< info depth 4 score cp 70 nodes 9036 time 4 nullcut 0 lmr 146/12 tthits 428 ttwrites 905 pv c4c3 b2c3 b3c3 d2a2
+<<< info depth 5 score cp 90 nodes 28636 time 13 nullcut 0 lmr 654/44 tthits 1904 ttwrites 3539 pv c4c3 b2c3 b3c3 d2a2 f6f7
+<<< info depth 6 score cp 95 nodes 92253 time 42 nullcut 0 lmr 2125/335 tthits 7374 ttwrites 12603 pv c4c3 b2c3 b3c3 d2a2 c3c2 a2c2
+<<< info depth 7 score cp 95 nodes 302075 time 132 nullcut 14 lmr 7406/829 tthits 23564 ttwrites 43068 pv c4c3 b2c3 b3c3 d2a2 c3c2 a2c2 d3c2
+<<< info depth 8 score cp 85 nodes 718749 time 313 nullcut 140 lmr 17704/1638 tthits 59911 ttwrites 109003 pv c4c3
+<<< info depth 9 score cp 90 nodes 2209812 time 955 nullcut 591 lmr 54735/5801 tthits 198752 ttwrites 338414 pv f6e6
+<<< info depth 10 score cp 50 nodes 5771766 time 2479 nullcut 2157 lmr 145567/16169 tthits 569014 ttwrites 900749 pv c4c3
+<<< bestmove c4c3
+
+RESULT: FAIL
+Engine move: c4c3
+Expected: Rxb2
+
+============================================================
+Testing WAC.003
+FEN: 5rk1/1ppb3p/p1pb4/6q1/3P1p1r/2P1R2P/PP1BQ1P1/5RKN w - - 0 1
+Expected best moves: Rg3
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp -3 nodes 2607 time 2 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv e2c4
+<<< info depth 2 score cp 30 nodes 10619 time 6 nullcut 0 lmr 0/0 tthits 2 ttwrites 45 pv e3g3 g5g3
+<<< info depth 3 score cp 30 nodes 55642 time 37 nullcut 0 lmr 0/0 tthits 114 ttwrites 2086 pv e3g3 g5g3 h1g3
+<<< info depth 4 score cp 30 nodes 155483 time 95 nullcut 0 lmr 1753/314 tthits 5239 ttwrites 8162 pv e3g3 g5g3 h1g3 f4g3
+<<< info depth 5 score cp 35 nodes 518265 time 278 nullcut 0 lmr 6354/1387 tthits 19862 ttwrites 29177 pv e3g3 g5g3 h1g3 f4g3 f1e1
+<<< info depth 6 score cp 35 nodes 1752426 time 1060 nullcut 1 lmr 19205/2921 tthits 76016 ttwrites 144127 pv e3g3 g5g3
+<<< info depth 7 score cp 190 nodes 5005449 time 2863 nullcut 181 lmr 65231/10184 tthits 242297 ttwrites 405690 pv e3g3 g5g3
+<<< bestmove e3g3
+
+RESULT: PASS
+Engine move: e3g3
+Expected: Rg3
+
+============================================================
+Testing WAC.004
+FEN: r1bq2rk/pp3pbp/2p1p1pQ/7P/3P4/2PB1N2/PP3PPR/2KR4 w - - 0 1
+Expected best moves: Qxh7+
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 10 nodes 549 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv h6e3
+<<< info depth 2 score cp 10 nodes 4432 time 2 nullcut 0 lmr 0/0 tthits 2 ttwrites 46 pv h6e3 g7f6
+<<< info depth 3 score mate 12 nodes 24358 time 15 nullcut 0 lmr 0/0 tthits 246 ttwrites 1672 pv h6h7 h8h7 h5g6
+<<< info depth 4 score mate 11 nodes 73609 time 49 nullcut 0 lmr 1203/301 tthits 4420 ttwrites 6627 pv h6h7 h8h7 h5g6
+<<< info depth 5 score mate 11 nodes 252089 time 160 nullcut 0 lmr 4182/862 tthits 15726 ttwrites 22158 pv h6h7 h8h7 h5g6
+<<< info depth 6 score mate 10 nodes 740477 time 439 nullcut 0 lmr 13096/2130 tthits 53644 ttwrites 67301 pv h6h7 h8h7 h5g6
+<<< info depth 7 score mate 10 nodes 2637388 time 1550 nullcut 265 lmr 44472/8266 tthits 195276 ttwrites 246554 pv h6h7 h8h7 h5g6
+<<< info depth 8 score mate 9 nodes 7045790 time 4139 nullcut 1082 lmr 119085/23966 tthits 498575 ttwrites 677975 pv h6h7
+<<< bestmove h6h7
+
+RESULT: PASS
+Engine move: h6h7
+Expected: Qxh7+
+
+============================================================
+Testing WAC.005
+FEN: 5k2/6pp/p1qN4/1p1p4/3P4/2PKP2Q/PP3r2/3R4 b - - 0 1
+Expected best moves: Qc4+
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 40 nodes 277 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv c6d6
+<<< info depth 2 score cp 40 nodes 3474 time 1 nullcut 0 lmr 0/0 tthits 0 ttwrites 36 pv c6d6 h3h7
+<<< info depth 3 score mate 12 nodes 18316 time 8 nullcut 0 lmr 0/0 tthits 140 ttwrites 1290 pv c6c4 d6c4 b5c4
+<<< info depth 4 score mate 11 nodes 57713 time 26 nullcut 0 lmr 975/90 tthits 3040 ttwrites 4866 pv c6c4 d6c4 b5c4
+<<< info depth 5 score mate 11 nodes 237189 time 102 nullcut 0 lmr 4375/490 tthits 12589 ttwrites 20926 pv c6c4 d6c4 b5c4
+<<< info depth 6 score mate 10 nodes 993337 time 451 nullcut 1 lmr 16193/2531 tthits 62257 ttwrites 101231 pv c6c4 d6c4
+<<< info depth 7 score mate 10 nodes 2642108 time 1217 nullcut 106 lmr 43839/6310 tthits 169913 ttwrites 281383 pv c6c4 d6c4
+<<< info depth 8 score mate 9 nodes 8080750 time 3794 nullcut 465 lmr 141368/18336 tthits 557206 ttwrites 891438 pv c6c4 d6c4
+<<< bestmove c6c4
+
+RESULT: PASS
+Engine move: c6c4
+Expected: Qc4+
+
+============================================================
+Testing WAC.006
+FEN: 7k/p7/1R5K/6r1/6p1/6P1/8/8 w - - 0 1
+Expected best moves: Rb7
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 70 nodes 33 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv h6g5
+<<< info depth 2 score cp 70 nodes 436 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 15 pv h6g5 a7b6
+<<< info depth 3 score cp 70 nodes 1556 time 0 nullcut 0 lmr 0/0 tthits 46 ttwrites 226 pv h6g5 a7b6 g5g4
+<<< info depth 4 score cp 400 nodes 6479 time 2 nullcut 0 lmr 114/87 tthits 1192 ttwrites 952 pv b6b7 g5b5 b7b5 h8g8
+<<< info depth 5 score cp 425 nodes 11379 time 4 nullcut 0 lmr 345/146 tthits 2933 ttwrites 2002 pv b6b7 g5b5 b7b5 h8g8 b5b7
+<<< info depth 6 score cp 475 nodes 25479 time 9 nullcut 0 lmr 832/268 tthits 7434 ttwrites 4894 pv b6b7 g5b5 b7b5 h8g8 b5b4 g8f7
+<<< info depth 7 score cp 490 nodes 50775 time 18 nullcut 25 lmr 1913/456 tthits 15991 ttwrites 10032 pv b6b7 g5b5 b7b5 h8g8 b5b8 g8f7 b8b7
+<<< info depth 8 score cp 490 nodes 83092 time 31 nullcut 133 lmr 3303/594 tthits 27111 ttwrites 17283 pv b6b7 g5b5 b7b5 h8g8 b5b8 g8f7 b8b7
+<<< info depth 9 score cp 500 nodes 193591 time 73 nullcut 412 lmr 7770/1322 tthits 64468 ttwrites 40559 pv b6b7 g5b5
+<<< info depth 10 score cp 0 nodes 410664 time 158 nullcut 1061 lmr 16309/2586 tthits 131043 ttwrites 86500 pv b6b7 g5h5
+<<< info depth 11 score mate 11 nodes 2202661 time 794 nullcut 2886 lmr 78403/9303 tthits 574090 ttwrites 429052 pv b6b7
+<<< info depth 12 score mate 10 nodes 8320209 time 2980 nullcut 9048 lmr 284448/30773 tthits 2102750 ttwrites 1601946 pv b6b7
+<<< bestmove b6b7
+
+RESULT: PASS
+Engine move: b6b7
+Expected: Rb7
+
+============================================================
+Testing WAC.007
+FEN: rnbqkb1r/pppp1ppp/8/4P3/6n1/7P/PPPNPPP1/R1BQKBNR b KQkq - 0 1
+Expected best moves: Ne3
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 17 nodes 151 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv g4e5
+<<< info depth 2 score cp -13 nodes 1749 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 33 pv g4e5 e2e4
+<<< info depth 3 score cp 7 nodes 8139 time 5 nullcut 0 lmr 0/0 tthits 70 ttwrites 786 pv g4e5 f2f4 d8h4
+<<< info depth 4 score cp -3 nodes 43608 time 24 nullcut 0 lmr 588/268 tthits 2160 ttwrites 2909 pv g4e5 e2e4 d7d5 g1f3
+<<< info depth 5 score cp 470 nodes 117497 time 72 nullcut 0 lmr 2079/406 tthits 7152 ttwrites 10393 pv g4e3 d2e4 e3d1 e1d1 b8c6
+<<< info depth 6 score cp 460 nodes 398073 time 272 nullcut 0 lmr 6904/687 tthits 26980 ttwrites 41525 pv g4e3 d2e4 e3d1 e1d1 d7d5
+<<< info depth 7 score cp 465 nodes 1468874 time 889 nullcut 178 lmr 28057/3998 tthits 87690 ttwrites 141196 pv g4e3 d2e4
+<<< info depth 8 score cp 460 nodes 3843259 time 2390 nullcut 506 lmr 70239/10065 tthits 242974 ttwrites 375782 pv g4e3
+<<< bestmove g4e3
+
+RESULT: PASS
+Engine move: g4e3
+Expected: Ne3
+
+============================================================
+Testing WAC.008
+FEN: r4q1k/p2bR1rp/2p2Q1N/5p2/5p2/2P5/PP3PPP/R5K1 w - - 0 1
+Expected best moves: Rf7
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 180 nodes 768 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv h6f7
+<<< info depth 2 score cp 535 nodes 3566 time 1 nullcut 0 lmr 0/0 tthits 0 ttwrites 48 pv e7f7 f8f7
+<<< info depth 3 score cp 535 nodes 14378 time 9 nullcut 0 lmr 0/0 tthits 150 ttwrites 1074 pv e7f7 f8f7 h6f7
+<<< info depth 4 score cp 555 nodes 41635 time 24 nullcut 0 lmr 791/74 tthits 2921 ttwrites 4179 pv e7f7 f8f7
+<<< info depth 5 score cp 645 nodes 124755 time 66 nullcut 0 lmr 2978/538 tthits 10378 ttwrites 13119 pv e7f7 f8f7
+<<< info depth 6 score cp 555 nodes 338192 time 193 nullcut 1 lmr 8685/1225 tthits 34250 ttwrites 42896 pv h6f7 h8g8 f7h6 g8h8 h6f7 h8g8
+<<< info depth 7 score cp 650 nodes 993196 time 533 nullcut 276 lmr 26012/5726 tthits 102292 ttwrites 119322 pv e7f7 f8f7
+<<< info depth 8 score cp 650 nodes 2743037 time 1531 nullcut 695 lmr 72044/13634 tthits 314984 ttwrites 355846 pv h6f7
+<<< info depth 9 score cp 650 nodes 8328719 time 4440 nullcut 2497 lmr 209593/53660 tthits 899225 ttwrites 1028730 pv h6f7
+<<< bestmove h6f7
+
+RESULT: PASS
+Engine move: h6f7
+Expected: Rf7
+
+============================================================
+Testing WAC.009
+FEN: 3q1rk1/p4pp1/2pb3p/3p4/6Pr/1PNQ4/P1PB1PP1/4RRK1 b - - 0 1
+Expected best moves: Bh2+
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp -243 nodes 618 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv h4g4
+<<< info depth 2 score cp -253 nodes 7122 time 4 nullcut 0 lmr 0/0 tthits 0 ttwrites 39 pv h4g4 f2f4
+<<< info depth 3 score cp -243 nodes 42499 time 28 nullcut 0 lmr 0/0 tthits 169 ttwrites 1715 pv d6h2 g1h1 h2f4
+<<< info depth 4 score cp -243 nodes 131773 time 81 nullcut 0 lmr 1433/206 tthits 4188 ttwrites 5691 pv d6h2 g1h1 h2f4 h1g1
+<<< info depth 5 score cp -238 nodes 542383 time 323 nullcut 0 lmr 5155/854 tthits 16930 ttwrites 28580 pv h4g4 d2e3 d8c7 f2f3 g4b4
+<<< info depth 6 score cp -238 nodes 2008995 time 1188 nullcut 0 lmr 22611/5746 tthits 86505 ttwrites 134201 pv d6h2 g1h1 d8c7 e1e3 h2e5 e3h3
+<<< info depth 7 score cp -203 nodes 6728118 time 3977 nullcut 286 lmr 78530/16229 tthits 312591 ttwrites 487054 pv d6h2
+<<< bestmove d6h2
+
+RESULT: PASS
+Engine move: d6h2
+Expected: Bh2+
+
+============================================================
+Testing WAC.010
+FEN: 2br2k1/2q3rn/p2NppQ1/2p1P3/Pp5R/4P3/1P3PPP/3R2K1 w - - 0 1
+Expected best moves: Rxh7
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 160 nodes 1823 time 1 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv h4h7
+<<< info depth 2 score cp 160 nodes 7309 time 4 nullcut 0 lmr 0/0 tthits 0 ttwrites 62 pv h4h7 f6e5
+<<< info depth 3 score cp 175 nodes 42423 time 30 nullcut 0 lmr 0/0 tthits 286 ttwrites 1678 pv h4h7 f6e5 e3e4
+<<< info depth 4 score cp 170 nodes 104466 time 72 nullcut 0 lmr 1328/60 tthits 4465 ttwrites 5915 pv h4h7 f6e5 e3e4 b4b3
+<<< info depth 5 score cp 155 nodes 360253 time 225 nullcut 0 lmr 4469/897 tthits 15280 ttwrites 20239 pv h4h7 f6e5 e3e4 c7d7 h7g7
+<<< info depth 6 score cp 280 nodes 953910 time 599 nullcut 3 lmr 13717/2787 tthits 56683 ttwrites 77743 pv h4h7 c8b7 h7g7 c7g7 g6g7 g8g7
+<<< info depth 7 score cp 265 nodes 2948208 time 1703 nullcut 229 lmr 51793/12823 tthits 190884 ttwrites 250452 pv h4h7 f6e5 h7g7 c7g7 g6g7 g8g7
+<<< info depth 8 score cp 275 nodes 8111233 time 4754 nullcut 771 lmr 138009/28620 tthits 562056 ttwrites 770269 pv h4h7
+<<< bestmove h4h7
+
+RESULT: PASS
+Engine move: h4h7
+Expected: Rxh7
+
+============================================================
+FINAL SUMMARY
+============================================================
+Total positions: 10
+Passed: 9
+Failed: 1
+Success rate: 90.0%
+
+FAILED POSITIONS:
+WAC.002: Expected Rxb2, got c4c3

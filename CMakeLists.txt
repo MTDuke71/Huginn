@@ -304,6 +304,15 @@ add_huginn_executable(mirror_eval_test
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# ---- Perft Suite VICE ----
+add_huginn_executable(perft_suite_vice
+    SOURCES
+        perft/perft_suite_vice.cpp
+        ${COMMON_SOURCES}
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # ---- Move Generation Profiler ----
 
 

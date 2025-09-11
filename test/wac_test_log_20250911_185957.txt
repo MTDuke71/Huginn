@@ -1,0 +1,49 @@
+WAC Test Suite - Huginn Chess Engine
+Timestamp: 2025-09-11 18:59:57.883993
+Engine: ../build/bin/Release/huginn.exe
+Search time per position: 5 seconds
+Testing 1 positions
+
+
+============================================================
+Testing WAC.002
+FEN: 8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - 0 1
+Expected best moves: Rxb2
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp 60 nodes 70 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv f6f7
+<<< info depth 2 score cp 55 nodes 679 time 0 nullcut 0 lmr 0/0 tthits 0 ttwrites 16 pv c4c3 b2c3
+<<< info depth 3 score cp 55 nodes 2846 time 1 nullcut 0 lmr 0/0 tthits 25 ttwrites 244 pv c4c3 b2c3 b3c3
+<<< info depth 4 score cp 70 nodes 9036 time 4 nullcut 0 lmr 146/12 tthits 428 ttwrites 905 pv c4c3 b2c3 b3c3 d2a2
+<<< info depth 5 score cp 90 nodes 28636 time 13 nullcut 0 lmr 654/44 tthits 1904 ttwrites 3539 pv c4c3 b2c3 b3c3 d2a2 f6f7
+<<< info depth 6 score cp 95 nodes 92253 time 41 nullcut 0 lmr 2125/335 tthits 7374 ttwrites 12603 pv c4c3 b2c3 b3c3 d2a2 c3c2 a2c2
+<<< info depth 7 score cp 95 nodes 302075 time 133 nullcut 14 lmr 7406/829 tthits 23564 ttwrites 43068 pv c4c3 b2c3 b3c3 d2a2 c3c2 a2c2 d3c2
+<<< info depth 8 score cp 85 nodes 718749 time 313 nullcut 140 lmr 17704/1638 tthits 59911 ttwrites 109003 pv c4c3
+<<< info depth 9 score cp 90 nodes 2209812 time 955 nullcut 591 lmr 54735/5801 tthits 198752 ttwrites 338414 pv f6e6
+<<< info depth 10 score cp 50 nodes 5771766 time 2471 nullcut 2157 lmr 145567/16169 tthits 569014 ttwrites 900749 pv c4c3
+<<< bestmove c4c3
+
+RESULT: FAIL
+Engine move: c4c3
+Expected: Rxb2
+
+============================================================
+FINAL SUMMARY
+============================================================
+Total positions: 1
+Passed: 0
+Failed: 1
+Success rate: 0.0%
+
+FAILED POSITIONS:
+WAC.002: Expected Rxb2, got c4c3
+
+Failed positions saved to: wac_failed_positions_20250911_190002.txt

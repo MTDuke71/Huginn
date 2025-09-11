@@ -1,0 +1,5 @@
+# Failed WAC position line numbers
+# Use: python wac_test.py --failed-file wac_failed_positions_XXXXXX.txt
+# to retest only these positions
+
+2

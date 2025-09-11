@@ -1,0 +1,40 @@
+WAC Test Suite - Huginn Chess Engine
+Timestamp: 2025-09-11 18:48:21.783563
+Engine: ../build/bin/Release/huginn.exe
+Search time per position: 3 seconds
+Testing 1 positions
+
+
+============================================================
+Testing WAC.001
+FEN: 2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1
+Expected best moves: Qg6
+============================================================
+<<< Loaded Polyglot book: ../../../src/performance.bin (92954 entries)
+<<< id name Huginn 1.2
+<<< id author MTDuke71
+<<< option name Threads type spin default 1 min 1 max 64
+<<< option name Ponder type check default false
+<<< option name OwnBook type check default true
+<<< option name BookFile type string default src/performance.bin
+<<< uciok
+<<< readyok
+<<< info depth 1 score cp -237 nodes 3713 time 3 nullcut 0 lmr 0/0 tthits 0 ttwrites 0 pv f6g4
+<<< info depth 2 score cp -242 nodes 12354 time 8 nullcut 0 lmr 0/0 tthits 0 ttwrites 62 pv f6g4 f7f6
+<<< info depth 3 score cp -247 nodes 44402 time 31 nullcut 0 lmr 0/0 tthits 128 ttwrites 2276 pv e5c6 d6c6 f6h5
+<<< info depth 4 score mate 12 nodes 192526 time 108 nullcut 0 lmr 1868/537 tthits 6512 ttwrites 9724 pv g3g6 f7g6 e5g6
+<<< info depth 5 score mate 11 nodes 587672 time 320 nullcut 0 lmr 6485/1862 tthits 25044 ttwrites 38552 pv g3g6 f7g6 e5g6
+<<< info depth 6 score mate 11 nodes 2040885 time 1196 nullcut 0 lmr 24098/6242 tthits 100421 ttwrites 170460 pv g3g6 c8b8
+<<< bestmove g3g6
+
+RESULT: PASS
+Engine move: g3g6
+Expected: Qg6
+
+============================================================
+FINAL SUMMARY
+============================================================
+Total positions: 1
+Passed: 1
+Failed: 0
+Success rate: 100.0%
