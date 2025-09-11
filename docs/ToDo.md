@@ -73,8 +73,16 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
   - [x] **Benefit**: 2% performance improvement + predictable performance and stack safety
   - [x] **Commit**: eb1b38e - See IMPROVEMENT_LOG.md for detailed metrics
 
+- [ ] **Counter-Move Heuristic Implementation** 
+  - [ ] **Issue**: Current move ordering lacks opponent-move awareness and tactical pattern learning
+  - [ ] **Solution**: Implement counter-move table to remember effective responses to opponent moves
+  - [ ] **Approach**: When move X causes beta-cutoff, store move Y as good counter to previous opponent move
+  - [ ] **Benefits**: 5-15% search speedup through better move ordering and earlier beta-cutoffs
+  - [ ] **Storage**: Temporary per-search learning (120x120 move table, ~115KB memory)
+  - [ ] **Integration**: High-priority scoring in move ordering (between hash moves and killers)
+
 - [ ] **Move Ordering Enhancements**
-  - [ ] Counter-move heuristic implementation
+  - [x] ~~Counter-move heuristic implementation~~ **⬆️ PROMOTED TO HIGH PRIORITY ABOVE**
   - [ ] Enhanced history heuristic with aging mechanism
   - [ ] Hash move ordering from transposition table
   - [ ] Internal iterative deepening for PV nodes without hash move
