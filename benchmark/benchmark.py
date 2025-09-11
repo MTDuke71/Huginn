@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 class HuginnBenchmark:
-    def __init__(self, engine_path="../build/bin/Release/huginn.exe"):
+    def __init__(self, engine_path="../build/msvc-x64-release/bin/Release/huginn.exe"):
         self.engine_path = engine_path
         self.test_positions = [
             # Standard opening position
@@ -96,7 +96,7 @@ class HuginnBenchmark:
     
     def run_full_benchmark(self):
         """Run complete benchmark suite"""
-        print("🚀 Starting Huginn Performance Benchmark")
+        print("Starting Huginn Performance Benchmark")
         print("=" * 50)
         
         results = {
@@ -109,23 +109,23 @@ class HuginnBenchmark:
         total_time = 0
         
         for pos in self.test_positions:
-            print(f"\n📍 Testing: {pos['name']}")
+            print(f"\nTesting: {pos['name']}")
             print(f"   FEN: {pos['fen']}")
             print(f"   Depth: {pos['depth']}")
             
             result = self.run_engine_test(pos['fen'], pos['depth'])
             
             if result['success']:
-                print(f"   ✅ Nodes: {result['nodes']:,}")
-                print(f"   ⏱️  Time: {result['time_ms']}ms")
-                print(f"   🚀 NPS: {result['nps']:,.0f}")
-                print(f"   🎯 Score: {result['score']}")
-                print(f"   🏁 Best: {result['bestmove']}")
+                print(f"   Nodes: {result['nodes']:,}")
+                print(f"   Time: {result['time_ms']}ms")
+                print(f"   NPS: {result['nps']:,.0f}")
+                print(f"   Score: {result['score']}")
+                print(f"   Best: {result['bestmove']}")
                 
                 total_nodes += result['nodes']
                 total_time += result['time_ms']
             else:
-                print(f"   ❌ Failed: {result.get('error', 'unknown')}")
+                print(f"   Failed: {result.get('error', 'unknown')}")
             
             pos_result = {**pos, **result}
             results["positions"].append(pos_result)
@@ -139,7 +139,7 @@ class HuginnBenchmark:
         }
         
         print("\n" + "=" * 50)
-        print("📊 BENCHMARK SUMMARY")
+        print("BENCHMARK SUMMARY")
         print("=" * 50)
         print(f"Total Nodes Searched: {total_nodes:,}")
         print(f"Total Time: {total_time/1000:.2f}s")
@@ -156,7 +156,7 @@ class HuginnBenchmark:
         with open(filename, 'w') as f:
             json.dump(results, f, indent=2)
         
-        print(f"\n💾 Results saved to: {filename}")
+        print(f"\nResults saved to: {filename}")
         return filename
 
 if __name__ == "__main__":

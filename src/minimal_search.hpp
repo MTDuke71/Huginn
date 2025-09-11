@@ -38,8 +38,13 @@ struct SearchInfo {
     // VICE Part 83: Null move pruning statistics
     uint64_t null_cut;  // Null move cutoffs
     
+    // Late Move Reduction statistics
+    uint64_t lmr_attempts;  // Number of LMR reductions attempted
+    uint64_t lmr_failures;  // Number of LMR reductions that failed high (needed re-search)
+    
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
-                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0) {}
+                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0),
+                   lmr_attempts(0), lmr_failures(0) {}
 };
 
 // Search limits structure - external interface for setting search parameters

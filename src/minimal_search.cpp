@@ -1116,7 +1116,57 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
-        int score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);  // Not a root call
+        int score;
+        
+        // Late Move Reduction (LMR) implementation
+        // Reduce depth for moves that are unlikely to be best
+        const int LMR_MIN_DEPTH = 3;           // Minimum depth to apply LMR
+        const int LMR_FULL_DEPTH_MOVES = 4;   // First N moves searched at full depth
+        
+        bool needs_full_search = true;
+        
+        if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES && 
+            !in_check && !move_list.moves[i].is_capture() && 
+            !move_list.moves[i].is_promotion()) {
+            
+            // Calculate reduction based on depth and move number
+            // More aggressive reduction for later moves and deeper searches
+            int reduction = 1;
+            if (i >= 8 && depth >= 6) {
+                reduction = 2;  // More reduction for very late moves at high depth
+            }
+            
+            // Try reduced search first
+            int reduced_depth = depth - 1 - reduction;
+            if (reduced_depth >= 1) {
+                info.lmr_attempts++;  // Track LMR attempt
+                score = -AlphaBeta(pos, -alpha - 1, -alpha, reduced_depth, info, true, false);
+                
+                // If reduced search fails high, we need full search
+                if (score > alpha) {
+                    info.lmr_failures++;  // Track LMR failure (needs re-search)
+                    needs_full_search = true;
+                } else {
+                    needs_full_search = false;
+                }
+            }
+        }
+        
+        // Full depth search (either initial search or re-search after LMR fail-high)
+        if (needs_full_search) {
+            if (i == 0 || alpha == best_score) {
+                // First move or no improvement yet - use full window
+                score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+            } else {
+                // PVS: Try null window first, then re-search if it fails high
+                score = -AlphaBeta(pos, -alpha - 1, -alpha, depth - 1, info, true, false);
+                if (score > alpha && score < beta) {
+                    // Null window search failed high, re-search with full window
+                    score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+                }
+            }
+        }
+        
         pos.TakeMove();
         
         if (info.stopped || info.quit) {
@@ -1331,6 +1381,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                   << " nodes " << info.nodes 
                   << " time " << elapsed.count()
                   << " nullcut " << info.null_cut
+                  << " lmr " << info.lmr_attempts << "/" << info.lmr_failures
                   << " tthits " << tt_table.get_hits()
                   << " ttwrites " << tt_table.get_writes()
                   << " pv ";
