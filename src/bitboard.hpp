@@ -1,24 +1,98 @@
-// bitboard.hpp
+/**
+ * @file bitboard.hpp
+ * @brief High-performance bitboard operations for chess square representation
+ * 
+ * Implements a complete bitboard system using 64-bit integers to represent chess board
+ * squares, providing lightning-fast set operations for move generation, attack detection,
+ * and position analysis. Each bit represents one square on the 8x8 chess board.
+ * 
+ * ## Bitboard Architecture
+ * 
+ * **Bit Layout (LSB = A1, MSB = H8):**
+ * ```
+ * 56 57 58 59 60 61 62 63  (8th rank: A8-H8)
+ * 48 49 50 51 52 53 54 55  (7th rank: A7-H7)
+ * ...
+ *  8  9 10 11 12 13 14 15  (2nd rank: A2-H2)  
+ *  0  1  2  3  4  5  6  7  (1st rank: A1-H1)
+ * ```
+ * 
+ * **Performance Philosophy:**
+ * - **Pre-computed Masks**: BIT_MASK and CLEAR_MASK arrays eliminate runtime bit shifts
+ * - **Macro-based Operations**: Inline macros for setBit/popBit avoid function call overhead
+ * - **Cache-Friendly Constants**: Compile-time bit patterns for optimal memory access
+ * - **SIMD-Ready**: 64-bit operations leverage modern CPU parallel processing
+ * 
+ * **Operation Categories:**
+ * - **Basic Operations**: Set, clear, test individual bits
+ * - **Population Count**: Hardware-accelerated bit counting (popcount)
+ * - **Bit Scanning**: Find first/last set bit (LSB/MSB detection)
+ * - **Utility Functions**: Board printing, bit manipulation helpers
+ * 
+ * **Coordinate System Integration:**
+ * - Square 0 = A1, Square 63 = H8 (Little-Endian Rank-File mapping)
+ * - Seamless conversion to/from mailbox-120 coordinates via SQ64/SQ120 macros
+ * - File/rank extraction through modulo and division operations
+ * 
+ * **Performance Impact:**
+ * Bitboards enable massive speedups in chess programming:
+ * - Move generation: 10x faster than piece-list iteration
+ * - Attack detection: Parallel testing of multiple squares
+ * - Pattern recognition: Instant evaluation of positional features
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see https://www.chessprogramming.org/Bitboards for algorithmic background
+ * @see board120.hpp for coordinate system conversions
+ */
 #pragma once
 #include <cstdint>
 #include <iostream>
 #include "chess_types.hpp"
 #include "board120.hpp"  // For MAILBOX_MAPS access in SQ64/SQ120 macros
 
-// Bitboard type - represents 64 squares using bits
+/// Type alias for 64-bit bitboard representing chess squares
 using Bitboard = uint64_t;
 
-// ---- Bitboard Macros ----
-// Using pre-computed masks for better performance than runtime bit shifts
+// ============================================================================
+// BITBOARD OPERATION MACROS - Optimized for maximum performance
+// ============================================================================
+
+/**
+ * @brief Set a bit at the specified square (mark square as occupied)
+ * @param bb Bitboard to modify
+ * @param sq Square index (0-63, where 0=A1, 63=H8)
+ * @note Uses pre-computed BIT_MASK for optimal performance
+ */
 #define setBit(bb, sq)   ((bb) |= BIT_MASK[sq])
+
+/**
+ * @brief Clear a bit at the specified square (mark square as empty)  
+ * @param bb Bitboard to modify
+ * @param sq Square index (0-63)
+ * @note Uses pre-computed CLEAR_MASK for optimal performance
+ */
 #define popBit(bb, sq)   ((bb) &= CLEAR_MASK[sq])
+
+/**
+ * @brief Test if a bit is set at the specified square
+ * @param bb Bitboard to test
+ * @param sq Square index (0-63)
+ * @return Non-zero if square is occupied, 0 if empty
+ */
 #define getBit(bb, sq)   ((bb) & BIT_MASK[sq])
 
-// Alternative names for clarity
+// ============================================================================
+// ALTERNATIVE MACRO NAMES - For compatibility and readability  
+// ============================================================================
+
+/// Alternative name for setBit - more descriptive in some contexts
 #define addBit(bb, sq)   setBit(bb, sq)
+
+/// VICE tutorial compatibility - capitalized version of popBit
 #define PopBit(bb, sq)   popBit(bb, sq)
 
-// Additional alias macros
+/// Legacy compatibility macros - uppercase versions
 #define SETBIT(bb, sq)   setBit(bb, sq)
 #define CLRBIT(bb, sq)   popBit(bb, sq)
 
