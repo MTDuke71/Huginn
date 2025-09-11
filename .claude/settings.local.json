@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake:*)",
+      "Bash(g++:*)",
+      "Bash(cl:*)",
+      "Bash(.buildmsvc-x64-releasebinReleasehuginn.exe)",
+      "Bash(\"./build/msvc-x64-release/bin/Release/huginn.exe\")",
+      "Bash(python:*)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
