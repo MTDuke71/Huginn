@@ -100,6 +100,7 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
   - [x] ~~Late move reductions (LMR) for unpromising moves~~ **✅ COMPLETED: Adaptive depth reduction with re-search**
   - [ ] Futility pruning (forward pruning in leaf nodes)
   - [ ] Razoring (reduce depth when evaluation is far below alpha)
+  - [ ] Multi-Cut pruning (prune subtrees when multiple moves cause beta-cutoff)
 
 ### **MEDIUM PRIORITY: Engine Strength Improvements**
 
