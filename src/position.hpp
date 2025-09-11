@@ -47,17 +47,6 @@ struct S_UNDO {
     
     // Constructor
     S_UNDO() : move(), castling_rights(0), ep_square(-1), halfmove_clock(0), zobrist_key(0), captured(Piece::None) {}
-    
-    // Legacy helper for backward compatibility (deprecated, use S_MOVE directly)
-    static int encode_move_legacy(int from, int to, PieceType promo = PieceType::None) {
-        return (from & 0x7F) | ((to & 0x7F) << 7) | ((int(promo) & 0x7) << 14);
-    }
-    
-    static void decode_move_legacy(int encoded, int& from, int& to, PieceType& promo) {
-        from = encoded & 0x7F;
-        to = (encoded >> 7) & 0x7F;
-        promo = PieceType((encoded >> 14) & 0x7);
-    }
 };
 
 class Position {
