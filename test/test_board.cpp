@@ -22,7 +22,7 @@ TEST_F(BoardTest, ResetBoardClearsAllSquares) {
     EXPECT_NE(pos.at(sq(File::E, Rank::R2)), Piece::None);  // White pawn
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // Verify all playable squares are empty
     for (int rank = 0; rank < 8; ++rank) {
@@ -49,7 +49,7 @@ TEST_F(BoardTest, ResetBoardClearsPieceCountsAndBitboards) {
     EXPECT_NE(pos.pawns_bb[1], 0ULL);  // Black pawns
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // Verify all piece counts are zero
     for (int i = 0; i < 7; ++i) {
@@ -67,7 +67,7 @@ TEST_F(BoardTest, ResetBoardClearsPieceLists) {
     EXPECT_GT(pos.pCount[1][int(PieceType::Pawn)], 0);  // Black pawns
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // Verify all piece counts are zero
     for (int color = 0; color < 2; ++color) {
@@ -90,7 +90,7 @@ TEST_F(BoardTest, ResetBoardClearsKingSquares) {
     EXPECT_NE(pos.king_sq[1], -1);  // Black king
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // Verify king squares are cleared
     EXPECT_EQ(pos.king_sq[0], -1);  // White king
@@ -108,7 +108,7 @@ TEST_F(BoardTest, ResetBoardClearsGameState) {
     pos.ply = 10;
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // Verify game state is cleared
     EXPECT_EQ(pos.side_to_move, Color::None);  // Neither side to move
@@ -131,7 +131,7 @@ TEST_F(BoardTest, ResetClearsMoveHistory) {
     EXPECT_GE(pos.ply, 0);  // ply should be non-negative
     
     // Reset the board
-    reset_board(pos);
+    pos.reset();
     
     // After reset: move history should be empty and ply should be 0
     EXPECT_TRUE(pos.move_history.empty());

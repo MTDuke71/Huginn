@@ -13,7 +13,6 @@
  * - Resets all game state variables
  * - Clears move history
  */
-void reset_board(Position& pos);
 
 /**
  * Print a chess position in a visual ASCII format

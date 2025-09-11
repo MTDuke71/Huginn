@@ -880,8 +880,6 @@ test/
 
 ## board.hpp — Board Management API
 
-- **Reset Function:**
-  - `reset_board(Position& pos)` — Wrapper function calling `pos.reset()` for backward compatibility
 - **Position Display:**
   - `print_position(const Position& pos)` — Visual ASCII board display with game state information
     - Shows 8x8 board with piece placement
@@ -928,7 +926,7 @@ test/
       // Process move to 'to'
   }
   
-  reset_board(pos);                // Reset to completely empty state
+  pos.reset();                     // Reset to completely empty state
   // Board is now ready for FEN loading or manual piece placement
   ```
 

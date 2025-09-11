@@ -7,11 +7,6 @@
 #include <iostream>
 #include <iomanip>
 
-// Reset the board to an empty, clean state
-void reset_board(Position& pos) {
-    pos.reset();
-}
-
 // Print a chess position in a visual ASCII format
 void print_position(const Position& pos) {
     std::cout << "\n   +---+---+---+---+---+---+---+---+\n";

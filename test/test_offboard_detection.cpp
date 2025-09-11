@@ -7,7 +7,7 @@
 
 TEST(OffboardDetection, MoveGenerationCanDetectOffboard) {
     Position pos;
-    reset_board(pos);
+    pos.reset();
     
     // Place a white rook on a1
     int a1 = sq(File::A, Rank::R1);
@@ -36,7 +36,7 @@ TEST(OffboardDetection, MoveGenerationCanDetectOffboard) {
 
 TEST(OffboardDetection, CharRepresentationShowsOffboard) {
     Position pos;
-    reset_board(pos);
+    pos.reset();
     
     // Test that offboard squares show as '#'
     int offboard_square = 0;  // Bottom-left corner of 120-array
