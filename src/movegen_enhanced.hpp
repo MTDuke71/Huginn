@@ -1,5 +1,4 @@
-#ifndef MOVEGEN_ENHANCED_HPP
-#define MOVEGEN_ENHANCED_HPP
+#pragma once
 
 #include "position.hpp"
 #include "move.hpp"
@@ -179,5 +178,3 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     
     return legal;
 }
-
-#endif // MOVEGEN_ENHANCED_HPP
