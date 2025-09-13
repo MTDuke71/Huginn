@@ -492,10 +492,13 @@ bool MinimalEngine::isRepetition(const Position& pos) {
 
 // Clear search tables - reset history and killers
 void MinimalEngine::clear_search_tables() {
-    // Clear search history array (3:55)
+    // Age search history array instead of clearing completely
+    // Aging preserves recent learning while gradually fading old patterns
     for (int piece = 0; piece < 13; ++piece) {
         for (int sq = 0; sq < 120; ++sq) {
-            search_history[piece][sq] = 0;
+            // Reduce history scores by 75% (age by factor of 4)
+            // This preserves 25% of existing knowledge while making room for new learning
+            search_history[piece][sq] = search_history[piece][sq] / 4;
         }
     }
     
@@ -542,6 +545,33 @@ void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& mov
     
     // Increase history score for this piece-to-square combination
     search_history[piece_index][to] += depth * depth;  // Deeper moves get higher bonus
+}
+
+// Penalize history for moves that fail to improve alpha (negative history scoring)
+void MinimalEngine::penalize_search_history(const Position& pos, const S_MOVE& move, int depth) {
+    if (move.move == 0) return;
+    
+    // Get piece and destination square
+    int from = move.get_from();
+    int to = move.get_to();
+    
+    if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
+    
+    Piece piece = pos.board[from];
+    int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
+    
+    // Decrease history score for this piece-to-square combination
+    search_history[piece_index][to] -= depth * depth;  // Penalize with same magnitude as bonus
+}
+
+// Apply periodic aging to prevent history scores from becoming too large
+void MinimalEngine::age_search_history() {
+    for (int piece = 0; piece < 13; ++piece) {
+        for (int sq = 0; sq < 120; ++sq) {
+            // Reduce all history scores by 12.5% to maintain discrimination
+            search_history[piece][sq] = (search_history[piece][sq] * 7) / 8;
+        }
+    }
 }
 
 // Update killer moves when move causes beta cutoff (4:37)  
@@ -1285,6 +1315,11 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                     break;
                 }
             }
+        } else {
+            // Move didn't improve alpha - apply negative history scoring for quiet moves
+            if (!move_list.moves[i].is_capture() && depth > 0) {
+                penalize_search_history(pos, move_list.moves[i], depth);
+            }
         }
     }
     
@@ -1409,6 +1444,12 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         }
         
         info.depth = current_depth;
+        
+        // Apply periodic aging to prevent history scores from becoming too large
+        // Age every 3 depths to maintain move discrimination
+        if (current_depth > 1 && (current_depth % 3) == 0) {
+            age_search_history();
+        }
         
         // Store best move from previous iteration for move ordering
         S_MOVE prev_best = best_move;

@@ -144,6 +144,8 @@ public:  // Make members public for easier access
     
     // Search history and killer move functions
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);
+    void penalize_search_history(const Position& pos, const S_MOVE& move, int depth);
+    void age_search_history();
     void update_killer_moves(const S_MOVE& move, int depth);
     
     // Counter-move heuristic functions (5-15% search speedup)
