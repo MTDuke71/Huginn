@@ -11,7 +11,7 @@
  * 
  * **Hash Table Design:**
  * - Power-of-2 sizing for fast modulo operations via bit masking
- * - Always-replace strategy (can be enhanced with depth-preferred replacement)
+ * - Depth-preferred replacement strategy for optimal cache utilization
  * - 16-byte entries optimized for cache line efficiency
  * - Collision handling through key verification (Zobrist hash comparison)
  * 
@@ -113,19 +113,37 @@ public:
         size_mask = power_of_2 - 1;
     }
     
-    // Store position in transposition table
+    // Store position in transposition table with depth-preferred replacement
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
         
-        // Always replace strategy (could implement depth-preferred later)
-        entry.zobrist_key = zobrist_key;
-        entry.score = score;
-        entry.depth = depth;
-        entry.node_type = node_type;
-        entry.best_move = best_move;
+        // Depth-preferred replacement strategy:
+        // Replace if: 1) Empty slot, 2) Same position, 3) New search is deeper, or 4) Significantly older entry
+        bool should_replace = false;
         
-        writes++;  // Track write operations
+        if (entry.zobrist_key == 0) {
+            // Empty slot - always replace
+            should_replace = true;
+        } else if (entry.zobrist_key == zobrist_key) {
+            // Same position - always update with new information
+            should_replace = true;
+        } else if (depth >= entry.depth) {
+            // New search is deeper or equal - prefer deeper searches
+            should_replace = true;
+        } else {
+            // Keep existing deeper entry, but could add aging logic here in future
+            should_replace = false;
+        }
+        
+        if (should_replace) {
+            entry.zobrist_key = zobrist_key;
+            entry.score = score;
+            entry.depth = depth;
+            entry.node_type = node_type;
+            entry.best_move = best_move;
+            writes++;  // Track write operations
+        }
     }
     
     // Probe transposition table for position

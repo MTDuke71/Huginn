@@ -745,6 +745,24 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
         uint32_t tt_best_move;
         bool has_tt_move = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
         
+        // Validate TT move to ensure it's reasonable for this position
+        bool tt_move_valid = false;
+        if (has_tt_move && tt_best_move != 0) {
+            // Basic sanity checks on the TT move
+            S_MOVE tt_move;
+            tt_move.move = static_cast<int>(tt_best_move);
+            
+            int from = tt_move.get_from();
+            int to = tt_move.get_to();
+            
+            // Validate square bounds and that there's a piece to move
+            if (from >= 0 && from < 120 && to >= 0 && to < 120 && 
+                pos.board[from] != Piece::None && 
+                color_of(pos.board[from]) == pos.side_to_move) {
+                tt_move_valid = true;
+            }
+        }
+        
         // Get PV move for this position (if any)
         S_MOVE pv_move;
         bool has_pv_move = pv_table.probe_move(pos.zobrist_key, pv_move);
@@ -754,8 +772,8 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
             S_MOVE& move = move_list.moves[i];
             int score = 0;
             
-            // VICE Part 84: TT move gets absolute highest priority (3,000,000)
-            if (has_tt_move && move.move == static_cast<int>(tt_best_move)) {
+            // VICE Part 84: TT move gets absolute highest priority (3,000,000) - but only if validated
+            if (tt_move_valid && move.move == static_cast<int>(tt_best_move)) {
                 score = 3000000;
                 
             // VICE Part 64: PV move gets second highest priority (2,000,000)
@@ -1404,6 +1422,19 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         int best_score = -30000;
         S_MOVE depth_best_move;
         depth_best_move.move = 0;
+        
+        // Order moves to try previous iteration's best move first for better alpha-beta cutoffs
+        if (prev_best.move != 0) {
+            for (int i = 0; i < move_list.count; ++i) {
+                if (move_list.moves[i].move == prev_best.move) {
+                    // Swap the previous best move to position 0
+                    S_MOVE temp = move_list.moves[0];
+                    move_list.moves[0] = move_list.moves[i];
+                    move_list.moves[i] = temp;
+                    break;
+                }
+            }
+        }
         
         // Try each move at the root
         for (int i = 0; i < move_list.count; ++i) {
