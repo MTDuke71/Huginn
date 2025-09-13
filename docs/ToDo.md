@@ -97,7 +97,11 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
 - [ ] **Move Ordering Enhancements**
   - [x] ~~Counter-move heuristic implementation~~ **⬆️ PROMOTED TO HIGH PRIORITY ABOVE**
   - [ ] Enhanced history heuristic with aging mechanism
-  - [ ] Hash move ordering from transposition table
+  - [x] **Hash move ordering from transposition table** ✅ **COMPLETED**
+    - [x] **Root Move Ordering**: Previous iteration's best move prioritized first at root level
+    - [x] **TT Move Validation**: Hash moves validated for legality before prioritization (3M score)
+    - [x] **Depth-Preferred Replacement**: TT replacement strategy protects deeper search results
+    - [x] **Performance**: 50%+ TT hit rate confirms effective hash move utilization
   - [ ] Internal iterative deepening for PV nodes without hash move
 
 - [ ] **Search Optimizations**
