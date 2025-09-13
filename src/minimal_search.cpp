@@ -766,7 +766,7 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
 
 // VICE Part 62: Pick Next Move - Select best move from remaining moves
 // This is more efficient than sorting all moves upfront
-int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth) const {
+int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
         // VICE Part 84: Check for transposition table move (highest priority)
@@ -809,6 +809,10 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
             // VICE Part 64: PV move gets second highest priority (2,000,000)
             } else if (has_pv_move && move.move == pv_move.move) {
                 score = 2000000;
+                
+            // IID move gets third highest priority (1,500,000) - between PV and captures
+            } else if (iid_move.move != 0 && move.move == iid_move.move) {
+                score = 1500000;
                 
             } else if (move.is_capture()) {
                 // VICE Part 64: Captures get 1,000,000 + MVV-LVA score
@@ -1207,6 +1211,19 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
     
+    // Internal Iterative Deepening for PV nodes without hash move
+    S_MOVE iid_move;
+    iid_move.move = 0;
+    
+    // Check if we should perform IID (PV node without hash move)
+    if (!isRoot && !tt_hit && depth >= 4) {
+        // Likely PV node with full alpha-beta window and no hash move
+        bool likely_pv_node = (beta - alpha > 1);
+        if (likely_pv_node) {
+            iid_move = internal_iterative_deepening(pos, alpha, beta, depth, info);
+        }
+    }
+    
     int best_score = -30000;
     S_MOVE best_move;  // Track best move for transposition table storage
     best_move.move = 0;
@@ -1214,7 +1231,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos, info, depth);
+        pick_next_move(move_list, i, pos, info, depth, iid_move);
         
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
@@ -1344,6 +1361,75 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
 
     return best_score;
+}
+
+// Internal Iterative Deepening for PV nodes without hash move
+// Performs a shallow search to find a good move for ordering when no hash move is available
+S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info) {
+    S_MOVE iid_move;
+    iid_move.move = 0;  // Initialize to null move
+    
+    // Only perform IID if conditions are met:
+    // 1. Sufficient depth to justify the overhead
+    // 2. Likely PV node (full alpha-beta window)
+    const int MIN_IID_DEPTH = 4;      // Minimum depth to perform IID
+    const int IID_REDUCTION = 2;      // Reduce depth by 2 for IID search
+    
+    if (depth < MIN_IID_DEPTH) {
+        return iid_move;  // Not worth the overhead at shallow depths
+    }
+    
+    // Check if this looks like a PV node (not a null window search)
+    bool likely_pv_node = (beta - alpha > 1);
+    if (!likely_pv_node) {
+        return iid_move;  // Only do IID for PV nodes
+    }
+    
+    // Perform shallow search to find best move
+    int iid_depth = depth - IID_REDUCTION;
+    if (iid_depth >= 1) {
+        // Generate moves for IID search
+        S_MOVELIST iid_move_list;
+        generate_legal_moves_enhanced(pos, iid_move_list);
+        
+        if (iid_move_list.count == 0) {
+            return iid_move;  // No moves available
+        }
+        
+        // Use simple move ordering for IID (no TT move dependency)
+        order_moves(iid_move_list, pos);
+        
+        int best_score = -30000;
+        
+        // Try moves in IID search
+        for (int i = 0; i < iid_move_list.count; ++i) {
+            if (pos.MakeMove(iid_move_list.moves[i]) != 1) continue;
+            
+            int score = -AlphaBeta(pos, -beta, -alpha, iid_depth, info, true, false);
+            
+            pos.TakeMove();
+            
+            // Check for early termination
+            if (info.stopped || info.quit) {
+                break;
+            }
+            
+            if (score > best_score) {
+                best_score = score;
+                iid_move = iid_move_list.moves[i];
+                
+                // Alpha-beta pruning in IID
+                if (score >= beta) {
+                    break;
+                }
+                if (score > alpha) {
+                    alpha = score;
+                }
+            }
+        }
+    }
+    
+    return iid_move;
 }
 
 // Quiescence search to handle horizon effect (4:40)

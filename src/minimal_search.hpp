@@ -161,7 +161,8 @@ public:  // Make members public for easier access
     // VICE Part 62: Move Picking - Pick best move from remaining moves  
     // VICE Part 64: Enhanced with PV move, killer moves, and history heuristic
     // Counter-move heuristic: Enhanced with counter-move support
-    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1) const;
+    // IID Enhancement: Enhanced with Internal Iterative Deepening move support
+    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1, const S_MOVE& iid_move = S_MOVE{}) const;
     
     // VICE Part 84: Transposition table statistics
     void print_tt_stats() const;
@@ -178,6 +179,9 @@ public:  // Make members public for easier access
     int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);  // Core search (2:58)
     int quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth = 0);  // Quiescence search with depth limit
     int evalPosition(const Position& pos);                   // Position evaluation (0:34)
+    
+    // Internal Iterative Deepening for PV nodes without hash move
+    S_MOVE internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info);
     
     // VICE-style search function that demonstrates clearForSearch usage (Part 57)
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
