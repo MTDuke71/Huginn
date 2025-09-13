@@ -73,21 +73,26 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
   - [x] **Benefit**: 2% performance improvement + predictable performance and stack safety
   - [x] **Commit**: eb1b38e - See IMPROVEMENT_LOG.md for detailed metrics
 
-- [ ] **Counter-Move Heuristic Implementation** 
-  - [ ] **Issue**: Current move ordering lacks opponent-move awareness and tactical pattern learning
-  - [ ] **Solution**: Implement counter-move table to remember effective responses to opponent moves
-  - [ ] **Approach**: When move X causes beta-cutoff, store move Y as good counter to previous opponent move
-  - [ ] **Benefits**: 5-15% search speedup through better move ordering and earlier beta-cutoffs
-  - [ ] **Storage**: Temporary per-search learning (120x120 move table, ~115KB memory)
-  - [ ] **Integration**: High-priority scoring in move ordering (between hash moves and killers)
+- [x] **Counter-Move Heuristic Implementation** ✅ **COMPLETED**
+  - [x] **Issue**: Current move ordering lacks opponent-move awareness and tactical pattern learning
+  - [x] **Solution**: Implement counter-move table to remember effective responses to opponent moves
+  - [x] **Approach**: When move X causes beta-cutoff, store move Y as good counter to previous opponent move
+  - [x] **Benefits**: 1-2% search speedup through better move ordering and earlier beta-cutoffs (Sept 12, 2025)
+  - [x] **Storage**: Per-search learning (120x120 move table, ~115KB memory)
+  - [x] **Integration**: High-priority scoring in move ordering (700,000 score between killers and promotions)
+  - [x] **Performance**: Previous NPS ~1.67M-1.69M → Current NPS 1.707M (+1-2% improvement)
+  - [x] **Testing**: All 232 tests passing, 93.1% LMR success rate indicates excellent move ordering
+  - [x] **Commit**: 5946228 - Full implementation with benchmarks and verification tests
 
-- [ ] **Test Suite Production Code Path Alignment** 
-  - [ ] **Issue**: Tests use `make_move_with_undo()` convenience wrapper instead of production `MakeMove`/`TakeMove` methods
-  - [ ] **Risk**: Tests don't validate actual engine code paths that could have bugs in move legality detection and state restoration
-  - [ ] **Solution**: Refactor test files to use production `MakeMove`/`TakeMove` pattern with proper error handling
-  - [ ] **Benefits**: Tests will validate actual engine behavior, illegal move detection, and separate undo operations
-  - [ ] **Scope**: Update test_perft.cpp, test_zobrist_incremental.cpp, test_pawn_consolidated.cpp, test_mate_detailed.cpp
-  - [ ] **Pattern**: Replace `make_move_with_undo(move)` with `if (pos.MakeMove(move) == 1) { /* test */ pos.TakeMove(); }`
+- [x] **Test Suite Production Code Path Alignment** ✅ **COMPLETED**
+  - [x] **Issue**: Tests use `make_move_with_undo()` convenience wrapper instead of production `MakeMove`/`TakeMove` methods
+  - [x] **Risk**: Tests don't validate actual engine code paths that could have bugs in move legality detection and state restoration
+  - [x] **Solution**: Refactor test files to use production `MakeMove`/`TakeMove` pattern with proper error handling
+  - [x] **Benefits**: Tests will validate actual engine behavior, illegal move detection, and separate undo operations
+  - [x] **Scope**: Update test_perft.cpp, test_zobrist_incremental.cpp, test_pawn_consolidated.cpp, test_mate_detailed.cpp
+  - [x] **Pattern**: Replace `make_move_with_undo(move)` with `if (pos.MakeMove(move) == 1) { /* test */ pos.TakeMove(); }`
+  - [x] **Result**: All 232 tests passing with production code paths validated
+  - [x] **Commit**: 9ee385c - Complete test suite alignment with production patterns
 
 - [ ] **Move Ordering Enhancements**
   - [x] ~~Counter-move heuristic implementation~~ **⬆️ PROMOTED TO HIGH PRIORITY ABOVE**
@@ -209,7 +214,7 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
 - ✅ **Move Ordering**: MVV-LVA, killers, and history heuristic
 
 ### **Performance Metrics**
-- ✅ **Search Speed**: ~220k nodes/second average
+- ✅ **Search Speed**: ~1.7M nodes/second average (Release build, Sept 2025)
 - ✅ **Transposition Table**: Basic hash table with position caching
 - ✅ **Move Generation**: Fast legal move generation with S_MOVE system
 - ✅ **Memory Efficiency**: Compact data structures (33% reduction in move storage)
@@ -227,7 +232,7 @@ This branch represents a **complete, tournament-ready chess engine** suitable fo
 ### **Current Achievements**
 - ✅ **Functionality**: Complete chess engine with all standard features
 - ✅ **Reliability**: 100% test pass rate (232/232 tests)
-- ✅ **Performance**: Competitive search speed (~220k nps)
+- ✅ **Performance**: Competitive search speed (~1.7M nps, Release build)
 - ✅ **Quality**: Modern C++17 architecture
 - ✅ **Compatibility**: Full UCI protocol compliance
 
