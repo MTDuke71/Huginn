@@ -1,4 +1,40 @@
-// board120.hpp
+/**
+ * @file board120.hpp
+ * @brief 120-square mailbox board representation and coordinate system
+ * 
+ * Implements the traditional 120-square mailbox representation used in many chess
+ * engines for fast and intuitive move generation. The 120-square system embeds the
+ * 64 real squares within a 10x12 grid, providing natural bounds checking and
+ * eliminating the need for complex boundary validation during move generation.
+ * 
+ * ## 120-Square Layout
+ * ```
+ * Index:  0  1  2  3  4  5  6  7  8  9
+ *        10 11 12 13 14 15 16 17 18 19
+ *        20 21 22 23 24 25 26 27 28 29  <- A1-H1 are 21-28
+ *        30 31 32 33 34 35 36 37 38 39  <- A2-H2 are 31-38
+ *        ...
+ *        90 91 92 93 94 95 96 97 98 99  <- A8-H8 are 91-98
+ *       100101102103104105106107108109
+ *       110111112113114115116117118119
+ * ```
+ * 
+ * ## Coordinate System
+ * - **Files**: A-H (0-7) mapped to columns 1-8 in the 120-square grid
+ * - **Ranks**: 1-8 (0-7) mapped to rows 2-9 in the 120-square grid
+ * - **Conversion**: sq(file, rank) = 21 + file + (rank * 10)
+ * - **Bounds Checking**: Automatic via offboard detection
+ * 
+ * ## Performance Benefits
+ * - **No Bounds Checking**: Move generation can safely add offsets without validation
+ * - **Simple Arithmetic**: Fast coordinate arithmetic using addition/subtraction
+ * - **Cache Efficiency**: Contiguous memory layout for better cache performance
+ * - **Natural Offsets**: Direction vectors work directly without special cases
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see bitboard.hpp for 64-square bitboard representation
+ */
 #pragma once
 #include <cstdint>
 #include <array>

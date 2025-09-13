@@ -1,4 +1,41 @@
-//#define DEBUG_CASTLING
+/**
+ * @file position.hpp
+ * @brief Chess position representation and manipulation
+ * 
+ * Implements the core Position class that represents a complete chess position
+ * including piece placement, game state, move history, and position evaluation
+ * context. The Position class is the central data structure for the Huginn engine,
+ * optimized for fast move making/unmaking and efficient position analysis.
+ * 
+ * ## Position Representation
+ * - **Mailbox 120**: Primary board representation for fast move validation
+ * - **Bitboards**: Secondary representation for attack detection and pattern recognition
+ * - **Piece Lists**: Efficient iteration over pieces by type and color
+ * - **Zobrist Hashing**: Incremental hash updates for transposition table
+ * 
+ * ## State Management
+ * - **Game State**: Side to move, castling rights, en passant, halfmove clock
+ * - **Move History**: Complete undo information for search tree traversal
+ * - **Hash Keys**: Position hashing for repetition detection and TT lookup
+ * - **Search Context**: Additional state needed for search algorithms
+ * 
+ * ## Performance Features
+ * - **Incremental Updates**: Fast make/unmake move operations
+ * - **Copy-Make Optimization**: Efficient position copying when needed
+ * - **Cache-Friendly Layout**: Hot data packed for optimal memory access
+ * - **SIMD Integration**: Hardware acceleration for bulk operations
+ * 
+ * ## Key Operations
+ * - Position setup from FEN strings
+ * - Legal move generation and validation
+ * - Move making and unmaking with full state preservation
+ * - Position evaluation and analysis
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see chess_types.hpp for fundamental types
+ * @see move.hpp for move representation
+ */
 #pragma once
 #include <array>
 #include <cstdint>

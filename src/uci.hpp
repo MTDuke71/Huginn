@@ -1,4 +1,35 @@
-#pragma once
+/**
+ * @file uci.hpp
+ * @brief Universal Chess Interface (UCI) protocol implementation
+ * 
+ * Implements the UCI protocol for communication between the Huginn chess engine
+ * and UCI-compatible chess GUIs. The UCI protocol is the standard interface used
+ * by most modern chess programs and provides a clean separation between the
+ * engine's chess logic and the user interface.
+ * 
+ * ## UCI Protocol Features
+ * - **Standard Commands**: uci, isready, position, go, stop, quit
+ * - **Engine Options**: Hash table size, threads, opening book settings
+ * - **Search Control**: Time management, depth limits, node limits
+ * - **Move Communication**: Algebraic notation move parsing and output
+ * 
+ * ## Implementation Details
+ * - **Asynchronous Search**: Multi-threaded search with stop capability
+ * - **Thread Safety**: Atomic operations for search control variables
+ * - **Command Parsing**: Robust input parsing with error handling
+ * - **Debug Mode**: Enhanced logging for debugging and analysis
+ * 
+ * ## Search Integration
+ * - MinimalEngine integration for search operations
+ * - SearchInfo structure for search state management
+ * - Time management and iteration control
+ * - Principal variation and score reporting
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see minimal_search.hpp for search engine interface
+ * @see https://www.shredderchess.com/chess-info/features/uci-universal-chess-interface.html
+ */
 
 #include <string>
 #include <vector>

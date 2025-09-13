@@ -1,4 +1,25 @@
-// board.cpp
+/**
+ * @file board.cpp
+ * @brief Chess board display and visualization utilities
+ * 
+ * Provides functionality for displaying chess positions in human-readable ASCII format.
+ * The board display follows standard chess notation with ranks 1-8 and files a-h,
+ * showing pieces using standard algebraic notation characters.
+ * 
+ * ## Display Format
+ * - White pieces: UPPERCASE (K, Q, R, B, N, P)
+ * - Black pieces: lowercase (k, q, r, b, n, p)  
+ * - Empty squares: '.' character
+ * - Board borders: ASCII art with rank/file labels
+ * 
+ * ## Functions
+ * - print_position(): Displays a position in visual ASCII format
+ * - Side-to-move, castling rights, and en passant status included
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see position.hpp for Position structure
+ */
 #include "board.hpp"
 #include "position.hpp"
 #include "chess_types.hpp"
@@ -7,7 +28,26 @@
 #include <iostream>
 #include <iomanip>
 
-// Print a chess position in a visual ASCII format
+/**
+ * @brief Print a chess position in visual ASCII format
+ * 
+ * Displays the chess board from White's perspective (rank 8 at top, rank 1 at bottom)
+ * with clear borders and coordinate labels. Shows piece positions using standard
+ * algebraic notation characters.
+ * 
+ * @param pos The chess position to display
+ * 
+ * Example output:
+ * ```
+ *    +---+---+---+---+---+---+---+---+
+ *  8 | r | n | b | q | k | b | n | r |
+ *    +---+---+---+---+---+---+---+---+
+ *  7 | p | p | p | p | p | p | p | p |
+ *    +---+---+---+---+---+---+---+---+
+ *  ...
+ *      a   b   c   d   e   f   g   h
+ * ```
+ */
 void print_position(const Position& pos) {
     std::cout << "\n   +---+---+---+---+---+---+---+---+\n";
     

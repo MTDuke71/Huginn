@@ -1,6 +1,33 @@
-#pragma once
-// MSVC-specific performance optimizations
-// Provides MSVC compiler-specific optimizations and hints
+/**
+ * @file msvc_optimizations.hpp
+ * @brief Microsoft Visual C++ compiler-specific optimizations
+ * 
+ * Provides MSVC-specific performance optimizations and compiler hints to maximize
+ * the engine's performance on Windows systems using the Microsoft toolchain.
+ * These optimizations leverage MSVC's advanced optimization features and intrinsics
+ * to achieve optimal code generation for chess-specific algorithms.
+ * 
+ * ## Optimization Categories
+ * - **Compiler Hints**: Branch prediction, inlining directives, prefetch hints
+ * - **Bit Operations**: Hardware-accelerated bit manipulation using BMI instructions
+ * - **Memory Access**: Cache-friendly prefetch patterns for search algorithms
+ * - **CPU Features**: Leveraging modern x86-64 instruction sets
+ * 
+ * ## Performance Impact
+ * - FORCE_INLINE: Eliminates function call overhead for critical functions
+ * - Branch prediction: Improves pipeline efficiency in search loops
+ * - Memory prefetch: Reduces cache misses during position evaluation
+ * - BMI instructions: Faster bit counting and manipulation operations
+ * 
+ * ## Conditional Compilation
+ * All optimizations are conditionally compiled for MSVC only (_MSC_VER).
+ * Other compilers fall back to standard implementations or compiler-specific
+ * alternatives defined in their respective optimization headers.
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see bit_utils.hpp for portable bit operations
+ */
 
 #ifdef _MSC_VER
 

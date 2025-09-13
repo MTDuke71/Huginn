@@ -1,4 +1,28 @@
-// position.cpp - Implementation file for Position class methods
+/**
+ * @file position.cpp
+ * @brief Implementation of the Position class methods
+ * 
+ * Contains the implementation of core Position class functionality including
+ * move making/unmaking, position setup, state management, and board operations.
+ * The Position class is the central data structure of the Huginn engine,
+ * optimized for fast incremental updates during search.
+ * 
+ * ## Key Operations
+ * - **Move Making/Unmaking**: Fast incremental position updates for search
+ * - **Position Setup**: FEN parsing and initial position configuration
+ * - **State Management**: Hash keys, piece lists, castling rights, en passant
+ * - **Board Operations**: Piece placement, capture handling, promotion logic
+ * 
+ * ## Performance Features
+ * - **Incremental Hash Updates**: Zobrist key maintenance for TT lookup
+ * - **Copy-Make Optimization**: Efficient position copying for search
+ * - **Fast Validation**: Quick legality checks and position consistency
+ * - **Memory Efficiency**: Compact state representation for deep search
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see position.hpp for class declaration and interface
+ */
 #include "position.hpp"
 #include "zobrist.hpp"
 #include "movegen_enhanced.hpp"  // For in_check function

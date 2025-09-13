@@ -1,5 +1,35 @@
-// Principal Variation Table - VICE tutorial style adapted to C++
-// This will store the best line of moves found during search
+/**
+ * @file pvtable.hpp
+ * @brief Principal Variation Table implementation
+ * 
+ * Implements a hash table for storing and retrieving principal variation (PV) moves
+ * during search. The PV table maintains the best line of play found during search,
+ * enabling the engine to reconstruct and display the principal variation for analysis.
+ * The implementation follows the VICE tutorial approach adapted for modern C++.
+ * 
+ * ## PV Table Architecture
+ * - **Hash-based Storage**: Zobrist position keys for fast lookup
+ * - **Move Storage**: Best move for each position in the principal variation
+ * - **Dynamic Sizing**: Configurable table size for memory management
+ * - **Collision Handling**: Simple replacement scheme for hash collisions
+ * 
+ * ## Search Integration
+ * - **Move Ordering**: PV moves get highest priority in move ordering
+ * - **Search Guidance**: Previous PV guides iterative deepening search
+ * - **Analysis Output**: PV reconstruction for UCI output
+ * - **Time Management**: PV stability influences time allocation
+ * 
+ * ## Performance Features
+ * - Fast hash-based position lookup
+ * - Minimal memory overhead per entry
+ * - Cache-friendly data layout
+ * - Integration with transposition table system
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see minimal_search.hpp for search engine integration
+ * @see move.hpp for move representation
+ */
 
 #pragma once
 #include "move.hpp"

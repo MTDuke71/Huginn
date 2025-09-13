@@ -1,4 +1,35 @@
-// chess_types.hpp
+/**
+ * @file chess_types.hpp
+ * @brief Core chess data types and fundamental constants
+ * 
+ * Defines the fundamental data types used throughout the Huginn chess engine,
+ * including pieces, colors, squares, castling rights, and move types. These types
+ * form the foundation of the engine's type system and are designed for both
+ * performance and type safety.
+ * 
+ * ## Type System Design
+ * - **Strongly Typed Enums**: Prevent implicit conversions and bugs
+ * - **Compact Representation**: Memory-efficient storage for search performance
+ * - **Fast Operations**: Bitwise operations and lookup tables where possible
+ * - **Debug Support**: Comprehensive assertions and validation in debug builds
+ * 
+ * ## Key Types
+ * - **Color**: White/Black/None enumeration
+ * - **PieceType**: None, Pawn, Knight, Bishop, Rook, Queen, King, Offboard
+ * - **Piece**: Combined color and piece type with fast access macros
+ * - **Square**: 120-square mailbox representation with coordinate conversion
+ * - **Castling**: Bit flags for efficient castling rights management
+ * 
+ * ## Performance Features
+ * - Constexpr functions for compile-time evaluation
+ * - Inline operations for zero-overhead abstractions  
+ * - MSVC-specific optimizations when available
+ * - Cache-friendly data layout and access patterns
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see board120.hpp for coordinate system details
+ */
 #pragma once
 #include <cstdint>
 #include <array>

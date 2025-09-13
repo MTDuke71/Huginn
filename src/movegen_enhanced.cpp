@@ -1,3 +1,33 @@
+/**
+ * @file movegen_enhanced.cpp
+ * @brief Enhanced chess move generation with performance optimizations
+ * 
+ * Implements high-performance move generation for the Huginn chess engine using
+ * specialized optimization modules for each piece type. The enhanced move generator
+ * leverages piece lists, template functions, and SIMD-optimized algorithms to
+ * achieve maximum performance in time-critical search operations.
+ * 
+ * ## Architecture
+ * - **Modular Design**: Separate optimization modules for each piece type
+ * - **Piece Lists**: Direct iteration over active pieces (fastest approach)
+ * - **Template Specialization**: Compile-time optimization for piece types
+ * - **SIMD Integration**: Hardware-accelerated bitboard operations
+ * 
+ * ## Performance Impact
+ * Profiling-driven optimizations address specific bottlenecks:
+ * - Pawn moves: 20.3% of generation time → PawnOptimizations module
+ * - Sliding pieces: 45%+ of generation time → SlidingPieceOptimizations module
+ * - Knight/King moves: KnightOptimizations, KingOptimizations modules
+ * 
+ * ## Function Categories
+ * - **Production**: generate_all_moves() - main entry point for search
+ * - **Legacy**: Individual piece functions for compatibility/testing
+ * - **Debugging**: Move validation and generation analysis
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see movegen_enhanced.hpp for interface declarations
+ */
 #include "movegen_enhanced.hpp"
 #include "position.hpp"
 #include "move.hpp"
@@ -9,7 +39,22 @@
 #include "knight_optimizations.hpp"
 #include "sliding_piece_optimizations.hpp"
 
-// Enhanced move generation function with improved organization
+/**
+ * @brief Generate all legal moves for the current position
+ * 
+ * Main entry point for move generation during search. Uses optimized piece-specific
+ * modules to generate moves efficiently, with each module targeting specific
+ * performance bottlenecks identified through profiling.
+ * 
+ * @param pos Current chess position
+ * @param list Move list to populate with generated moves
+ * 
+ * The function leverages:
+ * - PawnOptimizations: Handles 20.3% of generation overhead
+ * - SlidingPieceOptimizations: Handles 45%+ of generation overhead  
+ * - Knight/King optimizations: Template-based fast generation
+ * - Direct piece list iteration: Fastest traversal method
+ */
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     list.count = 0;  // Direct clear - faster than function call
     

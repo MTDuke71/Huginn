@@ -1,4 +1,22 @@
-// bitboard.cpp
+/**
+ * @file bitboard.cpp
+ * @brief Implementation of bitboard utility functions
+ * 
+ * Provides implementations for bitboard printing, visualization, and debugging
+ * utilities. These functions are primarily used for development, testing, and
+ * analysis rather than core engine performance, so they prioritize clarity
+ * and functionality over speed.
+ * 
+ * ## Utility Functions
+ * - **Bitboard Printing**: Visual representation of bitboard state
+ * - **Custom Characters**: Configurable display characters for occupied/empty squares
+ * - **Chess Notation**: Standard algebraic notation for coordinates
+ * - **Debug Support**: Clear visualization for development and debugging
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see bitboard.hpp for bitboard type definitions and core operations
+ */
 #include "bitboard.hpp"
 #include "bit_utils.hpp"   // Cross-platform bit manipulation utilities
 #include "board120.hpp"    // For MAILBOX_MAPS conversion arrays

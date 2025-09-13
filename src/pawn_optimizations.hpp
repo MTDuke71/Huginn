@@ -1,9 +1,35 @@
-#pragma once
-#include "movegen_enhanced.hpp"
-#include "board120.hpp"
-
-// Pawn Promotion Optimization Module
-// Based on profiling results showing pawn moves consume 20.3% of generation time
+/**
+ * @file pawn_optimizations.hpp
+ * @brief Pawn move generation optimizations
+ * 
+ * Specialized optimization module for pawn move generation, addressing the 20.3%
+ * of total move generation time consumed by pawn moves according to profiling data.
+ * The module uses precomputed lookup tables, template specialization, and optimized
+ * promotion handling to minimize the overhead of pawn move generation.
+ * 
+ * ## Optimization Strategies
+ * - **Precomputed Promotion Squares**: Fast lookup tables for rank-8/rank-1 detection
+ * - **Template Specialization**: Compile-time optimization for color-specific code paths
+ * - **Optimized Promotion Order**: High-value pieces first for better move ordering
+ * - **SIMD Integration**: Vectorized operations for bulk pawn move generation
+ * 
+ * ## Performance Impact
+ * Targets the 20.3% performance bottleneck identified in move generation profiling:
+ * - Eliminates redundant rank checks through precomputed masks
+ * - Reduces branching in promotion move generation
+ * - Optimizes en passant detection and validation
+ * - Improves cache locality through structured data access
+ * 
+ * ## Key Components
+ * - PromotionSquares: Fast promotion square detection
+ * - Optimized promotion piece ordering for move sorting
+ * - Template-based color-specific move generation
+ * - Integration with enhanced move list structures
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see movegen_enhanced.hpp for main move generation interface
+ */
 
 namespace PawnOptimizations {
 

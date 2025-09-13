@@ -1,3 +1,28 @@
+/**
+ * @file evaluation.cpp
+ * @brief Chess position evaluation implementation
+ * 
+ * Implements position evaluation functions for the Huginn chess engine, including
+ * material counting, piece-square tables, and advanced positional features.
+ * The evaluation is based on the VICE tutorial approach with runtime-initialized
+ * evaluation masks for passed pawn detection and other positional patterns.
+ * 
+ * ## Evaluation Components
+ * - **Material Balance**: Basic piece values (P=100, N/B=300, R=500, Q=900)
+ * - **Piece-Square Tables**: Positional bonuses for piece placement
+ * - **Passed Pawns**: Detection using precomputed bitmasks
+ * - **King Safety**: Basic king exposure evaluation
+ * - **Mobility**: Piece mobility considerations
+ * 
+ * ## Performance Features
+ * - Pre-computed evaluation masks for faster passed pawn detection
+ * - Runtime initialization of position-dependent lookup tables
+ * - Optimized evaluation ordering for alpha-beta cutoffs
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see position.hpp for Position structure
+ */
 #include "evaluation.hpp"
 
 namespace Huginn {
@@ -8,7 +33,18 @@ namespace EvalParams {
 std::array<uint64_t, 64> WHITE_PASSED_PAWN_MASKS;
 std::array<uint64_t, 64> BLACK_PASSED_PAWN_MASKS;
 
-// VICE Part 78: Initialize pawn bitmasks (2:19)
+/**
+ * @brief Initialize evaluation bitmasks for positional analysis
+ * 
+ * Sets up precomputed bitmasks for passed pawn detection and other positional
+ * patterns. This function must be called once during engine initialization before
+ * using the evaluation function. Based on VICE Part 78 tutorial approach.
+ * 
+ * Creates masks for:
+ * - White passed pawn detection (squares in front and adjacent files)
+ * - Black passed pawn detection (squares behind and adjacent files)
+ * - Fast bitboard-based passed pawn evaluation
+ */
 void init_evaluation_masks() {
     // Initialize all masks to 0
     WHITE_PASSED_PAWN_MASKS.fill(0);

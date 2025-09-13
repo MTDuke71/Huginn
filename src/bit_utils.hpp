@@ -1,5 +1,33 @@
-#pragma once
-// bit_utils.hpp - Cross-platform bit manipulation utilities
+/**
+ * @file bit_utils.hpp
+ * @brief Cross-platform bit manipulation utilities
+ * 
+ * Provides portable bit manipulation functions that work across different compilers
+ * and platforms. The utilities offer hardware-accelerated bit operations when
+ * available (using compiler intrinsics) and fall back to software implementations
+ * for maximum portability.
+ * 
+ * ## Supported Operations
+ * - **Population Count**: Count set bits in integers (popcount)
+ * - **Bit Scanning**: Find first/last set bit positions (ctz/clz)
+ * - **Bit Manipulation**: Set, clear, test individual bits
+ * - **Cross-Platform**: Unified interface across GCC, Clang, MSVC
+ * 
+ * ## Compiler Support
+ * - **MSVC**: Uses _BitScanForward64, __popcnt64, and other intrinsics
+ * - **GCC/Clang**: Uses __builtin_popcountll, __builtin_ctzll built-ins
+ * - **Fallback**: Software implementations for unsupported platforms
+ * 
+ * ## Performance Features
+ * - Hardware acceleration when available (BMI, POPCNT instructions)
+ * - Compile-time optimization for constant expressions
+ * - Minimal overhead abstraction layer
+ * - Optimized for both 32-bit and 64-bit architectures
+ * 
+ * @author MTDuke71
+ * @version 1.2
+ * @see bitboard.hpp for chess-specific bitboard operations
+ */
 
 #include <cstdint>
 
