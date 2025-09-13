@@ -9,9 +9,12 @@ static uint64_t perft(Position& pos, int depth) {
     generate_legal_moves_enhanced(pos, list);
     uint64_t nodes = 0;
     for (int i = 0; i < list.count; i++) {
-        pos.make_move_with_undo(list.moves[i]);
-        nodes += perft(pos, depth-1);
-        pos.undo_move();
+        // Use production MakeMove/TakeMove pattern with error checking
+        if (pos.MakeMove(list.moves[i]) == 1) {
+            nodes += perft(pos, depth-1);
+            pos.TakeMove();
+        }
+        // Skip illegal moves (MakeMove returned != 1)
     }
     return nodes;
 }
@@ -141,22 +144,29 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
         // Apply move manually to see what happens
         Position test_pos = pos;
         Color original_side = test_pos.side_to_move;  // Remember original side
-        test_pos.make_move_with_undo(move);
         
-        // Check if the ORIGINAL side's king is in check after the move
-        int original_king_sq = test_pos.king_sq[int(original_side)];
-        Color opponent_color = (original_side == Color::White) ? Color::Black : Color::White;
-        bool king_in_check_after = SqAttacked(original_king_sq, test_pos, opponent_color);
-        
-        test_pos.undo_move();
-        
-        bool legal = is_legal_move(pos, move);
-        std::cout << (i+1) << ". from=" << move.get_from() << " to=" << move.get_to() 
-                  << " legal=" << (legal ? "YES" : "NO")
-                  << " check_before=" << (currently_in_check ? "YES" : "NO")
-                  << " check_after=" << (king_in_check_after ? "YES" : "NO") << std::endl;
+        // Use production MakeMove/TakeMove pattern
+        if (test_pos.MakeMove(move) == 1) {
+            // Check if the ORIGINAL side's king is in check after the move
+            int original_king_sq = test_pos.king_sq[int(original_side)];
+            Color opponent_color = (original_side == Color::White) ? Color::Black : Color::White;
+            bool king_in_check_after = SqAttacked(original_king_sq, test_pos, opponent_color);
+            
+            test_pos.TakeMove();
+            
+            bool legal = is_legal_move(pos, move);
+            std::cout << (i+1) << ". from=" << move.get_from() << " to=" << move.get_to() 
+                      << " legal=" << (legal ? "YES" : "NO")
+                      << " check_before=" << (currently_in_check ? "YES" : "NO")
+                      << " check_after=" << (king_in_check_after ? "YES" : "NO") << std::endl;
+        } else {
+            // Move was illegal
+            std::cout << (i+1) << ". from=" << move.get_from() << " to=" << move.get_to() 
+                      << " legal=NO (MakeMove failed)"
+                      << " check_before=" << (currently_in_check ? "YES" : "NO")
+                      << " check_after=N/A" << std::endl;
+        }
     }
-    
     // Let's test with a simple perft that ignores legality checks temporarily  
     std::cout << "\nTesting with pseudo-legal moves only (no legality check):" << std::endl;
     uint64_t pseudo_perft1 = pseudo_moves.size();  // Just count pseudo-legal moves

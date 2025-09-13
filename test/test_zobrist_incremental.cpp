@@ -22,17 +22,16 @@ TEST_F(ZobristIncrementalTest, IncrementalXORMatchesFullComputation) {
     // Make a simple pawn move: e2-e4
     S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
-    // Make the move using make_move_with_undo (this uses incremental XOR updates)
-    pos.make_move_with_undo(move);
+    // Make the move using production MakeMove (this uses incremental XOR updates)
+    ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for legal move";
     
     // Compute the full Zobrist key and compare with incremental result
     uint64_t full_key_after = Zobrist::compute(pos);
     EXPECT_EQ(pos.zobrist_key, full_key_after) 
         << "Incremental XOR update should match full computation after move";
     
-    // Undo the move using undo_move
-    bool undo_success = pos.undo_move();
-    EXPECT_TRUE(undo_success) << "Undo move should succeed";
+    // Undo the move using TakeMove
+    pos.TakeMove();
     
     // Verify the Zobrist key is restored to original value
     uint64_t full_key_restored = Zobrist::compute(pos);
@@ -121,10 +120,10 @@ TEST_F(ZobristIncrementalTest, XORPropertyWorks) {
     
     S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     
-    // Apply the same move 1000 times (even number)
+    // Apply the same move 1000 times (even number) using production MakeMove/TakeMove
     for (int i = 0; i < 1000; ++i) {
-        pos.make_move_with_undo(move);
-        pos.undo_move();
+        ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for legal move on iteration " << i;
+        pos.TakeMove();
     }
     
     // Should be back to original key due to XOR property

@@ -298,7 +298,7 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     // Make a pawn capture move: e4 (after e2-e4, d7-d5, exd5)
     // First move pawn to e4
     S_MOVE e2e4 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
-    pos.make_move_with_undo(e2e4);
+    ASSERT_EQ(pos.MakeMove(e2e4), 1) << "MakeMove should succeed for e2-e4";
     
     // Place black pawn on d5 for capture
     pos.set(sq(File::D, Rank::R5), Piece::BlackPawn);
@@ -306,7 +306,7 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     
     // Make capture move
     S_MOVE exd5 = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
-    pos.make_move_with_undo(exd5);
+    ASSERT_EQ(pos.MakeMove(exd5), 1) << "MakeMove should succeed for exd5 capture";
     
     // Check bitboards are updated correctly
     int e4_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R4)];
@@ -336,7 +336,7 @@ TEST(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
     
     // Make promotion move
     S_MOVE promote = make_promotion(sq(File::E, Rank::R7), sq(File::E, Rank::R8), PieceType::Queen);
-    pos.make_move_with_undo(promote);
+    ASSERT_EQ(pos.MakeMove(promote), 1) << "MakeMove should succeed for pawn promotion";
     
     // Check that promotion worked
     EXPECT_EQ(pos.at(sq(File::E, Rank::R8)), Piece::WhiteQueen)
@@ -354,10 +354,10 @@ TEST(PawnBitboardTest, MakeUnmakePawnMoveConsistency) {
     
     // Make pawn move
     S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
-    pos.make_move_with_undo(move);
+    ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for e2-e4";
     
     // Undo move
-    pos.undo_move();
+    pos.TakeMove();
     
     // Check everything is restored
     EXPECT_EQ(pos.pawns_bb, initial_pawns_bb) << "Pawn bitboards should be fully restored";

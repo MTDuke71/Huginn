@@ -40,14 +40,13 @@ void analyze_position_detailed(Position pos, const std::string& description) {
     std::cout << "All legal moves:" << std::endl;
     for (int i = 0; i < legal_moves.count; ++i) {
         Position temp_pos = pos;
-        temp_pos.make_move_with_undo(legal_moves.moves[i]);
-        
-        // Check if opponent has any legal moves after this move
-        S_MOVELIST opponent_moves;
-        generate_legal_moves_enhanced(temp_pos, opponent_moves);
-        
-        // Check if opponent king is in check
-        int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
+        if (temp_pos.MakeMove(legal_moves.moves[i]) == 1) {
+            // Check if opponent has any legal moves after this move
+            S_MOVELIST opponent_moves;
+            generate_legal_moves_enhanced(temp_pos, opponent_moves);
+            
+            // Check if opponent king is in check
+            int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
         bool opp_in_check = (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move));
         
         bool delivers_mate = (opponent_moves.count == 0 && opp_in_check);
@@ -90,7 +89,7 @@ void test_simple_mate_position() {
         if (move_str == "h1h8") {
             std::cout << "\nFound Qh8 move! Testing it..." << std::endl;
             Position after_mate = simple_mate;
-            after_mate.make_move_with_undo(moves.moves[i]);
+            ASSERT_EQ(after_mate.MakeMove(moves.moves[i]), 1) << "MakeMove should succeed for Qh8";
             
             analyze_position_detailed(after_mate, "AFTER Qh8 (should be mate)");
             break;
@@ -124,9 +123,14 @@ int main() {
         for (int i = 0; i < legal_moves.count; ++i) {
             std::string uci_move = engine.move_to_uci(legal_moves.moves[i]);
             if (uci_move == move_str) {
-                pos1.make_move_with_undo(legal_moves.moves[i]);
-                move_found = true;
-                break;
+                int result = pos1.MakeMove(legal_moves.moves[i]);
+                if (result == 1) {
+                    move_found = true;
+                    break;
+                } else {
+                    std::cout << "Error: MakeMove failed for " << move_str << std::endl;
+                    return 1;
+                }
             }
         }
         if (!move_found) {
