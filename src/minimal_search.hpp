@@ -42,9 +42,17 @@ struct SearchInfo {
     uint64_t lmr_attempts;  // Number of LMR reductions attempted
     uint64_t lmr_failures;  // Number of LMR reductions that failed high (needed re-search)
     
+    // Counter-move heuristic: track moves played to update counter-move table
+    S_MOVE search_stack[64];  // Stack of moves made during search (max 64 plies)
+    
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
                    quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0),
-                   lmr_attempts(0), lmr_failures(0) {}
+                   lmr_attempts(0), lmr_failures(0) {
+        // Initialize search stack
+        for (int i = 0; i < 64; ++i) {
+            search_stack[i] = S_MOVE();
+        }
+    }
 };
 
 // Search limits structure - external interface for setting search parameters
@@ -72,6 +80,12 @@ public:  // Make members public for easier access
     // Search Killers array (4:37) - stores non-capture moves causing beta cutoff  
     // [depth][killer_slot] - 64 levels, 2 killer moves per depth
     S_MOVE search_killers[64][2];
+    
+    // Counter-Move Heuristic (5-15% search speedup)
+    // [from_square][to_square] - maps opponent's last move to best counter-move
+    // When move X causes beta-cutoff, store move Y as good counter to previous opponent move
+    // 120x120 table (~115KB memory) for temporary per-search learning
+    S_MOVE counter_moves[120][120];
     
     // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) table
     // [victim][attacker] - prioritizes captures where weak pieces take strong pieces
@@ -132,6 +146,10 @@ public:  // Make members public for easier access
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);
     void update_killer_moves(const S_MOVE& move, int depth);
     
+    // Counter-move heuristic functions (5-15% search speedup)
+    void update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move);
+    S_MOVE get_counter_move(const S_MOVE& previous_move) const;
+    
     // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) functions
     void init_mvv_lva();                                              // Initialize MVV-LVA scoring table
     int get_mvv_lva_score(PieceType victim, PieceType attacker) const; // Get capture score
@@ -140,7 +158,8 @@ public:  // Make members public for easier access
     
     // VICE Part 62: Move Picking - Pick best move from remaining moves  
     // VICE Part 64: Enhanced with PV move, killer moves, and history heuristic
-    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth = -1) const;
+    // Counter-move heuristic: Enhanced with counter-move support
+    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1) const;
     
     // VICE Part 84: Transposition table statistics
     void print_tt_stats() const;

@@ -504,6 +504,13 @@ void MinimalEngine::clear_search_tables() {
         search_killers[depth][0] = S_MOVE();  // Clear first killer
         search_killers[depth][1] = S_MOVE();  // Clear second killer
     }
+    
+    // Clear counter-moves table
+    for (int from_sq = 0; from_sq < 120; ++from_sq) {
+        for (int to_sq = 0; to_sq < 120; ++to_sq) {
+            counter_moves[from_sq][to_sq] = S_MOVE();
+        }
+    }
 }
 
 // PV table helper functions
@@ -549,6 +556,39 @@ void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
             search_killers[depth][0] = move;                      // First = new move
         }
     }
+}
+
+// Update counter-move table when move causes beta cutoff
+void MinimalEngine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move) {
+    // Validate move parameters
+    if (previous_move.move == 0 || counter_move.move == 0) return;
+    if (counter_move.is_capture()) return;  // Only store quiet moves as counter-moves
+    
+    int from_sq = previous_move.get_from();
+    int to_sq = previous_move.get_to();
+    
+    // Validate square indices (must be 0-119 for 120-square representation)
+    if (from_sq < 0 || from_sq >= 120 || to_sq < 0 || to_sq >= 120) return;
+    
+    // Store the counter-move for this [from][to] combination
+    counter_moves[from_sq][to_sq] = counter_move;
+}
+
+// Get counter-move for the opponent's last move
+S_MOVE MinimalEngine::get_counter_move(const S_MOVE& previous_move) const {
+    // Validate move parameter
+    if (previous_move.move == 0) return S_MOVE();
+    
+    int from_sq = previous_move.get_from();
+    int to_sq = previous_move.get_to();
+    
+    // Validate square indices
+    if (from_sq < 0 || from_sq >= 120 || to_sq < 0 || to_sq >= 120) {
+        return S_MOVE();
+    }
+    
+    // Return stored counter-move, or empty move if none stored
+    return counter_moves[from_sq][to_sq];
 }
 
 // Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
@@ -696,7 +736,7 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
 
 // VICE Part 62: Pick Next Move - Select best move from remaining moves
 // This is more efficient than sorting all moves upfront
-int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, int depth) const {
+int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
         // VICE Part 84: Check for transposition table move (highest priority)
@@ -752,7 +792,21 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                     }
                 }
                 
-                if (!is_killer) {
+                // Check for counter-move (if not a killer move)
+                bool is_counter_move = false;
+                if (!is_killer && info.ply > 0 && info.ply < 64) {
+                    // Get the previous move from search stack
+                    S_MOVE previous_move = info.search_stack[info.ply - 1];
+                    if (previous_move.move != 0) {
+                        S_MOVE counter_move = get_counter_move(previous_move);
+                        if (counter_move.move == move.move) {
+                            score = 700000;  // Counter-move priority: between killers and promotions
+                            is_counter_move = true;
+                        }
+                    }
+                }
+                
+                if (!is_killer && !is_counter_move) {
                     if (move.is_promotion()) {
                         // Promotions: High priority, queen promotion highest
                         PieceType promoted = move.get_promoted();
@@ -1112,9 +1166,14 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos, depth);
+        pick_next_move(move_list, i, pos, info, depth);
         
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+        
+        // Track move in search stack for counter-move heuristic
+        if (info.ply >= 0 && info.ply < 64) {
+            info.search_stack[info.ply] = move_list.moves[i];
+        }
         
         int score;
         
@@ -1196,6 +1255,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                     
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
+                    
+                    // Update counter-move table if we have a previous move
+                    if (info.ply > 0 && info.ply < 64) {
+                        S_MOVE previous_move = info.search_stack[info.ply - 1];
+                        if (previous_move.move != 0) {
+                            update_counter_move(previous_move, move_list.moves[i]);
+                        }
+                    }
+                    
                     break;
                 }
             }
@@ -1267,7 +1335,7 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     // Search all capture moves
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos, -1);  // No depth in quiescence
+        pick_next_move(move_list, i, pos, info, -1);  // No depth in quiescence
         
         S_MOVE move = move_list.moves[i];
         
