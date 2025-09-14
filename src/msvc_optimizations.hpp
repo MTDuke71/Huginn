@@ -1,3 +1,6 @@
+#ifndef MSVC_OPTIMIZATIONS_HPP
+#define MSVC_OPTIMIZATIONS_HPP
+
 /**
  * @file msvc_optimizations.hpp
  * @brief Microsoft Visual C++ compiler-specific optimizations
@@ -157,3 +160,5 @@ namespace MSVCOptimizations {
 }
 
 #endif // _MSC_VER
+
+#endif // MSVC_OPTIMIZATIONS_HPP

@@ -1191,6 +1191,35 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
 
+    // Futility Pruning (Forward Pruning at Pre-Frontier Nodes)
+    // Skip move search if position evaluation + safety margin is still <= alpha
+    // This is safe because even the best possible move won't improve alpha enough
+    const int FUTILITY_MARGIN_BASE = 100;      // Base margin in centipawns
+    const int FUTILITY_MARGIN_PER_PLY = 50;    // Additional margin per remaining ply
+    const int MAX_FUTILITY_DEPTH = 3;          // Maximum depth to apply futility pruning
+    
+    bool futility_prune = false;
+    int futility_margin = 0;
+    
+    if (depth <= MAX_FUTILITY_DEPTH && !in_check && !isRoot) {
+        // Calculate position evaluation if we haven't already
+        int eval = evalPosition(pos);
+        
+        // Calculate safety margin based on remaining depth
+        futility_margin = FUTILITY_MARGIN_BASE + (FUTILITY_MARGIN_PER_PLY * depth);
+        
+        // If even with the safety margin we can't reach alpha, prune this node
+        if (eval + futility_margin <= alpha) {
+            futility_prune = true;
+            
+            // For debugging: track futility pruning statistics
+            info.futility_cuts++;
+            
+            // Return alpha (or slightly better) since no move can improve it significantly
+            return alpha;
+        }
+    }
+
     // Generate all legal moves first
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
@@ -1618,6 +1647,13 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             if (i < pv_moves - 1) std::cout << " ";
         }
         std::cout << std::endl;
+        
+        // Print futility pruning statistics for this depth
+        if (info.futility_cuts > 0) {
+            std::cout << "info string Depth " << current_depth << " - Futility cuts: " 
+                      << info.futility_cuts << " (" << std::fixed << std::setprecision(1) 
+                      << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
+        }
         
         // Time management: if we're getting close to time limit, consider stopping
         // Skip this if depth_only is set (UCI go depth command)
