@@ -2,6 +2,7 @@
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include "board120.hpp"
+#include "init.hpp"
 
 class LegalMoveTest : public ::testing::Test {
 protected:
@@ -9,6 +10,7 @@ protected:
     S_MOVELIST pseudo_moves, legal_moves;
     
     void SetUp() override {
+        Huginn::init();
         pos.reset();
         pseudo_moves.count = 0;  // Direct clear - faster than function call
         legal_moves.count = 0;   // Direct clear - faster than function call

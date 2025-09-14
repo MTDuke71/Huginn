@@ -2,6 +2,7 @@
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include "board120.hpp"
+#include "init.hpp"
 
 class CompleteMoveGenTest : public ::testing::Test {
 protected:
@@ -9,6 +10,7 @@ protected:
     S_MOVELIST moves;
     
     void SetUp() override {
+        Huginn::init();
         pos.reset();
         moves.count = 0;  // Direct clear - faster than function call
     }

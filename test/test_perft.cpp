@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
+#include "init.hpp"
 
 // Tiny perft harness (uses legal moves; grow as you add rules)
 static uint64_t perft(Position& pos, int depth) {
@@ -44,11 +45,13 @@ TEST(Perft, StartposSmoke_KingsAndPawns) {
 // Enable one depth at a time as you pass prior tests.
 
 TEST(Perft, Startpos_d1_is_20) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos; pos.set_startpos();
     EXPECT_EQ(perft(pos, 1), 20u);
 }
 
 TEST(Perft, Startpos_d1_partial) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos; pos.set_startpos();
     uint64_t count = perft(pos, 1);
     // Starting position: 16 pawn moves + 4 knight moves = 20 total
@@ -59,17 +62,20 @@ TEST(Perft, Startpos_d1_partial) {
 }
 
 TEST(Perft, Startpos_d2_is_400) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos; pos.set_startpos();
     EXPECT_EQ(perft(pos, 2), 400u);
 }
 
 TEST(Perft, Startpos_d3_is_8902) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos; pos.set_startpos();
     EXPECT_EQ(perft(pos, 3), 8902u);
 }
 
 // Simple test with start position first
 TEST(Perft, Debug_Startpos_Legal_Check) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos;
     pos.set_startpos();
     
@@ -90,6 +96,7 @@ TEST(Perft, Debug_Startpos_Legal_Check) {
 
 // Debug what's attacking the king in Kiwipete
 TEST(Perft, Debug_Kiwipete_Check) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos;
     std::string kiwipete_fen = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     
@@ -116,6 +123,7 @@ TEST(Perft, Debug_Kiwipete_Check) {
 
 // Kiwipete covers castling, pins, etc.
 TEST(Perft, Kiwipete_d1_48_d2_2039) {
+    Huginn::init(); // Initialize lookup tables and other engine components
     Position pos;
     // The famous Kiwipete position (Position 2 from Perft test suite)
     std::string kiwipete_fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";

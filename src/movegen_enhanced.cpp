@@ -38,6 +38,7 @@
 #include "king_optimizations.hpp"
 #include "knight_optimizations.hpp"
 #include "knight_lookup_tables.hpp"  // New lookup table optimization
+#include "king_lookup_tables.hpp"    // King lookup table optimization
 #include "sliding_piece_optimizations.hpp"
 
 /**
@@ -65,16 +66,13 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     // Use optimized pawn generation (addresses 20.3% of generation time)
     PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
     
-    // Knight generation: Choose between template and lookup table methods
-    // Compile-time flag to select knight optimization approach
-    #ifdef USE_KNIGHT_LOOKUP_TABLES
-        KnightLookupTables::generate_knight_moves_lookup(pos, list, us);
-    #else
-        KnightOptimizations::generate_knight_moves_template(pos, list, us);
-    #endif
+    // Knight generation: Template functions work correctly, lookup tables have bugs - reverting temporarily
+    KnightOptimizations::generate_knight_moves_template(pos, list, us);
     
     // Use optimized sliding piece generation (addresses 45%+ of generation time)
     SlidingPieceOptimizations::generate_all_sliding_moves_optimized(pos, list, us);
+    
+    // King generation: Optimized functions work correctly, lookup tables have bugs - reverting temporarily  
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
 }
 
@@ -155,25 +153,12 @@ void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us) {
 }
 
 void generate_knight_moves(const Position& pos, S_MOVELIST& list, Color us) {
-    int piece_count = pos.pCount[int(us)][int(PieceType::Knight)];
-    
-    for (int i = 0; i < piece_count; ++i) {
-        int from = pos.pList[int(us)][int(PieceType::Knight)][i];
-        if (from == -1) continue;
-        
-        for (int delta : KNIGHT_DELTAS) {
-            int to = from + delta;
-            if (IS_PLAYABLE(to)) {
-                Piece target = pos.at(to);
-                
-                if (target == Piece::None) {
-                    list.add_quiet_move(make_move(from, to));
-                } else if (color_of(target) == !us) {
-                    list.add_capture_move(make_capture(from, to, type_of(target)), pos);
-                }
-            }
-        }
-    }
+    // Delegate to the optimized implementation
+    #ifdef USE_KNIGHT_LOOKUP_TABLES
+        KnightLookupTables::generate_knight_moves_lookup(pos, list, us);
+    #else
+        KnightOptimizations::generate_knight_moves_template(pos, list, us);
+    #endif
 }
 
 void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, PieceType piece_type, const int* directions, int num_directions) {
@@ -248,3 +233,12 @@ void generate_all_caps(Position& pos, S_MOVELIST& list) {
 // =============================================================================
 // BACKWARD COMPATIBILITY IMPLEMENTATIONS
 // =============================================================================
+
+void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us) {
+    // Delegate to the optimized implementation
+    #ifdef USE_KING_LOOKUP_TABLES
+        KingLookupTables::generate_king_moves_lookup(pos, list, us);
+    #else
+        KingOptimizations::generate_king_moves_optimized(pos, list, us);
+    #endif
+}

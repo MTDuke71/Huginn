@@ -1,6 +1,18 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
+#include "init.hpp"
+
+class PawnMoveGenEnvironment : public ::testing::Environment {
+public:
+    void SetUp() override {
+        Huginn::init();
+    }
+};
+
+// Register the global test environment
+::testing::Environment* const pawn_movegen_env = 
+    ::testing::AddGlobalTestEnvironment(new PawnMoveGenEnvironment);
 
 // ====================================================================
 // BASIC PAWN MOVE GENERATION TESTS

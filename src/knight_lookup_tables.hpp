@@ -31,41 +31,8 @@
 #include "movegen_enhanced.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
+#include "msvc_intrinsics.hpp"
 #include <cstdint>
-
-#ifdef _MSC_VER
-    #include <intrin.h>
-    /**
-     * @brief MSVC intrinsics for bit operations
-     * @details Provides compatibility layer for GCC built-ins on MSVC
-     */
-    #pragma intrinsic(_BitScanForward64)
-    
-    /**
-     * @brief Count trailing zeros in 64-bit value (MSVC version)
-     * @param value 64-bit integer to analyze
-     * @return Number of trailing zero bits, or 64 if value is 0
-     */
-    inline int msvc_ctz64(uint64_t value) {
-        unsigned long index;
-        return _BitScanForward64(&index, value) ? index : 64;
-    }
-    
-    /**
-     * @brief Count set bits in 64-bit value (MSVC version)
-     * @param value 64-bit integer to analyze
-     * @return Number of set bits in the value
-     */
-    inline int msvc_popcount64(uint64_t value) {
-        return __popcnt64(value);
-    }
-    #define builtin_ctzll msvc_ctz64
-    #define builtin_popcountll msvc_popcount64
-#else
-    /// GCC/Clang built-ins
-    #define builtin_ctzll __builtin_ctzll
-    #define builtin_popcountll __builtin_popcountll
-#endif
 
 /**
  * @namespace KnightLookupTables

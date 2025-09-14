@@ -5,6 +5,7 @@
 #include "movegen_enhanced.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
+#include "knight_lookup_tables.hpp"
 
 /**
  * Huginn Chess Engine - Knight Move Generation Optimizations
@@ -219,6 +220,23 @@ namespace KnightOptimizations {
             int from = knight_list[i];
             if (from == -1) continue;
             
+#ifdef USE_KNIGHT_LOOKUP_TABLES
+            // Use lookup table optimization when enabled
+            int square_64 = MAILBOX_MAPS.to64[from];
+            int move_count = KnightLookupTables::KNIGHT_MOVE_COUNT[square_64];
+            
+            for (int j = 0; j < move_count; ++j) {
+                int to_64 = KnightLookupTables::KNIGHT_MOVES[square_64][j];
+                int to = MAILBOX_MAPS.to120[to_64];  // Convert back to 120-square system
+                Piece target = pos.at(to);
+                
+                if (target == Piece::None) {
+                    list.add_quiet_move(make_move(from, to));
+                } else if (color_of(target) == !us) {
+                    list.add_capture_move(make_capture(from, to, type_of(target)), pos);
+                }
+            }
+#else
             // Template instantiation allows full compile-time optimization
             generate_single_knight_move<+21>(pos, list, us, from);
             generate_single_knight_move<+19>(pos, list, us, from);
@@ -228,6 +246,7 @@ namespace KnightOptimizations {
             generate_single_knight_move<-12>(pos, list, us, from);
             generate_single_knight_move<-19>(pos, list, us, from);
             generate_single_knight_move<-21>(pos, list, us, from);
+#endif
         }
     }
 

@@ -12,6 +12,7 @@
 
 #include "knight_lookup_tables.hpp"
 #include "board120.hpp"
+#include "msvc_intrinsics.hpp"
 
 namespace KnightLookupTables {
 

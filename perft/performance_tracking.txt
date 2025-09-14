@@ -57,3 +57,4 @@
 2025-09-13, 9a13e17, Knight lookup tables - test run 3, 17410
 2025-09-13, 9a13e17, Baseline - Knight lookup tables disabled, 17329
 2025-09-13, 9a13e17, Knight lookup tables optimization - final test, 17006
+2025-09-14, 3a6d217, Performance test, 16943

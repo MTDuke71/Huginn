@@ -56,6 +56,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # MSVC specific settings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
+    add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_options(/W3)
     
     # Suppress specific warnings that are common in this codebase and safe
@@ -79,6 +80,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using GCC compiler")
     # GCC specific settings
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
+    add_compile_definitions(USE_KING_LOOKUP_TABLES)
     # GCC optimizations for Release builds
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(
@@ -96,6 +98,7 @@ else()
     message(WARNING "Untested compiler: ${CMAKE_CXX_COMPILER_ID}. Proceeding anyway...")
     # Fallback compile definitions for other compilers
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
+    add_compile_definitions(USE_KING_LOOKUP_TABLES)
 endif()
 
 # ---- Build Type Validation ----
@@ -269,6 +272,7 @@ set(COMMON_SOURCES
     src/pvtable.cpp
     src/polyglot_book.cpp
     src/knight_lookup_tables.cpp
+    src/king_lookup_tables.cpp
 )
 
 set(ENGINE_SOURCES
@@ -378,7 +382,9 @@ if(GTEST_FOUND)
         test/test_pawn_optimization.cpp
         test/test_knight_optimization.cpp
         test/test_knight_lookup.cpp
+        test/test_king_lookup.cpp
         test/test_evaluation_symmetry.cpp
+        test/debug_lookup_integration.cpp
     test/test_uci_time_and_stop_gtest.cpp
     test/test_uci_time_param_gtest.cpp
     test/test_uci_position_parsing.cpp
@@ -394,6 +400,28 @@ if(GTEST_FOUND)
     
     target_compile_features(demo_knight_lookup PRIVATE cxx_std_17)
     target_include_directories(demo_knight_lookup PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src 
+    )
+
+    # ---- King Lookup Demo ----
+    add_executable(demo_king_lookup
+        demos/demo_king_lookup.cpp
+        ${COMMON_SOURCES}
+    )
+    
+    target_compile_features(demo_king_lookup PRIVATE cxx_std_17)
+    target_include_directories(demo_king_lookup PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src 
+    )
+
+    # ---- Castling Test Demo ----
+    add_executable(test_castling_demo
+        test_castling_demo.cpp
+        ${COMMON_SOURCES}
+    )
+    
+    target_compile_features(test_castling_demo PRIVATE cxx_std_17)
+    target_include_directories(test_castling_demo PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/src 
     )
 
@@ -433,6 +461,12 @@ if(GTEST_FOUND)
 else()
     message(STATUS "Tests disabled - GTest not found")
 endif()
+
+# Debug executable for knight lookup debugging
+add_executable(debug_knight_lookup debug_knight_lookup.cpp ${COMMON_SOURCES})
+target_compile_features(debug_knight_lookup PRIVATE cxx_std_17)
+target_include_directories(debug_knight_lookup PRIVATE src)
+target_compile_definitions(debug_knight_lookup PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
 

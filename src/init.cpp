@@ -24,6 +24,7 @@
 #include "zobrist.hpp"
 #include "evaluation.hpp"
 #include "knight_lookup_tables.hpp"
+#include "king_lookup_tables.hpp"
 
 namespace Huginn {
     
@@ -48,6 +49,11 @@ namespace Huginn {
         
         // Initialize knight lookup tables for optimized move generation
         KnightLookupTables::initialize_knight_tables();
+        
+        // Initialize king lookup tables for optimized move generation
+        #ifdef USE_KING_LOOKUP_TABLES
+        KingLookupTables::initialize_king_tables();
+        #endif
         
         initialized = true;
     }

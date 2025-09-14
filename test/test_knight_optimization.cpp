@@ -7,11 +7,13 @@
 #include "movegen_enhanced.hpp"
 #include "knight_optimizations.hpp"
 #include "move.hpp"
+#include "init.hpp"
 
 class KnightOptimizationTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Set up common test positions
+        // Initialize engine and lookup tables
+        Huginn::init();
     }
     
     // Helper function to compare two move lists
