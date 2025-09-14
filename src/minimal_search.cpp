@@ -1701,6 +1701,24 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                       << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
         
+#ifdef USE_RAZORING
+        // Print razoring statistics for this depth
+        if (info.razoring_cuts > 0) {
+            std::cout << "info string Depth " << current_depth << " - Razoring cuts: " 
+                      << info.razoring_cuts << " (" << std::fixed << std::setprecision(1) 
+                      << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
+        }
+#endif
+        
+#ifdef USE_MULTI_CUT
+        // Print multi-cut pruning statistics for this depth
+        if (info.multi_cut_prunes > 0) {
+            std::cout << "info string Depth " << current_depth << " - Multi-cut prunes: " 
+                      << info.multi_cut_prunes << " (" << std::fixed << std::setprecision(1) 
+                      << (double(info.multi_cut_prunes) / info.nodes * 100.0) << "%)" << std::endl;
+        }
+#endif
+        
         // Time management: if we're getting close to time limit, consider stopping
         // Skip this if depth_only is set (UCI go depth command)
         if (!info.infinite && !info.depth_only && elapsed.count() > 3000) {  // If we've used 3+ seconds
