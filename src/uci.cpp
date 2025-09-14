@@ -45,8 +45,13 @@ UCIInterface::UCIInterface() {
     // Set starting position
     position.set_startpos();
     
-    // Initialize search engine
-    search_engine = std::make_unique<Huginn::MinimalEngine>();  // Changed from SimpleEngine
+    // Initialize tablebase
+    tablebase = std::make_unique<Huginn::SyzygyTablebase>();
+    // Automatically initialize with hardcoded path
+    tablebase->initialize("");  // Empty string will use the hardcoded d:\TB\ path
+    
+    // Initialize search engine with tablebase
+    search_engine = std::make_unique<Huginn::MinimalEngine>(tablebase.get());
     
     // Load opening book if enabled
     if (own_book) {
@@ -212,6 +217,7 @@ void UCIInterface::send_options() {
     std::cout << "option name Ponder type check default false" << std::endl;
     std::cout << "option name OwnBook type check default true" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
+    std::cout << "option name SyzygyPath type string default d:\\TB\\" << std::endl;
 }
 
 /**
@@ -533,6 +539,25 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
             }
             if (debug_mode) {
                 std::cout << "info string BookFile set to " << book_file << std::endl;
+            }
+        }
+        else if (option_name == "SyzygyPath") {
+            if (tablebase) {
+                if (option_value.empty() || option_value == "<empty>") {
+                    tablebase->shutdown();
+                    if (debug_mode) {
+                        std::cout << "info string Syzygy tablebases disabled" << std::endl;
+                    }
+                } else {
+                    bool success = tablebase->initialize(option_value);
+                    if (debug_mode) {
+                        if (success) {
+                            std::cout << "info string " << tablebase->get_info() << std::endl;
+                        } else {
+                            std::cout << "info string Failed to load Syzygy tablebases from: " << option_value << std::endl;
+                        }
+                    }
+                }
             }
         }
     }

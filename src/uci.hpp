@@ -42,6 +42,7 @@
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include "minimal_search.hpp"  // Changed from search.hpp
+#include "syzygy_tablebase.hpp"
 
 // UCI constants following VICE Part 67 recommendations
 constexpr int UCI_INPUT_BUFFER_SIZE = 400 * 6; // Large buffer for GUI commands
@@ -51,6 +52,7 @@ class UCIInterface {
 private:
     Position position;
     std::unique_ptr<Huginn::MinimalEngine> search_engine;  // Changed from SimpleEngine
+    std::unique_ptr<Huginn::SyzygyTablebase> tablebase;
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};
     // Pointer to running SearchInfo so stop() can update it safely

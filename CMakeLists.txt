@@ -58,8 +58,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    add_compile_definitions(USE_RAZORING)
-    add_compile_definitions(USE_MULTI_CUT)
+    # Disabled optimizations for performance testing
+    # add_compile_definitions(USE_RAZORING)
+    # add_compile_definitions(USE_MULTI_CUT)
     add_compile_options(/W3)
     
     # Suppress specific warnings that are common in this codebase and safe
@@ -85,8 +86,9 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    add_compile_definitions(USE_RAZORING)
-    add_compile_definitions(USE_MULTI_CUT)
+    # Disabled optimizations for performance testing
+    # add_compile_definitions(USE_RAZORING)
+    # add_compile_definitions(USE_MULTI_CUT)
     # GCC optimizations for Release builds
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(
@@ -106,8 +108,9 @@ else()
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    add_compile_definitions(USE_RAZORING)
-    add_compile_definitions(USE_MULTI_CUT)
+    # Disabled optimizations for performance testing
+    # add_compile_definitions(USE_RAZORING)
+    # add_compile_definitions(USE_MULTI_CUT)
 endif()
 
 # ---- Build Type Validation ----
@@ -264,6 +267,14 @@ function(add_assembly_target target_name source_files)
     endforeach()
 endfunction()
 
+# ---- Fathom Syzygy tablebase library ----
+# Commented out for now due to C11/MSVC compatibility issues
+# Will re-enable when compatibility is resolved
+# set(FATHOM_SOURCES
+#     fathom/src/tbprobe.c
+#     fathom/src/tbchess.c
+# )
+
 # ---- Source file lists ----
 set(COMMON_SOURCES
     src/bitboard.cpp
@@ -283,10 +294,12 @@ set(COMMON_SOURCES
     src/knight_lookup_tables.cpp
     src/king_lookup_tables.cpp
     src/pawn_lookup_tables.cpp
+    src/syzygy_tablebase.cpp
 )
 
 set(ENGINE_SOURCES
     ${COMMON_SOURCES}
+    # ${FATHOM_SOURCES}  # Commented out for now
     src/board.cpp
 
     src/uci.cpp
@@ -311,6 +324,7 @@ add_huginn_executable(huginn
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        # ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src  # Commented out for now
 )
 
 # ---- Mirror Evaluation Test ----
@@ -444,6 +458,7 @@ if(GTEST_FOUND)
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
     target_include_directories(huginn_tests PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/src 
+        # ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src  # Commented out for now
     )
     target_link_libraries(huginn_tests PRIVATE ${GTEST_LIBRARIES} Threads::Threads)
 

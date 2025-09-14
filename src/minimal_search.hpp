@@ -6,6 +6,7 @@
 #include "pvtable.hpp"
 #include "transposition_table.hpp"
 #include "polyglot_book.hpp"
+#include "syzygy_tablebase.hpp"
 #include <chrono>
 
 namespace Huginn {
@@ -85,6 +86,15 @@ struct MinimalLimits {
 
 class MinimalEngine {
 public:  // Make members public for easier access
+    // Constructor
+    MinimalEngine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
+        // Initialize MVV-LVA table
+        init_mvv_lva();
+        
+        // Clear search tables
+        clear_search_tables();
+    }
+    
     bool should_stop = false;
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
@@ -92,6 +102,7 @@ public:  // Make members public for easier access
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
     TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
     PolyglotBook opening_book;    // VICE Part 85: Polyglot opening book for opening moves
+    SyzygyTablebase* tablebase;  // Syzygy tablebase for endgame perfect play
     
     // Search History array (3:55) - stores scores for moves that improved alpha
     // [piece][to_square] - 13 piece types, 120 squares (mailbox)
@@ -111,12 +122,6 @@ public:  // Make members public for easier access
     // [victim][attacker] - prioritizes captures where weak pieces take strong pieces
     // Higher scores = better captures (e.g., pawn takes queen = high score)
     int mvv_lva_scores[7][7];  // 7 piece types (None=0, Pawn=1, Knight=2, Bishop=3, Rook=4, Queen=5, King=6)
-    
-    // Constructor
-    MinimalEngine() : pv_table(2), tt_table(64) {  // 64MB transposition table
-        clear_search_tables();
-        init_mvv_lva();
-    }
     
     // Clear search tables
     void clear_search_tables();
@@ -205,6 +210,10 @@ public:  // Make members public for easier access
     
     // VICE-style search function that demonstrates clearForSearch usage (Part 57)
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
+    
+    // Syzygy tablebase functions
+    bool probe_tablebase_wdl(const Position& pos, int& wdl_score) const;
+    S_MOVE probe_tablebase_root(const Position& pos) const;
 };
 
 } // namespace Huginn

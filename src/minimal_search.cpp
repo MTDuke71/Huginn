@@ -1789,4 +1789,38 @@ void MinimalEngine::print_book_moves(const Position& pos) const {
     }
 }
 
+// Syzygy Tablebase functions
+bool MinimalEngine::probe_tablebase_wdl(const Position& pos, int& wdl_score) const {
+    if (!tablebase || !tablebase->is_available()) {
+        return false;  // No tablebase available
+    }
+    
+    if (!tablebase->can_probe(pos)) {
+        return false;  // Position cannot be probed
+    }
+    
+    int result = tablebase->probe_wdl(pos);
+    if (result == INT32_MAX) {
+        return false;  // Probe failed
+    }
+    
+    wdl_score = result;
+    return true;
+}
+
+S_MOVE MinimalEngine::probe_tablebase_root(const Position& pos) const {
+    S_MOVE null_move;
+    null_move.move = 0;
+    
+    if (!tablebase || !tablebase->is_available()) {
+        return null_move;  // No tablebase available
+    }
+    
+    if (!tablebase->can_probe(pos)) {
+        return null_move;  // Position cannot be probed
+    }
+    
+    return tablebase->probe_root(pos);
+}
+
 } // namespace Huginn

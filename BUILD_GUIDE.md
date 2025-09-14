@@ -41,18 +41,18 @@ cd perft
 
 The engine includes these optimizations (controlled by compilation flags):
 
-- **USE_RAZORING**: Depth reduction when eval+margin < alpha
-- **USE_MULTI_CUT**: Early pruning after multiple beta-cutoffs
-- **USE_LMR**: Late move reduction
-- **USE_FUTILITY_PRUNING**: Forward pruning in leaf nodes
-- **USE_NULL_MOVE**: Null move pruning
+- **USE_RAZORING**: Depth reduction when eval+margin < alpha ❌ *DISABLED*
+- **USE_MULTI_CUT**: Early pruning after multiple beta-cutoffs ❌ *DISABLED*
+- **USE_LMR**: Late move reduction ✅ *ENABLED*
+- **USE_FUTILITY_PRUNING**: Forward pruning in leaf nodes ✅ *ENABLED*
+- **USE_NULL_MOVE**: Null move pruning ✅ *ENABLED*
 
-All optimizations are enabled by default and verified through the test suite.
+Razoring and Multi-cut optimizations have been disabled for performance testing.
 
 ## Benchmark Results
 
-Current performance with all optimizations:
+Current performance with optimized search:
 
-- Average NPS: ~1,280,000 nodes/second
+- Average NPS: ~1,292,000 nodes/second (with razoring/multi-cut disabled)
 - All 246 tests passing
-- Razoring and Multi-cut statistics available in search output
+- Search statistics available in engine output
