@@ -175,6 +175,12 @@ SOURCE_BROWSER         = YES
 - **Visual Studio**: IntelliSense displays Doxygen comments
 - **CLion**: Built-in Doxygen preview and generation
 
+### AI Agent Integration
+- **GitHub Copilot**: Reads Doxygen comments for better code suggestions
+- **Copilot Chat**: Uses documentation context for architectural guidance
+- **IntelliSense**: Enhanced autocomplete with documented function signatures
+- **Context Awareness**: Documentation provides semantic understanding of codebase
+
 ### External Tools
 - **Sphinx**: Can import Doxygen XML for unified documentation
 - **GitBook**: Can integrate Doxygen HTML output
@@ -190,9 +196,79 @@ SOURCE_BROWSER         = YES
 5. **Cross-References**: Link related functions and classes
 
 ### Maintenance
+
 1. **Regular Generation**: Generate docs with each significant change
 2. **Warning Cleanup**: Address all Doxygen warnings
 3. **Version Control**: Commit documentation with code changes
 4. **Review Process**: Include documentation review in code reviews
 
-This workflow ensures professional, maintainable, and accessible documentation for the Huginn chess engine! 🎉
+## 🤖 AI Agent Optimization Strategies
+
+### 1. Documentation as Context
+
+The comprehensive Doxygen documentation serves as rich context for AI agents:
+
+```cpp
+/**
+ * @brief Evaluates the current position and returns a score
+ * @param position The chess position to evaluate
+ * @param color The side to move (WHITE or BLACK)
+ * @return Position score in centipawns (positive favors white)
+ * 
+ * @note This function uses piece values, positional factors,
+ *       king safety, and pawn structure evaluation
+ * @complexity O(1) - constant time evaluation
+ * @thread_safety Thread-safe, uses only const position data
+ */
+int evaluate_position(const Position& position, Color color);
+```
+
+### 2. Semantic Search Integration
+
+- **Code Completion**: AI agents can reference documented patterns
+- **Architecture Understanding**: Documentation explains design decisions
+- **Best Practices**: Comments include performance and safety notes
+- **Cross-References**: Links between related functions improve context
+
+### 3. Enhanced Code Generation
+
+AI agents benefit from documentation in several ways:
+
+1. **Function Signatures**: Complete parameter and return documentation
+2. **Usage Examples**: Code blocks showing proper API usage
+3. **Performance Notes**: Complexity and optimization guidance
+4. **Design Patterns**: Architectural documentation guides implementation
+
+## 🔍 Leveraging Documentation for AI
+
+### GitHub Copilot Integration
+
+The documentation enhances Copilot's suggestions by:
+
+- **Contextual Awareness**: Function comments provide semantic context
+- **Pattern Recognition**: Documented patterns improve code suggestions
+- **Error Prevention**: Safety notes prevent common mistakes
+- **API Consistency**: Documentation ensures consistent API usage
+
+### VS Code IntelliSense
+
+Enhanced tooltips and autocomplete through:
+
+- **Parameter Hints**: Detailed parameter documentation
+- **Return Type Info**: Clear return value descriptions
+- **Usage Examples**: Inline code samples for complex functions
+- **Cross-References**: Quick navigation between related components
+
+### Recommended Extensions for Enhanced AI Integration
+
+```vscode-extensions
+cschlosser.doxdocgen,betwo.vscode-doxygen-runner,hakua.doxygen-previewer
+```
+
+These extensions provide:
+
+- **Live Documentation Preview**: See formatted docs as you type
+- **Auto-generation**: Generate documentation templates automatically
+- **Integration**: Better VS Code and Copilot integration
+
+This workflow ensures professional, maintainable, and AI-enhanced documentation for the Huginn chess engine! 🎉
