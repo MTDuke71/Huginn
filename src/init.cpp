@@ -25,6 +25,7 @@
 #include "evaluation.hpp"
 #include "knight_lookup_tables.hpp"
 #include "king_lookup_tables.hpp"
+#include "pawn_lookup_tables.hpp"
 
 namespace Huginn {
     
@@ -54,6 +55,9 @@ namespace Huginn {
         #ifdef USE_KING_LOOKUP_TABLES
         KingLookupTables::initialize_king_tables();
         #endif
+        
+        // Initialize pawn lookup tables for optimized move generation
+        PawnLookupTables::initialize_pawn_tables();
         
         initialized = true;
     }

@@ -64,7 +64,7 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     
     // Generate moves for each piece type using piece lists (fastest approach)
     // Use optimized pawn generation (addresses 20.3% of generation time)
-    PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
+    PawnOptimizations::generate_pawn_moves_template(pos, list, us);
     
     // Knight generation: Template functions work correctly, lookup tables have bugs - reverting temporarily
     KnightOptimizations::generate_knight_moves_template(pos, list, us);

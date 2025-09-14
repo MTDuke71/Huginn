@@ -31,6 +31,10 @@
  * @see movegen_enhanced.hpp for main move generation interface
  */
 
+#ifdef USE_PAWN_LOOKUP_TABLES
+#include "pawn_lookup_tables.hpp"
+#endif
+
 namespace PawnOptimizations {
 
 // Pre-computed promotion squares for fast lookup
@@ -179,6 +183,92 @@ inline void generate_pawn_moves_optimized(const Position& pos, S_MOVELIST& list,
             }
         }
     }
+}
+
+#ifdef USE_PAWN_LOOKUP_TABLES
+/**
+ * @brief Pawn move generation using pre-computed lookup tables
+ * 
+ * Ultra-optimized version that uses lookup tables to eliminate all arithmetic
+ * in the critical path. Pre-computes all possible destinations for maximum speed.
+ * 
+ * @param pos The chess position
+ * @param list The move list to populate
+ * @param us The color of pawns to generate moves for
+ */
+inline void generate_pawn_moves_lookup(const Position& pos, S_MOVELIST& list, Color us) {
+    const int piece_count = pos.pCount[int(us)][int(PieceType::Pawn)];
+    
+    // Early exit for positions with no pawns
+    if (piece_count == 0) return;
+    
+    // Pre-calculate promotion rank bounds for fast comparison
+    const int promo_min = (us == Color::White) ? 91 : 21;
+    const int promo_max = (us == Color::White) ? 98 : 28;
+    
+    for (int i = 0; i < piece_count; ++i) {
+        const int from = pos.pList[int(us)][int(PieceType::Pawn)][i];
+        if (from == -1) continue;
+        
+        // 1. Forward move (using lookup table)
+        const int forward_dest = PawnLookupTables::get_pawn_forward_move(us, from);
+        if (forward_dest != PawnLookupTables::INVALID_SQUARE && pos.at(forward_dest) == Piece::None) {
+            // Fast promotion check using pre-calculated bounds
+            if (forward_dest >= promo_min && forward_dest <= promo_max) {
+                generate_promotion_batch(list, from, forward_dest);
+            } else {
+                list.add_quiet_move(make_move(from, forward_dest));
+                
+                // 2. Double move (using lookup table)
+                const int double_dest = PawnLookupTables::get_pawn_double_move(us, from);
+                if (double_dest != PawnLookupTables::INVALID_SQUARE && pos.at(double_dest) == Piece::None) {
+                    list.add_quiet_move(make_pawn_start(from, double_dest));
+                }
+            }
+        }
+        
+        // 3. Left capture (using lookup table)
+        const int left_dest = PawnLookupTables::get_pawn_capture_left(us, from);
+        if (left_dest != PawnLookupTables::INVALID_SQUARE) {
+            const Piece target = pos.at(left_dest);
+            if (target != Piece::None && color_of(target) == !us) {
+                // Fast promotion check
+                if (left_dest >= promo_min && left_dest <= promo_max) {
+                    generate_promotion_batch(list, from, left_dest, type_of(target));
+                } else {
+                    list.add_capture_move(make_capture(from, left_dest, type_of(target)), pos);
+                }
+            } else if (left_dest == pos.ep_square) {
+                list.add_en_passant_move(make_en_passant(from, left_dest));
+            }
+        }
+        
+        // 4. Right capture (using lookup table)
+        const int right_dest = PawnLookupTables::get_pawn_capture_right(us, from);
+        if (right_dest != PawnLookupTables::INVALID_SQUARE) {
+            const Piece target = pos.at(right_dest);
+            if (target != Piece::None && color_of(target) == !us) {
+                // Fast promotion check
+                if (right_dest >= promo_min && right_dest <= promo_max) {
+                    generate_promotion_batch(list, from, right_dest, type_of(target));
+                } else {
+                    list.add_capture_move(make_capture(from, right_dest, type_of(target)), pos);
+                }
+            } else if (right_dest == pos.ep_square) {
+                list.add_en_passant_move(make_en_passant(from, right_dest));
+            }
+        }
+    }
+}
+#endif // USE_PAWN_LOOKUP_TABLES
+
+// Main pawn move generation function with conditional compilation
+inline void generate_pawn_moves_template(const Position& pos, S_MOVELIST& list, Color us) {
+#ifdef USE_PAWN_LOOKUP_TABLES
+    generate_pawn_moves_lookup(pos, list, us);
+#else
+    generate_pawn_moves_optimized(pos, list, us);
+#endif
 }
 
 } // namespace PawnOptimizations

@@ -57,6 +57,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
+    add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
     add_compile_options(/W3)
     
     # Suppress specific warnings that are common in this codebase and safe
@@ -81,6 +82,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # GCC specific settings
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
+    add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
     # GCC optimizations for Release builds
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(
@@ -99,6 +101,7 @@ else()
     # Fallback compile definitions for other compilers
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
+    add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
 endif()
 
 # ---- Build Type Validation ----
@@ -273,6 +276,7 @@ set(COMMON_SOURCES
     src/polyglot_book.cpp
     src/knight_lookup_tables.cpp
     src/king_lookup_tables.cpp
+    src/pawn_lookup_tables.cpp
 )
 
 set(ENGINE_SOURCES
@@ -466,7 +470,7 @@ endif()
 add_executable(debug_knight_lookup debug_knight_lookup.cpp ${COMMON_SOURCES})
 target_compile_features(debug_knight_lookup PRIVATE cxx_std_17)
 target_include_directories(debug_knight_lookup PRIVATE src)
-target_compile_definitions(debug_knight_lookup PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES)
+target_compile_definitions(debug_knight_lookup PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
 
