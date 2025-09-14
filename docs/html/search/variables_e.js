@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['passed_5fpawn_5fbonus_0',['PASSED_PAWN_BONUS',['../namespace_huginn_1_1_eval_params.html#a7fceac3149bbd2967dbf1976cf3022e1',1,'Huginn::EvalParams']]],
+  ['pawn_5ftable_1',['PAWN_TABLE',['../namespace_huginn_1_1_eval_params.html#ac3e80cf5f7a83befeaaeaa67c4c0a9ac',1,'Huginn::EvalParams']]],
+  ['pawn_5fvalue_2',['PAWN_VALUE',['../namespace_huginn_1_1_eval_params.html#aef86def89abf47a7ef7df87a9bb4b887',1,'Huginn::EvalParams']]],
+  ['pawns_5fbb_3',['pawns_bb',['../class_position.html#a129e6025c454dcc739d9a26281bb7c9a',1,'Position']]],
+  ['pawns_5fbb_5fbackup_4',['pawns_bb_backup',['../struct_s___u_n_d_o.html#a5cebe48c322c17fad76c1a22bf7d4a14',1,'S_UNDO']]],
+  ['pcount_5',['pCount',['../class_position.html#a4b1cf6de89dca9396fe3269ffd765bd9',1,'Position']]],
+  ['pcount_5fbackup_6',['pCount_backup',['../struct_s___u_n_d_o.html#a6637722c242a17858d0cbd8ade1d0b6c',1,'S_UNDO']]],
+  ['piece_7',['Piece',['../namespace_zobrist.html#ab6ea7951763912188e1f7eceae520e79',1,'Zobrist']]],
+  ['piece_5fbitboards_8',['piece_bitboards',['../class_position.html#a37ad7ce2496eef08026bf2d02f571c45',1,'Position']]],
+  ['piece_5fcounts_9',['piece_counts',['../class_position.html#a9dfac90ac574f297c93d961ace483e6f',1,'Position']]],
+  ['piece_5fcounts_5fbackup_10',['piece_counts_backup',['../struct_s___u_n_d_o.html#afbe7b8070293596f4e13edf7ecf69590',1,'S_UNDO']]],
+  ['piece_5fnb_11',['PIECE_NB',['../zobrist_8hpp.html#a5155d8c849f9c9e1334d1aae072bb80a',1,'zobrist.hpp']]],
+  ['piece_5fvalues_5fmg_12',['PIECE_VALUES_MG',['../chess__types_8hpp.html#a3ed3dd152aa253c298551ca152a665f8',1,'chess_types.hpp']]],
+  ['playable_13',['playable',['../struct_file_rank_lookups.html#a1ff530346656a43ff0db6d8d23ef7d53',1,'FileRankLookups']]],
+  ['plist_14',['pList',['../class_position.html#a259ab50f322ccd7bc526e4499ff00e04',1,'Position']]],
+  ['plist_5fbackup_15',['pList_backup',['../struct_s___u_n_d_o.html#ad5dd9d07acac35687aca29d1e9283e93',1,'S_UNDO']]],
+  ['ply_16',['ply',['../struct_huginn_1_1_search_info.html#a6d9c458dee750a3d6ad4c910fcff8719',1,'Huginn::SearchInfo::ply'],['../class_position.html#a89988ad2cbcb28911e7053ecdf14921b',1,'Position::ply']]],
+  ['position_5fkey_17',['position_key',['../struct_huginn_1_1_p_v_entry.html#ad1f31454dbf527763ed62408123e1423',1,'Huginn::PVEntry']]],
+  ['promotion_5fpieces_18',['PROMOTION_PIECES',['../namespace_pawn_optimizations.html#a8ff4c698065f2d2cda119a66d8be7f1e',1,'PawnOptimizations']]],
+  ['pv_5ftable_19',['pv_table',['../class_huginn_1_1_minimal_engine.html#a9ef812af236f64118c22377b55c85593',1,'Huginn::MinimalEngine']]]
+];

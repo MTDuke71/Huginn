@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['e_0',['E',['../board120_8hpp.html#a2f9bad7e0dbe33423abe2a2ea71ffe26a3a3ea00cfc35332cedf6e5e9a32e94da',1,'board120.hpp']]],
+  ['east_1',['EAST',['../board120_8hpp.html#aed78fb088d01c8d87d26f65d3bc23d21',1,'board120.hpp']]],
+  ['empty_5fbb_2',['EMPTY_BB',['../bitboard_8hpp.html#a34ad8714a1a03685d63221803fc5e730',1,'bitboard.hpp']]],
+  ['encode_5fmove_3',['encode_move',['../struct_s___m_o_v_e.html#a4ac5f9c7d32eb96733ed1eb4a34041ba',1,'S_MOVE']]],
+  ['encoding_20format_4',['Encoding Format',['../move_8hpp.html#Move',1,'']]],
+  ['end_5',['end',['../struct_piece_type_iter.html#afac521d8826f5e3155606184b6cf4fd0',1,'PieceTypeIter::end()'],['../struct_s___m_o_v_e_l_i_s_t.html#a1274593989873e0a3dd9b1be67d2938d',1,'S_MOVELIST::end()'],['../struct_s___m_o_v_e_l_i_s_t.html#aaff78843052f21173a80eeb0a44942fc',1,'S_MOVELIST::end() const']]],
+  ['endgame_6',['Endgame',['../namespace_huginn.html#a90b0e0ef676895462f88e32bc005f0a9a1b4b16ae294b41580302d0090a902233',1,'Huginn']]],
+  ['endgame_5fmaterial_5fthreshold_7',['ENDGAME_MATERIAL_THRESHOLD',['../namespace_huginn_1_1_eval_params.html#a9b6eb3e6bfa5610eeaeb17a939a8b866',1,'Huginn::EvalParams']]],
+  ['engine_8',['Engine',['../polyglot__book_8hpp.html#autotoc_md32',1,'Integration with Engine'],['../index.html#autotoc_md58',1,'UCI Chess Engine']]],
+  ['engine_20architecture_9',['Chess Engine Architecture',['../index.html#autotoc_md59',1,'']]],
+  ['engine_20king_20move_20generation_20optimizations_10',['Huginn Chess Engine - King Move Generation Optimizations',['../namespace_king_optimizations.html#autotoc_md20',1,'']]],
+  ['engine_20knight_20move_20generation_20optimizations_11',['Huginn Chess Engine - Knight Move Generation Optimizations',['../namespace_knight_optimizations.html#autotoc_md21',1,'']]],
+  ['engine_20sliding_20piece_20move_20generation_20optimizations_12',['Huginn Chess Engine - Sliding Piece Move Generation Optimizations',['../namespace_sliding_piece_optimizations.html#autotoc_md43',1,'']]],
+  ['ep_5fsquare_13',['ep_square',['../struct_state.html#af4f2adc9ee53fa935aecd278e3adcf74',1,'State::ep_square'],['../struct_s___u_n_d_o.html#aaca64ad9c9128f0ed66aca66477e94e9',1,'S_UNDO::ep_square'],['../class_position.html#a2f3c491f5eaff4726d52b22f84d7448e',1,'Position::ep_square']]],
+  ['epfile_14',['EpFile',['../namespace_zobrist.html#a60d5caf19519bed85b52ff0def8a7e89',1,'Zobrist']]],
+  ['evalparams_15',['EvalParams',['../namespace_eval_params.html',1,'']]],
+  ['evalposition_16',['evalPosition',['../class_huginn_1_1_minimal_engine.html#afffdabccc455487b9bcda1a01be7f2a0',1,'Huginn::MinimalEngine']]],
+  ['evaluate_17',['evaluate',['../class_huginn_1_1_minimal_engine.html#aa0690cf53bb622eb3b549144949a14f3',1,'Huginn::MinimalEngine']]],
+  ['evaluation_20and_20dramatically_20improved_20chess_20playing_20strength_18',['Hug&amp;gt; &lt;b&gt;🎉 Version 1.1&lt;/b&gt; - Major release featuring hybrid evaluation and dramatically improved chess playing strength',['../index.html',1,'']]],
+  ['evaluation_20components_19',['Evaluation Components',['../evaluation_8cpp.html#autotoc_md15',1,'']]],
+  ['evaluation_2ecpp_20',['evaluation.cpp',['../evaluation_8cpp.html',1,'']]],
+  ['evaluation_2ehpp_21',['evaluation.hpp',['../evaluation_8hpp.html',1,'']]],
+  ['every_20move_22',['Huginn: Odin&apos;s Thought, in Every Move',['../index.html#autotoc_md50',1,'']]],
+  ['exact_23',['EXACT',['../struct_t_t_entry.html#a306f5a69fdef01b3643f145a2a84cbe8',1,'TTEntry']]]
+];

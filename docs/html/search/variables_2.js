@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['captured_0',['captured',['../struct_state.html#a87d30f4f950a146c4b4e1df56626d750',1,'State::captured'],['../struct_s___u_n_d_o.html#aca217d989acb8834b3a3dbc4eed5f21f',1,'S_UNDO::captured']]],
+  ['castle_1',['Castle',['../namespace_zobrist.html#a96a876fdb036ab730a07ecc3a05e393f',1,'Zobrist']]],
+  ['castle_5fall_2',['CASTLE_ALL',['../chess__types_8hpp.html#aff8d46109f422839146c9550ad316a25',1,'chess_types.hpp']]],
+  ['castle_5fbk_3',['CASTLE_BK',['../chess__types_8hpp.html#a41a30f087e65f04ad50c4e8b83b11d27',1,'chess_types.hpp']]],
+  ['castle_5fbonus_4',['CASTLE_BONUS',['../namespace_huginn_1_1_eval_params.html#a1de4ec51acd39a8001fe3b46603360b4',1,'Huginn::EvalParams']]],
+  ['castle_5fbq_5',['CASTLE_BQ',['../chess__types_8hpp.html#afc1338f6bcdf64fe1e1aa53011a8368b',1,'chess_types.hpp']]],
+  ['castle_5fnone_6',['CASTLE_NONE',['../chess__types_8hpp.html#a6059cb935244c70097ab0db192c5f297',1,'chess_types.hpp']]],
+  ['castle_5fwk_7',['CASTLE_WK',['../chess__types_8hpp.html#af405059669a2a4eb64074476a8bdd419',1,'chess_types.hpp']]],
+  ['castle_5fwq_8',['CASTLE_WQ',['../chess__types_8hpp.html#a939dd76068994eea6a855da0af8f7d00',1,'chess_types.hpp']]],
+  ['castling_5fmask_9',['CASTLING_MASK',['../namespace_castling_lookup.html#a3e60a9312fda045c34de460ff1aa81ca',1,'CastlingLookup']]],
+  ['castling_5frights_10',['castling_rights',['../struct_state.html#afec86f25aeb2924359484309231a4fa0',1,'State::castling_rights'],['../struct_s___u_n_d_o.html#afbc1d4ce9d64c644a4dbeba2b0f58411',1,'S_UNDO::castling_rights'],['../class_position.html#a3a908a764d12a6961a4326de5ad3d8c7',1,'Position::castling_rights']]],
+  ['clear_5fmask_11',['CLEAR_MASK',['../bitboard_8hpp.html#aca2334f92a75c5a0f238bbbd947b3b22',1,'bitboard.hpp']]],
+  ['color_5fbitboards_12',['color_bitboards',['../class_position.html#a93e00e39dd57466592b7bf826321da8d',1,'Position']]],
+  ['count_13',['count',['../struct_s___m_o_v_e_l_i_s_t.html#a4be6ff93290554ed36a1967406ff60c6',1,'S_MOVELIST']]],
+  ['counter_5fmoves_14',['counter_moves',['../class_huginn_1_1_minimal_engine.html#a668ab75397a1502a62880c5fe885f4cd',1,'Huginn::MinimalEngine']]],
+  ['current_5flimits_15',['current_limits',['../class_huginn_1_1_minimal_engine.html#a5681a988461f178b997a5a4de922dd33',1,'Huginn::MinimalEngine']]]
+];

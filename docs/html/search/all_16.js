@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['u64_0',['U64',['../zobrist_8hpp.html#a366635014d1bca8df2296a952bf1eef9',1,'zobrist.hpp']]],
+  ['uci_20chess_20engine_1',['UCI Chess Engine',['../index.html#autotoc_md58',1,'']]],
+  ['uci_20protocol_20features_2',['UCI Protocol Features',['../uci_8hpp.html#autotoc_md46',1,'']]],
+  ['uci_2ecpp_3',['uci.cpp',['../uci_8cpp.html',1,'']]],
+  ['uci_2ehpp_4',['uci.hpp',['../uci_8hpp.html',1,'']]],
+  ['uci_5finput_5fbuffer_5fsize_5',['UCI_INPUT_BUFFER_SIZE',['../uci_8hpp.html#a6710ec34fc887440965415ebbf978168',1,'uci.hpp']]],
+  ['uci_5futils_2ecpp_6',['uci_utils.cpp',['../uci__utils_8cpp.html',1,'']]],
+  ['uci_5futils_2ehpp_7',['uci_utils.hpp',['../uci__utils_8hpp.html',1,'']]],
+  ['uciinterface_8',['UCIInterface',['../class_u_c_i_interface.html',1,'UCIInterface'],['../class_u_c_i_interface.html#a373175d41334de0e1ebe1ea06e63124e',1,'UCIInterface::UCIInterface()']]],
+  ['undo_5fmove_9',['undo_move',['../class_position.html#acfc0ff1c670e171a94d68c8936835758',1,'Position']]],
+  ['unlikely_10',['UNLIKELY',['../msvc__optimizations_8hpp.html#ab10d0a221f4d7a706701b806c8135fd7',1,'msvc_optimizations.hpp']]],
+  ['unlikely_5fif_11',['UNLIKELY_IF',['../msvc__optimizations_8hpp.html#aef3becc6d096d4c223f3d6332c8b426d',1,'msvc_optimizations.hpp']]],
+  ['update_5fcastling_5frights_12',['update_castling_rights',['../namespace_castling_lookup.html#a407fe36dbfc540ee0a267a96a42cbdbd',1,'CastlingLookup']]],
+  ['update_5fcastling_5frights_5ffor_5fsquares_13',['update_castling_rights_for_squares',['../chess__types_8hpp.html#a56c4507a037ede95ce1ae0ee69238e18',1,'chess_types.hpp']]],
+  ['update_5fcounter_5fmove_14',['update_counter_move',['../class_huginn_1_1_minimal_engine.html#a7f4181a434c886df78f05b8609be9e12',1,'Huginn::MinimalEngine']]],
+  ['update_5fderived_5fstate_5ffor_5fmove_15',['update_derived_state_for_move',['../class_position.html#a7888eab3445efeefbc1bc8a5ed15508b',1,'Position']]],
+  ['update_5fkiller_5fmoves_16',['update_killer_moves',['../class_huginn_1_1_minimal_engine.html#a1004dd283aa37ab45dbeda1cffba2c3c',1,'Huginn::MinimalEngine']]],
+  ['update_5fsearch_5fhistory_17',['update_search_history',['../class_huginn_1_1_minimal_engine.html#a5cbcbaa57e8554358728f73d236f6c0c',1,'Huginn::MinimalEngine']]],
+  ['update_5fzobrist_5ffor_5fmove_18',['update_zobrist_for_move',['../class_position.html#a9e4b0d19e4025c44764ca997d5d30faf',1,'Position']]],
+  ['update_5fzobrist_5fkey_19',['update_zobrist_key',['../class_position.html#a46e630ab61fb240b31a3836be4cff77c',1,'Position']]],
+  ['upper_5fbound_20',['UPPER_BOUND',['../struct_t_t_entry.html#a0de298f42f8ced82dac0122eef8b5a40',1,'TTEntry']]],
+  ['usage_20pattern_3a_21',['Usage Pattern:',['../class_huginn_1_1_polyglot_book.html#autotoc_md33',1,'']]],
+  ['use_20msys2’s_20packaged_20googletest_22',['Option B: Use MSYS2’s packaged googletest',['../index.html#autotoc_md71',1,'']]],
+  ['use_20vs_20code_23',['Alternative: Use VS Code',['../index.html#autotoc_md55',1,'']]],
+  ['utility_20functions_24',['Utility Functions',['../bitboard_8cpp.html#autotoc_md3',1,'']]]
+];

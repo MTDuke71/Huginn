@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['best_5fmove_0',['best_move',['../struct_huginn_1_1_search_info.html#adc291a5104bdd7ed6ff29e59c5da9c22',1,'Huginn::SearchInfo::best_move'],['../struct_t_t_entry.html#aa2597674df4702d9cf4e9340408f9ffe',1,'TTEntry::best_move']]],
+  ['bishop_5fpair_5fbonus_1',['BISHOP_PAIR_BONUS',['../namespace_huginn_1_1_eval_params.html#ab366f61213186de874764aa08c3470fc',1,'Huginn::EvalParams']]],
+  ['bishop_5ftable_2',['BISHOP_TABLE',['../namespace_huginn_1_1_eval_params.html#a8d39e593a2633c9ef0766e1c81ee8a04',1,'Huginn::EvalParams']]],
+  ['bishop_5fvalue_3',['BISHOP_VALUE',['../namespace_huginn_1_1_eval_params.html#acda1ffd6e32cc311edcf8e9e388b6d8c',1,'Huginn::EvalParams']]],
+  ['bit_5fmask_4',['BIT_MASK',['../bitboard_8hpp.html#af3a78ea46015cfba60b968c3504a4a19',1,'bitboard.hpp']]],
+  ['bkca_5',['BKCA',['../chess__types_8hpp.html#ab80e0a665ba3c11588c3225ce8048a05',1,'chess_types.hpp']]],
+  ['black_5fking_5fstart_6',['BLACK_KING_START',['../struct_king_optimizations_1_1_castling_squares.html#a1970b8f5a44bc6e43caee547f21876a4',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fkingside_5fattack_5fcheck_7',['BLACK_KINGSIDE_ATTACK_CHECK',['../struct_king_optimizations_1_1_castling_squares.html#a5ecde59b8afe06a549f185bf90ef6845',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fkingside_5fking_5fto_8',['BLACK_KINGSIDE_KING_TO',['../struct_king_optimizations_1_1_castling_squares.html#a891b49bfef943bc2bbe3a474f4fc5daa',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fkingside_5fpath_9',['BLACK_KINGSIDE_PATH',['../struct_king_optimizations_1_1_castling_squares.html#ae34771ec71ed0f0773e80aeb4767b6ac',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fkingside_5frook_10',['BLACK_KINGSIDE_ROOK',['../struct_king_optimizations_1_1_castling_squares.html#a5773289fc2ed996a35441ab0328e4ef4',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fknight_5foutpost_5fmax_5frank_11',['BLACK_KNIGHT_OUTPOST_MAX_RANK',['../namespace_huginn_1_1_eval_params.html#a1ff6e7753b5ecc98d16f006a5f7d7dde',1,'Huginn::EvalParams']]],
+  ['black_5fpassed_5fpawn_5fmasks_12',['BLACK_PASSED_PAWN_MASKS',['../namespace_huginn_1_1_eval_params.html#a0dab0815f492eca5d7c7864e47b629e0',1,'Huginn::EvalParams']]],
+  ['black_5fpromotion_5frank_13',['BLACK_PROMOTION_RANK',['../struct_pawn_optimizations_1_1_promotion_squares.html#a548e7b2c4f4a30be18ae0a0c95d13f69',1,'PawnOptimizations::PromotionSquares']]],
+  ['black_5fqueenside_5fattack_5fcheck_14',['BLACK_QUEENSIDE_ATTACK_CHECK',['../struct_king_optimizations_1_1_castling_squares.html#ad8fc96a76de051ddcf229e099b4b81da',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fqueenside_5fking_5fto_15',['BLACK_QUEENSIDE_KING_TO',['../struct_king_optimizations_1_1_castling_squares.html#ad1d55e1dc820549d898fc48ad9ed63ac',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fqueenside_5fpath_16',['BLACK_QUEENSIDE_PATH',['../struct_king_optimizations_1_1_castling_squares.html#a160622d823c6828866165027cf7d0504',1,'KingOptimizations::CastlingSquares']]],
+  ['black_5fqueenside_5frook_17',['BLACK_QUEENSIDE_ROOK',['../struct_king_optimizations_1_1_castling_squares.html#a701c3f6d8848073c66e09dc9fa39577f',1,'KingOptimizations::CastlingSquares']]],
+  ['board_18',['board',['../class_position.html#ac94716aa1a89112bdbe56d8653caed94',1,'Position']]],
+  ['bqca_19',['BQCA',['../chess__types_8hpp.html#a88115d785d4103c99fedf195a2b9b617',1,'chess_types.hpp']]]
+];
