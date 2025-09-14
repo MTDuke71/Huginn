@@ -16,5 +16,6 @@ var searchData=
   ['file_5frank_5flookups_13',['FILE_RANK_LOOKUPS',['../board120_8hpp.html#ad3f7c28202cbbb3482484236db0b1c65',1,'board120.hpp']]],
   ['files_14',['files',['../struct_file_rank_lookups.html#aba227da4d13571aa0474f0129ad13c47',1,'FileRankLookups']]],
   ['full_5fbb_15',['FULL_BB',['../bitboard_8hpp.html#a08ef11f803158ec319b6573ca0f199f7',1,'bitboard.hpp']]],
-  ['fullmove_5fnumber_16',['fullmove_number',['../class_position.html#a35b16cb9f81dbc632f9327021e730fec',1,'Position']]]
+  ['fullmove_5fnumber_16',['fullmove_number',['../class_position.html#a35b16cb9f81dbc632f9327021e730fec',1,'Position']]],
+  ['futility_5fcuts_17',['futility_cuts',['../struct_huginn_1_1_search_info.html#afc59f5f50048ad8137dc234882efd388',1,'Huginn::SearchInfo']]]
 ];

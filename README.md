@@ -73,7 +73,7 @@ cd mirror_test
 
 - **Complete UCI Protocol**: Compatible with Arena, Fritz, ChessBase, and all UCI chess GUIs
 - **Hybrid Evaluation System**: Advanced evaluation combining Engine2's bitboard analysis with mailbox position representation
-- **Single-threaded Alpha-Beta Search**: Robust search with quiescence, iterative deepening, and move ordering
+- **Single-threaded Alpha-Beta Search**: Robust search with quiescence, iterative deepening, move ordering, and futility pruning
 - **Realistic Position Assessment**: Accurate centipawn evaluations and mate detection (~70k-90k nps)
 - **Enhanced Move Encoding**: Proper UCI move output (d2d4, e2e4) replacing legacy "0000" move bugs
 - **Game Phase Detection**: Opening/middlegame/endgame evaluation adjustments for optimal play strength
@@ -83,7 +83,7 @@ cd mirror_test
 - **Hybrid Evaluation Engine**: Combines advanced bitboard evaluation techniques with mailbox position representation
 - **Comprehensive Position Analysis**: Material counting, pawn structure, piece activity, king safety, and mobility evaluation
 - **Game Phase Awareness**: Dynamic evaluation adjustments based on opening/middlegame/endgame detection
-- **Single-threaded Search**: Alpha-beta pruning with quiescence search, iterative deepening, and sophisticated move ordering
+- **Single-threaded Search**: Alpha-beta pruning with quiescence search, iterative deepening, sophisticated move ordering, and futility pruning
 - **Principal Variation Collection**: Complete PV lines showing tactical sequences and candidate moves
 - **Mailbox-120 Board Representation**: 10x12 board with off-board sentinels for efficient boundary checking
 - **Modern C++17**: Type-safe enums, constexpr functions, and std::array for performance

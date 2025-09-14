@@ -138,7 +138,7 @@ UCI Chess Engine</h2>
 <ul>
 <li><b>Complete UCI Protocol</b>: Compatible with Arena, Fritz, ChessBase, and all UCI chess GUIs</li>
 <li><b>Hybrid Evaluation System</b>: Advanced evaluation combining Engine2's bitboard analysis with mailbox position representation</li>
-<li><b>Single-threaded Alpha-Beta Search</b>: Robust search with quiescence, iterative deepening, and move ordering</li>
+<li><b>Single-threaded Alpha-Beta Search</b>: Robust search with quiescence, iterative deepening, move ordering, and futility pruning</li>
 <li><b>Realistic Position Assessment</b>: Accurate centipawn evaluations and mate detection (~70k-90k nps)</li>
 <li><b>Enhanced Move Encoding</b>: Proper UCI move output (d2d4, e2e4) replacing legacy "0000" move bugs</li>
 <li><b>Game Phase Detection</b>: Opening/middlegame/endgame evaluation adjustments for optimal play strength</li>
@@ -149,7 +149,7 @@ Chess Engine Architecture</h2>
 <li><b>Hybrid Evaluation Engine</b>: Combines advanced bitboard evaluation techniques with mailbox position representation</li>
 <li><b>Comprehensive Position Analysis</b>: Material counting, pawn structure, piece activity, king safety, and mobility evaluation</li>
 <li><b>Game Phase Awareness</b>: Dynamic evaluation adjustments based on opening/middlegame/endgame detection</li>
-<li><b>Single-threaded Search</b>: Alpha-beta pruning with quiescence search, iterative deepening, and sophisticated move ordering</li>
+<li><b>Single-threaded Search</b>: Alpha-beta pruning with quiescence search, iterative deepening, sophisticated move ordering, and futility pruning</li>
 <li><b>Principal Variation Collection</b>: Complete PV lines showing tactical sequences and candidate moves</li>
 <li><b>Mailbox-120 Board Representation</b>: 10x12 board with off-board sentinels for efficient boundary checking</li>
 <li><b>Modern C++17</b>: Type-safe enums, constexpr functions, and std::array for performance</li>

@@ -33,5 +33,6 @@ var searchData=
   ['full_5fbb_30',['FULL_BB',['../bitboard_8hpp.html#a08ef11f803158ec319b6573ca0f199f7',1,'bitboard.hpp']]],
   ['fullmove_5fnumber_31',['fullmove_number',['../class_position.html#a35b16cb9f81dbc632f9327021e730fec',1,'Position']]],
   ['function_20categories_32',['Function Categories',['../movegen__enhanced_8cpp.html#autotoc_md24',1,'']]],
-  ['functions_33',['Functions',['../board_8cpp.html#autotoc_md6',1,'Functions'],['../board120_8cpp.html#autotoc_md7',1,'Functions'],['../chess__types_8cpp.html#autotoc_md11',1,'Functions'],['../bitboard_8cpp.html#autotoc_md3',1,'Utility Functions']]]
+  ['functions_33',['Functions',['../board_8cpp.html#autotoc_md6',1,'Functions'],['../board120_8cpp.html#autotoc_md7',1,'Functions'],['../chess__types_8cpp.html#autotoc_md11',1,'Functions'],['../bitboard_8cpp.html#autotoc_md3',1,'Utility Functions']]],
+  ['futility_5fcuts_34',['futility_cuts',['../struct_huginn_1_1_search_info.html#afc59f5f50048ad8137dc234882efd388',1,'Huginn::SearchInfo']]]
 ];

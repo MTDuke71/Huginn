@@ -107,6 +107,8 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ae8197abfd6b2f14dc10f9fbe82b71ad7" id="r_ae8197abfd6b2f14dc10f9fbe82b71ad7"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae8197abfd6b2f14dc10f9fbe82b71ad7">fh</a></td></tr>
 <tr class="memitem:a6827f5533de58a4b7a8f38770184f0e1" id="r_a6827f5533de58a4b7a8f38770184f0e1"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6827f5533de58a4b7a8f38770184f0e1">fhf</a></td></tr>
 <tr class="memitem:a32d69e33882f121a6df2fe5115738980" id="r_a32d69e33882f121a6df2fe5115738980"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a32d69e33882f121a6df2fe5115738980">null_cut</a></td></tr>
+<tr class="memitem:afc59f5f50048ad8137dc234882efd388" id="r_afc59f5f50048ad8137dc234882efd388"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc59f5f50048ad8137dc234882efd388">futility_cuts</a></td></tr>
+<tr class="memdesc:afc59f5f50048ad8137dc234882efd388"><td class="mdescLeft">&#160;</td><td class="mdescRight">Futility Pruning Statistics.  <br /></td></tr>
 <tr class="memitem:a542c8e24420bce7cacbd5a24ca93aed5" id="r_a542c8e24420bce7cacbd5a24ca93aed5"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a542c8e24420bce7cacbd5a24ca93aed5">lmr_attempts</a></td></tr>
 <tr class="memitem:a32ba1532db0842828d946b6f2ccec7f5" id="r_a32ba1532db0842828d946b6f2ccec7f5"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a32ba1532db0842828d946b6f2ccec7f5">lmr_failures</a></td></tr>
 <tr class="memitem:ac2bd88383adf9960ca074ac231a0754e" id="r_ac2bd88383adf9960ca074ac231a0754e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_s___m_o_v_e.html">S_MOVE</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac2bd88383adf9960ca074ac231a0754e">search_stack</a> [64]</td></tr>
@@ -138,7 +140,7 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00048">48</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00064">64</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
 
 </div>
 </div>
@@ -223,6 +225,31 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="afc59f5f50048ad8137dc234882efd388" name="afc59f5f50048ad8137dc234882efd388"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc59f5f50048ad8137dc234882efd388">&#9670;&#160;</a></span>futility_cuts</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint64_t Huginn::SearchInfo::futility_cuts</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Futility Pruning Statistics. </p>
+<p>Futility pruning is a forward pruning technique that skips evaluation of moves in positions where even the best possible move cannot significantly improve the position's score relative to alpha.</p>
+<p>Applied at shallow depths (≤3) with safety margins:</p><ul>
+<li>Base margin: 100 centipawns</li>
+<li>Additional margin: 50cp per remaining ply</li>
+<li>Safety: Never prunes when in check or at root</li>
+</ul>
+<p>Provides 5-15% search speedup while maintaining tactical accuracy. </p>
+
+<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00055">55</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
+
+</div>
+</div>
 <a id="af381693c5da6bb11ddcc005167ff6a8a" name="af381693c5da6bb11ddcc005167ff6a8a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af381693c5da6bb11ddcc005167ff6a8a">&#9670;&#160;</a></span>infinite</h2>
 
@@ -251,7 +278,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00042">42</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00058">58</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
 
 </div>
 </div>
@@ -267,7 +294,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00043">43</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00059">59</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
 
 </div>
 </div>
@@ -379,7 +406,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00046">46</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="minimal__search_8hpp_source.html#l00062">62</a> of file <a class="el" href="minimal__search_8hpp_source.html">minimal_search.hpp</a>.</p>
 
 </div>
 </div>

@@ -6,13 +6,18 @@ echo Generating Huginn Chess Engine Documentation...
 echo ================================================
 
 REM Ensure Doxygen is available
-where doxygen >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Doxygen not found in PATH
-    echo Please install Doxygen or add it to your PATH
-    echo Download from: https://www.doxygen.nl/download.html
-    pause
-    exit /b 1
+set DOXYGEN_PATH="C:\Program Files\doxygen\bin\doxygen.exe"
+if not exist %DOXYGEN_PATH% (
+    where doxygen >nul 2>&1
+    if %ERRORLEVEL% neq 0 (
+        echo ERROR: Doxygen not found in PATH or standard location
+        echo Please install Doxygen or add it to your PATH
+        echo Download from: https://www.doxygen.nl/download.html
+        pause
+        exit /b 1
+    ) else (
+        set DOXYGEN_PATH=doxygen
+    )
 )
 
 REM Clean previous documentation
@@ -23,7 +28,7 @@ if exist docs\html (
 
 REM Generate documentation
 echo Running Doxygen...
-doxygen Doxyfile.huginn
+%DOXYGEN_PATH% Doxyfile.huginn
 
 if %ERRORLEVEL% equ 0 (
     echo ================================================
