@@ -16,12 +16,13 @@ var searchData=
   ['popcount_13',['popcount',['../bitboard_8cpp.html#af4703a196109932d958ae6f97987862b',1,'popcount(Bitboard bb):&#160;bitboard.cpp'],['../bitboard_8hpp.html#af4703a196109932d958ae6f97987862b',1,'popcount(Bitboard bb):&#160;bitboard.cpp'],['../namespace_m_s_v_c_optimizations.html#abadec4976b71acab33f835bea1263fdc',1,'MSVCOptimizations::popcount()']]],
   ['position_14',['Position',['../class_position.html#a369a577425f8ba02e8750d04b6a088db',1,'Position']]],
   ['print_5fbook_5fmoves_15',['print_book_moves',['../class_huginn_1_1_minimal_engine.html#abe2a8c73ca7b066b65f7c32095330f2c',1,'Huginn::MinimalEngine']]],
-  ['print_5fposition_16',['print_position',['../board_8cpp.html#a3174f09f67a2c2e59a77c6c0d7e4a188',1,'print_position(const Position &amp;pos):&#160;board.cpp'],['../board_8hpp.html#a3174f09f67a2c2e59a77c6c0d7e4a188',1,'print_position(const Position &amp;pos):&#160;board.cpp']]],
-  ['print_5ftt_5fstats_17',['print_tt_stats',['../class_huginn_1_1_minimal_engine.html#a94f89cce125250af44225f53c619a3dd',1,'Huginn::MinimalEngine']]],
-  ['printbitboard_18',['printBitboard',['../bitboard_8cpp.html#a9bcb5ca5144c8e305be691ab1b7bde96',1,'printBitboard(Bitboard bb):&#160;bitboard.cpp'],['../bitboard_8cpp.html#a89ec9805be41d74e68ecc1e8b3c931dc',1,'printBitboard(Bitboard bb, char occupied_char, char empty_char):&#160;bitboard.cpp'],['../bitboard_8hpp.html#a9bcb5ca5144c8e305be691ab1b7bde96',1,'printBitboard(Bitboard bb):&#160;bitboard.cpp'],['../bitboard_8hpp.html#a8905fe38e5a357325cf7d8c09b6dd793',1,'printBitboard(Bitboard bb, char occupied_char, char empty_char=&apos;-&apos;):&#160;bitboard.cpp']]],
-  ['probe_19',['probe',['../class_transposition_table.html#aa28f7547e5bd26809fbdfc6b75b46377',1,'TranspositionTable']]],
-  ['probe_5fmove_20',['probe_move',['../class_huginn_1_1_p_v_table.html#a9f7c6770f30747cab4a974430fd9d50d',1,'Huginn::PVTable']]],
-  ['probe_5fpv_5fmove_21',['probe_pv_move',['../class_huginn_1_1_minimal_engine.html#a4dae2020fa7542445fa30206bbff7a5d',1,'Huginn::MinimalEngine']]],
-  ['pventry_22',['PVEntry',['../struct_huginn_1_1_p_v_entry.html#ac8795c60e717626978ac151c6ca8db1a',1,'Huginn::PVEntry']]],
-  ['pvtable_23',['PVTable',['../class_huginn_1_1_p_v_table.html#a23dbeed7ec8b8bd5300b9290ae19c6fc',1,'Huginn::PVTable']]]
+  ['print_5fknight_5ftables_16',['print_knight_tables',['../namespace_knight_lookup_tables.html#a92e7ee0a9bea3a9e9b322a3d5d153ace',1,'KnightLookupTables']]],
+  ['print_5fposition_17',['print_position',['../board_8cpp.html#a3174f09f67a2c2e59a77c6c0d7e4a188',1,'print_position(const Position &amp;pos):&#160;board.cpp'],['../board_8hpp.html#a3174f09f67a2c2e59a77c6c0d7e4a188',1,'print_position(const Position &amp;pos):&#160;board.cpp']]],
+  ['print_5ftt_5fstats_18',['print_tt_stats',['../class_huginn_1_1_minimal_engine.html#a94f89cce125250af44225f53c619a3dd',1,'Huginn::MinimalEngine']]],
+  ['printbitboard_19',['printBitboard',['../bitboard_8cpp.html#a9bcb5ca5144c8e305be691ab1b7bde96',1,'printBitboard(Bitboard bb):&#160;bitboard.cpp'],['../bitboard_8cpp.html#a89ec9805be41d74e68ecc1e8b3c931dc',1,'printBitboard(Bitboard bb, char occupied_char, char empty_char):&#160;bitboard.cpp'],['../bitboard_8hpp.html#a9bcb5ca5144c8e305be691ab1b7bde96',1,'printBitboard(Bitboard bb):&#160;bitboard.cpp'],['../bitboard_8hpp.html#a8905fe38e5a357325cf7d8c09b6dd793',1,'printBitboard(Bitboard bb, char occupied_char, char empty_char=&apos;-&apos;):&#160;bitboard.cpp']]],
+  ['probe_20',['probe',['../class_transposition_table.html#aa28f7547e5bd26809fbdfc6b75b46377',1,'TranspositionTable']]],
+  ['probe_5fmove_21',['probe_move',['../class_huginn_1_1_p_v_table.html#a9f7c6770f30747cab4a974430fd9d50d',1,'Huginn::PVTable']]],
+  ['probe_5fpv_5fmove_22',['probe_pv_move',['../class_huginn_1_1_minimal_engine.html#a4dae2020fa7542445fa30206bbff7a5d',1,'Huginn::MinimalEngine']]],
+  ['pventry_23',['PVEntry',['../struct_huginn_1_1_p_v_entry.html#ac8795c60e717626978ac151c6ca8db1a',1,'Huginn::PVEntry']]],
+  ['pvtable_24',['PVTable',['../class_huginn_1_1_p_v_table.html#a23dbeed7ec8b8bd5300b9290ae19c6fc',1,'Huginn::PVTable']]]
 ];

@@ -3,7 +3,7 @@ var searchData=
   ['b_0',['B',['../board120_8hpp.html#a2f9bad7e0dbe33423abe2a2ea71ffe26a9d5ed678fe57bcca610140957afab571',1,'board120.hpp']]],
   ['b_3a_20use_20msys2’s_20packaged_20googletest_1',['Option B: Use MSYS2’s packaged googletest',['../index.html#autotoc_md71',1,'']]],
   ['begin_2',['begin',['../struct_piece_type_iter.html#a5508269e8313ad5d2805602c49ce163b',1,'PieceTypeIter::begin()'],['../struct_s___m_o_v_e_l_i_s_t.html#a4d95c1651eed53ad62c87f3d760b46b2',1,'S_MOVELIST::begin()'],['../struct_s___m_o_v_e_l_i_s_t.html#af89ad67d7fdb8c2f27e8d24365405b50',1,'S_MOVELIST::begin() const']]],
-  ['benefits_3',['Performance Benefits',['../board120_8hpp.html#autotoc_md10',1,'']]],
+  ['benefits_3',['Benefits',['../board120_8hpp.html#autotoc_md10',1,'Performance Benefits'],['../namespace_knight_lookup_tables.html#performance',1,'Performance Benefits']]],
   ['best_5fmove_4',['best_move',['../struct_huginn_1_1_search_info.html#adc291a5104bdd7ed6ff29e59c5da9c22',1,'Huginn::SearchInfo::best_move'],['../struct_t_t_entry.html#aa2597674df4702d9cf4e9340408f9ffe',1,'TTEntry::best_move']]],
   ['bishop_5',['Bishop',['../chess__types_8hpp.html#a23b5bbcdbdb8bde75298d795943efa86a3aa4584e547efba20238772d4af5c03d',1,'chess_types.hpp']]],
   ['bishop_5fpair_5fbonus_6',['BISHOP_PAIR_BONUS',['../namespace_huginn_1_1_eval_params.html#ab366f61213186de874764aa08c3470fc',1,'Huginn::EvalParams']]],
@@ -43,5 +43,7 @@ var searchData=
   ['board120_2ecpp_40',['board120.cpp',['../board120_8cpp.html',1,'']]],
   ['board120_2ehpp_41',['board120.hpp',['../board120_8hpp.html',1,'']]],
   ['bqca_42',['BQCA',['../chess__types_8hpp.html#a88115d785d4103c99fedf195a2b9b617',1,'chess_types.hpp']]],
-  ['build_20instructions_20visual_20studio_202022_43',['MSVC Build Instructions (Visual Studio 2022)',['../index.html#autotoc_md52',1,'']]]
+  ['build_20instructions_20visual_20studio_202022_43',['MSVC Build Instructions (Visual Studio 2022)',['../index.html#autotoc_md52',1,'']]],
+  ['builtin_5fctzll_44',['builtin_ctzll',['../knight__lookup__tables_8hpp.html#a52faff7e84f9a624a846941c20eda47e',1,'knight_lookup_tables.hpp']]],
+  ['builtin_5fpopcountll_45',['builtin_popcountll',['../knight__lookup__tables_8hpp.html#a2ecb7a525a5951e2c24a1d2f452af7c1',1,'knight_lookup_tables.hpp']]]
 ];

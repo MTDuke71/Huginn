@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['likely_0',['LIKELY',['../msvc__optimizations_8hpp.html#affde14445f49f65ff4f5b592e44ee71a',1,'msvc_optimizations.hpp']]],
-  ['likely_5fif_1',['LIKELY_IF',['../msvc__optimizations_8hpp.html#a04a35f1329b95ff380a3c0198203ea6e',1,'msvc_optimizations.hpp']]]
+  ['is_5fplayable_0',['IS_PLAYABLE',['../board120_8hpp.html#a8c481e8fd57664c4bf03f3fead79d8ed',1,'board120.hpp']]]
 ];

@@ -9,8 +9,11 @@ var searchData=
   ['king_5ftable_6',['KING_TABLE',['../namespace_huginn_1_1_eval_params.html#a3360065f49e01850ac36dfd2a63aa7f4',1,'Huginn::EvalParams']]],
   ['king_5ftable_5fendgame_7',['KING_TABLE_ENDGAME',['../namespace_huginn_1_1_eval_params.html#af50ef0eab490bd65993730dec648773f',1,'Huginn::EvalParams']]],
   ['king_5fvalue_8',['KING_VALUE',['../namespace_huginn_1_1_eval_params.html#a795f6e18c83d178ab2089f36a59a9684',1,'Huginn::EvalParams']]],
-  ['knight_5fdeltas_9',['KNIGHT_DELTAS',['../board120_8hpp.html#aacf58c97738091dc83683e8ba2576cdb',1,'board120.hpp']]],
-  ['knight_5foutpost_5fbonus_10',['KNIGHT_OUTPOST_BONUS',['../namespace_huginn_1_1_eval_params.html#a5a4adce31f7582ddd8bc21172c99c5f8',1,'Huginn::EvalParams']]],
-  ['knight_5ftable_11',['KNIGHT_TABLE',['../namespace_huginn_1_1_eval_params.html#aa133acac50f5ccc79be60324762ad83a',1,'Huginn::EvalParams']]],
-  ['knight_5fvalue_12',['KNIGHT_VALUE',['../namespace_huginn_1_1_eval_params.html#a31496863d9f7cf399d0118cd08766480',1,'Huginn::EvalParams']]]
+  ['knight_5fattacks_9',['KNIGHT_ATTACKS',['../namespace_knight_lookup_tables.html#a13c871fde1504f950180e92637e2dff3',1,'KnightLookupTables']]],
+  ['knight_5fdeltas_10',['KNIGHT_DELTAS',['../board120_8hpp.html#aacf58c97738091dc83683e8ba2576cdb',1,'board120.hpp']]],
+  ['knight_5fmove_5fcount_11',['KNIGHT_MOVE_COUNT',['../namespace_knight_lookup_tables.html#ad8abbecb2fdf8c095d8b09a85722bb82',1,'KnightLookupTables']]],
+  ['knight_5fmoves_12',['KNIGHT_MOVES',['../namespace_knight_lookup_tables.html#a089ae39d8388ebbd5ec4867765e83333',1,'KnightLookupTables']]],
+  ['knight_5foutpost_5fbonus_13',['KNIGHT_OUTPOST_BONUS',['../namespace_huginn_1_1_eval_params.html#a5a4adce31f7582ddd8bc21172c99c5f8',1,'Huginn::EvalParams']]],
+  ['knight_5ftable_14',['KNIGHT_TABLE',['../namespace_huginn_1_1_eval_params.html#aa133acac50f5ccc79be60324762ad83a',1,'Huginn::EvalParams']]],
+  ['knight_5fvalue_15',['KNIGHT_VALUE',['../namespace_huginn_1_1_eval_params.html#a31496863d9f7cf399d0118cd08766480',1,'Huginn::EvalParams']]]
 ];

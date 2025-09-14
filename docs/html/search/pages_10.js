@@ -2,7 +2,7 @@ var searchData=
 [
   ['packaged_20googletest_0',['Option B: Use MSYS2’s packaged googletest',['../index.html#autotoc_md71',1,'']]],
   ['pattern_3a_1',['Usage Pattern:',['../class_huginn_1_1_polyglot_book.html#autotoc_md33',1,'']]],
-  ['performance_20benefits_2',['Performance Benefits',['../board120_8hpp.html#autotoc_md10',1,'']]],
+  ['performance_20benefits_2',['Performance Benefits',['../board120_8hpp.html#autotoc_md10',1,'Performance Benefits'],['../namespace_knight_lookup_tables.html#performance',1,'Performance Benefits']]],
   ['performance_20features_3',['Performance Features',['../bit__utils_8hpp.html#autotoc_md2',1,'Performance Features'],['../chess__types_8hpp.html#autotoc_md14',1,'Performance Features'],['../evaluation_8cpp.html#autotoc_md16',1,'Performance Features'],['../position_8cpp.html#autotoc_md35',1,'Performance Features'],['../position_8hpp.html#autotoc_md38',1,'Performance Features'],['../pvtable_8hpp.html#autotoc_md42',1,'Performance Features']]],
   ['performance_20impact_4',['Performance Impact',['../movegen__enhanced_8cpp.html#autotoc_md23',1,'Performance Impact'],['../msvc__optimizations_8hpp.html#autotoc_md26',1,'Performance Impact'],['../pawn__optimizations_8hpp.html#autotoc_md29',1,'Performance Impact']]],
   ['performance_20optimizations_5',['Performance Optimizations',['../index.html#autotoc_md64',1,'']]],

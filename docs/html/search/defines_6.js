@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['is_5fplayable_0',['IS_PLAYABLE',['../board120_8hpp.html#a8c481e8fd57664c4bf03f3fead79d8ed',1,'board120.hpp']]]
+  ['generate_5fknight_5fmove_0',['GENERATE_KNIGHT_MOVE',['../knight__optimizations_8hpp.html#a2500737fa0e7db04e425fe2bf8b1cd0c',1,'knight_optimizations.hpp']]],
+  ['getbit_1',['getBit',['../bitboard_8hpp.html#a92d406b4f8b8c7445e43e9e7ae31eee1',1,'bitboard.hpp']]]
 ];

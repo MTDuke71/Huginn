@@ -9,7 +9,7 @@ var indexSectionsWithContent =
   6: "bpu",
   7: "cfgprs",
   8: "_abcdefghkmnopqrw",
-  9: "_acdfgilmpsu",
+  9: "_abcdfgilmpsu",
   10: "12abcdefghiklmnopqrstuvw🎉"
 };
 

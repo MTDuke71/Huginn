@@ -23,5 +23,6 @@ var searchData=
   ['evaluation_2ecpp_20',['evaluation.cpp',['../evaluation_8cpp.html',1,'']]],
   ['evaluation_2ehpp_21',['evaluation.hpp',['../evaluation_8hpp.html',1,'']]],
   ['every_20move_22',['Huginn: Odin&apos;s Thought, in Every Move',['../index.html#autotoc_md50',1,'']]],
-  ['exact_23',['EXACT',['../struct_t_t_entry.html#a306f5a69fdef01b3643f145a2a84cbe8',1,'TTEntry']]]
+  ['exact_23',['EXACT',['../struct_t_t_entry.html#a306f5a69fdef01b3643f145a2a84cbe8',1,'TTEntry']]],
+  ['expected_20improvement_24',['Expected Improvement',['../namespace_knight_lookup_tables.html#improvement',1,'']]]
 ];

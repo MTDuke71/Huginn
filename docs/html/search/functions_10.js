@@ -24,9 +24,11 @@ var searchData=
   ['sq64_5fto_5fsq120_21',['sq64_to_sq120',['../bitboard_8cpp.html#a044218c9aefdfb0eeebe9aef5d6405f6',1,'sq64_to_sq120(int sq64):&#160;bitboard.cpp'],['../bitboard_8hpp.html#a044218c9aefdfb0eeebe9aef5d6405f6',1,'sq64_to_sq120(int sq64):&#160;bitboard.cpp']]],
   ['sqattacked_22',['SqAttacked',['../attack__detection_8cpp.html#a276bce228467fb84f3a60164a89bddf6',1,'SqAttacked(int sq, const Position &amp;pos, Color attacking_color):&#160;attack_detection.cpp'],['../attack__detection_8hpp.html#a276bce228467fb84f3a60164a89bddf6',1,'SqAttacked(int sq, const Position &amp;pos, Color attacking_color):&#160;attack_detection.cpp']]],
   ['square_5ffrom_5ffile_5frank_23',['square_from_file_rank',['../bitboard_8hpp.html#ad01c9782ad829bca774910e8b7cac142',1,'bitboard.hpp']]],
-  ['stop_24',['stop',['../class_huginn_1_1_minimal_engine.html#a5697552336e9f7d85c1f97e733bb5356',1,'Huginn::MinimalEngine']]],
-  ['store_25',['store',['../class_transposition_table.html#aca79f72d82da9d7c270cdcf4fcbfa06c',1,'TranspositionTable']]],
-  ['store_5fmove_26',['store_move',['../class_huginn_1_1_p_v_table.html#aff0c48acd0ddd9c9d85be8c7ce750282',1,'Huginn::PVTable']]],
-  ['store_5fpv_5fmove_27',['store_pv_move',['../class_huginn_1_1_minimal_engine.html#ab2ea0ea67f699e25119c28cccbf33851',1,'Huginn::MinimalEngine']]],
-  ['swappiececolor_28',['swapPieceColor',['../namespace_huginn.html#ae4437568cbf7957c203d9130ccfbf6a4',1,'Huginn']]]
+  ['square_5fto_5ffile_24',['square_to_file',['../namespace_knight_lookup_tables.html#a78d88839b123461ff2f763c72256788b',1,'KnightLookupTables']]],
+  ['square_5fto_5frank_25',['square_to_rank',['../namespace_knight_lookup_tables.html#a798af7b44a577de4e289fc5172548bf9',1,'KnightLookupTables']]],
+  ['stop_26',['stop',['../class_huginn_1_1_minimal_engine.html#a5697552336e9f7d85c1f97e733bb5356',1,'Huginn::MinimalEngine']]],
+  ['store_27',['store',['../class_transposition_table.html#aca79f72d82da9d7c270cdcf4fcbfa06c',1,'TranspositionTable']]],
+  ['store_5fmove_28',['store_move',['../class_huginn_1_1_p_v_table.html#aff0c48acd0ddd9c9d85be8c7ce750282',1,'Huginn::PVTable']]],
+  ['store_5fpv_5fmove_29',['store_pv_move',['../class_huginn_1_1_minimal_engine.html#ab2ea0ea67f699e25119c28cccbf33851',1,'Huginn::MinimalEngine']]],
+  ['swappiececolor_30',['swapPieceColor',['../namespace_huginn.html#ae4437568cbf7957c203d9130ccfbf6a4',1,'Huginn']]]
 ];

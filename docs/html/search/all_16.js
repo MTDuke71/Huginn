@@ -21,8 +21,9 @@ var searchData=
   ['update_5fzobrist_5ffor_5fmove_18',['update_zobrist_for_move',['../class_position.html#a9e4b0d19e4025c44764ca997d5d30faf',1,'Position']]],
   ['update_5fzobrist_5fkey_19',['update_zobrist_key',['../class_position.html#a46e630ab61fb240b31a3836be4cff77c',1,'Position']]],
   ['upper_5fbound_20',['UPPER_BOUND',['../struct_t_t_entry.html#a0de298f42f8ced82dac0122eef8b5a40',1,'TTEntry']]],
-  ['usage_20pattern_3a_21',['Usage Pattern:',['../class_huginn_1_1_polyglot_book.html#autotoc_md33',1,'']]],
-  ['use_20msys2’s_20packaged_20googletest_22',['Option B: Use MSYS2’s packaged googletest',['../index.html#autotoc_md71',1,'']]],
-  ['use_20vs_20code_23',['Alternative: Use VS Code',['../index.html#autotoc_md55',1,'']]],
-  ['utility_20functions_24',['Utility Functions',['../bitboard_8cpp.html#autotoc_md3',1,'']]]
+  ['usage_21',['Memory Usage',['../namespace_knight_lookup_tables.html#memory',1,'']]],
+  ['usage_20pattern_3a_22',['Usage Pattern:',['../class_huginn_1_1_polyglot_book.html#autotoc_md33',1,'']]],
+  ['use_20msys2’s_20packaged_20googletest_23',['Option B: Use MSYS2’s packaged googletest',['../index.html#autotoc_md71',1,'']]],
+  ['use_20vs_20code_24',['Alternative: Use VS Code',['../index.html#autotoc_md55',1,'']]],
+  ['utility_20functions_25',['Utility Functions',['../bitboard_8cpp.html#autotoc_md3',1,'']]]
 ];
