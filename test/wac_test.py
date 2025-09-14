@@ -38,7 +38,7 @@ class WACPosition:
         return f"{self.id}: {self.fen} (best: {', '.join(self.best_moves)})"
 
 class WACTester:
-    def __init__(self, engine_path: str = "../build/bin/Release/huginn.exe", 
+    def __init__(self, engine_path: str = "../build/msvc-x64-release/bin/Release/huginn.exe", 
                  epd_file: str = "WAC300.epd", max_positions: Optional[int] = None,
                  failed_positions_file: Optional[str] = None):
         self.engine_path = engine_path

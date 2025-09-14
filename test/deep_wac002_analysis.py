@@ -13,7 +13,7 @@ def test_position_at_time(search_time):
     print(f"Testing WAC.002 with {search_time} seconds search time")
     print(f"{'='*60}")
     
-    engine_path = "../build/bin/Release/huginn.exe"
+    engine_path = "../build/msvc-x64-release/bin/Release/huginn.exe"
     if not os.path.exists(engine_path):
         print(f"Engine not found at {engine_path}")
         return

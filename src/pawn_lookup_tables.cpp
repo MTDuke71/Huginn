@@ -119,15 +119,6 @@ void initialize_pawn_tables() {
     }
     
     std::cout << "Pawn lookup tables initialized successfully." << std::endl;
-    
-    // Debug: Print sample entries for verification
-    std::cout << "Sample pawn moves for White pawn on e2 (square " << sq(File::E, Rank::R2) << "):" << std::endl;
-    int e2 = sq(File::E, Rank::R2);
-    std::cout << "  Forward: " << PAWN_FORWARD_MOVES[0][e2] << std::endl;
-    std::cout << "  Double: " << PAWN_DOUBLE_MOVES[0][e2] << std::endl;
-    std::cout << "  Left capture: " << PAWN_CAPTURE_LEFT[0][e2] << std::endl;
-    std::cout << "  Right capture: " << PAWN_CAPTURE_RIGHT[0][e2] << std::endl;
-    std::cout << "  Move mask: " << PAWN_MOVE_MASK[0][e2] << std::endl;
 }
 
 } // namespace PawnLookupTables

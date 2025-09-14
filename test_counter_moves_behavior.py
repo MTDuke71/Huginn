@@ -9,7 +9,7 @@ import time
 
 def test_counter_move_behavior():
     """Test the counter-move heuristic behavior"""
-    engine_path = "build/bin/Release/huginn.exe"
+    engine_path = "build/msvc-x64-release/bin/Release/huginn.exe"
     
     # Test position where we can observe counter-move behavior
     test_position = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
