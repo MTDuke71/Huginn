@@ -1220,6 +1220,27 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
 
+#ifdef USE_RAZORING
+    // Razoring: reduce search depth when evaluation is far below alpha
+    // If position is hopeless (evaluation way below alpha), reduce depth to save time
+    const int RAZORING_MARGIN = 400;           // Margin to apply razoring (4 pawns)
+    const int MAX_RAZORING_DEPTH = 4;          // Maximum depth to apply razoring
+    
+    if (depth <= MAX_RAZORING_DEPTH && !in_check && !isRoot && depth >= 2) {
+        // Calculate position evaluation if we haven't already (reuse from futility if available)
+        int eval = evalPosition(pos);
+        
+        // If evaluation + margin is still far below alpha, reduce search depth
+        if (eval + RAZORING_MARGIN < alpha) {
+            // Reduce depth by 1 (conservative approach)
+            depth--;
+            
+            // Track razoring statistics for debugging
+            info.razoring_cuts++;
+        }
+    }
+#endif
+
     // Generate all legal moves first
     S_MOVELIST move_list;
     generate_legal_moves_enhanced(pos, move_list);
@@ -1257,10 +1278,30 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     S_MOVE best_move;  // Track best move for transposition table storage
     best_move.move = 0;
     
+#ifdef USE_MULTI_CUT
+    // Multi-Cut pruning: track beta cutoffs to enable early termination
+    // If multiple moves cause beta-cutoffs, remaining moves are likely also good
+    int beta_cutoff_count = 0;
+    const int MULTI_CUT_THRESHOLD = 3;  // Number of cutoffs before pruning
+    const int MIN_MULTI_CUT_DEPTH = 6;  // Minimum depth to apply multi-cut
+    const int MULTI_CUT_MOVES_TO_TRY = 6;  // Try this many moves before applying multi-cut
+#endif
+    
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, depth, iid_move);
+        
+#ifdef USE_MULTI_CUT
+        // Multi-Cut pruning: if we've had enough beta cutoffs, prune remaining moves
+        if (depth >= MIN_MULTI_CUT_DEPTH && i >= MULTI_CUT_MOVES_TO_TRY && 
+            beta_cutoff_count >= MULTI_CUT_THRESHOLD && !in_check) {
+            
+            // Skip remaining moves - position is too strong, remaining moves likely also good
+            info.multi_cut_prunes += (move_list.count - i);
+            break;
+        }
+#endif
         
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         
@@ -1346,6 +1387,11 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                     if (i == 0) {
                         info.fhf++; // Fail high first (first move caused beta cutoff)
                     }
+                    
+#ifdef USE_MULTI_CUT
+                    // Track beta cutoffs for multi-cut pruning
+                    beta_cutoff_count++;
+#endif
                     
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
