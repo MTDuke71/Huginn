@@ -1,3 +1,22 @@
+/**
+ * @file test_knight_lookup.cpp
+ * @brief Comprehensive test suite for knight lookup table optimization
+ * @author Huginn Chess Engine Development Team
+ * @date September 2025
+ * @version 1.0
+ * 
+ * This file contains extensive unit tests and performance benchmarks for the
+ * knight lookup table optimization implementation. Tests verify correctness
+ * and measure performance improvements compared to the template-based approach.
+ * 
+ * @test_coverage
+ * - Correctness verification against template method
+ * - Performance benchmarking across multiple test positions
+ * - Edge case testing (corner squares, center squares, etc.)
+ * - Memory usage validation
+ * - Cross-platform compatibility testing
+ */
+
 #include <gtest/gtest.h>
 #include <chrono>
 #include <vector>
@@ -8,13 +27,30 @@
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 
+/**
+ * @class KnightLookupTest
+ * @brief Test fixture for knight lookup table tests
+ * 
+ * Provides common setup and utility functions for all knight lookup tests.
+ * Initializes lookup tables and provides move comparison functionality.
+ */
 class KnightLookupTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Set up test fixture - initialize lookup tables
+     * @details Called before each test to ensure lookup tables are properly initialized
+     */
     void SetUp() override {
-        // Initialize lookup tables
         KnightLookupTables::initialize_knight_tables();
     }
     
+    /**
+     * @brief Compare knight moves between different generation methods
+     * @param fen_string FEN position to test
+     * @param test_name Descriptive name for the test position
+     * @details Generates knight moves using template, lookup, and bitboard methods
+     *          and verifies they produce identical results
+     */
     void compare_knight_moves(const std::string& fen_string, const std::string& test_name) {
         Position pos;
         pos.set_from_fen(fen_string);

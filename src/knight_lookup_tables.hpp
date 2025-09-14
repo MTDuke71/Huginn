@@ -1,3 +1,29 @@
+/**
+ * @file knight_lookup_tables.hpp
+ * @brief Knight move lookup tables for optimized move generation
+ * @author Huginn Chess Engine Development Team
+ * @date September 2025
+ * @version 1.0
+ * 
+ * This file implements pre-computed lookup tables for knight moves to optimize
+ * the 15.5% of move generation time consumed by knight moves in the Huginn chess engine.
+ * 
+ * The implementation provides three different approaches:
+ * - Array-based lookup tables (fastest)
+ * - Bitboard-based lookup
+ * - Hybrid template fallback
+ * 
+ * @performance
+ * - Expected improvement: 1-5% over template approach
+ * - Memory usage: 2.8KB total (2.3KB arrays + 512 bytes bitboards)
+ * - Cache lines: 44 (64-byte lines)
+ * 
+ * @compatibility
+ * - MSVC: Uses _BitScanForward64 and __popcnt64 intrinsics
+ * - GCC/Clang: Uses __builtin_ctzll and __builtin_popcountll
+ * - Other compilers: Falls back to template method
+ */
+
 #pragma once
 
 #include "position.hpp"
@@ -9,57 +35,114 @@
 
 #ifdef _MSC_VER
     #include <intrin.h>
-    // MSVC intrinsics for bit operations
+    /**
+     * @brief MSVC intrinsics for bit operations
+     * @details Provides compatibility layer for GCC built-ins on MSVC
+     */
     #pragma intrinsic(_BitScanForward64)
+    
+    /**
+     * @brief Count trailing zeros in 64-bit value (MSVC version)
+     * @param value 64-bit integer to analyze
+     * @return Number of trailing zero bits, or 64 if value is 0
+     */
     inline int msvc_ctz64(uint64_t value) {
         unsigned long index;
         return _BitScanForward64(&index, value) ? index : 64;
     }
+    
+    /**
+     * @brief Count set bits in 64-bit value (MSVC version)
+     * @param value 64-bit integer to analyze
+     * @return Number of set bits in the value
+     */
     inline int msvc_popcount64(uint64_t value) {
         return __popcnt64(value);
     }
     #define builtin_ctzll msvc_ctz64
     #define builtin_popcountll msvc_popcount64
 #else
-    // GCC/Clang built-ins
+    /// GCC/Clang built-ins
     #define builtin_ctzll __builtin_ctzll
     #define builtin_popcountll __builtin_popcountll
 #endif
 
 /**
- * Huginn Chess Engine - Knight Move Lookup Tables
- * ===============================================
+ * @namespace KnightLookupTables
+ * @brief Namespace containing knight move optimization lookup tables and functions
  * 
- * This module implements pre-computed lookup tables for knight moves
- * to further optimize the 15.5% of move generation time consumed by knight moves.
+ * This namespace implements pre-computed lookup tables for knight moves to optimize
+ * the 15.5% of move generation time consumed by knight moves in the Huginn chess engine.
  * 
- * Performance Benefits:
+ * @section performance Performance Benefits
  * 1. Eliminates repeated boundary checking (IS_PLAYABLE calls)
  * 2. Reduces arithmetic operations per move
  * 3. Better cache locality with 64-entry lookup table
  * 4. Integrates well with bitboard operations if used elsewhere
  * 
- * Expected improvement: 5-15% over current template approach
+ * @section memory Memory Usage
+ * - Array tables: 2,304 bytes (64 squares × 9 moves × 4 bytes)
+ * - Bitboard table: 512 bytes (64 squares × 8 bytes)
+ * - Total: 2,816 bytes (44 cache lines)
+ * 
+ * @section improvement Expected Improvement
+ * 1-5% performance improvement over template approach in typical positions
  */
-
 namespace KnightLookupTables {
 
-    // Pre-computed knight attack patterns for each square (0-63 for 64-square board)
-    // Each entry contains the valid destination squares for a knight on that square
+    /// @brief Pre-computed knight attack patterns for each square (0-63 for 64-square board)
+    /// @details Each entry contains the valid destination squares for a knight on that square
     extern int KNIGHT_MOVES[64][8];  // Max 8 moves per knight
-    extern int KNIGHT_MOVE_COUNT[64]; // Number of valid moves from each square
     
-    // Alternative: Bitboard representation (if your engine supports bitboards)
+    /// @brief Number of valid moves from each square
+    /// @details Contains count of legal knight moves for quick iteration bounds
+    extern int KNIGHT_MOVE_COUNT[64]; 
+    
+    /// @brief Bitboard representation of knight attacks for each square
+    /// @details Alternative representation using bitboards for engines that support them
     extern uint64_t KNIGHT_ATTACKS[64];
     
     /**
-     * Initialize lookup tables - call once at engine startup
+     * @brief Initialize lookup tables - call once at engine startup
+     * @details Populates all lookup tables with pre-computed knight move data.
+     *          Must be called before using any other functions in this namespace.
+     * @post All lookup tables are populated and ready for use
+     * @see generate_knight_moves_lookup()
+     * @see generate_knight_moves_bitboard()
      */
     void initialize_knight_tables();
     
     /**
-     * Lookup table-based knight move generation
-     * Uses pre-computed tables to eliminate boundary checking and arithmetic
+     * @brief Debug function to print knight lookup tables (development/debugging only)
+     * @details Prints human-readable representation of all lookup tables for verification.
+     *          Shows both array-based moves and bitboard representation.
+     * 
+     * @note This function is intended for development and debugging purposes only.
+     *       Not typically called in production builds.
+     * 
+     * @output Prints formatted tables to stdout showing:
+     *         - Square name and index
+     *         - Number of available moves  
+     *         - List of destination squares in algebraic notation
+     *         - Bitboard verification data
+     */
+    void print_knight_tables();
+    
+    /**
+     * @brief Lookup table-based knight move generation (primary optimized method)
+     * @param pos Current chess position
+     * @param list Move list to append generated moves to
+     * @param us Color of the side to move
+     * 
+     * @details Uses pre-computed tables to eliminate boundary checking and arithmetic.
+     *          This is the fastest implementation using array-based lookups.
+     * 
+     * @performance
+     * - Eliminates IS_PLAYABLE calls per knight move
+     * - Reduces arithmetic operations to table lookups
+     * - Better cache locality with contiguous memory access
+     * 
+     * @complexity O(n*m) where n = number of knights, m = average moves per knight
      */
     inline void generate_knight_moves_lookup(const Position& pos, S_MOVELIST& list, Color us) {
         int piece_count = pos.pCount[int(us)][int(PieceType::Knight)];
@@ -96,8 +179,24 @@ namespace KnightLookupTables {
     }
     
     /**
-     * Bitboard-based knight move generation (if bitboards are available)
-     * Most efficient for engines that use bitboard representation
+     * @brief Bitboard-based knight move generation (alternative optimized method)
+     * @param pos Current chess position  
+     * @param list Move list to append generated moves to
+     * @param us Color of the side to move
+     * 
+     * @details Uses pre-computed bitboard representation for knight attacks.
+     *          Most efficient for engines that already use bitboard representation.
+     * 
+     * @performance
+     * - Uses bit manipulation for fast iteration
+     * - Single memory lookup per knight position
+     * - Efficient with builtin_ctzll for bit scanning
+     * 
+     * @complexity O(n*m) where n = number of knights, m = number of attacked squares
+     * 
+     * @requires
+     * - builtin_ctzll function (GCC/Clang: __builtin_ctzll, MSVC: _BitScanForward64)
+     * - KNIGHT_ATTACKS lookup table must be initialized
      */
     inline void generate_knight_moves_bitboard(const Position& pos, S_MOVELIST& list, Color us) {
         int piece_count = pos.pCount[int(us)][int(PieceType::Knight)];
@@ -116,10 +215,10 @@ namespace KnightLookupTables {
             // Get pre-computed attack bitboard
             uint64_t attacks = KNIGHT_ATTACKS[from_64];
             
-            // Iterate through attacked squares
+            // Iterate through attacked squares using bit manipulation
             while (attacks) {
                 int to_64 = builtin_ctzll(attacks); // Count trailing zeros (LSB)
-                attacks &= attacks - 1; // Clear LSB
+                attacks &= attacks - 1; // Clear LSB (Brian Kernighan's bit trick)
                 
                 int to = MAILBOX_MAPS.to120[to_64];
                 
@@ -134,8 +233,20 @@ namespace KnightLookupTables {
     }
     
     /**
-     * Hybrid approach: Use lookup for move generation, template for validation
-     * Combines the benefits of lookup tables with compile-time optimization
+     * @brief Hybrid approach combining lookup tables with template fallback
+     * @tparam UseLookup If true, use lookup tables; if false, use template approach
+     * @param pos Current chess position
+     * @param list Move list to append generated moves to  
+     * @param us Color of the side to move
+     * 
+     * @details Provides compile-time selection between lookup table optimization
+     *          and template-based fallback for comparison or compatibility.
+     * 
+     * @note Template parameter allows dead code elimination when not needed.
+     *       Fallback implementation requires including knight_optimizations.hpp
+     *       at the call site to avoid circular dependencies.
+     * 
+     * @see generate_knight_moves_lookup()
      */
     template<bool UseLookup = true>
     inline void generate_knight_moves_hybrid(const Position& pos, S_MOVELIST& list, Color us) {

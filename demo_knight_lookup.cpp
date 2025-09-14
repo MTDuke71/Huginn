@@ -1,3 +1,24 @@
+/**
+ * @file demo_knight_lookup.cpp
+ * @brief Performance demonstration program for knight lookup table optimization
+ * @author Huginn Chess Engine Development Team
+ * @date September 2025
+ * @version 1.0
+ * 
+ * This standalone program demonstrates the performance benefits of lookup tables
+ * for knight move generation compared to the existing template approach.
+ * 
+ * @features
+ * - Performance benchmarking across multiple test positions
+ * - Memory usage analysis
+ * - Detailed timing comparisons
+ * - Educational output showing optimization benefits
+ * 
+ * @usage
+ * Compile and run this program to see real-time performance comparisons
+ * between template-based and lookup table-based knight move generation.
+ */
+
 #include <iostream>
 #include <chrono>
 #include <vector>
@@ -8,18 +29,18 @@
 #include "init.hpp"
 
 /**
- * Knight Move Generation Performance Demo
- * ======================================
+ * @brief Benchmark knight move generation performance across different methods
+ * @details Tests template-based, lookup table, and bitboard approaches across
+ *          multiple chess positions with varying knight counts and placements.
  * 
- * This program demonstrates the performance benefits of lookup tables
- * for knight move generation compared to the existing template approach.
+ * @performance Measures timing for 50,000 iterations per position per method
+ *              to provide statistically significant performance comparisons.
  */
-
 void benchmark_knight_generation() {
     std::cout << "Knight Move Generation Performance Benchmark\n";
     std::cout << "============================================\n\n";
     
-    // Test positions with varying numbers of knights
+    /// @brief Test positions with varying numbers of knights and board configurations
     const std::vector<std::pair<std::string, std::string>> test_positions = {
         {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "Starting Position (4 knights)"},
         {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", "Kiwipete (6 knights)"},
