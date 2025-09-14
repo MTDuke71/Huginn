@@ -23,6 +23,7 @@
 #include "init.hpp"
 #include "zobrist.hpp"
 #include "evaluation.hpp"
+#include "knight_lookup_tables.hpp"
 
 namespace Huginn {
     
@@ -44,6 +45,9 @@ namespace Huginn {
         
         // Initialize evaluation masks
         EvalParams::init_evaluation_masks();
+        
+        // Initialize knight lookup tables for optimized move generation
+        KnightLookupTables::initialize_knight_tables();
         
         initialized = true;
     }

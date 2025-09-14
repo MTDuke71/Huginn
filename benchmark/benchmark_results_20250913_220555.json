@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-09-13T22:05:55.332367",
+  "engine_path": "../build/bin/Release/huginn.exe",
+  "positions": [
+    {
+      "name": "Starting Position",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "depth": 5,
+      "success": true,
+      "nodes": 72281,
+      "time_ms": 51,
+      "wall_time_s": 0.08813357353210449,
+      "nps": 1417274.5098039217,
+      "score": 20,
+      "bestmove": "d2d4"
+    },
+    {
+      "name": "WAC.001 - White to Move",
+      "fen": "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1",
+      "depth": 6,
+      "success": true,
+      "nodes": 369110,
+      "time_ms": 300,
+      "wall_time_s": 0.3161478042602539,
+      "nps": 1230366.6666666667,
+      "score": null,
+      "bestmove": "g3g6"
+    },
+    {
+      "name": "Middlegame Position",
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      "depth": 5,
+      "success": true,
+      "nodes": 128523,
+      "time_ms": 103,
+      "wall_time_s": 0.12026166915893555,
+      "nps": 1247796.1165048545,
+      "score": 25,
+      "bestmove": "b1c3"
+    },
+    {
+      "name": "King and Pawn Endgame",
+      "fen": "8/8/8/8/8/8/k1K5/8 w - - 0 1",
+      "depth": 8,
+      "success": true,
+      "nodes": 3619,
+      "time_ms": 1,
+      "wall_time_s": 0.01764655113220215,
+      "nps": 3619000.0,
+      "score": 0,
+      "bestmove": "c2c3"
+    }
+  ],
+  "summary": {
+    "total_nodes": 573533,
+    "total_time_ms": 455,
+    "average_nps": 1260512.0879120878
+  }
+}

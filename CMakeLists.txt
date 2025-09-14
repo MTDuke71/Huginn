@@ -55,6 +55,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     message(STATUS "Using MSVC toolchain")
     # MSVC specific settings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_options(/W3)
     
     # Suppress specific warnings that are common in this codebase and safe
@@ -76,6 +77,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using GCC compiler")
+    # GCC specific settings
+    add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     # GCC optimizations for Release builds
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(
@@ -91,6 +94,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif()
 else()
     message(WARNING "Untested compiler: ${CMAKE_CXX_COMPILER_ID}. Proceeding anyway...")
+    # Fallback compile definitions for other compilers
+    add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
 endif()
 
 # ---- Build Type Validation ----
@@ -263,6 +268,7 @@ set(COMMON_SOURCES
     src/minimal_search.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
+    src/knight_lookup_tables.cpp
 )
 
 set(ENGINE_SOURCES
@@ -371,12 +377,24 @@ if(GTEST_FOUND)
         test/test_enhanced_movegen.cpp
         test/test_pawn_optimization.cpp
         test/test_knight_optimization.cpp
+        test/test_knight_lookup.cpp
         test/test_evaluation_symmetry.cpp
     test/test_uci_time_and_stop_gtest.cpp
     test/test_uci_time_param_gtest.cpp
     test/test_uci_position_parsing.cpp
     test/test_uci_go_parsing.cpp
     test/test_input_checking.cpp
+    )
+
+    # ---- Knight Lookup Demo ----
+    add_executable(demo_knight_lookup
+        demo_knight_lookup.cpp
+        ${COMMON_SOURCES}
+    )
+    
+    target_compile_features(demo_knight_lookup PRIVATE cxx_std_17)
+    target_include_directories(demo_knight_lookup PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src 
     )
 
     add_executable(huginn_tests

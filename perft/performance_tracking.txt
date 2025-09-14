@@ -51,3 +51,9 @@
 2025-09-06, 492d047, Performance test, 16926
 2025-09-10, 1f2c1a0, Improvement #5: Performance Optimization & Analysis Framework - 2,109,398 NPS validated
 2025-09-11, bf16176, Build fix test, 16900
+2025-09-13, 9a13e17, Knight lookup table validation, 17109
+2025-09-13, 9a13e17, Knight lookup tables optimization enabled, 17151
+2025-09-13, 9a13e17, Knight lookup tables - test run 2, 17280
+2025-09-13, 9a13e17, Knight lookup tables - test run 3, 17410
+2025-09-13, 9a13e17, Baseline - Knight lookup tables disabled, 17329
+2025-09-13, 9a13e17, Knight lookup tables optimization - final test, 17006

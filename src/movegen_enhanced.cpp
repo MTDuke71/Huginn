@@ -37,6 +37,7 @@
 #include "pawn_optimizations.hpp"
 #include "king_optimizations.hpp"
 #include "knight_optimizations.hpp"
+#include "knight_lookup_tables.hpp"  // New lookup table optimization
 #include "sliding_piece_optimizations.hpp"
 
 /**
@@ -52,7 +53,7 @@
  * The function leverages:
  * - PawnOptimizations: Handles 20.3% of generation overhead
  * - SlidingPieceOptimizations: Handles 45%+ of generation overhead  
- * - Knight/King optimizations: Template-based fast generation
+ * - Knight optimizations: Template-based or lookup table-based fast generation
  * - Direct piece list iteration: Fastest traversal method
  */
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
@@ -63,7 +64,15 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     // Generate moves for each piece type using piece lists (fastest approach)
     // Use optimized pawn generation (addresses 20.3% of generation time)
     PawnOptimizations::generate_pawn_moves_optimized(pos, list, us);
-    KnightOptimizations::generate_knight_moves_template(pos, list, us);
+    
+    // Knight generation: Choose between template and lookup table methods
+    // Compile-time flag to select knight optimization approach
+    #ifdef USE_KNIGHT_LOOKUP_TABLES
+        KnightLookupTables::generate_knight_moves_lookup(pos, list, us);
+    #else
+        KnightOptimizations::generate_knight_moves_template(pos, list, us);
+    #endif
+    
     // Use optimized sliding piece generation (addresses 45%+ of generation time)
     SlidingPieceOptimizations::generate_all_sliding_moves_optimized(pos, list, us);
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
