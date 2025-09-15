@@ -25,6 +25,7 @@
 
 #include "pawn_lookup_tables.hpp"
 #include "board120.hpp"
+#include "bitboard.hpp"
 #include <iostream>
 
 namespace PawnLookupTables {
@@ -35,6 +36,9 @@ int (*PAWN_DOUBLE_MOVES)[120] = nullptr;
 int (*PAWN_CAPTURE_LEFT)[120] = nullptr;
 int (*PAWN_CAPTURE_RIGHT)[120] = nullptr;
 int (*PAWN_MOVE_MASK)[120] = nullptr;
+
+// Bitboard attack tables - static allocation for performance
+uint64_t PAWN_ATTACKS[2][64];
 
 void initialize_pawn_tables() {
     // Allocate memory for all lookup tables
@@ -116,6 +120,74 @@ void initialize_pawn_tables() {
             // Store the move mask for this square and color
             PAWN_MOVE_MASK[color_int][square] = move_mask;
         }
+    }
+    
+    // Initialize bitboard attack tables
+    // Clear all attack tables first
+    for (int color = 0; color < 2; ++color) {
+        for (int square = 0; square < 64; ++square) {
+            PAWN_ATTACKS[color][square] = 0ULL;
+        }
+    }
+    
+    // Populate pawn attack bitboards for each square
+    for (int sq64 = 0; sq64 < 64; ++sq64) {
+        int sq120 = MAILBOX_MAPS.to120[sq64];
+        if (!IS_PLAYABLE(sq120)) continue;
+        
+        // White pawn attacks (moving north)
+        uint64_t white_attacks = 0ULL;
+        int white_left = sq120 + NORTH + WEST;   // Northwest
+        int white_right = sq120 + NORTH + EAST;  // Northeast
+        
+        if (IS_PLAYABLE(white_left)) {
+            File from_file = file_of(sq120);
+            File to_file = file_of(white_left);
+            // Valid if moving left one file (A->None not valid, B->A valid, etc.)
+            if (from_file > File::A && to_file == static_cast<File>(int(from_file) - 1)) {
+                int target_sq64 = MAILBOX_MAPS.to64[white_left];
+                white_attacks |= (1ULL << target_sq64);
+            }
+        }
+        
+        if (IS_PLAYABLE(white_right)) {
+            File from_file = file_of(sq120);
+            File to_file = file_of(white_right);
+            // Valid if moving right one file (H->None not valid, G->H valid, etc.)
+            if (from_file < File::H && to_file == static_cast<File>(int(from_file) + 1)) {
+                int target_sq64 = MAILBOX_MAPS.to64[white_right];
+                white_attacks |= (1ULL << target_sq64);
+            }
+        }
+        
+        PAWN_ATTACKS[int(Color::White)][sq64] = white_attacks;
+        
+        // Black pawn attacks (moving south)
+        uint64_t black_attacks = 0ULL;
+        int black_left = sq120 + SOUTH + WEST;   // Southwest
+        int black_right = sq120 + SOUTH + EAST;  // Southeast
+        
+        if (IS_PLAYABLE(black_left)) {
+            File from_file = file_of(sq120);
+            File to_file = file_of(black_left);
+            // Valid if moving left one file (A->None not valid, B->A valid, etc.)
+            if (from_file > File::A && to_file == static_cast<File>(int(from_file) - 1)) {
+                int target_sq64 = MAILBOX_MAPS.to64[black_left];
+                black_attacks |= (1ULL << target_sq64);
+            }
+        }
+        
+        if (IS_PLAYABLE(black_right)) {
+            File from_file = file_of(sq120);
+            File to_file = file_of(black_right);
+            // Valid if moving right one file (H->None not valid, G->H valid, etc.)
+            if (from_file < File::H && to_file == static_cast<File>(int(from_file) + 1)) {
+                int target_sq64 = MAILBOX_MAPS.to64[black_right];
+                black_attacks |= (1ULL << target_sq64);
+            }
+        }
+        
+        PAWN_ATTACKS[int(Color::Black)][sq64] = black_attacks;
     }
     
     std::cout << "Pawn lookup tables initialized successfully." << std::endl;

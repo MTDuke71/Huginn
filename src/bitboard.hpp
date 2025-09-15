@@ -252,3 +252,109 @@ int sq120_to_sq64(int sq120);       // Convert 120-square to 64-square index
 // Convenient macros for square conversion (direct MAILBOX_MAPS access)
 #define SQ64(sq120)  (MAILBOX_MAPS.to64[sq120])    // Convert sq120 → sq64
 #define SQ120(sq64)  (MAILBOX_MAPS.to120[sq64])    // Convert sq64 → sq120
+
+// ============================================================================
+// SLIDING PIECE ATTACK GENERATION
+// ============================================================================
+
+/**
+ * @brief Generate bishop attack bitboard for a given square and occupancy
+ * @param square The square index (0-63) where the bishop is located
+ * @param occupancy Bitboard representing all occupied squares on the board
+ * @return Bitboard containing all squares attacked by the bishop
+ * 
+ * Uses ray-based attack generation in four diagonal directions.
+ * Stops when hitting an occupied square (friend or foe).
+ */
+uint64_t bishop_attacks(int square, uint64_t occupancy);
+
+/**
+ * @brief Generate rook attack bitboard for a given square and occupancy
+ * @param square The square index (0-63) where the rook is located  
+ * @param occupancy Bitboard representing all occupied squares on the board
+ * @return Bitboard containing all squares attacked by the rook
+ * 
+ * Uses ray-based attack generation in four orthogonal directions.
+ * Stops when hitting an occupied square (friend or foe).
+ */
+uint64_t rook_attacks(int square, uint64_t occupancy);
+
+/**
+ * @brief Generate queen attack bitboard for a given square and occupancy
+ * @param square The square index (0-63) where the queen is located
+ * @param occupancy Bitboard representing all occupied squares on the board
+ * @return Bitboard containing all squares attacked by the queen
+ * 
+ * Combines bishop and rook attacks (all 8 directions).
+ */
+inline uint64_t queen_attacks(int square, uint64_t occupancy) {
+    return bishop_attacks(square, occupancy) | rook_attacks(square, occupancy);
+}
+
+// Direction vectors for sliding piece ray generation
+constexpr int BISHOP_DIRECTIONS[4] = {9, 7, -7, -9};   // NE, NW, SE, SW
+constexpr int ROOK_DIRECTIONS[4] = {8, -8, 1, -1};     // N, S, E, W
+
+/**
+ * @brief Internal helper: Generate attacks in a single direction
+ * @param square Starting square (0-63)
+ * @param direction Direction vector (+/-1, +/-7, +/-8, +/-9)
+ * @param occupancy Current board occupancy
+ * @return Bitboard of attacked squares in that direction
+ */
+uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy);
+
+// ============================================================================
+// BITBOARD ITERATION UTILITIES
+// ============================================================================
+
+/**
+ * @brief Extract and remove the least significant bit from a bitboard
+ * @param bitboard Reference to the bitboard to modify
+ * @return The square index (0-63) of the removed bit, or -1 if bitboard was empty
+ * 
+ * Essential for while() loop iteration over bitboards:
+ * ```cpp
+ * uint64_t attacks = knight_attacks(square);
+ * int target;
+ * while ((target = pop_lsb(attacks)) != -1) {
+ *     // Process each attacked square
+ * }
+ * ```
+ */
+inline int pop_lsb(uint64_t& bitboard) {
+    if (bitboard == 0) return -1;
+    int square = get_lsb(bitboard);
+    bitboard &= bitboard - 1;  // Remove the LSB
+    return square;
+}
+
+/**
+ * @brief Get the least significant bit without modifying the bitboard
+ * @param bitboard The bitboard to examine
+ * @return The square index (0-63) of the LSB, or -1 if bitboard is empty
+ */
+inline int peek_lsb(uint64_t bitboard) {
+    if (bitboard == 0) return -1;
+    return get_lsb(bitboard);
+}
+
+/**
+ * @brief Iterate over all set bits in a bitboard using a lambda function
+ * @param bitboard The bitboard to iterate over
+ * @param func Function to call for each set bit (takes square index as parameter)
+ * 
+ * Convenience function for functional-style iteration:
+ * ```cpp
+ * for_each_bit(knight_attacks(square), [&](int target) {
+ *     // Process each attacked square
+ * });
+ * ```
+ */
+template<typename Func>
+inline void for_each_bit(uint64_t bitboard, Func func) {
+    int square;
+    while ((square = pop_lsb(bitboard)) != -1) {
+        func(square);
+    }
+}

@@ -369,6 +369,34 @@ add_huginn_executable(huginn
         ${HUGINN_INCLUDE_DIRS}
 )
 
+# ---- Huginn2: Bitboard Migration Engine ----
+add_huginn_executable(huginn2
+    SOURCES
+        src/main.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for huginn2 to enable bitboard features
+target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Test ----
+add_huginn_executable(perft_huginn2
+    SOURCES
+        perft_huginn2.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for perft test to enable bitboard features
+target_compile_definitions(perft_huginn2 PRIVATE BITBOARD_ENGINE=1)
+
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
     SOURCES

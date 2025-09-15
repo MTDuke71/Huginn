@@ -41,6 +41,10 @@
 #include "king_lookup_tables.hpp"    // King lookup table optimization
 #include "sliding_piece_optimizations.hpp"
 
+#ifdef BITBOARD_ENGINE
+#include "bitboard_movegen.hpp"  // Include bitboard move generation for huginn2
+#endif
+
 /**
  * @brief Generate all legal moves for the current position
  * 
@@ -58,6 +62,11 @@
  * - Direct piece list iteration: Fastest traversal method
  */
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
+#ifdef BITBOARD_ENGINE
+    // Use pure bitboard move generation for dramatically improved performance
+    BitboardMoveGen::generate_all_moves_bitboard(pos, list);
+#else
+    // Use traditional piece list generation for huginn
     list.count = 0;  // Direct clear - faster than function call
     
     Color us = pos.side_to_move;
@@ -74,6 +83,7 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     
     // King generation: Optimized functions work correctly, lookup tables have bugs - reverting temporarily  
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
+#endif
 }
 
 // ====================================================================

@@ -66,13 +66,6 @@ int get_lsb(Bitboard bb) {
     return __builtin_ctzll(bb);   // Cross-platform count trailing zeros via bit_utils.hpp
 }
 
-int pop_lsb(Bitboard& bb) {
-    if (bb == 0) return -1;
-    int index = __builtin_ctzll(bb);   // Cross-platform count trailing zeros via bit_utils.hpp
-    bb &= bb - 1;                      // clears the least significant 1 bit
-    return index;
-}
-
 bool is_empty(Bitboard bb) {
     return bb == 0;
 }
@@ -89,4 +82,60 @@ int sq64_to_sq120(int sq64) {
 int sq120_to_sq64(int sq120) {
     if (sq120 < 0 || sq120 >= 120) return -1;
     return MAILBOX_MAPS.to64[sq120];
+}
+
+// ============================================================================
+// SLIDING PIECE ATTACK GENERATION
+// ============================================================================
+
+uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy) {
+    uint64_t attacks = 0ULL;
+    int file = square % 8;
+    int rank = square / 8;
+    
+    for (int step = 1; step < 8; ++step) {
+        int new_rank = rank + (direction / 8) * step;
+        int new_file = file + (direction % 8) * step;
+        
+        // Check board boundaries
+        if (new_rank < 0 || new_rank >= 8 || new_file < 0 || new_file >= 8) {
+            break;
+        }
+        
+        // Handle wrapping for horizontal moves (prevent wrapping around board edges)
+        if (direction == 1 && new_file < file) break;    // East direction, file wrapped
+        if (direction == -1 && new_file > file) break;   // West direction, file wrapped
+        
+        int target_square = new_rank * 8 + new_file;
+        attacks |= (1ULL << target_square);
+        
+        // Stop if we hit an occupied square
+        if (occupancy & (1ULL << target_square)) {
+            break;
+        }
+    }
+    
+    return attacks;
+}
+
+uint64_t bishop_attacks(int square, uint64_t occupancy) {
+    uint64_t attacks = 0ULL;
+    
+    // Generate attacks in all four diagonal directions
+    for (int i = 0; i < 4; ++i) {
+        attacks |= generate_ray_attacks(square, BISHOP_DIRECTIONS[i], occupancy);
+    }
+    
+    return attacks;
+}
+
+uint64_t rook_attacks(int square, uint64_t occupancy) {
+    uint64_t attacks = 0ULL;
+    
+    // Generate attacks in all four orthogonal directions
+    for (int i = 0; i < 4; ++i) {
+        attacks |= generate_ray_attacks(square, ROOK_DIRECTIONS[i], occupancy);
+    }
+    
+    return attacks;
 }

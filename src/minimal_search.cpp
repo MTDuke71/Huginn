@@ -1605,8 +1605,25 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     if (opening_book.is_book_loaded() && opening_book.has_book_moves(pos)) {
         S_MOVE book_move = opening_book.get_book_move(pos);
         if (book_move.move != 0) {
-            std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
-            return book_move;
+            // CRITICAL: Validate that the book move is actually legal in current position
+            S_MOVELIST legal_moves;
+            generate_legal_moves_enhanced(pos, legal_moves);
+            
+            // Check if book move is in the legal move list
+            bool book_move_is_legal = false;
+            for (int i = 0; i < legal_moves.count; ++i) {
+                if (legal_moves.moves[i].move == book_move.move) {
+                    book_move_is_legal = true;
+                    break;
+                }
+            }
+            
+            if (book_move_is_legal) {
+                std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
+                return book_move;
+            } else {
+                std::cout << "info string Book move " << move_to_uci(book_move) << " is illegal, ignoring" << std::endl;
+            }
         }
     }
     

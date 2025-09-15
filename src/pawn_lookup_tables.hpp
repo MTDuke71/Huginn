@@ -56,6 +56,10 @@ extern int (*PAWN_CAPTURE_RIGHT)[120];
 // Bit flags: 1=forward, 2=double, 4=capture_left, 8=capture_right
 extern int (*PAWN_MOVE_MASK)[120];
 
+// Bitboard attack tables for bitboard-based move generation
+// PAWN_ATTACKS[color][square64] = bitboard of attacked squares
+extern uint64_t PAWN_ATTACKS[2][64];
+
 /**
  * @brief Initialize all pawn lookup tables
  * 
@@ -128,5 +132,15 @@ constexpr int FORWARD_MOVE_FLAG = 1;
 constexpr int DOUBLE_MOVE_FLAG = 2;
 constexpr int LEFT_CAPTURE_FLAG = 4;
 constexpr int RIGHT_CAPTURE_FLAG = 8;
+
+/**
+ * @brief Get pawn attack bitboard for a square
+ * @param color The color of the pawn (White or Black)
+ * @param square The square in 64-square format (0-63)
+ * @return Bitboard of squares attacked by the pawn
+ */
+inline uint64_t get_pawn_attacks(Color color, int square) {
+    return PAWN_ATTACKS[int(color)][square];
+}
 
 } // namespace PawnLookupTables
