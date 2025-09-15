@@ -21,6 +21,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <assert.h>
+#include "tbprobe.h"
+
+// Map internal function names to Fathom API
+#define popcount tb_pop_count
+#define lsb tb_lsb
+#define poplsb tb_pop_lsb
+
 #define TB_PAWN 1
 #define TB_KNIGHT 2
 #define TB_BISHOP 3

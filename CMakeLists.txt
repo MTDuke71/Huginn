@@ -45,6 +45,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ---- Assembly Generation Option ----
 option(GENERATE_ASSEMBLY "Generate assembly listings for analysis" OFF)
 
+# ---- Fathom Tablebase Option ----
+option(ENABLE_FATHOM "Enable Fathom Syzygy tablebase support (requires C11 compiler)" OFF)
+
 # ---- Toolchain Detection and Configuration ----
 message(STATUS "=== Compiler Detection ===")
 message(STATUS "Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
@@ -268,12 +271,41 @@ function(add_assembly_target target_name source_files)
 endfunction()
 
 # ---- Fathom Syzygy tablebase library ----
-# Commented out for now due to C11/MSVC compatibility issues
-# Will re-enable when compatibility is resolved
-# set(FATHOM_SOURCES
-#     fathom/src/tbprobe.c
-#     fathom/src/tbchess.c
-# )
+if(ENABLE_FATHOM)
+    message(STATUS "Fathom tablebase support enabled")
+    add_compile_definitions(FATHOM_AVAILABLE=1)
+    set(FATHOM_SOURCES
+        fathom/src/tbprobe.c
+        fathom/src/tbchess.c
+    )
+    # Ensure C11 standard is used for Fathom
+    set(CMAKE_C_STANDARD 17)
+    set(CMAKE_C_STANDARD_REQUIRED ON)
+    
+    # For MSVC, compile Fathom as C++ to avoid atomics issues
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set_source_files_properties(
+            fathom/src/tbprobe.c
+            fathom/src/tbchess.c
+            PROPERTIES
+            LANGUAGE CXX
+            COMPILE_FLAGS "/TP"  # Force compilation as C++
+        )
+    else()
+        # Set C-specific properties for Fathom source files on other compilers
+        set_source_files_properties(
+            fathom/src/tbprobe.c
+            fathom/src/tbchess.c
+            PROPERTIES
+            LANGUAGE C
+            COMPILE_FLAGS ""
+        )
+    endif()
+else()
+    message(STATUS "Fathom tablebase support disabled - using stub implementation")
+    add_compile_definitions(FATHOM_AVAILABLE=0)
+    set(FATHOM_SOURCES)
+endif()
 
 # ---- Source file lists ----
 set(COMMON_SOURCES
@@ -299,7 +331,7 @@ set(COMMON_SOURCES
 
 set(ENGINE_SOURCES
     ${COMMON_SOURCES}
-    # ${FATHOM_SOURCES}  # Commented out for now
+    ${FATHOM_SOURCES}
     src/board.cpp
 
     src/uci.cpp
@@ -318,13 +350,23 @@ set(PERFORMANCE_CRITICAL_SOURCES
 )
 
 # ---- Huginn 1.2 - Main Executable ----
+if(ENABLE_FATHOM)
+    set(HUGINN_INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src
+    )
+else()
+    set(HUGINN_INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+endif()
+
 add_huginn_executable(huginn
     SOURCES
         src/main.cpp
         ${ENGINE_SOURCES}
     INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        # ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src  # Commented out for now
+        ${HUGINN_INCLUDE_DIRS}
 )
 
 # ---- Mirror Evaluation Test ----
@@ -457,8 +499,7 @@ if(GTEST_FOUND)
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)
     target_include_directories(huginn_tests PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/src 
-        # ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src  # Commented out for now
+        ${HUGINN_INCLUDE_DIRS}
     )
     target_link_libraries(huginn_tests PRIVATE ${GTEST_LIBRARIES} Threads::Threads)
 

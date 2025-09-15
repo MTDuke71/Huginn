@@ -117,13 +117,15 @@
         {
             "name": "gcc-x64-release",
             "displayName": "GCC x64 Release",
-            "description": "Release build using GCC compiler",
-            "generator": "Ninja",
+            "description": "Release build using GCC compiler with Fathom C11 support",
             "binaryDir": "${sourceDir}/build/gcc-x64-release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
+                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
+                "CMAKE_C_STANDARD": "17",
+                "CMAKE_CXX_STANDARD": "17",
+                "ENABLE_FATHOM": "ON"
             }
         },
         {

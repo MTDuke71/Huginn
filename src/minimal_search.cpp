@@ -1126,6 +1126,25 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
     
+    // Syzygy Tablebase Probe - TEMPORARILY DISABLED FOR DEBUGGING
+    // Only probe at leaf nodes or very low depth to avoid search issues
+    if (false && depth <= 1 && tablebase && tablebase->is_available()) {
+        int wdl_score;
+        if (probe_tablebase_wdl(pos, wdl_score)) {
+            // Perfect tablebase result found
+            // Adjust mate scores relative to current ply
+            if (wdl_score > MATE - 1000) {
+                wdl_score -= info.ply;
+            } else if (wdl_score < -MATE + 1000) {
+                wdl_score += info.ply;
+            }
+            
+            // Store in transposition table with maximum depth for future use
+            tt_table.store(pos.zobrist_key, wdl_score, 127, TTEntry::EXACT, 0);
+            return wdl_score;
+        }
+    }
+    
     // Check for early exit conditions
     if (depth == 0) {
         return quiescence(pos, alpha, beta, info, 0);  // Enter quiescence search at leaf nodes
@@ -1588,6 +1607,15 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         if (book_move.move != 0) {
             std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
             return book_move;
+        }
+    }
+    
+    // Syzygy Tablebase Root Probe - Check for perfect endgame move
+    if (tablebase && tablebase->is_available()) {
+        S_MOVE tablebase_move = probe_tablebase_root(pos);
+        if (tablebase_move.move != 0) {
+            std::cout << "info string Found tablebase move: " << move_to_uci(tablebase_move) << std::endl;
+            return tablebase_move;
         }
     }
     

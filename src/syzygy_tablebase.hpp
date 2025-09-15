@@ -6,13 +6,20 @@
 #include "position.hpp"
 #include "move.hpp"
 
-// For now, comment out Fathom includes to avoid compilation issues
-// Will re-enable when C11/MSVC compatibility is resolved
-/*
+// Conditional compilation for Fathom library
+#ifndef FATHOM_AVAILABLE
+    #ifdef ENABLE_FATHOM
+        #define FATHOM_AVAILABLE 1
+    #else
+        #define FATHOM_AVAILABLE 0
+    #endif
+#endif
+
+#if FATHOM_AVAILABLE
 extern "C" {
-    #include "../fathom/src/tbprobe.h"
+    #include "tbprobe.h"
 }
-*/
+#endif
 
 namespace Huginn {
 
