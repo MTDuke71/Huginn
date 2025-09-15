@@ -52,61 +52,59 @@ int MinimalEngine::evaluate(const Position& pos) {
     int total_material = pos.get_total_material();
     bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
     
-    // SECOND PASS: Evaluate all pieces using pre-calculated endgame status
-    for (int sq = 21; sq <= 98; ++sq) {
-        if (pos.board[sq] == Piece::Offboard) continue;
-        
-        Piece piece = pos.board[sq];
-        if (piece == Piece::None) continue;
-        
-        Color piece_color = color_of(piece);
-        PieceType piece_type = type_of(piece);
-        
-        // Material values (VICE-compatible)
-        int material_value = 0;
-        switch (piece_type) {
-            case PieceType::Pawn:   material_value = 100; break;
-            case PieceType::Knight: material_value = 320; break;
-            case PieceType::Bishop: material_value = 330; break;
-            case PieceType::Rook:   material_value = 500; break;
-            case PieceType::Queen:  material_value = 900; break;
-            case PieceType::King:   material_value = 20000; break;
-            default: material_value = 0; break;
-        }
-        
-        // Convert square120 to square64 for piece-square tables
-        int sq64 = MAILBOX_MAPS.to64[sq];
-        if (sq64 < 0) continue; // Invalid square
-        
-        // Get piece-square table value
-        int pst_value = 0;
-        int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
-        
-        // VICE Part 82: Use different king tables based on pre-calculated material
-        if (piece_type == PieceType::King) {
-            if (is_endgame) {
-                pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
-            } else {
-                pst_value = EvalParams::KING_TABLE[table_index];
+    // Evaluate all pieces using piece lists for efficiency
+    for (int color = 0; color <= 1; ++color) {
+        for (int piece_type = int(PieceType::Pawn); piece_type <= int(PieceType::King); ++piece_type) {
+            int count = pos.pCount[color][piece_type];
+            for (int i = 0; i < count; ++i) {
+                int sq = pos.pList[color][piece_type][i];
+                if (sq < 0 || sq >= 120) continue;
+                Piece piece = pos.board[sq];
+                if (piece == Piece::None || piece == Piece::Offboard) continue;
+                Color piece_color = static_cast<Color>(color);
+                PieceType pt = static_cast<PieceType>(piece_type);
+                // Material values (VICE-compatible)
+                int material_value = 0;
+                switch (pt) {
+                    case PieceType::Pawn:   material_value = 100; break;
+                    case PieceType::Knight: material_value = 320; break;
+                    case PieceType::Bishop: material_value = 330; break;
+                    case PieceType::Rook:   material_value = 500; break;
+                    case PieceType::Queen:  material_value = 900; break;
+                    case PieceType::King:   material_value = 20000; break;
+                    default: material_value = 0; break;
+                }
+                // Convert square120 to square64 for piece-square tables
+                int sq64 = MAILBOX_MAPS.to64[sq];
+                if (sq64 < 0) continue; // Invalid square
+                // Get piece-square table value
+                int pst_value = 0;
+                int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
+                // VICE Part 82: Use different king tables based on pre-calculated material
+                if (pt == PieceType::King) {
+                    if (is_endgame) {
+                        pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
+                    } else {
+                        pst_value = EvalParams::KING_TABLE[table_index];
+                    }
+                } else {
+                    switch (pt) {
+                        case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
+                        case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
+                        case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
+                        case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
+                        case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
+                        default: pst_value = 0; break;
+                    }
+                }
+                // Add material + piece-square value for this piece
+                int piece_value = material_value + pst_value;
+                if (piece_color == Color::White) {
+                    score += piece_value;
+                } else {
+                    score -= piece_value;
+                }
             }
-        } else {
-            switch (piece_type) {
-                case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
-                case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
-                case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
-                case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
-                case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
-                default: pst_value = 0; break;
-            }
-        }
-        
-        // Add material + piece-square value for this piece
-        int piece_value = material_value + pst_value;
-        
-        if (piece_color == Color::White) {
-            score += piece_value;
-        } else {
-            score -= piece_value;
         }
     }
     
@@ -1156,7 +1154,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     bool in_check = false;
     int king_sq = pos.king_sq[int(pos.side_to_move)];
     if (king_sq >= 0) {
-        in_check = SqAttacked(king_sq, pos, !pos.side_to_move);
+    in_check = Huginn::SqAttacked(king_sq, pos, !pos.side_to_move);
         if (in_check) {
             depth++; // Extend search depth when in check
         }
@@ -1271,7 +1269,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     }    // No legal moves (checkmate or stalemate)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
-        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
+    if (king_sq >= 0 && Huginn::SqAttacked(king_sq, pos, !pos.side_to_move)) {
             // Checkmate: side_to_move is mated
             // Return negative score with distance information
             return -MATE + (info.max_depth - depth); // Negative = loss, distance = plies to mate
