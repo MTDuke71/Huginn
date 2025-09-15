@@ -200,7 +200,7 @@ int SimpleEngine::quiescence_search(Position& pos, int alpha, int beta) {
     
 #ifdef _MSC_VER
     // Hint that we expect some captures but not all moves
-    __assume(captures.count >= 0 && captures.count <= 256);
+    __assume(captures.count >= 0 && captures.count <= MAX_POSITION_MOVES);
 #endif
     
     for (int i = 0; i < captures.count; ++i) {
