@@ -80,12 +80,12 @@ inline void generate_promotion_batch(S_MOVELIST& list, int from, int to, PieceTy
         // Optimized scoring calculation (avoiding function calls in hot path)
         int score = base_score;
         
-        // Add promotion piece bonus (Queen=900, Rook=500, Bishop=350, Knight=300)
+        // Add promotion piece bonus (Queen=900, Rook=500, Bishop=330, Knight=320)
         switch (promoted) {
             case PieceType::Queen:  score += 90000; break;
             case PieceType::Rook:   score += 50000; break; 
-            case PieceType::Bishop: score += 35000; break;
-            case PieceType::Knight: score += 30000; break;
+            case PieceType::Bishop: score += 33000; break;
+            case PieceType::Knight: score += 32000; break;
             default: break;
         }
         
@@ -94,8 +94,8 @@ inline void generate_promotion_batch(S_MOVELIST& list, int from, int to, PieceTy
             switch (captured) {
                 case PieceType::Queen:  score += 9000; break;
                 case PieceType::Rook:   score += 5000; break;
-                case PieceType::Bishop: score += 3500; break;
-                case PieceType::Knight: score += 3000; break;
+                case PieceType::Bishop: score += 3300; break;
+                case PieceType::Knight: score += 3200; break;
                 case PieceType::Pawn:   score += 1000; break;
                 default: break;
             }
