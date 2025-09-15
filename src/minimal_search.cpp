@@ -691,8 +691,8 @@ void MinimalEngine::init_mvv_lva() {
                 mvv_lva_scores[victim][attacker] = 0;
             } else {
                 // Valuable victim + cheap attacker = high score
-                // Example: Pawn(100) takes Queen(1000) = (1000 * 100) + (600 - 100) = 100,500
-                // Example: Queen(1000) takes Pawn(100) = (100 * 100) + (600 - 1000) = 9,600
+                // Example: Pawn(100) takes Queen(900) = (900 * 100) + (600 - 100) = 90,500
+                // Example: Queen(900) takes Pawn(100) = (100 * 100) + (600 - 900) = 9,700
                 mvv_lva_scores[victim][attacker] = (piece_values[victim] * 100) + (600 - piece_values[attacker]);
             }
         }
@@ -740,8 +740,8 @@ void MinimalEngine::order_moves(std::vector<S_MOVE>& moves, const Position& pos)
             switch (promoted) {
                 case PieceType::Queen:  score = 90000; break;
                 case PieceType::Rook:   score = 50000; break;
-                case PieceType::Bishop: score = 35000; break;
-                case PieceType::Knight: score = 30000; break;
+                case PieceType::Bishop: score = 33000; break;
+                case PieceType::Knight: score = 32000; break;
                 default: score = 25000; break;
             }
             
@@ -789,8 +789,8 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
             switch (promoted) {
                 case PieceType::Queen:  score = 90000; break;
                 case PieceType::Rook:   score = 50000; break;
-                case PieceType::Bishop: score = 35000; break;
-                case PieceType::Knight: score = 30000; break;
+                case PieceType::Bishop: score = 33000; break;
+                case PieceType::Knight: score = 32000; break;
                 default: score = 25000; break;
             }
             
@@ -911,8 +911,8 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                         switch (promoted) {
                             case PieceType::Queen:  score = 90000; break;
                             case PieceType::Rook:   score = 50000; break;
-                            case PieceType::Bishop: score = 35000; break;
-                            case PieceType::Knight: score = 30000; break;
+                            case PieceType::Bishop: score = 33000; break;
+                            case PieceType::Knight: score = 32000; break;
                             default: score = 25000; break;
                         }
                     } else {

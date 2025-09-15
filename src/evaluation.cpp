@@ -8,7 +8,7 @@
  * evaluation masks for passed pawn detection and other positional patterns.
  * 
  * ## Evaluation Components
- * - **Material Balance**: Basic piece values (P=100, N/B=300, R=500, Q=900)
+ * - **Material Balance**: Basic piece values (P=100, N=320, B=330, R=500, Q=900)
  * - **Piece-Square Tables**: Positional bonuses for piece placement
  * - **Passed Pawns**: Detection using precomputed bitmasks
  * - **King Safety**: Basic king exposure evaluation
