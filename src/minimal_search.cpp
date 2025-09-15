@@ -116,39 +116,57 @@ int MinimalEngine::evaluate(const Position& pos) {
     uint64_t white_pawns = pos.get_white_pawns();
     uint64_t black_pawns = pos.get_black_pawns();
     
-    // Check all pawns for isolated and passed pawn characteristics
-    for (int sq64 = 0; sq64 < 64; ++sq64) {
-        int sq120 = (sq64 / 8 + 2) * 10 + (sq64 % 8 + 1);
-        Piece piece = pos.board[sq120];
+    // Evaluate pawn structure using piece lists for efficiency
+    // Check white pawns for isolated and passed pawn characteristics
+    int white_pawn_count = pos.pCount[int(Color::White)][int(PieceType::Pawn)];
+    for (int i = 0; i < white_pawn_count; ++i) {
+        int sq120 = pos.pList[int(Color::White)][int(PieceType::Pawn)][i];
+        if (sq120 < 0 || sq120 >= 120) continue;
         
-        if (piece == Piece::WhitePawn) {
-            int file = sq64 % 8;
-            int rank = sq64 / 8;
-            
-            // Check for isolated pawn using pre-computed masks (3:07)
-            if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file]) == 0) {
-                pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
-            }
-            
-            // Check for passed pawn using pre-computed masks (4:25)
-            if ((black_pawns & EvalParams::WHITE_PASSED_PAWN_MASKS[sq64]) == 0) {
-                pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank];
-            }
-            
-        } else if (piece == Piece::BlackPawn) {
-            int file = sq64 % 8;
-            int rank = sq64 / 8;
-            
-            // Check for isolated pawn using pre-computed masks  
-            if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file]) == 0) {
-                pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY; // Penalty for black
-            }
-            
-            // Check for passed pawn using pre-computed masks
-            if ((white_pawns & EvalParams::BLACK_PASSED_PAWN_MASKS[sq64]) == 0) {
-                int mirror_rank = 7 - rank; // Mirror rank for black (rank increases as black advances)
-                pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank]; // Bonus for black
-            }
+        File file = file_of(sq120);
+        Rank rank = rank_of(sq120);
+        if (file == File::None || rank == Rank::None) continue;
+        
+        int file_idx = int(file);
+        int rank_idx = int(rank);
+        int sq64 = MAILBOX_MAPS.to64[sq120];
+        if (sq64 < 0) continue;
+        
+        // Check for isolated pawn using pre-computed masks (3:07)
+        if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
+            pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
+        }
+        
+        // Check for passed pawn using pre-computed masks (4:25)
+        if ((black_pawns & EvalParams::WHITE_PASSED_PAWN_MASKS[sq64]) == 0) {
+            pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank_idx];
+        }
+    }
+    
+    // Check black pawns for isolated and passed pawn characteristics
+    int black_pawn_count = pos.pCount[int(Color::Black)][int(PieceType::Pawn)];
+    for (int i = 0; i < black_pawn_count; ++i) {
+        int sq120 = pos.pList[int(Color::Black)][int(PieceType::Pawn)][i];
+        if (sq120 < 0 || sq120 >= 120) continue;
+        
+        File file = file_of(sq120);
+        Rank rank = rank_of(sq120);
+        if (file == File::None || rank == Rank::None) continue;
+        
+        int file_idx = int(file);
+        int rank_idx = int(rank);
+        int sq64 = MAILBOX_MAPS.to64[sq120];
+        if (sq64 < 0) continue;
+        
+        // Check for isolated pawn using pre-computed masks  
+        if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
+            pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY; // Penalty for black
+        }
+        
+        // Check for passed pawn using pre-computed masks
+        if ((white_pawns & EvalParams::BLACK_PASSED_PAWN_MASKS[sq64]) == 0) {
+            int mirror_rank = 7 - rank_idx; // Mirror rank for black (rank increases as black advances)
+            pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank]; // Bonus for black
         }
     }
     
@@ -160,53 +178,91 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     uint64_t all_pawns = white_pawns | black_pawns;
     
-    // Evaluate all squares for rooks and queens
-    for (int sq = 21; sq <= 98; ++sq) {
-        if (pos.board[sq] == Piece::Offboard || pos.board[sq] == Piece::None) continue;
+    // Evaluate white rooks using piece lists
+    int white_rook_count = pos.pCount[int(Color::White)][int(PieceType::Rook)];
+    for (int i = 0; i < white_rook_count; ++i) {
+        int sq = pos.pList[int(Color::White)][int(PieceType::Rook)][i];
+        if (sq < 0 || sq >= 120) continue;
         
-        Piece piece = pos.board[sq];
-        int sq64 = MAILBOX_MAPS.to64[sq];
-        if (sq64 < 0) continue; // Invalid square
+        File file = file_of(sq);
+        if (file == File::None) continue;
         
-        int file = sq64 % 8; // File A=0, B=1, ..., H=7
-        uint64_t file_mask = EvalParams::FILE_MASKS[file];
+        int file_idx = int(file);
+        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
         
-        if (piece == Piece::WhiteRook) {
-            // Check for open file (no pawns from either side)
-            if ((all_pawns & file_mask) == 0) {
-                file_bonus_score += EvalParams::ROOK_OPEN_FILE_BONUS;
-            }
-            // Check for semi-open file (no white pawns on this file)
-            else if ((white_pawns & file_mask) == 0) {
-                file_bonus_score += EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
-            }
-        } else if (piece == Piece::BlackRook) {
-            // Check for open file (no pawns from either side)
-            if ((all_pawns & file_mask) == 0) {
-                file_bonus_score -= EvalParams::ROOK_OPEN_FILE_BONUS;
-            }
-            // Check for semi-open file (no black pawns on this file)
-            else if ((black_pawns & file_mask) == 0) {
-                file_bonus_score -= EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
-            }
-        } else if (piece == Piece::WhiteQueen) {
-            // Check for open file (no pawns from either side)
-            if ((all_pawns & file_mask) == 0) {
-                file_bonus_score += EvalParams::QUEEN_OPEN_FILE_BONUS;
-            }
-            // Check for semi-open file (no white pawns on this file)
-            else if ((white_pawns & file_mask) == 0) {
-                file_bonus_score += EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
-            }
-        } else if (piece == Piece::BlackQueen) {
-            // Check for open file (no pawns from either side)
-            if ((all_pawns & file_mask) == 0) {
-                file_bonus_score -= EvalParams::QUEEN_OPEN_FILE_BONUS;
-            }
-            // Check for semi-open file (no black pawns on this file)
-            else if ((black_pawns & file_mask) == 0) {
-                file_bonus_score -= EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
-            }
+        // Check for open file (no pawns from either side)
+        if ((all_pawns & file_mask) == 0) {
+            file_bonus_score += EvalParams::ROOK_OPEN_FILE_BONUS;
+        }
+        // Check for semi-open file (no white pawns on this file)
+        else if ((white_pawns & file_mask) == 0) {
+            file_bonus_score += EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
+        }
+    }
+    
+    // Evaluate black rooks using piece lists
+    int black_rook_count = pos.pCount[int(Color::Black)][int(PieceType::Rook)];
+    for (int i = 0; i < black_rook_count; ++i) {
+        int sq = pos.pList[int(Color::Black)][int(PieceType::Rook)][i];
+        if (sq < 0 || sq >= 120) continue;
+        
+        File file = file_of(sq);
+        if (file == File::None) continue;
+        
+        int file_idx = int(file);
+        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
+        
+        // Check for open file (no pawns from either side)
+        if ((all_pawns & file_mask) == 0) {
+            file_bonus_score -= EvalParams::ROOK_OPEN_FILE_BONUS;
+        }
+        // Check for semi-open file (no black pawns on this file)
+        else if ((black_pawns & file_mask) == 0) {
+            file_bonus_score -= EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
+        }
+    }
+    
+    // Evaluate white queens using piece lists
+    int white_queen_count = pos.pCount[int(Color::White)][int(PieceType::Queen)];
+    for (int i = 0; i < white_queen_count; ++i) {
+        int sq = pos.pList[int(Color::White)][int(PieceType::Queen)][i];
+        if (sq < 0 || sq >= 120) continue;
+        
+        File file = file_of(sq);
+        if (file == File::None) continue;
+        
+        int file_idx = int(file);
+        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
+        
+        // Check for open file (no pawns from either side)
+        if ((all_pawns & file_mask) == 0) {
+            file_bonus_score += EvalParams::QUEEN_OPEN_FILE_BONUS;
+        }
+        // Check for semi-open file (no white pawns on this file)
+        else if ((white_pawns & file_mask) == 0) {
+            file_bonus_score += EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
+        }
+    }
+    
+    // Evaluate black queens using piece lists
+    int black_queen_count = pos.pCount[int(Color::Black)][int(PieceType::Queen)];
+    for (int i = 0; i < black_queen_count; ++i) {
+        int sq = pos.pList[int(Color::Black)][int(PieceType::Queen)][i];
+        if (sq < 0 || sq >= 120) continue;
+        
+        File file = file_of(sq);
+        if (file == File::None) continue;
+        
+        int file_idx = int(file);
+        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
+        
+        // Check for open file (no pawns from either side)
+        if ((all_pawns & file_mask) == 0) {
+            file_bonus_score -= EvalParams::QUEEN_OPEN_FILE_BONUS;
+        }
+        // Check for semi-open file (no black pawns on this file)
+        else if ((black_pawns & file_mask) == 0) {
+            file_bonus_score -= EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
         }
     }
     
