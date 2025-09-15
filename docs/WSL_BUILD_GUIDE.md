@@ -4,16 +4,25 @@ This guide documents how to build the Huginn chess engine using GCC in Windows S
 
 ## Performance Comparison
 
-Based on testing with the perft suite demo (quick test mode):
+Based on testing with the perft suite demo (quick test mode) - September 2025:
 
 | Build Type | Performance | Notes |
 |------------|-------------|--------|
-| **MSVC (Recommended)** | **28.6 seconds** | Best performance, native Windows toolchain |
-| Historical GCC baseline | 22.5 seconds | Target performance (conditions unknown) |
-| WSL GCC Linux | 57.8 seconds | GCC native Linux build in WSL |
-| MinGW-w64 Windows .exe | 58.1 seconds | GCC cross-compiled Windows executable |
+| **MSVC (Recommended)** | **16.8 seconds** | Best performance, native Windows toolchain |
+| WSL GCC Release | 23.1 seconds | GCC optimized build (-O3 -march=native) |
+| WSL GCC Debug | 195.3 seconds | Debug build for reference |
+| Historical GCC baseline | 22.5 seconds | Previous target performance |
+| Historical WSL GCC Linux | 57.8 seconds | Older unoptimized build |
+| Historical MinGW-w64 Windows .exe | 58.1 seconds | Cross-compiled Windows executable |
 
-**Recommendation**: Use MSVC for production builds due to superior performance.
+**Key Findings (2025)**:
+
+- MSVC Release is 37% faster than optimized GCC
+- Both compilers achieve 100% correctness on all tests
+- Debug vs Release makes 8.5x performance difference
+- WSL provides clean cross-compilation environment
+
+**Recommendation**: Use MSVC for production builds due to superior performance, WSL for cross-platform testing.
 
 ## Prerequisites
 
@@ -44,7 +53,44 @@ gcc --version
 cmake --version
 ```
 
-## Building Native Linux Version in WSL
+## Quick Start: Optimized WSL Build (2025)
+
+The simplest way to build and test Huginn with WSL:
+
+### 1. Build with Optimizations
+
+```bash
+# Start WSL and navigate to source
+wsl -d Ubuntu
+cd /mnt/d/repos/Huginn_New/Huginn
+
+# Create optimized build
+rm -rf build-wsl && mkdir build-wsl && cd build-wsl
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-O3 -march=native -DNDEBUG' -DENABLE_FATHOM=OFF ..
+make -j8 huginn perft_suite_vice
+```
+
+### 2. Run Performance Tests
+
+```bash
+# Perft benchmark (from project root)
+cd /mnt/d/repos/Huginn_New/Huginn
+echo '1' | ./build-wsl/bin/perft_suite_vice
+
+# Search benchmark
+cd benchmark
+python3 wsl_benchmark.py
+```
+
+### 3. Test Engine Functionality
+
+```bash
+# Basic UCI test
+cd /mnt/d/repos/Huginn_New/Huginn/build-wsl
+echo -e 'uci\nposition startpos\ngo depth 3\nquit' | ./bin/huginn
+```
+
+## Building Native Linux Version in WSL (Detailed)
 
 ### 1. Configure the Build
 
