@@ -44,6 +44,11 @@
 
 /build_debug/
 
+# WSL and cross-compilation build directories
+/build-wsl/
+/build-gcc/
+/build-gcc-simple/
+
 /Testing/*
 
 # Generated performance test files

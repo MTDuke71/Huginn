@@ -60,3 +60,5 @@
 2025-09-14, 3a6d217, Performance test, 16943
 2025-09-14, 2f8164b, Performance test, 16846
 2025-09-14, a08acf3, Performance test, 16821
+2025-09-14, da8203b, MSVC Release Performance Test, 16808
+2025-09-14, da8203b, WSL GCC Release Performance Test (O3 -march=native), 23050

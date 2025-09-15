@@ -172,7 +172,7 @@ void UCIInterface::run() {
             search_engine->stop();
             Huginn::SearchInfo* info_ptr = running_info.load();
             if (info_ptr) {
-                info_ptr->stop_time = std::chrono::high_resolution_clock::now();
+                info_ptr->stop_time = std::chrono::steady_clock::now();
                 info_ptr->stopped = true;
             }
             std::cout.flush(); // Ensure immediate response to GUI
@@ -588,7 +588,7 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     info.infinite = limits.infinite;
     
     // Convert time limits
-    auto search_start = std::chrono::high_resolution_clock::now();
+    auto search_start = std::chrono::steady_clock::now();
     info.start_time = search_start;
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
     
@@ -703,7 +703,7 @@ void UCIInterface::signal_stop() {
     if (search_engine) search_engine->stop();
     Huginn::SearchInfo* info_ptr = running_info.load();
     if (info_ptr) {
-        info_ptr->stop_time = std::chrono::high_resolution_clock::now();
+        info_ptr->stop_time = std::chrono::steady_clock::now();
         info_ptr->stopped = true;
     }
 }
