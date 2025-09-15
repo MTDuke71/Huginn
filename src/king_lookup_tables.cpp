@@ -238,9 +238,9 @@ namespace KingLookupTables {
                 
                 if (pos.board[f1] == Piece::None && pos.board[g1] == Piece::None) {
                     const int e1 = WHITE_KING_START;
-                    if (!SqAttacked(e1, pos, Color::Black) && 
-                        !SqAttacked(f1, pos, Color::Black) && 
-                        !SqAttacked(g1, pos, Color::Black)) {
+                    if (!Huginn::SqAttacked(e1, pos, Color::Black) && 
+                        !Huginn::SqAttacked(f1, pos, Color::Black) && 
+                        !Huginn::SqAttacked(g1, pos, Color::Black)) {
                         list.add_quiet_move(make_castle(e1, WHITE_KINGSIDE_KING_TO));
                     }
                 }
@@ -254,9 +254,9 @@ namespace KingLookupTables {
                 
                 if (pos.board[d1] == Piece::None && pos.board[c1] == Piece::None && pos.board[b1] == Piece::None) {
                     const int e1 = WHITE_KING_START;
-                    if (!SqAttacked(e1, pos, Color::Black) && 
-                        !SqAttacked(d1, pos, Color::Black) && 
-                        !SqAttacked(c1, pos, Color::Black)) {
+                    if (!Huginn::SqAttacked(e1, pos, Color::Black) && 
+                        !Huginn::SqAttacked(d1, pos, Color::Black) && 
+                        !Huginn::SqAttacked(c1, pos, Color::Black)) {
                         list.add_quiet_move(make_castle(e1, WHITE_QUEENSIDE_KING_TO));
                     }
                 }
@@ -269,9 +269,9 @@ namespace KingLookupTables {
                 
                 if (pos.board[f8] == Piece::None && pos.board[g8] == Piece::None) {
                     const int e8 = BLACK_KING_START;
-                    if (!SqAttacked(e8, pos, Color::White) && 
-                        !SqAttacked(f8, pos, Color::White) && 
-                        !SqAttacked(g8, pos, Color::White)) {
+                    if (!Huginn::SqAttacked(e8, pos, Color::White) && 
+                        !Huginn::SqAttacked(f8, pos, Color::White) && 
+                        !Huginn::SqAttacked(g8, pos, Color::White)) {
                         list.add_quiet_move(make_castle(e8, BLACK_KINGSIDE_KING_TO));
                     }
                 }
@@ -285,9 +285,9 @@ namespace KingLookupTables {
                 
                 if (pos.board[d8] == Piece::None && pos.board[c8] == Piece::None && pos.board[b8] == Piece::None) {
                     const int e8 = BLACK_KING_START;
-                    if (!SqAttacked(e8, pos, Color::White) && 
-                        !SqAttacked(d8, pos, Color::White) && 
-                        !SqAttacked(c8, pos, Color::White)) {
+                    if (!Huginn::SqAttacked(e8, pos, Color::White) && 
+                        !Huginn::SqAttacked(d8, pos, Color::White) && 
+                        !Huginn::SqAttacked(c8, pos, Color::White)) {
                         list.add_quiet_move(make_castle(e8, BLACK_QUEENSIDE_KING_TO));
                     }
                 }

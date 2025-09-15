@@ -463,7 +463,7 @@ int Position::MakeMove(const S_MOVE& move) {
     
     // Re-enable legality check now that we've debugged the Zobrist issues
     // Use SqAttacked directly to check if king is attacked by current side
-    if (SqAttacked(king_square, *this, side_to_move)) {
+    if (Huginn::SqAttacked(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
         TakeMove();
         return 0;  // Illegal move

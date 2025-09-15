@@ -22,7 +22,10 @@
  * @param attacking_color The color of the potential attackers (Color::White or Color::Black).
  * @return true if the square is attacked by any piece of the given color, false otherwise.
  */
+
 #include "attack_detection.hpp"
+
+namespace Huginn {
 
 // Main attack detection function moved from header for better compilation times
 bool SqAttacked(int sq, const Position &pos, Color attacking_color)
@@ -265,3 +268,5 @@ bool SqAttacked(int sq, const Position &pos, Color attacking_color)
     // No attacks found in optimized mode
     return false;
 }
+
+} // namespace Huginn

@@ -20,11 +20,14 @@
  * - chess_types.hpp: For chess type definitions (Color, File, Rank, etc.).
  * - <cmath>: For abs() function.
  */
+
 #pragma once
 #include "position.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include <cmath>
+
+namespace Huginn {
 
 /**
  * @brief Checks if a pawn on pawn_sq attacks target_sq.
@@ -193,3 +196,5 @@ inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position
  * @return True if the square is attacked by any piece of the given color, false otherwise.
  */
 bool SqAttacked(int sq, const Position &pos, Color attacking_color);
+
+} // namespace Huginn
