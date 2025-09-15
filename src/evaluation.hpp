@@ -76,28 +76,6 @@ inline constexpr int GAME_PHASE_OPENING_THRESHOLD = 28;
 inline constexpr int GAME_PHASE_MIDDLEGAME_THRESHOLD = 16;  
 
 // ============================================================================
-// PIECE VALUES - Base material values in centipawns (100 = 1 pawn)
-// ============================================================================
-
-/** @brief Pawn base value - fundamental unit of chess evaluation */
-inline constexpr int PAWN_VALUE = 100;
-
-/** @brief Knight value - slightly favored over bishops in closed positions */
-inline constexpr int KNIGHT_VALUE = 325;
-
-/** @brief Bishop value - equal to knight, stronger in open positions */
-inline constexpr int BISHOP_VALUE = 325;
-
-/** @brief Rook value - major piece, significantly stronger than minor pieces */
-inline constexpr int ROOK_VALUE = 550;
-
-/** @brief Queen value - most powerful piece, roughly equivalent to 2 rooks */
-inline constexpr int QUEEN_VALUE = 1000;
-
-/** @brief King value - invaluable, loss means checkmate */
-inline constexpr int KING_VALUE = 50000;
-
-// ============================================================================
 // TACTICAL BONUSES - Positional and tactical pattern recognition
 // ============================================================================
 

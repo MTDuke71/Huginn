@@ -63,17 +63,8 @@ int MinimalEngine::evaluate(const Position& pos) {
                 if (piece == Piece::None || piece == Piece::Offboard) continue;
                 Color piece_color = static_cast<Color>(color);
                 PieceType pt = static_cast<PieceType>(piece_type);
-                // Material values (VICE-compatible)
-                int material_value = 0;
-                switch (pt) {
-                    case PieceType::Pawn:   material_value = 100; break;
-                    case PieceType::Knight: material_value = 320; break;
-                    case PieceType::Bishop: material_value = 330; break;
-                    case PieceType::Rook:   material_value = 500; break;
-                    case PieceType::Queen:  material_value = 900; break;
-                    case PieceType::King:   material_value = 20000; break;
-                    default: material_value = 0; break;
-                }
+                // Material values (VICE-compatible) - use PIECE_VALUES_MG for consistency
+                int material_value = PIECE_VALUES_MG[static_cast<int>(pt)];
                 // Convert square120 to square64 for piece-square tables
                 int sq64 = MAILBOX_MAPS.to64[sq];
                 if (sq64 < 0) continue; // Invalid square
@@ -677,14 +668,15 @@ S_MOVE MinimalEngine::get_counter_move(const S_MOVE& previous_move) const {
 
 // Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
 void MinimalEngine::init_mvv_lva() {
-    // Piece values for MVV-LVA (using standard values)
+    // Use the same piece values as evaluation for consistency
+    // Note: King value set to 0 for MVV-LVA since king captures are illegal
     int piece_values[7] = {
         0,    // None
         100,  // Pawn
-        300,  // Knight  
-        350,  // Bishop
+        320,  // Knight (matches PIECE_VALUES_MG)
+        330,  // Bishop (matches PIECE_VALUES_MG)
         500,  // Rook
-        1000, // Queen
+        900,  // Queen (matches PIECE_VALUES_MG)
         0     // King (should never be captured)
     };
     
