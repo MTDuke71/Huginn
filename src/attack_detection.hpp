@@ -33,11 +33,15 @@
  * @param pawn_color The color of the pawn (White or Black).
  * @return True if the pawn attacks the target square, false otherwise.
  */
-inline bool pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color) {
-    if (pawn_color == Color::White) {
+inline bool pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color)
+{
+    if (pawn_color == Color::White)
+    {
         // White pawn attacks NE and NW
         return (target_sq == pawn_sq + NE || target_sq == pawn_sq + NW);
-    } else {
+    }
+    else
+    {
         // Black pawn attacks SE and SW
         return (target_sq == pawn_sq + SE || target_sq == pawn_sq + SW);
     }
@@ -49,9 +53,12 @@ inline bool pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color) {
  * @param target_sq The square index of the target square.
  * @return True if the knight attacks the target square, false otherwise.
  */
-inline bool knight_attacks_square(int knight_sq, int target_sq) {
-    for (int delta : KNIGHT_DELTAS) {
-        if (knight_sq + delta == target_sq) {
+inline bool knight_attacks_square(int knight_sq, int target_sq)
+{
+    for (int delta : KNIGHT_DELTAS)
+    {
+        if (knight_sq + delta == target_sq)
+        {
             return true;
         }
     }
@@ -64,9 +71,12 @@ inline bool knight_attacks_square(int knight_sq, int target_sq) {
  * @param target_sq The square index of the target square.
  * @return True if the king attacks the target square, false otherwise.
  */
-inline bool king_attacks_square(int king_sq, int target_sq) {
-    for (int delta : KING_DELTAS) {
-        if (king_sq + delta == target_sq) {
+inline bool king_attacks_square(int king_sq, int target_sq)
+{
+    for (int delta : KING_DELTAS)
+    {
+        if (king_sq + delta == target_sq)
+        {
             return true;
         }
     }
@@ -86,36 +96,43 @@ inline bool king_attacks_square(int king_sq, int target_sq) {
  * @param pos The current board position, used to check for obstructions.
  * @return True if the sliding piece can attack the target square along the rank or file, false otherwise.
  */
-inline bool sliding_attacks_rank_file(int piece_sq, int target_sq, const Position& pos) {
+inline bool sliding_attacks_rank_file(int piece_sq, int target_sq, const Position &pos)
+{
     // Check if on same rank or file
     File piece_file = file_of(piece_sq);
     Rank piece_rank = rank_of(piece_sq);
     File target_file = file_of(target_sq);
     Rank target_rank = rank_of(target_sq);
-    
-    if (piece_file != target_file && piece_rank != target_rank) {
+
+    if (piece_file != target_file && piece_rank != target_rank)
+    {
         return false; // Not on same rank or file
     }
-    
+
     // Determine direction
     int dir;
-    if (piece_file == target_file) {
+    if (piece_file == target_file)
+    {
         // Same file - moving along rank
         dir = (target_rank > piece_rank) ? NORTH : SOUTH;
-    } else {
+    }
+    else
+    {
         // Same rank - moving along file
         dir = (target_file > piece_file) ? EAST : WEST;
     }
-    
+
     // Check for clear path
     int current_sq = piece_sq + dir;
-    while (current_sq != target_sq && is_playable(current_sq)) {
-        if (!is_none(pos.at(current_sq))) {
+    while (current_sq != target_sq && is_playable(current_sq))
+    {
+        if (!is_none(pos.at(current_sq)))
+        {
             return false; // Path blocked
         }
         current_sq += dir;
     }
-    
+
     return current_sq == target_sq;
 }
 
@@ -132,31 +149,39 @@ inline bool sliding_attacks_rank_file(int piece_sq, int target_sq, const Positio
  * @param pos The current board position, used to check for obstructions.
  * @return True if the sliding piece can attack the target square along the diagonal, false otherwise.
  */
-inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position& pos) {
+inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position &pos)
+{
     // Check if on same diagonal
     int file_diff = int(file_of(target_sq)) - int(file_of(piece_sq));
     int rank_diff = int(rank_of(target_sq)) - int(rank_of(piece_sq));
-    
-    if (abs(file_diff) != abs(rank_diff)) {
+
+    if (abs(file_diff) != abs(rank_diff))
+    {
         return false; // Not on same diagonal
     }
-    
+
     // Determine direction
     int dir;
-    if (file_diff > 0 && rank_diff > 0) dir = NE;
-    else if (file_diff < 0 && rank_diff > 0) dir = NW;
-    else if (file_diff > 0 && rank_diff < 0) dir = SE;
-    else dir = SW;
-    
+    if (file_diff > 0 && rank_diff > 0)
+        dir = NE;
+    else if (file_diff < 0 && rank_diff > 0)
+        dir = NW;
+    else if (file_diff > 0 && rank_diff < 0)
+        dir = SE;
+    else
+        dir = SW;
+
     // Check for clear path
     int current_sq = piece_sq + dir;
-    while (current_sq != target_sq && is_playable(current_sq)) {
-        if (!is_none(pos.at(current_sq))) {
+    while (current_sq != target_sq && is_playable(current_sq))
+    {
+        if (!is_none(pos.at(current_sq)))
+        {
             return false; // Path blocked
         }
         current_sq += dir;
     }
-    
+
     return current_sq == target_sq;
 }
 
@@ -167,4 +192,4 @@ inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position
  * @param attacking_color The color of the pieces to check for attacks.
  * @return True if the square is attacked by any piece of the given color, false otherwise.
  */
-bool SqAttacked(int sq, const Position& pos, Color attacking_color);
+bool SqAttacked(int sq, const Position &pos, Color attacking_color);
