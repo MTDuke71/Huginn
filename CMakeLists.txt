@@ -420,15 +420,6 @@ add_huginn_executable(perft_suite_vice
 
 # ---- Move Generation Profiler ----
 
-# ---- Debug Tools ----
-add_huginn_executable(compare_kiwipete_implementations
-    SOURCES
-        debug/compare_kiwipete_implementations.cpp
-        ${COMMON_SOURCES}
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
 # ---- Assembly Generation Target ----
 if(GENERATE_ASSEMBLY)
     # Create assembly directory
@@ -495,39 +486,6 @@ if(GTEST_FOUND)
     test/test_input_checking.cpp
     )
 
-    # ---- Knight Lookup Demo ----
-    add_executable(demo_knight_lookup
-        demo_knight_lookup.cpp
-        ${COMMON_SOURCES}
-    )
-    
-    target_compile_features(demo_knight_lookup PRIVATE cxx_std_17)
-    target_include_directories(demo_knight_lookup PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/src 
-    )
-
-    # ---- King Lookup Demo ----
-    add_executable(demo_king_lookup
-        demos/demo_king_lookup.cpp
-        ${COMMON_SOURCES}
-    )
-    
-    target_compile_features(demo_king_lookup PRIVATE cxx_std_17)
-    target_include_directories(demo_king_lookup PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/src 
-    )
-
-    # ---- Castling Test Demo ----
-    add_executable(test_castling_demo
-        test_castling_demo.cpp
-        ${COMMON_SOURCES}
-    )
-    
-    target_compile_features(test_castling_demo PRIVATE cxx_std_17)
-    target_include_directories(test_castling_demo PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/src 
-    )
-
     add_executable(huginn_tests
     ${TEST_SOURCES}
     ${ENGINE_SOURCES}
@@ -565,19 +523,25 @@ else()
     message(STATUS "Tests disabled - GTest not found")
 endif()
 
-# Debug executable for knight lookup debugging
-add_executable(debug_knight_lookup debug_knight_lookup.cpp ${COMMON_SOURCES})
-target_compile_features(debug_knight_lookup PRIVATE cxx_std_17)
-target_include_directories(debug_knight_lookup PRIVATE src)
-target_compile_definitions(debug_knight_lookup PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
 # Move generation comparison benchmark
 add_executable(movegen_comparison benchmark/movegen_comparison.cpp ${COMMON_SOURCES})
 target_compile_features(movegen_comparison PRIVATE cxx_std_17)
 target_include_directories(movegen_comparison PRIVATE src)
 target_compile_definitions(movegen_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
-# Move generation debugging tool (minimal sources)
+# Evaluation benchmark for performance testing
+add_executable(eval_benchmark_old eval_benchmark_old.cpp ${COMMON_SOURCES})
+target_compile_features(eval_benchmark_old PRIVATE cxx_std_17)
+target_include_directories(eval_benchmark_old PRIVATE src)
+target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
+# Evaluation benchmark for new piece list approach
+add_executable(eval_benchmark_new eval_benchmark_new.cpp ${COMMON_SOURCES})
+target_compile_features(eval_benchmark_new PRIVATE cxx_std_17)
+target_include_directories(eval_benchmark_new PRIVATE src)
+target_compile_definitions(eval_benchmark_new PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
+# End of CMakeLists.txt
 set(DEBUG_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
@@ -594,106 +558,7 @@ set(DEBUG_SOURCES
     src/king_lookup_tables.cpp
     src/pawn_lookup_tables.cpp
 )
-add_executable(movegen_debugging debug/movegen_debugging.cpp ${DEBUG_SOURCES})
-target_compile_features(movegen_debugging PRIVATE cxx_std_17)
-target_include_directories(movegen_debugging PRIVATE src)
-target_compile_definitions(movegen_debugging PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
-# Knight debugging tool
-add_executable(knight_debug debug/knight_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(knight_debug PRIVATE cxx_std_17)
-target_include_directories(knight_debug PRIVATE src)
-target_compile_definitions(knight_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
-# Legal move filtering debugging tool
-add_executable(legal_move_debug debug/legal_move_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(legal_move_debug PRIVATE cxx_std_17)
-target_include_directories(legal_move_debug PRIVATE src)
-target_compile_definitions(legal_move_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Compilation flag debugging tool
-add_executable(compilation_debug debug/compilation_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(compilation_debug PRIVATE cxx_std_17)
-target_include_directories(compilation_debug PRIVATE src)
-target_compile_definitions(compilation_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Knights bitboard verification tool
-add_executable(knights_bitboard_check debug/knights_bitboard_check.cpp ${DEBUG_SOURCES})
-target_compile_features(knights_bitboard_check PRIVATE cxx_std_17)
-target_include_directories(knights_bitboard_check PRIVATE src)
-target_compile_definitions(knights_bitboard_check PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Move generation analysis tool
-add_executable(move_analysis debug/move_analysis.cpp ${DEBUG_SOURCES})
-target_compile_features(move_analysis PRIVATE cxx_std_17)
-target_include_directories(move_analysis PRIVATE src)
-target_compile_definitions(move_analysis PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# MakeMove legality filter analysis tool
-add_executable(makemove_filter_analysis debug/makemove_filter_analysis.cpp ${DEBUG_SOURCES})
-target_compile_features(makemove_filter_analysis PRIVATE cxx_std_17)
-target_include_directories(makemove_filter_analysis PRIVATE src)
-target_compile_definitions(makemove_filter_analysis PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Perft debug analysis tool
-add_executable(perft_debug_analysis debug/perft_debug_analysis.cpp ${DEBUG_SOURCES})
-target_compile_features(perft_debug_analysis PRIVATE cxx_std_17)
-target_include_directories(perft_debug_analysis PRIVATE src)
-target_compile_definitions(perft_debug_analysis PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Exact perft reproduction test
-add_executable(exact_perft_reproduction debug/exact_perft_reproduction.cpp ${DEBUG_SOURCES})
-target_compile_features(exact_perft_reproduction PRIVATE cxx_std_17)
-target_include_directories(exact_perft_reproduction PRIVATE src)
-target_compile_definitions(exact_perft_reproduction PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Perft divide comparison tool
-add_executable(perft_divide_comparison debug/perft_divide_comparison.cpp ${DEBUG_SOURCES})
-target_compile_features(perft_divide_comparison PRIVATE cxx_std_17)
-target_include_directories(perft_divide_comparison PRIVATE src)
-target_compile_definitions(perft_divide_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# En passant test tool
-add_executable(en_passant_test debug/en_passant_test.cpp ${DEBUG_SOURCES})
-target_compile_features(en_passant_test PRIVATE cxx_std_17)
-target_include_directories(en_passant_test PRIVATE src)
-target_compile_definitions(en_passant_test PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Deep dive debug tool
-add_executable(deep_dive_debug debug/deep_dive_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(deep_dive_debug PRIVATE cxx_std_17)
-target_include_directories(deep_dive_debug PRIVATE src)
-target_compile_definitions(deep_dive_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Hybrid comparison tool
-add_executable(hybrid_comparison debug/hybrid_comparison.cpp ${DEBUG_SOURCES})
-target_compile_features(hybrid_comparison PRIVATE cxx_std_17)
-target_include_directories(hybrid_comparison PRIVATE src)
-target_compile_definitions(hybrid_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Bishop debug tool
-add_executable(bishop_debug debug/bishop_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(bishop_debug PRIVATE cxx_std_17)
-target_include_directories(bishop_debug PRIVATE src)
-target_compile_definitions(bishop_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Kiwipete divide analysis tool
-add_executable(kiwipete_divide debug/kiwipete_divide.cpp ${DEBUG_SOURCES})
-target_compile_features(kiwipete_divide PRIVATE cxx_std_17)
-target_include_directories(kiwipete_divide PRIVATE src)
-target_compile_definitions(kiwipete_divide PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Kiwipete raw move analysis tool
-add_executable(kiwipete_raw_analysis debug/kiwipete_raw_analysis.cpp ${DEBUG_SOURCES})
-target_compile_features(kiwipete_raw_analysis PRIVATE cxx_std_17)
-target_include_directories(kiwipete_raw_analysis PRIVATE src)
-target_compile_definitions(kiwipete_raw_analysis PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-# Perft debugging tool - same config as real perft
-add_executable(perft_debug debug/perft_debug.cpp ${COMMON_SOURCES})
-target_compile_features(perft_debug PRIVATE cxx_std_17)
-target_include_directories(perft_debug PRIVATE src)
-target_compile_definitions(perft_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
 # Huginn2 bitboard perft suite (first 2 positions)
 add_executable(perft_suite_huginn2 perft/perft_suite_huginn2.cpp ${DEBUG_SOURCES})
@@ -701,23 +566,9 @@ target_compile_features(perft_suite_huginn2 PRIVATE cxx_std_17)
 target_include_directories(perft_suite_huginn2 PRIVATE src)
 target_compile_definitions(perft_suite_huginn2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Bitboard state debugging tool
-add_executable(bitboard_state_debug debug/bitboard_state_debug.cpp ${DEBUG_SOURCES})
-target_compile_features(bitboard_state_debug PRIVATE cxx_std_17)
-target_include_directories(bitboard_state_debug PRIVATE src)
-target_compile_definitions(bitboard_state_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Evaluation benchmark for performance testing
-add_executable(eval_benchmark_old eval_benchmark_old.cpp ${COMMON_SOURCES})
-target_compile_features(eval_benchmark_old PRIVATE cxx_std_17)
-target_include_directories(eval_benchmark_old PRIVATE src)
-target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
-# Evaluation benchmark for new piece list approach
-add_executable(eval_benchmark_new eval_benchmark_new.cpp ${COMMON_SOURCES})
-target_compile_features(eval_benchmark_new PRIVATE cxx_std_17)
-target_include_directories(eval_benchmark_new PRIVATE src)
-target_compile_definitions(eval_benchmark_new PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
 
 # End of CMakeLists.txt
 
