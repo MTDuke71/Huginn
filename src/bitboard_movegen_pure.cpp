@@ -95,6 +95,40 @@ void BitboardMoveGen::generate_white_pawn_moves_optimized(const BitboardPosition
         moves.add_capture(from_64, to_64);
     }
     
+    // ---- En passant captures ----
+    if (pos.ep_square_64 != -1) {
+        int ep_square = pos.ep_square_64;
+        
+        // Check for white pawns that can capture en passant
+        // En passant target square is on rank 6 for white pawns
+        if (ep_square >= 40 && ep_square <= 47) { // rank 6 (0-indexed)
+            // For white pawns, they attack diagonally up-left and up-right
+            // If en passant square is the target, check the squares diagonally down-left and down-right
+            
+            // Check diagonal capture from down-left (a5 -> b6 type)
+            if ((ep_square % 8) > 0) { // not on a-file
+                int pawn_square = ep_square - 8 - 1; // one rank down, one file left
+                if (pawn_square >= 0 && pos.piece_at(pawn_square) == Piece::WhitePawn) {
+                    BitboardMoveList::BitboardMove move(pawn_square, ep_square);
+                    move.is_capture = true;
+                    move.is_ep_capture = true;
+                    moves.moves.push_back(move);
+                }
+            }
+            
+            // Check diagonal capture from down-right (c5 -> b6 type)  
+            if ((ep_square % 8) < 7) { // not on h-file
+                int pawn_square = ep_square - 8 + 1; // one rank down, one file right
+                if (pawn_square >= 0 && pos.piece_at(pawn_square) == Piece::WhitePawn) {
+                    BitboardMoveList::BitboardMove move(pawn_square, ep_square);
+                    move.is_capture = true;
+                    move.is_ep_capture = true;
+                    moves.moves.push_back(move);
+                }
+            }
+        }
+    }
+    
     // ---- Process promotions (all 4 types) ----
     while (promotion_pushes != 0) {
         int to_64 = pop_lsb(promotion_pushes);
@@ -177,6 +211,37 @@ void BitboardMoveGen::generate_black_pawn_moves_optimized(const BitboardPosition
         int to_64 = pop_lsb(right_captures);
         int from_64 = to_64 + 7;
         moves.add_capture(from_64, to_64);
+    }
+    
+    // ---- En passant captures ----
+    if (pos.ep_square_64 != -1) {
+        int ep_square = pos.ep_square_64;
+        
+        // Check for black pawns that can capture en passant
+        // En passant target square is on rank 3 for black pawns
+        if (ep_square >= 16 && ep_square <= 23) { // rank 3 (0-indexed)
+            // Check left en passant capture (pawn moving from file+1 to file)
+            if ((ep_square % 8) < 7) { // not on h-file
+                int left_pawn_square = ep_square + 7; // one rank up, one file right
+                if (pos.piece_at(left_pawn_square) == Piece::BlackPawn) {
+                    BitboardMoveList::BitboardMove move(left_pawn_square, ep_square);
+                    move.is_capture = true;
+                    move.is_ep_capture = true;
+                    moves.moves.push_back(move);
+                }
+            }
+            
+            // Check right en passant capture (pawn moving from file-1 to file)  
+            if ((ep_square % 8) > 0) { // not on a-file
+                int right_pawn_square = ep_square + 9; // one rank up, one file left
+                if (pos.piece_at(right_pawn_square) == Piece::BlackPawn) {
+                    BitboardMoveList::BitboardMove move(right_pawn_square, ep_square);
+                    move.is_capture = true;
+                    move.is_ep_capture = true;
+                    moves.moves.push_back(move);
+                }
+            }
+        }
     }
     
     // ---- Process promotions (all 4 types) ----

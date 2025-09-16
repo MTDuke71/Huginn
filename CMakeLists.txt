@@ -17,7 +17,14 @@ if(WIN32)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-        
+add_executable(debug_fresh_vs_sequence debug_fresh_vs_add_executable(a2a4_test a2a4_test.cpp ${CORE_SOURCES})equence.cpp ${COMMON_SOURCES})
+target_compile_features(debug_fresh_vs_sequence PRIVATE cxx_std_17)
+target_include_directories(debug_fresh_vs_sequence PRIVATE src)
+target_compile_definitions(debug_fresh_vs_sequence PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+
+
+# End of CMakeLists.txt    
         # Clear system paths that might include MSYS2
         set(CMAKE_SYSTEM_INCLUDE_PATH "")
         set(CMAKE_SYSTEM_LIBRARY_PATH "")
@@ -614,7 +621,54 @@ target_compile_features(complete_movegen_benchmark PRIVATE cxx_std_17)
 target_include_directories(complete_movegen_benchmark PRIVATE src)
 target_compile_definitions(complete_movegen_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
 
+# ===== ESSENTIAL DEBUGGING TOOLS =====
 
+# Pure Bitboard Perft (Main comprehensive test suite)
+add_executable(bitboard_perft src/bitboard_perft.cpp ${COMMON_SOURCES})
+target_compile_features(bitboard_perft PRIVATE cxx_std_17)
+target_include_directories(bitboard_perft PRIVATE src)
+target_compile_definitions(bitboard_perft PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# Perft Divide 5 Analysis (Identifies 2-square pawn move bugs - CRITICAL TOOL)
+add_executable(perft_divide5_analysis perft_divide5_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(perft_divide5_analysis PRIVATE cxx_std_17)
+target_include_directories(perft_divide5_analysis PRIVATE src)
+target_compile_definitions(perft_divide5_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# Perft Correctness Analysis (Depth-by-depth accuracy testing)
+add_executable(perft_correctness_check perft_correctness_check.cpp ${COMMON_SOURCES})
+target_compile_features(perft_correctness_check PRIVATE cxx_std_17)
+target_include_directories(perft_correctness_check PRIVATE src)
+target_compile_definitions(perft_correctness_check PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a2a4 Debug (Tests position after 2-square pawn move)
+add_executable(after_a2a4_debug after_a2a4_debug.cpp ${COMMON_SOURCES})
+target_compile_features(after_a2a4_debug PRIVATE cxx_std_17)
+target_include_directories(after_a2a4_debug PRIVATE src)
+target_compile_definitions(after_a2a4_debug PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a2a4 a7a6 Debug (Tests position after sequence with no en passant)
+add_executable(after_a2a4_a7a6_debug after_a2a4_a7a6_debug.cpp ${COMMON_SOURCES})
+target_compile_features(after_a2a4_a7a6_debug PRIVATE cxx_std_17)
+target_include_directories(after_a2a4_a7a6_debug PRIVATE src)
+target_compile_definitions(after_a2a4_a7a6_debug PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a4a5 Debug (Tests position after a2a4 a7a6 a4a5 sequence)
+add_executable(after_a4a5_debug after_a4a5_debug.cpp ${COMMON_SOURCES})
+target_compile_features(after_a4a5_debug PRIVATE cxx_std_17)
+target_include_directories(after_a4a5_debug PRIVATE src)
+target_compile_definitions(after_a4a5_debug PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# b7b5 Deep Analysis (Investigates the specific b7b5 move bug)
+add_executable(b7b5_deep_analysis b7b5_deep_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(b7b5_deep_analysis PRIVATE cxx_std_17)
+target_include_directories(b7b5_deep_analysis PRIVATE src)
+target_compile_definitions(b7b5_deep_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# En Passant Validation (Tests for invalid en passant move generation)
+add_executable(en_passant_validation en_passant_validation.cpp ${COMMON_SOURCES})
+target_compile_features(en_passant_validation PRIVATE cxx_std_17)
+target_include_directories(en_passant_validation PRIVATE src)
+target_compile_definitions(en_passant_validation PRIVATE USE_PAWN_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
-
