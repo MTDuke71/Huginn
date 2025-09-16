@@ -710,5 +710,17 @@ target_compile_features(bitboard_state_debug PRIVATE cxx_std_17)
 target_include_directories(bitboard_state_debug PRIVATE src)
 target_compile_definitions(bitboard_state_debug PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
+# Evaluation benchmark for performance testing
+add_executable(eval_benchmark_old eval_benchmark_old.cpp ${COMMON_SOURCES})
+target_compile_features(eval_benchmark_old PRIVATE cxx_std_17)
+target_include_directories(eval_benchmark_old PRIVATE src)
+target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
+# Evaluation benchmark for new piece list approach
+add_executable(eval_benchmark_new eval_benchmark_new.cpp ${COMMON_SOURCES})
+target_compile_features(eval_benchmark_new PRIVATE cxx_std_17)
+target_include_directories(eval_benchmark_new PRIVATE src)
+target_compile_definitions(eval_benchmark_new PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
 # End of CMakeLists.txt
 

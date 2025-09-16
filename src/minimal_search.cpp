@@ -1202,7 +1202,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     bool in_check = false;
     int king_sq = pos.king_sq[int(pos.side_to_move)];
     if (king_sq >= 0) {
-    in_check = Huginn::SqAttacked(king_sq, pos, !pos.side_to_move);
+        in_check = SqAttacked(king_sq, pos, !pos.side_to_move);
         if (in_check) {
             depth++; // Extend search depth when in check
         }
@@ -1317,7 +1317,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     }    // No legal moves (checkmate or stalemate)
     if (move_list.count == 0) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
-    if (king_sq >= 0 && Huginn::SqAttacked(king_sq, pos, !pos.side_to_move)) {
+    if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
             // Checkmate: side_to_move is mated
             // Return negative score with distance information
             return -MATE + (info.max_depth - depth); // Negative = loss, distance = plies to mate
