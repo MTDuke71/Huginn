@@ -31,6 +31,30 @@
 #include "chess_types.hpp"
 
 // ============================================================================
+// SIMPLE BITBOARD MOVE STRUCTURE
+// ============================================================================
+
+/**
+ * @brief Simple move structure for bitboard operations
+ * 
+ * Lightweight move representation that avoids circular dependencies.
+ * Used for make/unmake operations in BitboardPosition.
+ */
+struct SimpleBitboardMove {
+    int from_64;
+    int to_64;
+    PieceType promotion_type;
+    bool is_capture;
+    bool is_ep_capture;
+    bool is_castling;
+    bool is_promotion;
+    
+    SimpleBitboardMove(int f = -1, int t = -1, PieceType promo = PieceType::None) 
+        : from_64(f), to_64(t), promotion_type(promo), is_capture(false), 
+          is_ep_capture(false), is_castling(false), is_promotion(promo != PieceType::None) {}
+};
+
+// ============================================================================
 // BITBOARD POSITION ARCHITECTURE
 // ============================================================================
 
@@ -78,6 +102,27 @@ public:
     // ---- Piece manipulation ----
     void place_piece(int square_64, Color color, PieceType piece_type);
     void remove_piece(int square_64);
+    
+    // ---- Move operations ----
+    struct UndoInfo {
+        Piece captured_piece;           // What piece was captured (if any)
+        int ep_square_64;               // Previous en passant square
+        uint8_t castling_rights;        // Previous castling rights
+        uint16_t halfmove_clock;        // Previous halfmove clock
+        uint64_t zobrist_key;           // Previous zobrist key
+        bool was_en_passant_capture;    // True if this was an en passant capture
+        int en_passant_captured_square; // Square where en passant captured pawn was
+        int ply;                        // Previous ply count
+        uint16_t fullmove_number;       // Previous fullmove number
+        std::array<int, 2> material_score;  // Previous material scores
+        Color side_to_move;             // Previous side to move
+    };
+    
+    bool make_move(const SimpleBitboardMove& move);
+    BitboardPosition::UndoInfo make_move_with_undo(const SimpleBitboardMove& move);
+    void unmake_move(const SimpleBitboardMove& move, const UndoInfo& undo_info);
+    bool is_legal_move(const SimpleBitboardMove& move);
+    bool is_square_attacked(int square_64, Color attacking_color) const;
     void move_piece(int from_64, int to_64);
     
     // ---- Bitboard accessors ----
