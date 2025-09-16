@@ -602,6 +602,18 @@ target_compile_features(comprehensive_movegen_benchmark PRIVATE cxx_std_17)
 target_include_directories(comprehensive_movegen_benchmark PRIVATE src)
 target_compile_definitions(comprehensive_movegen_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
 
+# Sliding Pieces Benchmark (Magic bitboard sliding piece performance test)
+add_executable(sliding_pieces_benchmark src/sliding_pieces_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(sliding_pieces_benchmark PRIVATE cxx_std_17)
+target_include_directories(sliding_pieces_benchmark PRIVATE src)
+target_compile_definitions(sliding_pieces_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# Complete Move Generation Benchmark (Full pure bitboard engine test)
+add_executable(complete_movegen_benchmark src/complete_movegen_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(complete_movegen_benchmark PRIVATE cxx_std_17)
+target_include_directories(complete_movegen_benchmark PRIVATE src)
+target_compile_definitions(complete_movegen_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
+
 
 
 # End of CMakeLists.txt

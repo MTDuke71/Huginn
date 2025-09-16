@@ -83,21 +83,28 @@ void generate_pawn_moves(const BitboardPosition& pos, BitboardMoveList& moves);
 void generate_knight_moves(const BitboardPosition& pos, BitboardMoveList& moves);
 
 /**
- * @brief Generate bishop moves using bitboard operations  
+ * @brief Generate bishop moves using bitboard operations
+ * 
+ * Uses magic bitboard attack generation for maximum performance.
+ * Processes all bishops with bulk bitboard operations.
  */
 void generate_bishop_moves(const BitboardPosition& pos, BitboardMoveList& moves);
 
 /**
  * @brief Generate rook moves using bitboard operations
+ * 
+ * Uses magic bitboard attack generation for maximum performance.
+ * Processes all rooks with bulk bitboard operations.
  */
 void generate_rook_moves(const BitboardPosition& pos, BitboardMoveList& moves);
 
 /**
  * @brief Generate queen moves using bitboard operations
+ * 
+ * Combines bishop and rook attacks for complete queen mobility.
+ * Processes all queens with bulk bitboard operations.
  */
-void generate_queen_moves(const BitboardPosition& pos, BitboardMoveList& moves);
-
-/**
+void generate_queen_moves(const BitboardPosition& pos, BitboardMoveList& moves);/**
  * @brief Generate king moves using bitboard operations
  */
 void generate_king_moves(const BitboardPosition& pos, BitboardMoveList& moves);

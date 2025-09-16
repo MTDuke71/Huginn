@@ -241,15 +241,84 @@ void BitboardMoveGen::generate_knight_moves(const BitboardPosition& pos, Bitboar
 }
 
 void BitboardMoveGen::generate_bishop_moves(const BitboardPosition& pos, BitboardMoveList& moves) {
-    // Placeholder - would implement sliding diagonal attacks
+    Color us = pos.side_to_move;
+    uint64_t our_bishops = pos.get_pieces(us, PieceType::Bishop);
+    uint64_t occupied = pos.get_occupied();
+    uint64_t our_pieces = pos.get_all_pieces(us);
+    uint64_t enemy_pieces = pos.get_all_pieces(us == Color::White ? Color::Black : Color::White);
+    
+    // Process each bishop
+    while (our_bishops != 0) {
+        int from = pop_lsb(our_bishops);
+        
+        // Generate bishop attacks using existing bitboard function
+        uint64_t attacks = bishop_attacks(from, occupied);
+        
+        // Remove squares occupied by our pieces
+        attacks &= ~our_pieces;
+        
+        // Separate captures from quiet moves
+        uint64_t captures = attacks & enemy_pieces;
+        uint64_t quiet_moves = attacks & ~enemy_pieces;
+        
+        // Add moves with proper capture flags
+        add_moves_from_bitboard(captures, from, moves, true);
+        add_moves_from_bitboard(quiet_moves, from, moves, false);
+    }
 }
 
 void BitboardMoveGen::generate_rook_moves(const BitboardPosition& pos, BitboardMoveList& moves) {
-    // Placeholder - would implement sliding horizontal/vertical attacks  
+    Color us = pos.side_to_move;
+    uint64_t our_rooks = pos.get_pieces(us, PieceType::Rook);
+    uint64_t occupied = pos.get_occupied();
+    uint64_t our_pieces = pos.get_all_pieces(us);
+    uint64_t enemy_pieces = pos.get_all_pieces(us == Color::White ? Color::Black : Color::White);
+    
+    // Process each rook
+    while (our_rooks != 0) {
+        int from = pop_lsb(our_rooks);
+        
+        // Generate rook attacks using existing bitboard function
+        uint64_t attacks = rook_attacks(from, occupied);
+        
+        // Remove squares occupied by our pieces
+        attacks &= ~our_pieces;
+        
+        // Separate captures from quiet moves
+        uint64_t captures = attacks & enemy_pieces;
+        uint64_t quiet_moves = attacks & ~enemy_pieces;
+        
+        // Add moves with proper capture flags
+        add_moves_from_bitboard(captures, from, moves, true);
+        add_moves_from_bitboard(quiet_moves, from, moves, false);
+    }
 }
 
 void BitboardMoveGen::generate_queen_moves(const BitboardPosition& pos, BitboardMoveList& moves) {
-    // Placeholder - would combine bishop + rook attacks
+    Color us = pos.side_to_move;
+    uint64_t our_queens = pos.get_pieces(us, PieceType::Queen);
+    uint64_t occupied = pos.get_occupied();
+    uint64_t our_pieces = pos.get_all_pieces(us);
+    uint64_t enemy_pieces = pos.get_all_pieces(us == Color::White ? Color::Black : Color::White);
+    
+    // Process each queen
+    while (our_queens != 0) {
+        int from = pop_lsb(our_queens);
+        
+        // Generate queen attacks (combination of bishop and rook attacks)
+        uint64_t attacks = bishop_attacks(from, occupied) | rook_attacks(from, occupied);
+        
+        // Remove squares occupied by our pieces
+        attacks &= ~our_pieces;
+        
+        // Separate captures from quiet moves
+        uint64_t captures = attacks & enemy_pieces;
+        uint64_t quiet_moves = attacks & ~enemy_pieces;
+        
+        // Add moves with proper capture flags
+        add_moves_from_bitboard(captures, from, moves, true);
+        add_moves_from_bitboard(quiet_moves, from, moves, false);
+    }
 }
 
 void BitboardMoveGen::generate_king_moves(const BitboardPosition& pos, BitboardMoveList& moves) {
