@@ -4,6 +4,7 @@
 #include "position.hpp"
 #include "movegen_enhanced.hpp"
 #include "chess_types.hpp"
+#include "init.hpp"
 
 /**
  * @brief Performance test (perft) for huginn2 bitboard move generation
@@ -256,6 +257,9 @@ void compare_with_huginn() {
 int main(int argc, char* argv[]) {
     std::cout << "Huginn2 Bitboard Perft Test\n";
     std::cout << "============================\n\n";
+    
+    // Initialize the engine - CRITICAL for correct move generation!
+    Huginn::init();
     
     if (argc > 1) {
         std::string arg = argv[1];

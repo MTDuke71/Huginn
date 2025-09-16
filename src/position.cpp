@@ -26,7 +26,7 @@
 #include "position.hpp"
 #include "zobrist.hpp"
 #include "movegen_enhanced.hpp"  // For in_check function
-#include "attack_detection.hpp"  // For SqAttacked function
+#include "attack_detection.hpp"  // For Huginn::SqAttacked function
 
 // Update Zobrist key incrementally for side/castling/en passant changes only
 // (Piece position changes are handled by atomic operations)
@@ -79,6 +79,15 @@ void Position::reset() {
     pawns_bb[0] = 0ULL;
     pawns_bb[1] = 0ULL;
     all_pawns_bb = 0ULL;
+    
+    // Clear new full bitboard structures (FIX: was missing in reset!)
+    for (int color = 0; color < 2; ++color) {
+        color_bitboards[color] = 0ULL;
+        for (int type = 0; type < int(PieceType::_Count); ++type) {
+            piece_bitboards[color][type] = 0ULL;
+        }
+    }
+    occupied_bitboard = 0ULL;
     for (int color = 0; color < 2; ++color) {
         for (int type = 0; type < int(PieceType::_Count); ++type) {
             pCount[color][type] = 0;
@@ -462,7 +471,7 @@ int Position::MakeMove(const S_MOVE& move) {
     int king_square = king_sq[int(previous_side)];
     
     // Re-enable legality check now that we've debugged the Zobrist issues
-    // Use SqAttacked directly to check if king is attacked by current side
+    // Use Huginn::SqAttacked directly to check if king is attacked by current side
     if (Huginn::SqAttacked(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
         TakeMove();

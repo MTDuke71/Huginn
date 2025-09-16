@@ -443,18 +443,18 @@ int main() {
   pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   
   // Check if e4 is attacked by Black pieces
-  bool attacked = SqAttacked(sq(File::E, Rank::R4), pos, Color::Black);
+  bool attacked = Huginn::SqAttacked(sq(File::E, Rank::R4), pos, Color::Black);
   
   // Check if king is in check
   int king_square = pos.king_sq[int(Color::White)];
-  bool in_check = SqAttacked(king_square, pos, Color::Black);
+  bool in_check = Huginn::SqAttacked(king_square, pos, Color::Black);
   
   // Generate attack map for position analysis (optimized for performance)
   for (int rank = 0; rank < 8; ++rank) {
       for (int file = 0; file < 8; ++file) {
           int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-          bool white_attacks = SqAttacked(square, pos, Color::White);
-          bool black_attacks = SqAttacked(square, pos, Color::Black);
+          bool white_attacks = Huginn::SqAttacked(square, pos, Color::White);
+          bool black_attacks = Huginn::SqAttacked(square, pos, Color::Black);
           // Process attack information...
       }
   }
@@ -463,7 +463,7 @@ int main() {
   Position manual_pos;
   manual_pos.reset();
   manual_pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);  // Manual piece placement
-  bool attacks_d5 = SqAttacked(sq(File::D, Rank::R5), manual_pos, Color::White);  // Uses fallback
+  bool attacks_d5 = Huginn::SqAttacked(sq(File::D, Rank::R5), manual_pos, Color::White);  // Uses fallback
   
   // Check if position is legal (king not in check for side not to move)
   bool position_legal = !SqAttacked(pos.king_sq[1 - int(pos.side_to_move)], pos, pos.side_to_move);
@@ -778,7 +778,7 @@ test/
   
   // Check if position has any legal moves (detect checkmate/stalemate)
   bool has_moves = legal_moves.size() > 0;
-  bool in_check = SqAttacked(pos.king_sq[int(pos.side_to_move)], pos, !pos.side_to_move);
+  bool in_check = Huginn::SqAttacked(pos.king_sq[int(pos.side_to_move)], pos, !pos.side_to_move);
   if (!has_moves) {
       if (in_check) {
           std::cout << "Checkmate!" << std::endl;
@@ -1283,7 +1283,7 @@ generate_legal_moves_enhanced(pos, legal_moves);
 
 // Check for checkmate/stalemate
 Color us = pos.side_to_move;
-bool in_check = SqAttacked(pos.king_sq[int(us)], pos, !us);
+bool in_check = Huginn::SqAttacked(pos.king_sq[int(us)], pos, !us);
 if (legal_moves.size() == 0) {
     if (in_check) {
         std::cout << "Checkmate!" << std::endl;
@@ -2045,7 +2045,7 @@ Huginn Chess Engine now represents a **complete, competitive chess engine** with
 1. **Board Representation** — Efficient mailbox-120 system with bitboard integration
 2. **Move Generation** — Optimized system delivering 34+ million moves/second (69% improvement)
 3. **Position Management** — Complete position handling with make/undo moves and Zobrist hashing
-4. **Attack Detection** — Ultra-fast SqAttacked system using piece lists (3.9-8.6 ns/call)
+4. **Attack Detection** — Ultra-fast Huginn::SqAttacked system using piece lists (3.9-8.6 ns/call)
 5. **Position Evaluation** — Comprehensive evaluation with material, PSTs, king safety, pawn structure
 6. **Search Engine** — Alpha-beta with PVS, quiescence, transposition table, move ordering
 7. **UCI Interface** — Complete protocol implementation for GUI communication

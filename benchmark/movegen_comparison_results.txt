@@ -1,0 +1,48 @@
+Huginn Move Generation Comparison Results
+==========================================
+Date: 2025-09-15
+Test: Piece Lists vs Bitboards (10,000 iterations each)
+
+PERFORMANCE RESULTS:
+-------------------
+Starting Position (33 pieces):
+  - Piece Lists: 1.13ms (177M moves/sec)  
+  - Bitboards:   0.74ms (269M moves/sec)
+  - Speedup: Bitboards 1.52x FASTER
+
+Endgame Position (8 pieces):
+  - Piece Lists: 0.40ms (202M moves/sec)
+  - Bitboards:   0.37ms (216M moves/sec)  
+  - Speedup: Bitboards 1.07x FASTER
+
+Knight-Heavy Position (32 pieces):
+  - Piece Lists: 1.13ms (195M moves/sec)
+  - Bitboards:   0.80ms (274M moves/sec)
+  - Speedup: Bitboards 1.41x FASTER
+
+Minimal Endgame (2 pieces):
+  - Piece Lists: 0.36ms (225M moves/sec)
+  - Bitboards:   0.36ms (220M moves/sec)
+  - Speedup: Piece Lists 1.02x FASTER (essentially equal)
+
+OVERALL AVERAGE: Bitboards 1.32x faster!
+
+CORRECTNESS ISSUES:
+------------------
+Middlegame Position: piece_list=32 vs bitboard=26 moves (MISMATCH)
+Tactical Position: piece_list=59 vs bitboard=55 moves (MISMATCH)
+
+ANALYSIS:
+--------
+1. Bitboards consistently outperform piece lists, especially with more pieces
+2. The advantage is most pronounced in positions with many pieces (1.4-1.5x speedup)
+3. In sparse endgames, performance is nearly identical
+4. Bitboard implementation has correctness bugs that need fixing
+5. When working correctly, bitboards offer significant performance benefits
+
+CONCLUSIONS:
+-----------
+- Bitboard move generation is the superior approach for Huginn2
+- Expected 10-15x improvement was not achieved, but 1.3x is still significant
+- Need to fix bitboard correctness issues before production use
+- Piece count scaling favors bitboards (more pieces = bigger advantage)

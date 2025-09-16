@@ -4,7 +4,7 @@
 #include "move.hpp"
 #include "chess_types.hpp"
 #include "board120.hpp"
-#include "attack_detection.hpp"  // For SqAttacked function
+#include "attack_detection.hpp"  // For Huginn::SqAttacked function
 #include "msvc_optimizations.hpp"
 #include <algorithm>
 #include <vector>
@@ -131,7 +131,7 @@ inline bool in_check(const Position& pos) {
     
     // Check if the king is attacked by the opponent
     Color opponent_color = (current_color == Color::White) ? Color::Black : Color::White;
-    return SqAttacked(king_sq, pos, opponent_color);
+    return Huginn::SqAttacked(king_sq, pos, opponent_color);
 }
 
 // Check if a move is legal (doesn't leave own king in check)
@@ -144,14 +144,14 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
         Color opponent_side = (current_side == Color::White) ? Color::Black : Color::White;
         
         // King cannot be in check before castling
-        if (SqAttacked(from, pos, opponent_side)) {
+        if (Huginn::SqAttacked(from, pos, opponent_side)) {
             return false;
         }
         
         // Check that king doesn't pass through attacked squares during castling
         int step = (to > from) ? 1 : -1;
         for (int sq = from + step; sq != to + step; sq += step) {
-            if (SqAttacked(sq, pos, opponent_side)) {
+            if (Huginn::SqAttacked(sq, pos, opponent_side)) {
                 return false;
             }
         }
@@ -171,7 +171,7 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     
     // Check if our king would be in check after the move
     // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
-    bool legal = !SqAttacked(king_sq, pos, !current_side);
+    bool legal = !Huginn::SqAttacked(king_sq, pos, !current_side);
     
     // Undo the move to restore the original position
     pos.TakeMove();

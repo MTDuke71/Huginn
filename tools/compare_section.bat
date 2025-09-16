@@ -7,7 +7,7 @@ if "%1"=="" (
     echo Examples:
     echo   compare_section.bat rank_file_dirs attack_detection
     echo   compare_section.bat "constexpr int" attack_detection
-    echo   compare_section.bat SqAttacked attack_detection
+    echo   compare_section.bat Huginn::SqAttacked attack_detection
     echo.
     exit /b 1
 )

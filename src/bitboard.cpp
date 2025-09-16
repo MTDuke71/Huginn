@@ -93,18 +93,37 @@ uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy) {
     int file = square % 8;
     int rank = square / 8;
     
+    // Calculate direction offsets correctly
+    int rank_offset, file_offset;
+    switch (direction) {
+        case 9:   // NE
+            rank_offset = 1; file_offset = 1; break;
+        case 7:   // NW  
+            rank_offset = 1; file_offset = -1; break;
+        case -7:  // SE
+            rank_offset = -1; file_offset = 1; break;
+        case -9:  // SW
+            rank_offset = -1; file_offset = -1; break;
+        case 8:   // N
+            rank_offset = 1; file_offset = 0; break;
+        case -8:  // S
+            rank_offset = -1; file_offset = 0; break;
+        case 1:   // E
+            rank_offset = 0; file_offset = 1; break;
+        case -1:  // W
+            rank_offset = 0; file_offset = -1; break;
+        default:
+            return 0ULL; // Invalid direction
+    }
+    
     for (int step = 1; step < 8; ++step) {
-        int new_rank = rank + (direction / 8) * step;
-        int new_file = file + (direction % 8) * step;
+        int new_rank = rank + rank_offset * step;
+        int new_file = file + file_offset * step;
         
         // Check board boundaries
         if (new_rank < 0 || new_rank >= 8 || new_file < 0 || new_file >= 8) {
             break;
         }
-        
-        // Handle wrapping for horizontal moves (prevent wrapping around board edges)
-        if (direction == 1 && new_file < file) break;    // East direction, file wrapped
-        if (direction == -1 && new_file > file) break;   // West direction, file wrapped
         
         int target_square = new_rank * 8 + new_file;
         attacks |= (1ULL << target_square);

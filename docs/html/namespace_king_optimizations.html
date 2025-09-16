@@ -99,7 +99,7 @@ Functions</h2></td></tr>
 Huginn Chess Engine - King Move Generation Optimizations</h1>
 <p>This module implements optimized king move generation by separating ordinary king moves from castling logic, based on profiling results showing king moves consume 19.1% of move generation time.</p>
 <p>Optimization Strategy:</p><ol type="1">
-<li>Pre-check castling viability to avoid expensive SqAttacked calls</li>
+<li>Pre-check castling viability to avoid expensive Huginn::SqAttacked calls</li>
 <li>Separate ordinary king moves from castling moves</li>
 <li>Use early returns for impossible castling scenarios</li>
 <li>Cache-friendly data structures for quick castling validation </li>

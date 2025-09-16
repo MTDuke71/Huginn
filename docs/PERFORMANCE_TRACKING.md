@@ -176,7 +176,7 @@ The VICE MakeMove function implementation shows a **84ms regression** (0.3% slow
 
 The minimal performance impact demonstrates:
 1. **Efficient implementation**: Using existing atomic piece operations minimizes overhead
-2. **Proper legality checking**: SqAttacked() function provides accurate move validation
+2. **Proper legality checking**: Huginn::SqAttacked() function provides accurate move validation
 3. **Clean integration**: New function works seamlessly with existing codebase
 4. **Educational value**: Exact VICE tutorial compliance for learning purposes
 

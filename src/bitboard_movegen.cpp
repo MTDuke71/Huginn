@@ -11,6 +11,7 @@
 
 #include "bitboard_movegen.hpp"
 #include "board120.hpp"
+#include "king_lookup_tables.hpp"
 
 namespace BitboardMoveGen {
 
@@ -25,6 +26,9 @@ void generate_all_moves_bitboard(const Position& pos, S_MOVELIST& list) {
     generate_rook_moves_bitboard(pos, list, us);
     generate_queen_moves_bitboard(pos, list, us);
     generate_king_moves_bitboard(pos, list, us);
+    
+    // Castling moves - this was missing!
+    KingLookupTables::generate_castling_moves_optimized(pos, list, us);
 }
 
 void generate_knight_moves_bitboard(const Position& pos, S_MOVELIST& list, Color us) {
@@ -194,6 +198,34 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
                 } else {
                     list.add_capture_move(make_capture(from_sq120, to_sq120, type_of(captured)), pos);
                 }
+            }
+        }
+    }
+    
+    // Generate en passant captures
+    if (pos.ep_square != -1) {
+        int ep_sq120 = pos.ep_square;
+        int ep_sq64 = MAILBOX_MAPS.to64[ep_sq120];
+        
+        if (ep_sq64 >= 0) {  // Valid 64-square position
+            uint64_t ep_attackers = 0;
+            
+            if (us == Color::White) {
+                // White pawns can capture en passant if they're on rank 5 (sq64: 32-39)
+                // and can attack the en passant square
+                ep_attackers = PawnLookupTables::get_pawn_attacks(Color::Black, ep_sq64) & pawns;
+            } else {
+                // Black pawns can capture en passant if they're on rank 4 (sq64: 24-31) 
+                // and can attack the en passant square
+                ep_attackers = PawnLookupTables::get_pawn_attacks(Color::White, ep_sq64) & pawns;
+            }
+            
+            while (ep_attackers != 0) {
+                int from_sq64 = get_lsb(ep_attackers);
+                ep_attackers &= ep_attackers - 1;
+                
+                int from_sq120 = MAILBOX_MAPS.to120[from_sq64];
+                list.add_en_passant_move(make_en_passant(from_sq120, ep_sq120));
             }
         }
     }

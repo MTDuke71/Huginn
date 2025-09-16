@@ -12,7 +12,7 @@
  * - king_attacks_square: Checks if a king on a given square attacks a target square.
  * - sliding_attacks_rank_file: Checks if a sliding piece (rook/queen) attacks along rank or file.
  * - sliding_attacks_diagonal: Checks if a sliding piece (bishop/queen) attacks along a diagonal.
- * - SqAttacked: Main function to check if a square is attacked by any piece of a given color.
+ * - Huginn::SqAttacked: Main function to check if a square is attacked by any piece of a given color.
  *
  * Dependencies:
  * - position.hpp: For Position class and board state access.

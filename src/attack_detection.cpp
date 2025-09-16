@@ -28,7 +28,7 @@
 namespace Huginn {
 
 // Main attack detection function moved from header for better compilation times
-bool SqAttacked(int sq, const Position &pos, Color attacking_color)
+bool Huginn::SqAttacked(int sq, const Position &pos, Color attacking_color)
 {
     if (!is_playable(sq))
         return false;

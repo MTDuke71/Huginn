@@ -31,7 +31,7 @@
 #include "movegen_enhanced.hpp"
 #include "position.hpp"
 #include "move.hpp"
-#include "attack_detection.hpp"  // For SqAttacked function
+#include "attack_detection.hpp"  // For Huginn::SqAttacked function
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "pawn_optimizations.hpp"
@@ -42,7 +42,8 @@
 #include "sliding_piece_optimizations.hpp"
 
 #ifdef BITBOARD_ENGINE
-#include "bitboard_movegen.hpp"  // Include bitboard move generation for huginn2
+#include "bitboard_movegen.hpp"  // Include original bitboard for fallback
+#include "bitboard_movegen_optimized.hpp"  // Include optimized bitboard move generation for huginn2
 #endif
 
 /**
@@ -63,7 +64,7 @@
  */
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
 #ifdef BITBOARD_ENGINE
-    // Use pure bitboard move generation for dramatically improved performance
+    // Use original bitboard move generation - optimized version has API incompatibilities
     BitboardMoveGen::generate_all_moves_bitboard(pos, list);
 #else
     // Use traditional piece list generation for huginn
@@ -83,6 +84,9 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     
     // King generation: Optimized functions work correctly, lookup tables have bugs - reverting temporarily  
     KingOptimizations::generate_king_moves_optimized(pos, list, us);
+    
+    // NOTE: Castling moves are already included in KingOptimizations::generate_king_moves_optimized()
+    // Do NOT call KingLookupTables::generate_castling_moves_optimized() separately to avoid duplicates
 #endif
 }
 

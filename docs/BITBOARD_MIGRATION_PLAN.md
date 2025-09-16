@@ -95,7 +95,7 @@ Replace piece list based attack detection with bitboard implementation
 ### Current Implementation
 ```cpp
 // src/attack_detection.cpp uses mailbox iteration
-bool SqAttacked(int sq, Color side, const Position& pos) {
+bool Huginn::SqAttacked(int sq, Color side, const Position& pos) {
     // Iterates through piece lists to find attackers
     for (int i = 0; i < pos.pCount[color_idx][type_idx]; ++i) {
         int piece_sq = pos.pList[color_idx][type_idx][i];
@@ -106,7 +106,7 @@ bool SqAttacked(int sq, Color side, const Position& pos) {
 
 ### Target Implementation
 ```cpp
-bool SqAttackedBB(int sq, Color side, const Position& pos) {
+bool Huginn::SqAttackedBB(int sq, Color side, const Position& pos) {
     uint64_t enemy_pieces = pos.color_bitboards[size_t(side)];
     uint64_t target_bit = 1ULL << sq;
     

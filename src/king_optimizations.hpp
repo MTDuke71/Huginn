@@ -15,7 +15,7 @@
  * showing king moves consume 19.1% of move generation time.
  * 
  * Optimization Strategy:
- * 1. Pre-check castling viability to avoid expensive SqAttacked calls
+ * 1. Pre-check castling viability to avoid expensive Huginn::SqAttacked calls
  * 2. Separate ordinary king moves from castling moves
  * 3. Use early returns for impossible castling scenarios
  * 4. Cache-friendly data structures for quick castling validation
@@ -113,7 +113,7 @@ namespace KingOptimizations {
     template<size_t N>
     inline bool is_path_safe(const Position& pos, const std::array<int, N>& squares, Color enemy) {
         for (int sq : squares) {
-            if (SqAttacked(sq, pos, enemy)) return false;
+            if (Huginn::SqAttacked(sq, pos, enemy)) return false;
         }
         return true;
     }
@@ -230,9 +230,9 @@ namespace KingOptimizations {
                 pos.at(CastlingSquares::WHITE_KINGSIDE_PATH[1]) == Piece::None) {
                 
                 // Only check attacks if path is clear
-                if (!SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[0], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[1], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[2], pos, enemy)) {
+                if (!Huginn::SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[0], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[1], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::WHITE_KINGSIDE_ATTACK_CHECK[2], pos, enemy)) {
                     list.add_castle_move(make_castle(CastlingSquares::WHITE_KING_START, 
                                                    CastlingSquares::WHITE_KINGSIDE_KING_TO));
                 }
@@ -246,9 +246,9 @@ namespace KingOptimizations {
                 pos.at(CastlingSquares::WHITE_QUEENSIDE_PATH[2]) == Piece::None) {
                 
                 // Only check attacks if path is clear
-                if (!SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[0], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[1], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[2], pos, enemy)) {
+                if (!Huginn::SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[0], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[1], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::WHITE_QUEENSIDE_ATTACK_CHECK[2], pos, enemy)) {
                     list.add_castle_move(make_castle(CastlingSquares::WHITE_KING_START, 
                                                    CastlingSquares::WHITE_QUEENSIDE_KING_TO));
                 }
@@ -261,9 +261,9 @@ namespace KingOptimizations {
                 pos.at(CastlingSquares::BLACK_KINGSIDE_PATH[1]) == Piece::None) {
                 
                 // Only check attacks if path is clear
-                if (!SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[0], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[1], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[2], pos, enemy)) {
+                if (!Huginn::SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[0], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[1], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::BLACK_KINGSIDE_ATTACK_CHECK[2], pos, enemy)) {
                     list.add_castle_move(make_castle(CastlingSquares::BLACK_KING_START, 
                                                    CastlingSquares::BLACK_KINGSIDE_KING_TO));
                 }
@@ -277,9 +277,9 @@ namespace KingOptimizations {
                 pos.at(CastlingSquares::BLACK_QUEENSIDE_PATH[2]) == Piece::None) {
                 
                 // Only check attacks if path is clear
-                if (!SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[0], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[1], pos, enemy) &&
-                    !SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[2], pos, enemy)) {
+                if (!Huginn::SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[0], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[1], pos, enemy) &&
+                    !Huginn::SqAttacked(CastlingSquares::BLACK_QUEENSIDE_ATTACK_CHECK[2], pos, enemy)) {
                     list.add_castle_move(make_castle(CastlingSquares::BLACK_KING_START, 
                                                    CastlingSquares::BLACK_QUEENSIDE_KING_TO));
                 }

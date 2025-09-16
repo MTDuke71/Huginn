@@ -93,7 +93,7 @@ namespace KingLookupTables {
      * @param us Color of the side to move
      * 
      * @details Fast castling validation using pre-computed squares and bit operations.
-     *          Avoids expensive SqAttacked calls when possible.
+     *          Avoids expensive Huginn::SqAttacked calls when possible.
      */
     void generate_castling_moves_optimized(const Position& pos, S_MOVELIST& list, Color us);
     
@@ -168,7 +168,7 @@ namespace KingLookupTables {
      * @param us Color of the side to move
      * 
      * @details Fast castling validation using pre-computed squares and bit operations.
-     *          Avoids expensive SqAttacked calls when possible.
+     *          Avoids expensive Huginn::SqAttacked calls when possible.
      */
     void generate_castling_moves_optimized(const Position& pos, S_MOVELIST& list, Color us);
     

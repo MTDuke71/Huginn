@@ -19,7 +19,7 @@ void analyze_position_detailed(Position pos, const std::string& description) {
     
     // Check if king is in check
     int king_square = pos.king_sq[int(pos.side_to_move)];
-    bool in_check = (king_square >= 0 && SqAttacked(king_square, pos, !pos.side_to_move));
+    bool in_check = (king_square >= 0 && Huginn::SqAttacked(king_square, pos, !pos.side_to_move));
     std::cout << "King in check: " << (in_check ? "YES" : "NO") << std::endl;
     std::cout << "King square: " << king_square << std::endl;
     
@@ -47,7 +47,7 @@ void analyze_position_detailed(Position pos, const std::string& description) {
             
             // Check if opponent king is in check
             int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
-        bool opp_in_check = (opp_king_sq >= 0 && SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move));
+        bool opp_in_check = (opp_king_sq >= 0 && Huginn::SqAttacked(opp_king_sq, temp_pos, !temp_pos.side_to_move));
         
         bool delivers_mate = (opponent_moves.count == 0 && opp_in_check);
         
