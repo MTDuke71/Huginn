@@ -32,11 +32,12 @@ void BitboardMoveGen::generate_legal_moves(BitboardPosition& pos, BitboardMoveLi
     // First generate all pseudo-legal moves
     BitboardMoveList pseudo_legal_moves;
     generate_all_moves(pos, pseudo_legal_moves);
-    
+
     // Filter out illegal moves (those that leave king in check)
+    // Use VICE-style approach: make move, test legality, unmake move
     moves.clear();
     for (size_t i = 0; i < pseudo_legal_moves.moves.size(); i++) {
-        // Convert to SimpleBitboardMove for legality testing
+        // Convert to SimpleBitboardMove for move making
         SimpleBitboardMove simple_move;
         simple_move.from_64 = pseudo_legal_moves.moves[i].from_64;
         simple_move.to_64 = pseudo_legal_moves.moves[i].to_64;
@@ -45,8 +46,26 @@ void BitboardMoveGen::generate_legal_moves(BitboardPosition& pos, BitboardMoveLi
         simple_move.is_castling = pseudo_legal_moves.moves[i].is_castling;
         simple_move.is_promotion = pseudo_legal_moves.moves[i].is_promotion;
         simple_move.promotion_type = pseudo_legal_moves.moves[i].promotion_type;
-        
-        if (pos.is_legal_move(simple_move)) {
+
+        // Test legality like VICE: make move, check if king in check, unmake
+        Color original_side = pos.side_to_move;
+        BitboardPosition::UndoInfo undo_info = pos.make_move_with_undo(simple_move);
+
+        // After making the move, check if our king (original side) is attacked
+        int our_king_square = pos.king_square_64[static_cast<int>(original_side)];
+        bool is_legal = true;
+
+        if (our_king_square != -1) {
+            // Current side_to_move is now the opponent after make_move
+            Color enemy_color = pos.side_to_move;
+            is_legal = !pos.is_square_attacked(our_king_square, enemy_color);
+        }
+
+        // Unmake the move to restore position
+        pos.unmake_move(simple_move, undo_info);
+
+        // If move was legal, add it to the list
+        if (is_legal) {
             moves.moves.push_back(pseudo_legal_moves.moves[i]);
         }
     }

@@ -255,30 +255,39 @@ int sq120_to_sq64(int sq120);       // Convert 120-square to 64-square index
 #define SQ120(sq64)  (MAILBOX_MAPS.to120[sq64])    // Convert sq64 → sq120
 
 // ============================================================================
-// SLIDING PIECE ATTACK GENERATION
+// SLIDING PIECE ATTACK FUNCTIONS
 // ============================================================================
 
-/**
- * @brief Generate bishop attack bitboard for a given square and occupancy
- * @param square The square index (0-63) where the bishop is located
- * @param occupancy Bitboard representing all occupied squares on the board
- * @return Bitboard containing all squares attacked by the bishop
- * 
- * Uses ray-based attack generation in four diagonal directions.
- * Stops when hitting an occupied square (friend or foe).
- */
-uint64_t bishop_attacks(int square, uint64_t occupancy);
+// Direction constants for sliding pieces
+constexpr int BISHOP_DIRECTIONS[] = {9, 7, -7, -9};  // NE, NW, SE, SW
+constexpr int ROOK_DIRECTIONS[] = {8, -8, 1, -1};    // N, S, E, W
+constexpr int NUM_BISHOP_DIRECTIONS = 4;
+constexpr int NUM_ROOK_DIRECTIONS = 4;
 
 /**
- * @brief Generate rook attack bitboard for a given square and occupancy
- * @param square The square index (0-63) where the rook is located  
- * @param occupancy Bitboard representing all occupied squares on the board
- * @return Bitboard containing all squares attacked by the rook
- * 
- * Uses ray-based attack generation in four orthogonal directions.
- * Stops when hitting an occupied square (friend or foe).
+ * @brief Generate ray attacks in a specific direction from a square
+ * @param square Starting square (0-63)
+ * @param direction Direction offset (-9, -8, -7, -1, 1, 7, 8, 9)
+ * @param occupancy Bitboard of occupied squares
+ * @return Bitboard of attacked squares in that direction
  */
-uint64_t rook_attacks(int square, uint64_t occupancy);
+uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy);
+
+/**
+ * @brief Get bishop attack bitboard for a square with occupancy
+ * @param square 64-square index (0-63)
+ * @param occupied Bitboard of occupied squares
+ * @return Bitboard of squares the bishop can attack
+ */
+uint64_t bishop_attacks(int square, uint64_t occupied);
+
+/**
+ * @brief Get rook attack bitboard for a square with occupancy
+ * @param square 64-square index (0-63)
+ * @param occupied Bitboard of occupied squares
+ * @return Bitboard of squares the rook can attack
+ */
+uint64_t rook_attacks(int square, uint64_t occupied);
 
 /**
  * @brief Generate queen attack bitboard for a given square and occupancy
@@ -291,19 +300,6 @@ uint64_t rook_attacks(int square, uint64_t occupancy);
 inline uint64_t queen_attacks(int square, uint64_t occupancy) {
     return bishop_attacks(square, occupancy) | rook_attacks(square, occupancy);
 }
-
-// Direction vectors for sliding piece ray generation
-constexpr int BISHOP_DIRECTIONS[4] = {9, 7, -7, -9};   // NE, NW, SE, SW
-constexpr int ROOK_DIRECTIONS[4] = {8, -8, 1, -1};     // N, S, E, W
-
-/**
- * @brief Internal helper: Generate attacks in a single direction
- * @param square Starting square (0-63)
- * @param direction Direction vector (+/-1, +/-7, +/-8, +/-9)
- * @param occupancy Current board occupancy
- * @return Bitboard of attacked squares in that direction
- */
-uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy);
 
 // ============================================================================
 // BITBOARD ITERATION UTILITIES

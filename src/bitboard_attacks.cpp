@@ -26,6 +26,7 @@ std::array<uint64_t, 64> black_pawn_attacks = {};
 // ============================================================================
 
 void init_bitboard_attacks() {
+    std::cout << "Initializing bitboard attack tables..." << std::endl;
     // ---- Initialize knight attacks ----
     for (int square = 0; square < 64; ++square) {
         uint64_t attacks = 0ULL;

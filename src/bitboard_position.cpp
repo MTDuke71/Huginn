@@ -41,13 +41,8 @@ int algebraic_to_square(const std::string& algebraic) {
 
 BitboardPosition::BitboardPosition() {
     reset();
-    
-    // Initialize attack tables on first construction
-    static bool tables_initialized = false;
-    if (!tables_initialized) {
-        init_bitboard_attacks();
-        tables_initialized = true;
-    }
+    // Ensure attack tables are initialized globally
+    ensure_bitboard_attacks_initialized();
 }
 
 void BitboardPosition::reset() {

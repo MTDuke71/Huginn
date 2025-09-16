@@ -13,7 +13,22 @@
       "Bash(.buildmsvc-x64-releaseReleasecomprehensive_perft_test.exe)",
       "Bash(\"./build/msvc-x64-release/Release/comprehensive_perft_test.exe\")",
       "Bash(\"./build/msvc-x64-release/Release/verify_en_passant_bug.exe\")",
-      "Bash(\"./build/msvc-x64-release/Release/test_correct_adjacent_en_passant.exe\")"
+      "Bash(\"./build/msvc-x64-release/Release/test_correct_adjacent_en_passant.exe\")",
+      "Bash(ctest:*)",
+      "Bash(dir:*)",
+      "Bash(grep:*)",
+      "Bash(.buildmsvc-x64-releaseReleasekiwipete_divide.exe)",
+      "Bash(./build/msvc-x64-release/Release/kiwipete_divide.exe)",
+      "Bash(./build/msvc-x64-release/Release/comprehensive_perft_test.exe)",
+      "Bash(./build/msvc-x64-release/Release/kiwipete_raw_analysis.exe)",
+      "Bash(./build/msvc-x64-release/Release/kiwipete_perft_test.exe)",
+      "Bash(./build/msvc-x64-release/Release/kiwipete_divide_debug.exe)",
+      "Bash(./build/msvc-x64-release/Release/test_move_generation_discrepancy.exe)",
+      "Bash(./build/msvc-x64-release/Release/find_missing_moves.exe)",
+      "Bash(./build/msvc-x64-release/Release/compare_position_implementations.exe)",
+      "Bash(./build/msvc-x64-release/bin/Release/perft_suite_vice.exe)",
+      "Bash(build/bin/Release/perft_suite_vice.exe)",
+      "Bash(build/bin/Release/compare_kiwipete_implementations.exe)"
     ],
     "deny": [],
     "ask": []

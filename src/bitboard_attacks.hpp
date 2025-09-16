@@ -8,7 +8,11 @@
  * @author MTDuke71
  * @version 1.0
  */
+
 #pragma once
+
+// Forward declaration for attack table initialization
+void init_bitboard_attacks();
 
 #include <cstdint>
 #include <array>
@@ -62,6 +66,16 @@ extern std::array<uint64_t, 64> black_pawn_attacks;
  * Must be called once during engine initialization before using attack lookups.
  * Generates optimized attack patterns for maximum performance.
  */
+
+// Ensures attack tables are initialized exactly once before any use
+inline void ensure_bitboard_attacks_initialized() {
+    static bool initialized = false;
+    if (!initialized) {
+        init_bitboard_attacks();
+        initialized = true;
+    }
+}
+
 void init_bitboard_attacks();
 
 // ============================================================================
@@ -95,6 +109,22 @@ inline uint64_t get_king_attacks(int square) {
 inline uint64_t get_pawn_attacks(int square, bool is_white) {
     return is_white ? white_pawn_attacks[square] : black_pawn_attacks[square];
 }
+
+/**
+ * @brief Get bishop attack bitboard for a square with occupancy
+ * @param square 64-square index (0-63)
+ * @param occupied Bitboard of occupied squares
+ * @return Bitboard of squares the bishop can attack
+ */
+uint64_t bishop_attacks(int square, uint64_t occupied);
+
+/**
+ * @brief Get rook attack bitboard for a square with occupancy
+ * @param square 64-square index (0-63)
+ * @param occupied Bitboard of occupied squares
+ * @return Bitboard of squares the rook can attack
+ */
+uint64_t rook_attacks(int square, uint64_t occupied);
 
 // ============================================================================
 // UTILITY FUNCTIONS
