@@ -311,7 +311,6 @@ endif()
 set(COMMON_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
-    src/bitboard_movegen_optimized.cpp
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp
@@ -392,7 +391,6 @@ add_huginn_executable(perft_huginn2
         ${ENGINE_SOURCES}
         src/bitboard_benchmark.cpp  # Add bitboard performance framework
         src/bitboard_movegen.cpp    # Add actual bitboard move generation
-        src/bitboard_movegen_optimized.cpp  # Add optimized bitboard implementation
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
@@ -583,7 +581,6 @@ target_compile_definitions(movegen_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES U
 set(DEBUG_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
-    # src/bitboard_movegen_optimized.cpp  # Temporarily disabled due to API incompatibilities
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp

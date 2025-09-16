@@ -43,7 +43,6 @@
 
 #ifdef BITBOARD_ENGINE
 #include "bitboard_movegen.hpp"  // Include original bitboard for fallback
-#include "bitboard_movegen_optimized.hpp"  // Include optimized bitboard move generation for huginn2
 #endif
 
 /**

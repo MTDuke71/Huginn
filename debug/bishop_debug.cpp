@@ -30,17 +30,17 @@ int main() {
     Huginn::init();
     
     Position pos;
-    pos.parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     // Make moves: b2b3 a7a6
-    S_MOVE move1 = make_move(22, 33);  // b2-b3
-    pos.make_move(move1);
+    S_MOVE move1 = S_MOVE(22, 33, PieceType::None, false, false, PieceType::None, false);  // b2-b3
+    pos.make_move_with_undo(move1);
     
-    S_MOVE move2 = make_move(91, 81);  // a7-a6
-    pos.make_move(move2);
+    S_MOVE move2 = S_MOVE(91, 81, PieceType::None, false, false, PieceType::None, false);  // a7-a6
+    pos.make_move_with_undo(move2);
     
     std::cout << "Position after b2b3 a7a6:\n";
-    pos.print_board();
+    // pos.print_board();  // Function not available - comment out
     std::cout << "\n";
     
     // Check c1 bishop (square 2 in 64-bit, square 23 in 120-bit)
@@ -84,8 +84,8 @@ int main() {
     
     // Check what's on b2 currently
     std::cout << "\nSquare analysis:\n";
-    std::cout << "b2 (sq120=22): " << piece_to_char(pos.at(22)) << "\n";
-    std::cout << "a3 (sq120=81): " << piece_to_char(pos.at(81)) << "\n";
+    std::cout << "b2 (sq120=22): " << to_char(pos.at(22)) << "\n";
+    std::cout << "a3 (sq120=81): " << to_char(pos.at(81)) << "\n";
     
     return 0;
 }
