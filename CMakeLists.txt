@@ -311,12 +311,17 @@ endif()
 set(COMMON_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
+    src/bitboard_position.cpp
+    src/bitboard_movegen_pure.cpp
+    src/bitboard_attacks.cpp
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/attack_tables.cpp
+    src/pawn_movegen_bb.cpp
+    src/pawn_movegen_native_bb.cpp
     src/move.cpp
     src/board120.cpp
     src/chess_types.cpp
@@ -548,6 +553,18 @@ target_compile_features(attack_benchmark PRIVATE cxx_std_17)
 target_include_directories(attack_benchmark PRIVATE src)
 target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
+# Pawn move generation benchmark for Phase 2 bitboard migration
+add_executable(pawn_movegen_benchmark pawn_movegen_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(pawn_movegen_benchmark PRIVATE cxx_std_20)
+target_include_directories(pawn_movegen_benchmark PRIVATE src)
+target_compile_definitions(pawn_movegen_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
+# Native bitboard benchmark for conversion overhead elimination
+add_executable(native_bitboard_benchmark native_bitboard_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(native_bitboard_benchmark PRIVATE cxx_std_20)
+target_include_directories(native_bitboard_benchmark PRIVATE src)
+target_compile_definitions(native_bitboard_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
 # End of CMakeLists.txt
 set(DEBUG_SOURCES
     src/bitboard.cpp
@@ -573,7 +590,17 @@ target_compile_features(perft_suite_huginn2 PRIVATE cxx_std_17)
 target_include_directories(perft_suite_huginn2 PRIVATE src)
 target_compile_definitions(perft_suite_huginn2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
+# Parallel Architecture Benchmark (120-square vs 64-square comparison)
+add_executable(parallel_architecture_benchmark parallel_architecture_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(parallel_architecture_benchmark PRIVATE cxx_std_17)
+target_include_directories(parallel_architecture_benchmark PRIVATE src)
+target_compile_definitions(parallel_architecture_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
 
+# Comprehensive Move Generation Benchmark (Complete 64-square architecture test)
+add_executable(comprehensive_movegen_benchmark comprehensive_movegen_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(comprehensive_movegen_benchmark PRIVATE cxx_std_17)
+target_include_directories(comprehensive_movegen_benchmark PRIVATE src)
+target_compile_definitions(comprehensive_movegen_benchmark PRIVATE USE_PAWN_LOOKUP_TABLES)
 
 
 
