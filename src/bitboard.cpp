@@ -66,6 +66,11 @@ int get_lsb(Bitboard bb) {
     return __builtin_ctzll(bb);   // Cross-platform count trailing zeros via bit_utils.hpp
 }
 
+int get_msb(Bitboard bb) {
+    if (bb == 0) return -1;
+    return 63 - __builtin_clzll(bb);   // Cross-platform count leading zeros to find MSB
+}
+
 bool is_empty(Bitboard bb) {
     return bb == 0;
 }

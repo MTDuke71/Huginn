@@ -82,6 +82,37 @@ inline int __builtin_ctz(uint32_t x)
     return (int)index;
 }
 
+inline int __builtin_clzll(uint64_t x)
+{
+    if (x == 0)
+        return 64;
+    unsigned long index;
+#ifdef _M_X64
+    _BitScanReverse64(&index, x);
+#else
+    // 32-bit fallback for _BitScanReverse64
+    if ((uint32_t)(x >> 32) != 0)
+    {
+        _BitScanReverse(&index, (uint32_t)(x >> 32));
+        index += 32;
+    }
+    else
+    {
+        _BitScanReverse(&index, (uint32_t)x);
+    }
+#endif
+    return 63 - (int)index;
+}
+
+inline int __builtin_clz(uint32_t x)
+{
+    if (x == 0)
+        return 32;
+    unsigned long index;
+    _BitScanReverse(&index, x);
+    return 31 - (int)index;
+}
+
 #elif defined(__GNUC__) || defined(__clang__)
 // GCC/Clang already have these intrinsics built-in
 // No need to redefine them
@@ -124,6 +155,26 @@ inline int __builtin_ctz(uint32_t x)
     if (x == 0)
         return 32;
     return __builtin_ctzll(x);
+}
+
+inline int __builtin_clzll(uint64_t x)
+{
+    if (x == 0)
+        return 64;
+    int count = 0;
+    while ((x & (1ULL << 63)) == 0)
+    {
+        x <<= 1;
+        count++;
+    }
+    return count;
+}
+
+inline int __builtin_clz(uint32_t x)
+{
+    if (x == 0)
+        return 32;
+    return __builtin_clzll(x);
 }
 
 #endif

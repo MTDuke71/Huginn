@@ -21,6 +21,7 @@
  * @see init.hpp for function declarations
  */
 #include "init.hpp"
+#include "attack_tables.hpp"
 #include "zobrist.hpp"
 #include "evaluation.hpp"
 #include "knight_lookup_tables.hpp"
@@ -58,6 +59,9 @@ namespace Huginn {
         
         // Initialize pawn lookup tables for optimized move generation
         PawnLookupTables::initialize_pawn_tables();
+        
+        // Initialize attack tables for bitboard move generation (Phase 1 migration)
+        init_attack_tables();
         
         initialized = true;
     }

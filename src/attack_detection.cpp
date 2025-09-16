@@ -24,6 +24,8 @@
  */
 
 #include "attack_detection.hpp"
+#include "attack_tables.hpp"
+#include "bitboard.hpp"
 
 namespace Huginn {
 
@@ -266,6 +268,82 @@ bool Huginn::SqAttacked(int sq, const Position &pos, Color attacking_color)
         }
     }
     // No attacks found in optimized mode
+    return false;
+}
+
+// ============================================================================
+// BITBOARD-BASED ATTACK DETECTION (Phase 1 Migration)
+// ============================================================================
+
+bool SqAttackedBB(int sq, const Position &pos, Color attacking_color)
+{
+    // Input validation: ensure square is in 0-63 range
+    if (sq < 0 || sq >= 64) {
+        return false;
+    }
+    
+    int color_idx = static_cast<int>(attacking_color);
+    uint64_t target_bit = 1ULL << sq;
+    
+    // Get enemy pieces bitboard
+    uint64_t enemy_pieces = pos.color_bitboards[color_idx];
+    if (enemy_pieces == 0) {
+        return false; // No pieces of this color on the board
+    }
+    
+    // 1. Check pawn attacks
+    // Note: pawn_attacks[color][square] gives squares that a pawn of 'color' on 'square' attacks
+    // We need the reverse: squares from which a pawn can attack our target
+    // So we check if enemy pawns exist on squares that can attack our target
+    uint64_t enemy_pawns = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Pawn)];
+    if (enemy_pawns != 0) {
+        // For pawn attacks, we need to check the reverse direction
+        // If we're checking if square X is attacked by white pawns,
+        // we look at squares that white pawns would need to be on to attack X
+        Color opposite_color = (attacking_color == Color::White) ? Color::Black : Color::White;
+        uint64_t pawn_attackers = pawn_attacks[static_cast<int>(opposite_color)][sq];
+        if ((pawn_attackers & enemy_pawns) != 0) {
+            return true;
+        }
+    }
+    
+    // 2. Check knight attacks  
+    uint64_t enemy_knights = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Knight)];
+    if (enemy_knights != 0) {
+        if ((knight_attacks[sq] & enemy_knights) != 0) {
+            return true;
+        }
+    }
+    
+    // 3. Check king attacks
+    uint64_t enemy_kings = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::King)];
+    if (enemy_kings != 0) {
+        if ((king_attacks[sq] & enemy_kings) != 0) {
+            return true;
+        }
+    }
+    
+    // 4. Check sliding piece attacks (rooks and queens on ranks/files)
+    uint64_t enemy_rooks_queens = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Rook)] |
+                                  pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Queen)];
+    if (enemy_rooks_queens != 0) {
+        uint64_t rook_attacks_bb = rook_attacks(sq, pos.occupied_bitboard);
+        if ((rook_attacks_bb & enemy_rooks_queens) != 0) {
+            return true;
+        }
+    }
+    
+    // 5. Check sliding piece attacks (bishops and queens on diagonals)
+    uint64_t enemy_bishops_queens = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Bishop)] |
+                                   pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Queen)];
+    if (enemy_bishops_queens != 0) {
+        uint64_t bishop_attacks_bb = bishop_attacks(sq, pos.occupied_bitboard);
+        if ((bishop_attacks_bb & enemy_bishops_queens) != 0) {
+            return true;
+        }
+    }
+    
+    // No attacks found
     return false;
 }
 

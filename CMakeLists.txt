@@ -316,6 +316,7 @@ set(COMMON_SOURCES
     src/zobrist.cpp
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
+    src/attack_tables.cpp
     src/move.cpp
     src/board120.cpp
     src/chess_types.cpp
@@ -540,6 +541,12 @@ add_executable(eval_benchmark_new eval_benchmark_new.cpp ${COMMON_SOURCES})
 target_compile_features(eval_benchmark_new PRIVATE cxx_std_17)
 target_include_directories(eval_benchmark_new PRIVATE src)
 target_compile_definitions(eval_benchmark_new PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
+
+# Attack detection benchmark for Phase 1 bitboard migration
+add_executable(attack_benchmark benchmark/attack_benchmark.cpp ${COMMON_SOURCES})
+target_compile_features(attack_benchmark PRIVATE cxx_std_17)
+target_include_directories(attack_benchmark PRIVATE src)
+target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
 set(DEBUG_SOURCES

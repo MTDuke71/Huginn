@@ -197,4 +197,17 @@ inline bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position
  */
 bool SqAttacked(int sq, const Position &pos, Color attacking_color);
 
+/**
+ * @brief Checks if a square is attacked using bitboard-based detection (Phase 1 migration)
+ * @param sq The square to check for attacks (0-63 bitboard indexing)
+ * @param pos The current position (for bitboard state and occupancy).
+ * @param attacking_color The color of the pieces to check for attacks.
+ * @return True if the square is attacked by any piece of the given color, false otherwise.
+ * 
+ * This function implements the bitboard-based attack detection from the migration plan.
+ * It uses pre-computed attack tables for non-sliding pieces and the existing sliding
+ * piece attack functions. Performance target: 10-20% improvement over piece list iteration.
+ */
+bool SqAttackedBB(int sq, const Position &pos, Color attacking_color);
+
 } // namespace Huginn
