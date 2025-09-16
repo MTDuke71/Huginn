@@ -671,4 +671,34 @@ target_compile_features(en_passant_validation PRIVATE cxx_std_17)
 target_include_directories(en_passant_validation PRIVATE src)
 target_compile_definitions(en_passant_validation PRIVATE USE_PAWN_LOOKUP_TABLES)
 
+# Depth 4 Divide Analysis (Compare our depth 4 results with user reference)
+add_executable(depth4_divide_analysis depth4_divide_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(depth4_divide_analysis PRIVATE cxx_std_17)
+target_include_directories(depth4_divide_analysis PRIVATE src)
+target_compile_definitions(depth4_divide_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a2a3 Depth 3 Analysis (Investigate the +1 over-generation after a2a3)
+add_executable(after_a2a3_depth3_analysis after_a2a3_depth3_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(after_a2a3_depth3_analysis PRIVATE cxx_std_17)
+target_include_directories(after_a2a3_depth3_analysis PRIVATE src)
+target_compile_definitions(after_a2a3_depth3_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a2a3 a7a5 Depth 2 Analysis (Find the exact extra move we're generating)
+add_executable(after_a2a3_a7a5_depth2_analysis after_a2a3_a7a5_depth2_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(after_a2a3_a7a5_depth2_analysis PRIVATE cxx_std_17)
+target_include_directories(after_a2a3_a7a5_depth2_analysis PRIVATE src)
+target_compile_definitions(after_a2a3_a7a5_depth2_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# After a2a3 a7a5 h2h4 Depth 1 Analysis (Find the exact invalid move)
+add_executable(after_a2a3_a7a5_h2h4_depth1_analysis after_a2a3_a7a5_h2h4_depth1_analysis.cpp ${COMMON_SOURCES})
+target_compile_features(after_a2a3_a7a5_h2h4_depth1_analysis PRIVATE cxx_std_17)
+target_include_directories(after_a2a3_a7a5_h2h4_depth1_analysis PRIVATE src)
+target_compile_definitions(after_a2a3_a7a5_h2h4_depth1_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
+
+# Board Wrap Investigation (Debug the board wrap issue in en passant)
+add_executable(board_wrap_investigation board_wrap_investigation.cpp ${COMMON_SOURCES})
+target_compile_features(board_wrap_investigation PRIVATE cxx_std_17)
+target_include_directories(board_wrap_investigation PRIVATE src)
+target_compile_definitions(board_wrap_investigation PRIVATE USE_PAWN_LOOKUP_TABLES)
+
 # End of CMakeLists.txt

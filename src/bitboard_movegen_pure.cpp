@@ -108,22 +108,28 @@ void BitboardMoveGen::generate_white_pawn_moves_optimized(const BitboardPosition
             // Check diagonal capture from down-left (a5 -> b6 type)
             if ((ep_square % 8) > 0) { // not on a-file
                 int pawn_square = ep_square - 8 - 1; // one rank down, one file left
-                if (pawn_square >= 0 && pos.piece_at(pawn_square) == Piece::WhitePawn) {
-                    BitboardMoveList::BitboardMove move(pawn_square, ep_square);
-                    move.is_capture = true;
-                    move.is_ep_capture = true;
-                    moves.moves.push_back(move);
+                // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
+                if (pawn_square >= 0 && (pawn_square % 8) == ((ep_square % 8) - 1)) {
+                    if (pos.piece_at(pawn_square) == Piece::WhitePawn) {
+                        BitboardMoveList::BitboardMove move(pawn_square, ep_square);
+                        move.is_capture = true;
+                        move.is_ep_capture = true;
+                        moves.moves.push_back(move);
+                    }
                 }
             }
             
             // Check diagonal capture from down-right (c5 -> b6 type)  
             if ((ep_square % 8) < 7) { // not on h-file
                 int pawn_square = ep_square - 8 + 1; // one rank down, one file right
-                if (pawn_square >= 0 && pos.piece_at(pawn_square) == Piece::WhitePawn) {
-                    BitboardMoveList::BitboardMove move(pawn_square, ep_square);
-                    move.is_capture = true;
-                    move.is_ep_capture = true;
-                    moves.moves.push_back(move);
+                // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
+                if (pawn_square >= 0 && (pawn_square % 8) == ((ep_square % 8) + 1)) {
+                    if (pos.piece_at(pawn_square) == Piece::WhitePawn) {
+                        BitboardMoveList::BitboardMove move(pawn_square, ep_square);
+                        move.is_capture = true;
+                        move.is_ep_capture = true;
+                        moves.moves.push_back(move);
+                    }
                 }
             }
         }
@@ -223,22 +229,28 @@ void BitboardMoveGen::generate_black_pawn_moves_optimized(const BitboardPosition
             // Check left en passant capture (pawn moving from file+1 to file)
             if ((ep_square % 8) < 7) { // not on h-file
                 int left_pawn_square = ep_square + 7; // one rank up, one file right
-                if (pos.piece_at(left_pawn_square) == Piece::BlackPawn) {
-                    BitboardMoveList::BitboardMove move(left_pawn_square, ep_square);
-                    move.is_capture = true;
-                    move.is_ep_capture = true;
-                    moves.moves.push_back(move);
+                // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
+                if (left_pawn_square < 64 && (left_pawn_square % 8) == ((ep_square % 8) + 1)) {
+                    if (pos.piece_at(left_pawn_square) == Piece::BlackPawn) {
+                        BitboardMoveList::BitboardMove move(left_pawn_square, ep_square);
+                        move.is_capture = true;
+                        move.is_ep_capture = true;
+                        moves.moves.push_back(move);
+                    }
                 }
             }
             
             // Check right en passant capture (pawn moving from file-1 to file)  
             if ((ep_square % 8) > 0) { // not on a-file
                 int right_pawn_square = ep_square + 9; // one rank up, one file left
-                if (pos.piece_at(right_pawn_square) == Piece::BlackPawn) {
-                    BitboardMoveList::BitboardMove move(right_pawn_square, ep_square);
-                    move.is_capture = true;
-                    move.is_ep_capture = true;
-                    moves.moves.push_back(move);
+                // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
+                if (right_pawn_square < 64 && (right_pawn_square % 8) == ((ep_square % 8) - 1)) {
+                    if (pos.piece_at(right_pawn_square) == Piece::BlackPawn) {
+                        BitboardMoveList::BitboardMove move(right_pawn_square, ep_square);
+                        move.is_capture = true;
+                        move.is_ep_capture = true;
+                        moves.moves.push_back(move);
+                    }
                 }
             }
         }
