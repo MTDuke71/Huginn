@@ -28,6 +28,30 @@ void BitboardMoveGen::generate_all_moves(const BitboardPosition& pos, BitboardMo
     generate_king_moves(pos, moves);
 }
 
+void BitboardMoveGen::generate_legal_moves(BitboardPosition& pos, BitboardMoveList& moves) {
+    // First generate all pseudo-legal moves
+    BitboardMoveList pseudo_legal_moves;
+    generate_all_moves(pos, pseudo_legal_moves);
+    
+    // Filter out illegal moves (those that leave king in check)
+    moves.clear();
+    for (size_t i = 0; i < pseudo_legal_moves.moves.size(); i++) {
+        // Convert to SimpleBitboardMove for legality testing
+        SimpleBitboardMove simple_move;
+        simple_move.from_64 = pseudo_legal_moves.moves[i].from_64;
+        simple_move.to_64 = pseudo_legal_moves.moves[i].to_64;
+        simple_move.is_capture = pseudo_legal_moves.moves[i].is_capture;
+        simple_move.is_ep_capture = pseudo_legal_moves.moves[i].is_ep_capture;
+        simple_move.is_castling = pseudo_legal_moves.moves[i].is_castling;
+        simple_move.is_promotion = pseudo_legal_moves.moves[i].is_promotion;
+        simple_move.promotion_type = pseudo_legal_moves.moves[i].promotion_type;
+        
+        if (pos.is_legal_move(simple_move)) {
+            moves.moves.push_back(pseudo_legal_moves.moves[i]);
+        }
+    }
+}
+
 // ============================================================================
 // OPTIMIZED PAWN MOVE GENERATION (PURE BITBOARD)
 // ============================================================================
@@ -226,13 +250,16 @@ void BitboardMoveGen::generate_black_pawn_moves_optimized(const BitboardPosition
         // Check for black pawns that can capture en passant
         // En passant target square is on rank 3 for black pawns
         if (ep_square >= 16 && ep_square <= 23) { // rank 3 (0-indexed)
-            // Check left en passant capture (pawn moving from file+1 to file)
-            if ((ep_square % 8) < 7) { // not on h-file
-                int left_pawn_square = ep_square + 7; // one rank up, one file right
+            // For black pawns, they attack diagonally down-left and down-right
+            // If en passant square is the target, check the squares diagonally up-left and up-right
+            
+            // Check diagonal capture from up-left (a4 -> b3 type)
+            if ((ep_square % 8) > 0) { // not on a-file
+                int pawn_square = ep_square + 8 - 1; // one rank up, one file left
                 // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
-                if (left_pawn_square < 64 && (left_pawn_square % 8) == ((ep_square % 8) + 1)) {
-                    if (pos.piece_at(left_pawn_square) == Piece::BlackPawn) {
-                        BitboardMoveList::BitboardMove move(left_pawn_square, ep_square);
+                if (pawn_square <= 63 && (pawn_square % 8) == ((ep_square % 8) - 1)) {
+                    if (pos.piece_at(pawn_square) == Piece::BlackPawn) {
+                        BitboardMoveList::BitboardMove move(pawn_square, ep_square);
                         move.is_capture = true;
                         move.is_ep_capture = true;
                         moves.moves.push_back(move);
@@ -240,13 +267,13 @@ void BitboardMoveGen::generate_black_pawn_moves_optimized(const BitboardPosition
                 }
             }
             
-            // Check right en passant capture (pawn moving from file-1 to file)  
-            if ((ep_square % 8) > 0) { // not on a-file
-                int right_pawn_square = ep_square + 9; // one rank up, one file left
+            // Check diagonal capture from up-right (c4 -> b3 type)  
+            if ((ep_square % 8) < 7) { // not on h-file
+                int pawn_square = ep_square + 8 + 1; // one rank up, one file right
                 // BOARD WRAP FIX: Ensure the pawn is actually on an adjacent file
-                if (right_pawn_square < 64 && (right_pawn_square % 8) == ((ep_square % 8) - 1)) {
-                    if (pos.piece_at(right_pawn_square) == Piece::BlackPawn) {
-                        BitboardMoveList::BitboardMove move(right_pawn_square, ep_square);
+                if (pawn_square <= 63 && (pawn_square % 8) == ((ep_square % 8) + 1)) {
+                    if (pos.piece_at(pawn_square) == Piece::BlackPawn) {
+                        BitboardMoveList::BitboardMove move(pawn_square, ep_square);
                         move.is_capture = true;
                         move.is_ep_capture = true;
                         moves.moves.push_back(move);
@@ -416,6 +443,11 @@ void BitboardMoveGen::generate_king_moves(const BitboardPosition& pos, BitboardM
     while (attacks != 0) {
         int to_64 = pop_lsb(attacks);
         
+        // King cannot move to attacked squares
+        if (pos.is_square_attacked(to_64, static_cast<Color>(1 - static_cast<int>(us)))) {
+            continue; // Skip this destination as it's attacked by enemy
+        }
+        
         if (pos.is_square_occupied(to_64)) {
             // Capture move
             moves.add_capture(king_square, to_64);
@@ -425,7 +457,54 @@ void BitboardMoveGen::generate_king_moves(const BitboardPosition& pos, BitboardM
         }
     }
     
-    // TODO: Add castling moves when castling rights are implemented
+    // Generate castling moves
+    if (pos.side_to_move == Color::White) {
+        // White castling
+        // Kingside castling (e1g1)
+        if ((pos.castling_rights & 1) && // White kingside right available
+            !pos.is_square_occupied(5) && !pos.is_square_occupied(6) && // f1 and g1 empty
+            !pos.is_square_attacked(4, Color::Black) &&  // King not in check
+            !pos.is_square_attacked(5, Color::Black) &&  // King doesn't pass through check (f1)
+            !pos.is_square_attacked(6, Color::Black)) {  // King doesn't end in check (g1)
+            BitboardMoveList::BitboardMove castle_move(4, 6); // e1 to g1
+            castle_move.is_castling = true;
+            moves.moves.push_back(castle_move);
+        }
+        
+        // Queenside castling (e1c1)  
+        if ((pos.castling_rights & 2) && // White queenside right available
+            !pos.is_square_occupied(1) && !pos.is_square_occupied(2) && !pos.is_square_occupied(3) && // b1, c1, d1 empty
+            !pos.is_square_attacked(4, Color::Black) &&  // King not in check
+            !pos.is_square_attacked(3, Color::Black) &&  // King doesn't pass through check (d1)
+            !pos.is_square_attacked(2, Color::Black)) {  // King doesn't end in check (c1)
+            BitboardMoveList::BitboardMove castle_move(4, 2); // e1 to c1
+            castle_move.is_castling = true;
+            moves.moves.push_back(castle_move);
+        }
+    } else {
+        // Black castling
+        // Kingside castling (e8g8)
+        if ((pos.castling_rights & 4) && // Black kingside right available
+            !pos.is_square_occupied(61) && !pos.is_square_occupied(62) && // f8 and g8 empty
+            !pos.is_square_attacked(60, Color::White) && // King not in check
+            !pos.is_square_attacked(61, Color::White) && // King doesn't pass through check (f8)
+            !pos.is_square_attacked(62, Color::White)) { // King doesn't end in check (g8)
+            BitboardMoveList::BitboardMove castle_move(60, 62); // e8 to g8
+            castle_move.is_castling = true;
+            moves.moves.push_back(castle_move);
+        }
+        
+        // Queenside castling (e8c8)
+        if ((pos.castling_rights & 8) && // Black queenside right available
+            !pos.is_square_occupied(57) && !pos.is_square_occupied(58) && !pos.is_square_occupied(59) && // b8, c8, d8 empty
+            !pos.is_square_attacked(60, Color::White) && // King not in check
+            !pos.is_square_attacked(59, Color::White) && // King doesn't pass through check (d8)
+            !pos.is_square_attacked(58, Color::White)) { // King doesn't end in check (c8)
+            BitboardMoveList::BitboardMove castle_move(60, 58); // e8 to c8
+            castle_move.is_castling = true;
+            moves.moves.push_back(castle_move);
+        }
+    }
 }
 
 // ============================================================================

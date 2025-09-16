@@ -70,6 +70,14 @@ namespace BitboardMoveGen {
 void generate_all_moves(const BitboardPosition& pos, BitboardMoveList& moves);
 
 /**
+ * @brief Generate only legal moves by filtering out illegal moves
+ * 
+ * First generates all pseudo-legal moves, then filters out moves that would
+ * leave the king in check (including pinned pieces and discovered checks).
+ */
+void generate_legal_moves(BitboardPosition& pos, BitboardMoveList& moves);
+
+/**
  * @brief Generate pawn moves using optimized bitboard operations
  * 
  * Pure bitboard pawn move generation with no conversion overhead.
