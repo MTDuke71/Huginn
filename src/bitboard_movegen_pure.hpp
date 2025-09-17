@@ -38,6 +38,14 @@ struct BitboardMoveList {
         BitboardMove(int f, int t, PieceType promo = PieceType::None) 
             : from_64(f), to_64(t), promotion_type(promo), is_capture(false), 
               is_ep_capture(false), is_castling(false), is_promotion(promo != PieceType::None) {}
+
+        BitboardMove(int f, int t, PieceType promo, bool capture)
+            : from_64(f), to_64(t), promotion_type(promo), is_capture(capture),
+              is_ep_capture(false), is_castling(false), is_promotion(promo != PieceType::None) {}
+
+        BitboardMove(int f, int t, PieceType promo, bool capture, bool ep, bool castle, bool promotion)
+            : from_64(f), to_64(t), promotion_type(promo), is_capture(capture),
+              is_ep_capture(ep), is_castling(castle), is_promotion(promotion) {}
     };
     
     std::vector<BitboardMove> moves;

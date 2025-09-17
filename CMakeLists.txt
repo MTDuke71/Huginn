@@ -12,7 +12,67 @@ if(WIN32)
         unset(ENV{MANPATH})
         
         # Force CMake to not use any non-Windows paths
-        set(CMAKE_FIND_ROOT_PATH "")
+      # Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v4 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V5 Testarget_compile_target_compile_definitions(debug_move_comparison PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug Board Display ----
+add_huginn_executable(debug_board_display
+    SOURCES
+        debug_board_display.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_board_display PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug Pawn Captures ----
+add_huginn_executable(debug_pawn_captures
+    SOURCES
+        debug_pawn_captures.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_pawn_captures PRIVATE ULTRA_ENGINE=1)
+
+# ---- Test Castling Debug ----
+
+# ---- Debug Board State ----
+add_huginn_executable(debug_board_state
+    SOURCES
+        debug_board_state.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_board_state PRIVATE ULTRA_ENGINE=1)
+
+# ---- Test Castling Debug -------
+add_huginn_executable(perft_optimized_v5
+    SOURCES
+        perft/perft_optimized_v5.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v5 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Mirror Evaluation Test ----t(CMAKE_FIND_ROOT_PATH "")
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
@@ -335,6 +395,7 @@ set(COMMON_SOURCES
     src/king_lookup_tables.cpp
     src/pawn_lookup_tables.cpp
     src/syzygy_tablebase.cpp
+    src/epd_parser.cpp
 )
 
 set(ENGINE_SOURCES
@@ -362,10 +423,12 @@ if(ENABLE_FATHOM)
     set(HUGINN_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/ultra_engine
     )
 else()
     set(HUGINN_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/ultra_engine
     )
 endif()
 
@@ -391,6 +454,71 @@ add_huginn_executable(huginn2
 # Set preprocessor define for huginn2 to enable bitboard features
 target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
 
+# ---- Ultra Engine Sliding Piece Performance Test ----
+add_huginn_executable(test_sliding_performance
+    SOURCES
+        test_sliding_performance.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- Basic Ultra Engine Test ----
+add_huginn_executable(test_basic_ultra
+    SOURCES
+        test_basic_ultra.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- UltraAttacks Only Test ----
+add_huginn_executable(test_attacks_only
+    SOURCES
+        test_attacks_only.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- Ultra Engine Pawn Performance Test ----
+add_huginn_executable(test_pawn_performance
+    SOURCES
+        test_pawn_performance.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- Ultra Engine Position System Test ----
+add_huginn_executable(test_position_system
+    SOURCES
+        test_position_system.cpp
+        ultra_engine/ultra_attacks.cpp
+        ultra_engine/ultra_position.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- Ultra Engine Special Moves Test ----
+add_huginn_executable(test_special_moves
+    SOURCES
+        test_special_moves.cpp
+        ultra_engine/ultra_attacks.cpp
+        ultra_engine/ultra_position.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# ---- Ultra Engine Special Moves Test (Simple) ----
+add_huginn_executable(test_special_moves_simple
+    SOURCES
+        test_special_moves_simple.cpp
+        ultra_engine/ultra_attacks.cpp
+        ultra_engine/ultra_position.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
 # ---- Huginn2 Perft Test ----
 add_huginn_executable(perft_huginn2
     SOURCES
@@ -404,6 +532,262 @@ add_huginn_executable(perft_huginn2
 
 # Set preprocessor define for perft test to enable bitboard features
 target_compile_definitions(perft_huginn2 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V1 Test ----
+add_huginn_executable(perft_optimized_v1
+    SOURCES
+        perft/perft_optimized_v1.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v1 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V2 Test ----
+add_huginn_executable(perft_optimized_v2
+    SOURCES
+        perft/perft_optimized_v2.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v2 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V3 Test ----
+add_huginn_executable(perft_optimized_v3
+    SOURCES
+        perft/perft_optimized_v3.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v3 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V4 Test ----
+add_huginn_executable(perft_optimized_v4
+    SOURCES
+        perft/perft_optimized_v4.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v4 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V5 Test ----
+add_huginn_executable(perft_optimized_v5
+    SOURCES
+        perft/perft_optimized_v5.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v5 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V6 Test ----
+add_huginn_executable(perft_optimized_v6
+    SOURCES
+        perft/perft_optimized_v6.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v6 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- Huginn2 Perft Optimized V7 Test ----
+add_huginn_executable(perft_optimized_v7
+    SOURCES
+        perft/perft_optimized_v7.cpp
+        ${ENGINE_SOURCES}
+        src/bitboard_benchmark.cpp  # Add bitboard performance framework
+        src/bitboard_movegen.cpp    # Add actual bitboard move generation
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for optimized perft test to enable bitboard features
+target_compile_definitions(perft_optimized_v7 PRIVATE BITBOARD_ENGINE=1)
+
+# ---- TRUE UltraEngine Perft Test ----
+add_huginn_executable(perft_ultra_engine
+    SOURCES
+        perft/perft_ultra_engine.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+        src/epd_parser.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+# Set preprocessor define for UltraEngine perft test
+target_compile_definitions(perft_ultra_engine PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug UltraPosition ----
+add_huginn_executable(debug_ultra_position
+    SOURCES
+        debug_ultra_position.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_ultra_position PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug UltraEngine Moves Detailed ----
+add_huginn_executable(debug_ultra_moves_detailed
+    SOURCES
+        debug_ultra_moves_detailed.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_ultra_moves_detailed PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug King Moves ----
+add_huginn_executable(debug_king_moves
+    SOURCES
+        debug_king_moves.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_king_moves PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug Move Comparison ----
+add_huginn_executable(debug_move_comparison
+    SOURCES
+        debug_move_comparison.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_move_comparison PRIVATE ULTRA_ENGINE=1)
+
+# ---- Debug FEN Parsing ----
+add_huginn_executable(debug_fen_parsing
+    SOURCES
+        debug_fen_parsing.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(debug_fen_parsing PRIVATE ULTRA_ENGINE=1)
+
+# ---- Test Castling Debug ----
+add_huginn_executable(test_castling_debug
+    SOURCES
+        test_castling_debug.cpp
+        ultra_engine/ultra_position.cpp
+        ultra_engine/ultra_move.cpp
+        ultra_engine/ultra_attacks.cpp
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+
+target_compile_definitions(test_castling_debug PRIVATE ULTRA_ENGINE=1)
+
+# ---- Ultra Engine Move System Test ----
+add_executable(test_ultra_move
+    ultra_engine/test_ultra_move.cpp
+    ultra_engine/ultra_move.cpp
+)
+
+# Ultra engine requires C++17 for constexpr features
+target_compile_features(test_ultra_move PRIVATE cxx_std_17)
+
+# Optimize ultra engine test for maximum performance
+if(MSVC)
+    target_compile_options(test_ultra_move PRIVATE 
+        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
+        /fp:fast /arch:AVX2
+    )
+    target_link_options(test_ultra_move PRIVATE /LTCG)
+endif()
+
+# Include ultra engine directory
+target_include_directories(test_ultra_move PRIVATE ultra_engine)
+
+# ---- Ultra Engine Attack System Test ----
+add_executable(test_ultra_attacks
+    ultra_engine/test_ultra_attacks.cpp
+    ultra_engine/ultra_attacks.cpp
+    ultra_engine/ultra_move.cpp
+)
+
+# Ultra engine requires C++17 for constexpr features
+target_compile_features(test_ultra_attacks PRIVATE cxx_std_17)
+
+# Optimize ultra engine test for maximum performance
+if(MSVC)
+    target_compile_options(test_ultra_attacks PRIVATE 
+        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
+        /fp:fast /arch:AVX2
+    )
+    target_link_options(test_ultra_attacks PRIVATE /LTCG)
+endif()
+
+# Include ultra engine directory
+target_include_directories(test_ultra_attacks PRIVATE ultra_engine)
+
+# ---- Ultra Engine Knight Performance Test ----
+add_executable(test_knight_performance
+    ultra_engine/test_knight_performance.cpp
+    ultra_engine/ultra_attacks.cpp
+    ultra_engine/ultra_move.cpp
+)
+
+# Ultra engine requires C++17 for constexpr features
+target_compile_features(test_knight_performance PRIVATE cxx_std_17)
+
+# Optimize ultra engine test for maximum performance
+if(MSVC)
+    target_compile_options(test_knight_performance PRIVATE 
+        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
+        /fp:fast /arch:AVX2
+    )
+    target_link_options(test_knight_performance PRIVATE /LTCG)
+endif()
+
+# Include ultra engine directory
+target_include_directories(test_knight_performance PRIVATE ultra_engine)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
@@ -420,6 +804,14 @@ add_huginn_executable(mirror_eval_test
 add_huginn_executable(perft_suite_vice
     SOURCES
         perft/perft_suite_vice.cpp
+        ${COMMON_SOURCES}
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+add_huginn_executable(fast_perft_test
+    SOURCES
+        perft/fast_perft_test.cpp
         ${COMMON_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -549,86 +941,29 @@ target_compile_features(attack_benchmark PRIVATE cxx_std_17)
 target_include_directories(attack_benchmark PRIVATE src)
 target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
+# Add ultra_engine directory to include paths globally
+include_directories(${CMAKE_SOURCE_DIR}/ultra_engine)
+
 # End of CMakeLists.txt
-set(DEBUG_SOURCES
-    src/bitboard.cpp
-    src/bitboard_movegen.cpp
-    src/bitboard_position.cpp
-    src/bitboard_movegen_pure.cpp
-    src/bitboard_perft_optimized.cpp
-    src/bitboard_attacks.cpp
-    src/init.cpp
-    src/position.cpp
-    src/zobrist.cpp
-    src/attack_detection.cpp
-    src/attack_tables.cpp
-    src/movegen_enhanced.cpp
-    src/move.cpp
-    src/board120.cpp
-    src/chess_types.cpp
-    src/evaluation.cpp
-    src/knight_lookup_tables.cpp
-    src/king_lookup_tables.cpp
-    src/pawn_lookup_tables.cpp
-)
 
 
-# Huginn2 bitboard perft suite (first 2 positions)
-add_executable(perft_suite_huginn2 perft/perft_suite_huginn2.cpp ${DEBUG_SOURCES})
-target_compile_features(perft_suite_huginn2 PRIVATE cxx_std_17)
-target_include_directories(perft_suite_huginn2 PRIVATE src)
-target_compile_definitions(perft_suite_huginn2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Performance optimization test
-add_executable(test_perft_optimization test_perft_optimization.cpp ${DEBUG_SOURCES})
-target_compile_features(test_perft_optimization PRIVATE cxx_std_17)
-target_include_directories(test_perft_optimization PRIVATE .)
-target_compile_definitions(test_perft_optimization PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug move differences tool
-add_executable(debug_move_differences debug_move_differences.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_move_differences PRIVATE cxx_std_17)
-target_include_directories(debug_move_differences PRIVATE .)
-target_compile_definitions(debug_move_differences PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug endgame position tool
-add_executable(debug_endgame_position debug_endgame_position.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_endgame_position PRIVATE cxx_std_17)
-target_include_directories(debug_endgame_position PRIVATE .)
-target_compile_definitions(debug_endgame_position PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Comprehensive perft validation
-add_executable(test_perft_validation test_perft_validation.cpp ${DEBUG_SOURCES})
-target_compile_features(test_perft_validation PRIVATE cxx_std_17)
-target_include_directories(test_perft_validation PRIVATE .)
-target_compile_definitions(test_perft_validation PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug perft depth 2 issues
-add_executable(debug_perft_depth2 debug_perft_depth2.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_perft_depth2 PRIVATE cxx_std_17)
-target_include_directories(debug_perft_depth2 PRIVATE .)
-target_compile_definitions(debug_perft_depth2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Comprehensive perft debugging
-add_executable(debug_perft_comprehensive debug_perft_comprehensive.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_perft_comprehensive PRIVATE cxx_std_17)
-target_include_directories(debug_perft_comprehensive PRIVATE .)
-target_compile_definitions(debug_perft_comprehensive PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug specific problematic moves
-add_executable(debug_specific_moves debug_specific_moves.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_specific_moves PRIVATE cxx_std_17)
-target_include_directories(debug_specific_moves PRIVATE .)
-target_compile_definitions(debug_specific_moves PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug depth 3 detailed comparison
-add_executable(debug_depth3_comparison debug_depth3_comparison.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_depth3_comparison PRIVATE cxx_std_17)
-target_include_directories(debug_depth3_comparison PRIVATE .)
-target_compile_definitions(debug_depth3_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
 
-# Debug counting logic
-add_executable(debug_counting_logic debug_counting_logic.cpp ${DEBUG_SOURCES})
-target_compile_features(debug_counting_logic PRIVATE cxx_std_17)
-target_include_directories(debug_counting_logic PRIVATE .)
-target_compile_definitions(debug_counting_logic PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+
+
+
+
+
+
+
+
+
+

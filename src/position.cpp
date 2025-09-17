@@ -647,3 +647,26 @@ void Position::TakeNullMove() {
         --fullmove_number;
     }
 }
+
+// Function definitions that use S_MOVELIST
+uint64_t Position::perft(int depth) {
+    if (depth == 0) return 1;
+
+    S_MOVELIST list;
+    generate_all_moves(list);
+
+    uint64_t nodes = 0;
+    for (int i = 0; i < list.count; ++i) {
+        if (MakeMove(list.moves[i])) {
+            nodes += perft(depth - 1);
+            TakeMove();
+        }
+    }
+    return nodes;
+}
+
+// Generate all moves for the current position
+void Position::generate_all_moves(S_MOVELIST& list) const {
+    list.clear();
+    // Implement move generation logic here or leave empty if unnecessary
+}

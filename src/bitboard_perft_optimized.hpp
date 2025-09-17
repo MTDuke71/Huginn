@@ -31,11 +31,16 @@ namespace BitboardPerftOptimized {
 
 /**
  * @brief Ultra-fast legal move generation for perft
- * 
+ *
  * Generates legal moves directly without expensive make/unmake testing.
  * Uses efficient check detection and pin analysis.
  */
 void generate_legal_moves_fast(const BitboardPosition& pos, BitboardMoveList& moves);
+
+/**
+ * @brief Fast recursive perft implementation
+ */
+uint64_t perft_fast(const BitboardPosition& pos, int depth);
 
 // ============================================================================
 // EFFICIENT ATTACK DETECTION
@@ -121,32 +126,11 @@ void generate_king_moves_legal(const BitboardPosition& pos, BitboardMoveList& mo
  * @brief Generate legal pawn moves with pin awareness
  */
 void generate_pawn_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square);
-void generate_pawn_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square, uint64_t pinned_pieces);
-
-// Pin detection
-uint64_t find_pinned_pieces(const BitboardPosition& pos, int king_square);
-
-/**
- * @brief Generate moves for pinned pawns (restricted to pin ray)
- */
-void generate_pawn_moves_pinned(const BitboardPosition& pos, BitboardMoveList& moves, 
-                               uint64_t pinned_pawns, int king_square);
-
-/**
- * @brief Bulk pawn move generation for unpinned pawns
- */
-void generate_pawn_moves_bulk(const BitboardPosition& pos, BitboardMoveList& moves, 
-                             uint64_t pawns, bool pinned);
-
-/**
- * @brief Generate legal knight moves with pin checking
- */
-void generate_knight_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square);
-
-/**
- * @brief Generate legal bishop moves with pin checking  
- */
-void generate_bishop_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square);
+bool is_pawn_move_legal(const BitboardPosition& pos, int from_square, int to_square, bool is_capture, int king_square, bool is_ep);
+bool is_move_legal_simple(const BitboardPosition& pos, int from_square, int to_square, int king_square);
+void generate_pawn_moves_bulk(const BitboardPosition& pos, BitboardMoveList& moves, uint64_t pawns, bool is_pinned);
+void generate_knight_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square, uint64_t pinned_pieces);
+void generate_bishop_moves_legal(const BitboardPosition& pos, BitboardMoveList& moves, int king_square, uint64_t pinned_pieces);
 
 /**
  * @brief Generate legal rook moves with pin checking
@@ -192,31 +176,6 @@ bool is_on_diagonal_ray(int square, int attacker_square, uint64_t occupied);
  * @brief Check if square is on straight ray from attacker  
  */
 bool is_on_straight_ray(int square, int attacker_square, uint64_t occupied);
-
-/**
- * @brief Check if a pawn move is legal (doesn't leave king in check)
- */
-bool is_pawn_move_legal(const BitboardPosition& pos, int from_square, int to_square, bool is_capture, int king_square);
-
-/**
- * @brief Check if a knight move is legal (doesn't leave king in check)
- */
-bool is_knight_move_legal(const BitboardPosition& pos, int from_square, int to_square, int king_square);
-
-/**
- * @brief Check if a sliding piece move is legal (doesn't leave king in check)
- */
-bool is_sliding_move_legal(const BitboardPosition& pos, int from_square, int to_square, int king_square);
-
-/**
- * @brief Generate diagonal attacks for bishop-like pieces
- */
-uint64_t generate_diagonal_attacks(int square, uint64_t occupied);
-
-/**
- * @brief Generate straight attacks for rook-like pieces
- */
-uint64_t generate_straight_attacks(int square, uint64_t occupied);
 
 /**
  * @brief Fast pop_lsb that doesn't modify the bitboard

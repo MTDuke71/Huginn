@@ -1,4 +1,6 @@
 #include "uci_utils.hpp"
+#include "position.hpp"
+#include "move.hpp"
 
 /**
  * @brief Parses a UCI move string and returns the corresponding legal move.

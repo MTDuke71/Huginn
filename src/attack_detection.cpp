@@ -24,6 +24,7 @@
  */
 
 #include "attack_detection.hpp"
+#include "position.hpp"
 #include "attack_tables.hpp"
 #include "bitboard.hpp"
 
@@ -345,6 +346,83 @@ bool SqAttackedBB(int sq, const Position &pos, Color attacking_color)
     
     // No attacks found
     return false;
+}
+
+// Moved from header to resolve circular dependency
+bool sliding_attacks_rank_file(int piece_sq, int target_sq, const Position &pos)
+{
+    // Check if on same rank or file
+    File piece_file = file_of(piece_sq);
+    Rank piece_rank = rank_of(piece_sq);
+    File target_file = file_of(target_sq);
+    Rank target_rank = rank_of(target_sq);
+
+    if (piece_file != target_file && piece_rank != target_rank)
+    {
+        return false; // Not on same rank or file
+    }
+
+    // Determine direction
+    int dir;
+    if (piece_file == target_file)
+    {
+        // Same file - moving along rank
+        dir = (target_rank > piece_rank) ? NORTH : SOUTH;
+    }
+    else
+    {
+        // Same rank - moving along file
+        dir = (target_file > piece_file) ? EAST : WEST;
+    }
+
+    // Check for clear path
+    int current_sq = piece_sq + dir;
+    while (current_sq != target_sq && is_playable(current_sq))
+    {
+        if (!is_none(pos.at(current_sq)))
+        {
+            return false; // Path blocked
+        }
+        current_sq += dir;
+    }
+
+    return current_sq == target_sq;
+}
+
+bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position &pos)
+{
+    // Check if on same diagonal
+    int file_diff = int(file_of(target_sq)) - int(file_of(piece_sq));
+    int rank_diff = int(rank_of(target_sq)) - int(rank_of(piece_sq));
+
+    if (abs(file_diff) != abs(rank_diff))
+    {
+        return false; // Not on same diagonal
+    }
+
+    // Determine direction
+    int dir;
+    if (file_diff > 0 && rank_diff > 0)
+        dir = NE;
+    else if (file_diff < 0 && rank_diff > 0)
+        dir = NW;
+    else if (file_diff > 0 && rank_diff < 0)
+        dir = SE;
+    else
+        dir = SW;
+
+    // Check for clear path
+    int current_sq = piece_sq + dir;
+    while (current_sq != target_sq && is_playable(current_sq))
+    {
+        if (!is_none(pos.at(current_sq)))
+        {
+            return false; // Path blocked
+        }
+        current_sq += dir;
+    }
+
+    return current_sq == target_sq;
 }
 
 } // namespace Huginn

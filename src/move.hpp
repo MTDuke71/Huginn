@@ -10,8 +10,25 @@
 
 #pragma once
 #include <cstdint>
+#include <string>
+#include <sstream>
 #include "board120.hpp"
 #include "chess_types.hpp"
+
+// Utility functions for square and piece string conversion
+inline std::string square_to_string(int square_64) {
+    int file = square_64 % 8;
+    int rank = square_64 / 8;
+    return std::string(1, 'a' + file) + std::string(1, '1' + rank);
+}
+
+inline char piece_to_char(int color, int piece) {
+    static const char pieceChars[2][6] = {
+        {'P', 'N', 'B', 'R', 'Q', 'K'}, // White pieces
+        {'p', 'n', 'b', 'r', 'q', 'k'}  // Black pieces
+    };
+    return pieceChars[color][piece];
+}
 
 /**
  * @section Move Encoding Format
@@ -296,8 +313,28 @@ struct S_MOVE {
     bool operator==(int value) const {
         return move == value;
     }
+    
+    /**
+     * @brief Convert the move to a UCI string representation
+     * @return UCI string (e.g., e2e4, e7e8q for promotions)
+     */
+    std::string to_string() const {
+        int from = (move & MOVE_FROM_MASK) >> MOVE_FROM_SHIFT;
+        int to = (move & MOVE_TO_MASK) >> MOVE_TO_SHIFT;
+        std::ostringstream oss;
+        oss << std::string(::square_to_string(static_cast<int>(from)))
+            << std::string(::square_to_string(static_cast<int>(to)));
+        if (move & MOVE_PROMOTED_MASK) {
+            int promoted = (move & MOVE_PROMOTED_MASK) >> MOVE_PROMOTED_SHIFT;
+            oss << ::piece_to_char(0, static_cast<int>(promoted));
+        }
+        return oss.str();
+    }
 };
 
+
+
+// Explicitly qualify operator<< calls to avoid ambiguity
 // ============================================================================
 // MOVE FACTORY FUNCTIONS
 // Convenient constructors for common move types with descriptive names

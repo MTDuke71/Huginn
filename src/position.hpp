@@ -50,6 +50,10 @@
 #include "move.hpp"
 #include "msvc_optimizations.hpp"
 #include "zobrist.hpp"
+#include "../ultra_engine/ultra_attacks.hpp"
+
+// Forward declarations to avoid circular dependencies
+struct S_MOVELIST;
 
 struct State {
     // Minimal saved state for unmake
@@ -807,4 +811,13 @@ public:
     Bitboard get_kings(Color color) const {
         return piece_bitboards[size_t(color)][size_t(PieceType::King)];
     }
+    
+    // Perft function for move generation validation - definition after class
+    uint64_t perft(int depth);
+
+    // Generate all moves for the current position - definition after class  
+    void generate_all_moves(S_MOVELIST& list) const;
 };
+
+// Include S_MOVELIST definition after Position class declaration
+#include "movegen_enhanced.hpp"
