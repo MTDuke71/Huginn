@@ -313,6 +313,7 @@ set(COMMON_SOURCES
     src/bitboard_movegen.cpp
     src/bitboard_position.cpp
     src/bitboard_movegen_pure.cpp
+    src/bitboard_perft_optimized.cpp
     src/bitboard_attacks.cpp
     src/init.cpp
     src/position.cpp
@@ -552,6 +553,10 @@ target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE
 set(DEBUG_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
+    src/bitboard_position.cpp
+    src/bitboard_movegen_pure.cpp
+    src/bitboard_perft_optimized.cpp
+    src/bitboard_attacks.cpp
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp
@@ -573,3 +578,21 @@ add_executable(perft_suite_huginn2 perft/perft_suite_huginn2.cpp ${DEBUG_SOURCES
 target_compile_features(perft_suite_huginn2 PRIVATE cxx_std_17)
 target_include_directories(perft_suite_huginn2 PRIVATE src)
 target_compile_definitions(perft_suite_huginn2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Performance optimization test
+add_executable(test_perft_optimization test_perft_optimization.cpp ${DEBUG_SOURCES})
+target_compile_features(test_perft_optimization PRIVATE cxx_std_17)
+target_include_directories(test_perft_optimization PRIVATE .)
+target_compile_definitions(test_perft_optimization PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug move differences tool
+add_executable(debug_move_differences debug_move_differences.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_move_differences PRIVATE cxx_std_17)
+target_include_directories(debug_move_differences PRIVATE .)
+target_compile_definitions(debug_move_differences PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug endgame position tool
+add_executable(debug_endgame_position debug_endgame_position.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_endgame_position PRIVATE cxx_std_17)
+target_include_directories(debug_endgame_position PRIVATE .)
+target_compile_definitions(debug_endgame_position PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
