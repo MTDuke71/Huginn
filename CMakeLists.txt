@@ -596,3 +596,15 @@ add_executable(debug_endgame_position debug_endgame_position.cpp ${DEBUG_SOURCES
 target_compile_features(debug_endgame_position PRIVATE cxx_std_17)
 target_include_directories(debug_endgame_position PRIVATE .)
 target_compile_definitions(debug_endgame_position PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Comprehensive perft validation
+add_executable(test_perft_validation test_perft_validation.cpp ${DEBUG_SOURCES})
+target_compile_features(test_perft_validation PRIVATE cxx_std_17)
+target_include_directories(test_perft_validation PRIVATE .)
+target_compile_definitions(test_perft_validation PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug perft depth 2 issues
+add_executable(debug_perft_depth2 debug_perft_depth2.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_perft_depth2 PRIVATE cxx_std_17)
+target_include_directories(debug_perft_depth2 PRIVATE .)
+target_compile_definitions(debug_perft_depth2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
