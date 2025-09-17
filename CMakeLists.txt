@@ -17,57 +17,7 @@ if(WIN32)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-add_executable(debug_fresh_vs_sequence debug_fresh_vs_sequence.cpp ${COMMON_SOURCES})
-target_compile_features(debug_fresh_vs_sequence PRIVATE cxx_std_17)
-target_include_directories(debug_fresh_vs_sequence PRIVATE src)
-target_compile_definitions(debug_fresh_vs_sequence PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_next_en_passant_bug debug_next_en_passant_bug.cpp ${COMMON_SOURCES})
-target_compile_features(debug_next_en_passant_bug PRIVATE cxx_std_17)
-target_include_directories(debug_next_en_passant_bug PRIVATE src)
-target_compile_definitions(debug_next_en_passant_bug PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(analyze_d2c1_depth3 analyze_d2c1_depth3.cpp ${COMMON_SOURCES})
-target_compile_features(analyze_d2c1_depth3 PRIVATE cxx_std_17)
-target_include_directories(analyze_d2c1_depth3 PRIVATE src)
-target_compile_definitions(analyze_d2c1_depth3 PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_move_generation_discrepancy test_move_generation_discrepancy.cpp ${COMMON_SOURCES})
-target_compile_features(test_move_generation_discrepancy PRIVATE cxx_std_17)
-target_include_directories(test_move_generation_discrepancy PRIVATE src)
-target_compile_definitions(test_move_generation_discrepancy PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(find_missing_moves find_missing_moves.cpp ${COMMON_SOURCES})
-target_compile_features(find_missing_moves PRIVATE cxx_std_17)
-target_include_directories(find_missing_moves PRIVATE src)
-target_compile_definitions(find_missing_moves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(compare_position_implementations compare_position_implementations.cpp ${COMMON_SOURCES})
-target_compile_features(compare_position_implementations PRIVATE cxx_std_17)
-target_include_directories(compare_position_implementations PRIVATE src)
-target_compile_definitions(compare_position_implementations PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_vice_kiwipete test_vice_kiwipete.cpp ${COMMON_SOURCES})
-target_compile_features(test_vice_kiwipete PRIVATE cxx_std_17)
-target_include_directories(test_vice_kiwipete PRIVATE src)
-target_compile_definitions(test_vice_kiwipete PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_depth3 test_depth3.cpp ${COMMON_SOURCES})
-target_compile_features(test_depth3 PRIVATE cxx_std_17)
-target_include_directories(test_depth3 PRIVATE src)
-target_compile_definitions(test_depth3 PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(analyze_f3f5_tree analyze_f3f5_tree.cpp ${COMMON_SOURCES})
-target_compile_features(analyze_f3f5_tree PRIVATE cxx_std_17)
-target_include_directories(analyze_f3f5_tree PRIVATE src)
-target_compile_definitions(analyze_f3f5_tree PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_attack_detection test_attack_detection.cpp ${COMMON_SOURCES})
-target_compile_features(test_attack_detection PRIVATE cxx_std_17)
-target_include_directories(test_attack_detection PRIVATE src)
-target_compile_definitions(test_attack_detection PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# End of CMakeLists.txt    
+        
         # Clear system paths that might include MSYS2
         set(CMAKE_SYSTEM_INCLUDE_PATH "")
         set(CMAKE_SYSTEM_LIBRARY_PATH "")
@@ -443,7 +393,7 @@ target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
 # ---- Huginn2 Perft Test ----
 add_huginn_executable(perft_huginn2
     SOURCES
-        perft_huginn2.cpp
+        perft/perft_suite_huginn2.cpp
         ${ENGINE_SOURCES}
         src/bitboard_benchmark.cpp  # Add bitboard performance framework
         src/bitboard_movegen.cpp    # Add actual bitboard move generation
@@ -592,29 +542,11 @@ endif()
 # target_include_directories(eval_benchmark_old PRIVATE src)
 # target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
-# Evaluation benchmark for new piece list approach
-add_executable(eval_benchmark_new eval_benchmark_new.cpp ${COMMON_SOURCES})
-target_compile_features(eval_benchmark_new PRIVATE cxx_std_17)
-target_include_directories(eval_benchmark_new PRIVATE src)
-target_compile_definitions(eval_benchmark_new PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
 # Attack detection benchmark for Phase 1 bitboard migration
 add_executable(attack_benchmark benchmark/attack_benchmark.cpp ${COMMON_SOURCES})
 target_compile_features(attack_benchmark PRIVATE cxx_std_17)
 target_include_directories(attack_benchmark PRIVATE src)
 target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
-# Pawn move generation benchmark for Phase 2 bitboard migration
-add_executable(pawn_movegen_benchmark pawn_movegen_benchmark.cpp ${COMMON_SOURCES})
-target_compile_features(pawn_movegen_benchmark PRIVATE cxx_std_20)
-target_include_directories(pawn_movegen_benchmark PRIVATE src)
-target_compile_definitions(pawn_movegen_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
-# Native bitboard benchmark for conversion overhead elimination
-add_executable(native_bitboard_benchmark native_bitboard_benchmark.cpp ${COMMON_SOURCES})
-target_compile_features(native_bitboard_benchmark PRIVATE cxx_std_20)
-target_include_directories(native_bitboard_benchmark PRIVATE src)
-target_compile_definitions(native_bitboard_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
 set(DEBUG_SOURCES
@@ -624,6 +556,7 @@ set(DEBUG_SOURCES
     src/position.cpp
     src/zobrist.cpp
     src/attack_detection.cpp
+    src/attack_tables.cpp
     src/movegen_enhanced.cpp
     src/move.cpp
     src/board120.cpp
@@ -640,276 +573,3 @@ add_executable(perft_suite_huginn2 perft/perft_suite_huginn2.cpp ${DEBUG_SOURCES
 target_compile_features(perft_suite_huginn2 PRIVATE cxx_std_17)
 target_include_directories(perft_suite_huginn2 PRIVATE src)
 target_compile_definitions(perft_suite_huginn2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
-
-add_executable(test_occupied_bitboard test_occupied_bitboard.cpp ${COMMON_SOURCES})
-target_compile_features(test_occupied_bitboard PRIVATE cxx_std_17)
-target_include_directories(test_occupied_bitboard PRIVATE src)
-target_compile_definitions(test_occupied_bitboard PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(kiwipete_systematic kiwipete_systematic.cpp ${COMMON_SOURCES})
-target_compile_features(kiwipete_systematic PRIVATE cxx_std_17)
-target_include_directories(kiwipete_systematic PRIVATE src)
-target_compile_definitions(kiwipete_systematic PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(simple_f3f5_test simple_f3f5_test.cpp ${COMMON_SOURCES})
-target_compile_features(simple_f3f5_test PRIVATE cxx_std_17)
-target_include_directories(simple_f3f5_test PRIVATE src)
-target_compile_definitions(simple_f3f5_test PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_position_state debug_position_state.cpp ${COMMON_SOURCES})
-target_compile_features(debug_position_state PRIVATE cxx_std_17)
-target_include_directories(debug_position_state PRIVATE src)
-target_compile_definitions(debug_position_state PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_bitboard_position debug_bitboard_position.cpp ${COMMON_SOURCES})
-target_compile_features(debug_bitboard_position PRIVATE cxx_std_17)
-target_include_directories(debug_bitboard_position PRIVATE src)
-target_compile_definitions(debug_bitboard_position PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(simple_bitboard_debug simple_bitboard_debug.cpp ${COMMON_SOURCES})
-target_compile_features(simple_bitboard_debug PRIVATE cxx_std_17)
-target_include_directories(simple_bitboard_debug PRIVATE src)
-target_compile_definitions(simple_bitboard_debug PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_specific_fen test_specific_fen.cpp ${COMMON_SOURCES})
-target_compile_features(test_specific_fen PRIVATE cxx_std_17)
-target_include_directories(test_specific_fen PRIVATE src)
-target_compile_definitions(test_specific_fen PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(verify_f3f5 verify_f3f5.cpp ${SOURCE_FILES})
-# target_link_libraries(verify_f3f5 ${PROJECT_NAME}_lib)
-
-add_executable(analyze_f3f5 analyze_f3f5.cpp)
-target_compile_features(analyze_f3f5 PRIVATE cxx_std_17)
-target_include_directories(analyze_f3f5 PRIVATE src)
-target_compile_definitions(analyze_f3f5 PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_attack_detection_detailed test_attack_detection_detailed.cpp ${COMMON_SOURCES})
-target_compile_features(test_attack_detection_detailed PRIVATE cxx_std_17)
-target_include_directories(test_attack_detection_detailed PRIVATE src)
-target_compile_definitions(test_attack_detection_detailed PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_attack_tables test_attack_tables.cpp ${COMMON_SOURCES})
-target_compile_features(test_attack_tables PRIVATE cxx_std_17)
-target_include_directories(test_attack_tables PRIVATE src)
-target_compile_definitions(test_attack_tables PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_pawn_attacks test_pawn_attacks.cpp ${COMMON_SOURCES})
-target_compile_features(test_pawn_attacks PRIVATE cxx_std_17)
-target_include_directories(test_pawn_attacks PRIVATE src)
-target_compile_definitions(test_pawn_attacks PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_knight_attacks debug_knight_attacks.cpp ${COMMON_SOURCES})
-target_compile_features(debug_knight_attacks PRIVATE cxx_std_17)
-target_include_directories(debug_knight_attacks PRIVATE src)
-target_compile_definitions(debug_knight_attacks PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_knight_table test_knight_table.cpp ${COMMON_SOURCES})
-target_compile_features(test_knight_table PRIVATE cxx_std_17)
-target_include_directories(test_knight_table PRIVATE src)
-target_compile_definitions(test_knight_table PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(e5_debug e5_debug.cpp ${COMMON_SOURCES})
-target_compile_features(e5_debug PRIVATE cxx_std_17)
-target_include_directories(e5_debug PRIVATE src)
-target_compile_definitions(e5_debug PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(compare_moves compare_moves.cpp ${COMMON_SOURCES})
-target_compile_features(compare_moves PRIVATE cxx_std_17)
-target_include_directories(compare_moves PRIVATE src)
-target_compile_definitions(compare_moves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_f3f5_bug test_f3f5_bug.cpp ${COMMON_SOURCES})
-target_compile_features(test_f3f5_bug PRIVATE cxx_std_17)
-target_include_directories(test_f3f5_bug PRIVATE src)
-target_compile_definitions(test_f3f5_bug PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(verify_bitboard_correct verify_bitboard_correct.cpp ${COMMON_SOURCES})
-target_compile_features(verify_bitboard_correct PRIVATE cxx_std_17)
-target_include_directories(verify_bitboard_correct PRIVATE src)
-target_compile_definitions(verify_bitboard_correct PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(debug_state_corruption debug_state_corruption.cpp ${COMMON_SOURCES})
-target_compile_features(debug_state_corruption PRIVATE cxx_std_17)
-target_include_directories(debug_state_corruption PRIVATE src)
-target_compile_definitions(debug_state_corruption PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(compare_move_vs_fen compare_move_vs_fen.cpp ${COMMON_SOURCES})
-target_compile_features(compare_move_vs_fen PRIVATE cxx_std_17)
-target_include_directories(compare_move_vs_fen PRIVATE src)
-target_compile_definitions(compare_move_vs_fen PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(debug_original_kiwipete debug_original_kiwipete.cpp ${COMMON_SOURCES})
-target_compile_features(debug_original_kiwipete PRIVATE cxx_std_17)
-target_include_directories(debug_original_kiwipete PRIVATE src)
-target_compile_definitions(debug_original_kiwipete PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(test_position_perft test_position_perft.cpp ${COMMON_SOURCES})
-target_compile_features(test_position_perft PRIVATE cxx_std_17)
-target_include_directories(test_position_perft PRIVATE src)
-target_compile_definitions(test_position_perft PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(kiwipete_depth5_divide kiwipete_depth5_divide.cpp ${COMMON_SOURCES})
-target_compile_features(kiwipete_depth5_divide PRIVATE cxx_std_17)
-target_include_directories(kiwipete_depth5_divide PRIVATE src)
-target_compile_definitions(kiwipete_depth5_divide PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(compare_depth5_reference compare_depth5_reference.cpp ${COMMON_SOURCES})
-target_compile_features(compare_depth5_reference PRIVATE cxx_std_17)
-target_include_directories(compare_depth5_reference PRIVATE src)
-target_compile_definitions(compare_depth5_reference PRIVATE USE_PAWN_LOOKUP_TABLES)
-add_executable(check_move_order_pattern check_move_order_pattern.cpp ${COMMON_SOURCES})
-target_compile_features(check_move_order_pattern PRIVATE cxx_std_17)
-target_include_directories(check_move_order_pattern PRIVATE src)
-target_compile_definitions(check_move_order_pattern PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_e5_knight debug_e5_knight.cpp ${COMMON_SOURCES})
-target_compile_features(debug_e5_knight PRIVATE cxx_std_17)
-target_include_directories(debug_e5_knight PRIVATE src)
-target_compile_definitions(debug_e5_knight PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(compare_positions compare_positions.cpp ${COMMON_SOURCES})
-target_compile_features(compare_positions PRIVATE cxx_std_17)
-target_include_directories(compare_positions PRIVATE src)
-target_compile_definitions(compare_positions PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_e5f7_specific debug_e5f7_specific.cpp ${COMMON_SOURCES})
-target_compile_features(debug_e5f7_specific PRIVATE cxx_std_17)
-target_include_directories(debug_e5f7_specific PRIVATE src)
-target_compile_definitions(debug_e5f7_specific PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(fen_integrity_checker fen_integrity_checker.cpp ${COMMON_SOURCES})
-target_compile_features(fen_integrity_checker PRIVATE cxx_std_17)
-target_include_directories(fen_integrity_checker PRIVATE src)
-target_compile_definitions(fen_integrity_checker PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_unmake_detailed debug_unmake_detailed.cpp ${COMMON_SOURCES})
-target_compile_features(debug_unmake_detailed PRIVATE cxx_std_17)
-target_include_directories(debug_unmake_detailed PRIVATE src)
-target_compile_definitions(debug_unmake_detailed PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_knight_captures_pawn debug_knight_captures_pawn.cpp ${COMMON_SOURCES})
-target_compile_features(debug_knight_captures_pawn PRIVATE cxx_std_17)
-target_include_directories(debug_knight_captures_pawn PRIVATE src)
-target_compile_definitions(debug_knight_captures_pawn PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(detailed_move_comparison detailed_move_comparison.cpp ${COMMON_SOURCES})
-target_compile_features(detailed_move_comparison PRIVATE cxx_std_17)
-target_include_directories(detailed_move_comparison PRIVATE src)
-target_compile_definitions(detailed_move_comparison PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_castling_rights debug_castling_rights.cpp ${COMMON_SOURCES})
-target_compile_features(debug_castling_rights PRIVATE cxx_std_17)
-target_include_directories(debug_castling_rights PRIVATE src)
-target_compile_definitions(debug_castling_rights PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(analyze_castling_differences analyze_castling_differences.cpp ${COMMON_SOURCES})
-target_compile_features(analyze_castling_differences PRIVATE cxx_std_17)
-target_include_directories(analyze_castling_differences PRIVATE src)
-target_compile_definitions(analyze_castling_differences PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(verify_castling_moves verify_castling_moves.cpp ${COMMON_SOURCES})
-target_compile_features(verify_castling_moves PRIVATE cxx_std_17)
-target_include_directories(verify_castling_moves PRIVATE src)
-target_compile_definitions(verify_castling_moves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(perft_depth1_knight_positions perft_depth1_knight_positions.cpp ${COMMON_SOURCES})
-target_compile_features(perft_depth1_knight_positions PRIVATE cxx_std_17)
-target_include_directories(perft_depth1_knight_positions PRIVATE src)
-target_compile_definitions(perft_depth1_knight_positions PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(debug_knight_capture_specific debug_knight_capture_specific.cpp ${COMMON_SOURCES})
-target_compile_features(debug_knight_capture_specific PRIVATE cxx_std_17)
-target_include_directories(debug_knight_capture_specific PRIVATE src)
-target_compile_definitions(debug_knight_capture_specific PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_knight_perft_specific test_knight_perft_specific.cpp ${COMMON_SOURCES})
-target_compile_features(test_knight_perft_specific PRIVATE cxx_std_17)
-target_include_directories(test_knight_perft_specific PRIVATE src)
-target_compile_definitions(test_knight_perft_specific PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_cold_vs_warm_perft test_cold_vs_warm_perft.cpp ${COMMON_SOURCES})
-target_compile_features(test_cold_vs_warm_perft PRIVATE cxx_std_17)
-target_include_directories(test_cold_vs_warm_perft PRIVATE src)
-target_compile_definitions(test_cold_vs_warm_perft PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_fen_integrity test_fen_integrity.cpp ${COMMON_SOURCES})
-target_compile_features(test_fen_integrity PRIVATE cxx_std_17)
-target_include_directories(test_fen_integrity PRIVATE src)
-target_compile_definitions(test_fen_integrity PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-add_executable(test_depth4_early_exit test_depth4_early_exit.cpp ${COMMON_SOURCES})
-target_compile_features(test_depth4_early_exit PRIVATE cxx_std_17)
-target_include_directories(test_depth4_early_exit PRIVATE src)
-target_compile_definitions(test_depth4_early_exit PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Debug tool for +82 node difference
-add_executable(debug_82_difference debug_82_difference.cpp ${COMMON_SOURCES})
-target_compile_features(debug_82_difference PRIVATE cxx_std_17)
-target_include_directories(debug_82_difference PRIVATE src)
-target_compile_definitions(debug_82_difference PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Find exact source of depth-4 bug
-add_executable(find_depth4_bug find_depth4_bug.cpp ${COMMON_SOURCES})
-target_compile_features(find_depth4_bug PRIVATE cxx_std_17)
-target_include_directories(find_depth4_bug PRIVATE src)
-target_compile_definitions(find_depth4_bug PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Debug the h7->g6 move that causes +82 nodes
-add_executable(debug_h7g6_move debug_h7g6_move.cpp ${COMMON_SOURCES})
-target_compile_features(debug_h7g6_move PRIVATE cxx_std_17)
-target_include_directories(debug_h7g6_move PRIVATE src)
-target_compile_definitions(debug_h7g6_move PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Compare move lists after h7->g6 to find the discrepancy
-add_executable(compare_move_lists compare_move_lists.cpp ${COMMON_SOURCES})
-target_compile_features(compare_move_lists PRIVATE cxx_std_17)
-target_include_directories(compare_move_lists PRIVATE src)
-target_compile_definitions(compare_move_lists PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Divide analysis from position after h7->g6
-add_executable(divide_after_h7g6 divide_after_h7g6.cpp ${COMMON_SOURCES})
-target_compile_features(divide_after_h7g6 PRIVATE cxx_std_17)
-target_include_directories(divide_after_h7g6 PRIVATE src)
-target_compile_definitions(divide_after_h7g6 PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Comparison tool for VICE vs BitboardPosition
-add_executable(compare_vice_vs_bitboard compare_vice_vs_bitboard.cpp ${COMMON_SOURCES})
-target_compile_features(compare_vice_vs_bitboard PRIVATE cxx_std_17)
-target_include_directories(compare_vice_vs_bitboard PRIVATE src)
-target_compile_definitions(compare_vice_vs_bitboard PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Analyze specific moves to understand the +2 systematic overcounting
-add_executable(analyze_specific_moves analyze_specific_moves.cpp ${COMMON_SOURCES})
-target_compile_features(analyze_specific_moves PRIVATE cxx_std_17)
-target_include_directories(analyze_specific_moves PRIVATE src)
-target_compile_definitions(analyze_specific_moves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Deep analysis of moves to find where +2 overcounting occurs
-add_executable(deep_move_analysis deep_move_analysis.cpp ${COMMON_SOURCES})
-target_compile_features(deep_move_analysis PRIVATE cxx_std_17)
-target_include_directories(deep_move_analysis PRIVATE src)
-target_compile_definitions(deep_move_analysis PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Find all submoves that cause +1 errors leading to +2 total
-add_executable(find_all_plus1_submoves find_all_plus1_submoves.cpp ${COMMON_SOURCES})
-target_compile_features(find_all_plus1_submoves PRIVATE cxx_std_17)
-target_include_directories(find_all_plus1_submoves PRIVATE src)
-target_compile_definitions(find_all_plus1_submoves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Debug pawn promotion moves to understand the systematic bug
-add_executable(debug_promotion_moves debug_promotion_moves.cpp ${COMMON_SOURCES})
-target_compile_features(debug_promotion_moves PRIVATE cxx_std_17)
-target_include_directories(debug_promotion_moves PRIVATE src)
-target_compile_definitions(debug_promotion_moves PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Debug promotion move perft and undo functionality
-add_executable(debug_promotion_perft debug_promotion_perft.cpp ${COMMON_SOURCES})
-target_compile_features(debug_promotion_perft PRIVATE cxx_std_17)
-target_include_directories(debug_promotion_perft PRIVATE src)
-target_compile_definitions(debug_promotion_perft PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Test promotion move matching and undo correctness
-add_executable(test_promotion_matching test_promotion_matching.cpp ${COMMON_SOURCES})
-target_compile_features(test_promotion_matching PRIVATE cxx_std_17)
-target_include_directories(test_promotion_matching PRIVATE src)
-target_compile_definitions(test_promotion_matching PRIVATE USE_PAWN_LOOKUP_TABLES)
-
-# Deep perft test with performance timing for depths 1-5
-add_executable(deep_perft_test deep_perft_test.cpp ${COMMON_SOURCES})
-target_compile_features(deep_perft_test PRIVATE cxx_std_17)
-target_include_directories(deep_perft_test PRIVATE src)
-target_compile_definitions(deep_perft_test PRIVATE USE_PAWN_LOOKUP_TABLES)
