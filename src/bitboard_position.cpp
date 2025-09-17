@@ -506,6 +506,7 @@ BitboardPosition::UndoInfo BitboardPosition::make_move_with_undo(const SimpleBit
     // Store current state for undo
     UndoInfo undo_info;
     undo_info.captured_piece = this->piece_at(move.to_64);
+    undo_info.moving_piece_type = this->piece_type_at(move.from_64);  // CRITICAL FIX: Store moving piece type
     undo_info.ep_square_64 = this->ep_square_64;
     undo_info.castling_rights = this->castling_rights;
     undo_info.halfmove_clock = this->halfmove_clock;
@@ -560,6 +561,16 @@ BitboardPosition::UndoInfo BitboardPosition::make_move_with_undo(const SimpleBit
     
     // Handle regular captures
     if (move.is_capture && !move.is_ep_capture) {
+        // Check if captured piece affects castling rights
+        Piece captured_piece = this->piece_at(move.to_64);
+        if (type_of(captured_piece) == PieceType::Rook) {
+            // If rook is captured on corner square, lose castling rights for that side
+            if (move.to_64 == 0) this->castling_rights &= ~2;  // White queenside
+            if (move.to_64 == 7) this->castling_rights &= ~1;  // White kingside
+            if (move.to_64 == 56) this->castling_rights &= ~8; // Black queenside
+            if (move.to_64 == 63) this->castling_rights &= ~4; // Black kingside
+        }
+        
         // Remove captured piece
         this->remove_piece(move.to_64);
     }
@@ -634,12 +645,12 @@ void BitboardPosition::unmake_move(const SimpleBitboardMove& move, const UndoInf
     // The moving color is the side that was originally to move (saved in UndoInfo)
     Color moving_color = undo_info.side_to_move;
     PieceType moving_piece_type;
-    
+
     if (move.is_promotion) {
         moving_piece_type = PieceType::Pawn;  // Original piece was a pawn
         this->remove_piece(move.to_64);  // Remove promoted piece
     } else {
-        moving_piece_type = this->piece_type_at(move.to_64);
+        moving_piece_type = undo_info.moving_piece_type;  // CRITICAL FIX: Use stored piece type
         this->remove_piece(move.to_64);  // Remove piece from destination
     }
     

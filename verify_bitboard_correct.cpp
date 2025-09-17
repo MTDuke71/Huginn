@@ -17,15 +17,13 @@ std::string move_to_string(const SimpleBitboardMove& move) {
 
 SimpleBitboardMove convert_move(const BitboardMoveList::BitboardMove& move) {
     SimpleBitboardMove simple_move;
-    simple_move.from_64 = move.from;
-    simple_move.to_64 = move.to;
-    simple_move.piece = move.piece;
-    simple_move.captured_piece = move.captured_piece;
-    simple_move.is_capture = move.captured_piece != PIECE_NONE;
-    simple_move.promotion_piece = move.promotion_piece;
-    simple_move.is_promotion = move.promotion_piece != PIECE_NONE;
-    simple_move.is_en_passant = move.move_type == MOVE_TYPE_EN_PASSANT;
-    simple_move.is_castling = (move.move_type == MOVE_TYPE_CASTLE_KING || move.move_type == MOVE_TYPE_CASTLE_QUEEN);
+    simple_move.from_64 = move.from_64;
+    simple_move.to_64 = move.to_64;
+    simple_move.is_capture = move.is_capture;
+    simple_move.promotion_type = move.promotion_type;
+    simple_move.is_promotion = move.is_promotion;
+    simple_move.is_ep_capture = move.is_ep_capture;
+    simple_move.is_castling = move.is_castling;
     return simple_move;
 }
 
@@ -38,11 +36,11 @@ uint64_t simple_perft(BitboardPosition& pos, int depth) {
     uint64_t total_nodes = 0;
     for (const auto& move : moves.moves) {
         SimpleBitboardMove simple_move = convert_move(move);
-        pos.make_move_with_undo(simple_move);
+        BitboardPosition::UndoInfo undo_info = pos.make_move_with_undo(simple_move);
         total_nodes += simple_perft(pos, depth - 1);
-        pos.unmake_move(simple_move);
+        pos.unmake_move(simple_move, undo_info);
     }
-    
+
     return total_nodes;
 }
 
@@ -69,7 +67,7 @@ int main() {
     // Test 2: Original Kiwipete position  
     std::cout << "\n--- Test 2: Original Kiwipete Position ---" << std::endl;
     BitboardPosition pos2;
-    pos2.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    pos2.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     
     uint64_t nodes2_d1 = simple_perft(pos2, 1);
     uint64_t nodes2_d2 = simple_perft(pos2, 2);

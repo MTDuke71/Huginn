@@ -106,6 +106,7 @@ public:
     // ---- Move operations ----
     struct UndoInfo {
         Piece captured_piece;           // What piece was captured (if any)
+        PieceType moving_piece_type;    // Type of piece that moved (CRITICAL FIX)
         int ep_square_64;               // Previous en passant square
         uint8_t castling_rights;        // Previous castling rights
         uint16_t halfmove_clock;        // Previous halfmove clock

@@ -28,7 +28,20 @@
       "Bash(./build/msvc-x64-release/Release/compare_position_implementations.exe)",
       "Bash(./build/msvc-x64-release/bin/Release/perft_suite_vice.exe)",
       "Bash(build/bin/Release/perft_suite_vice.exe)",
-      "Bash(build/bin/Release/compare_kiwipete_implementations.exe)"
+      "Bash(build/bin/Release/compare_kiwipete_implementations.exe)",
+      "Bash(./build/msvc-x64-release/Release/knight_debug.exe)",
+      "Bash(./build/msvc-x64-release/Release/debug_e5_knight.exe)",
+      "Bash(./build/msvc-x64-release/Release/verify_bitboard_correct.exe)",
+      "Bash(./build/msvc-x64-release/Release/compare_positions.exe)",
+      "Bash(./build/msvc-x64-release/Release/fen_integrity_checker.exe)",
+      "Bash(./build/msvc-x64-release/Release/debug_e5f7_specific.exe)",
+      "Bash(./build/msvc-x64-release/Release/debug_unmake_detailed.exe)",
+      "Bash(./build/msvc-x64-release/Release/debug_knight_captures_pawn.exe)",
+      "Bash(./build/msvc-x64-release/Release/detailed_move_comparison.exe)",
+      "Bash(./build/msvc-x64-release/Release/debug_castling_rights.exe)",
+      "Bash(./build/msvc-x64-release/Release/analyze_castling_differences.exe)",
+      "Bash(./build/msvc-x64-release/Release/verify_castling_moves.exe)",
+      "Bash(./build/msvc-x64-release/Release/perft_depth1_knight_positions.exe)"
     ],
     "deny": [],
     "ask": []
