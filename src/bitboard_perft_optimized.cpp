@@ -68,14 +68,14 @@ bool is_square_attacked_fast(const BitboardPosition& pos, int square, Color atta
         // White pawns attack diagonally upward (from white's perspective)
         pawn_attacks = ((1ULL << square) >> 7) | ((1ULL << square) >> 9);
         // Remove attacks that wrap around the board
-        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square - 9)); // Remove H-file wrap
-        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square - 7)); // Remove A-file wrap
+        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square - 7)); // Remove A-file wrap (H->A)
+        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square - 9)); // Remove H-file wrap (A->H)
     } else {
         // Black pawns attack diagonally downward (from white's perspective)
         pawn_attacks = ((1ULL << square) << 7) | ((1ULL << square) << 9);
         // Remove attacks that wrap around the board  
-        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square + 7)); // Remove H-file wrap
-        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square + 9)); // Remove A-file wrap
+        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square + 7)); // Remove H-file wrap (A->H)
+        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square + 9)); // Remove A-file wrap (H->A)
     }
     
     if (pawn_attacks & pos.get_pieces(attacking_color, PieceType::Pawn)) {
@@ -120,14 +120,14 @@ bool is_square_attacked_with_occupied(const BitboardPosition& pos, int square,
         // White pawns attack diagonally upward (from white's perspective)
         pawn_attacks = ((1ULL << square) >> 7) | ((1ULL << square) >> 9);
         // Remove attacks that wrap around the board
-        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square - 9)); // Remove H-file wrap
-        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square - 7)); // Remove A-file wrap
+        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square - 7)); // Remove A-file wrap (H->A)
+        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square - 9)); // Remove H-file wrap (A->H)
     } else {
         // Black pawns attack diagonally downward (from white's perspective)
         pawn_attacks = ((1ULL << square) << 7) | ((1ULL << square) << 9);
         // Remove attacks that wrap around the board  
-        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square + 7)); // Remove H-file wrap
-        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square + 9)); // Remove A-file wrap
+        if (square % 8 == 0) pawn_attacks &= ~(1ULL << (square + 7)); // Remove H-file wrap (A->H)
+        if (square % 8 == 7) pawn_attacks &= ~(1ULL << (square + 9)); // Remove A-file wrap (H->A)
     }
     
     if (pawn_attacks & pos.get_pieces(attacking_color, PieceType::Pawn)) {
@@ -496,8 +496,8 @@ void generate_pawn_moves_legal(const BitboardPosition& pos, BitboardMoveList& mo
         }
         
         // Captures
-        uint64_t left_captures = ((our_pawns & ~0x0101010101010101ULL) >> 7) & enemy_pieces; // Not A-file
-        uint64_t right_captures = ((our_pawns & ~0x8080808080808080ULL) >> 9) & enemy_pieces; // Not H-file
+        uint64_t left_captures = ((our_pawns & ~0x8080808080808080ULL) >> 7) & enemy_pieces; // Not H-file
+        uint64_t right_captures = ((our_pawns & ~0x0101010101010101ULL) >> 9) & enemy_pieces; // Not A-file
         
         while (left_captures) {
             int to_square = pop_lsb(left_captures);

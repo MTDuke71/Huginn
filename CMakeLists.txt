@@ -608,3 +608,27 @@ add_executable(debug_perft_depth2 debug_perft_depth2.cpp ${DEBUG_SOURCES})
 target_compile_features(debug_perft_depth2 PRIVATE cxx_std_17)
 target_include_directories(debug_perft_depth2 PRIVATE .)
 target_compile_definitions(debug_perft_depth2 PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Comprehensive perft debugging
+add_executable(debug_perft_comprehensive debug_perft_comprehensive.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_perft_comprehensive PRIVATE cxx_std_17)
+target_include_directories(debug_perft_comprehensive PRIVATE .)
+target_compile_definitions(debug_perft_comprehensive PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug specific problematic moves
+add_executable(debug_specific_moves debug_specific_moves.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_specific_moves PRIVATE cxx_std_17)
+target_include_directories(debug_specific_moves PRIVATE .)
+target_compile_definitions(debug_specific_moves PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug depth 3 detailed comparison
+add_executable(debug_depth3_comparison debug_depth3_comparison.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_depth3_comparison PRIVATE cxx_std_17)
+target_include_directories(debug_depth3_comparison PRIVATE .)
+target_compile_definitions(debug_depth3_comparison PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
+
+# Debug counting logic
+add_executable(debug_counting_logic debug_counting_logic.cpp ${DEBUG_SOURCES})
+target_compile_features(debug_counting_logic PRIVATE cxx_std_17)
+target_include_directories(debug_counting_logic PRIVATE .)
+target_compile_definitions(debug_counting_logic PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES BITBOARD_ENGINE=1)
