@@ -14,7 +14,9 @@ namespace Zobrist {
     // Helper function to compute consistent 0-based piece index for Zobrist hashing
     // Maps PieceType (1-6) and Color (0=White, 1=Black) to index 0-11
     // White pieces: indices 0-5, Black pieces: indices 6-11
+    // Precondition: pt must not be PieceType::None (callers must validate)
     constexpr inline int piece_index(PieceType pt, Color c) {
+        // Callers must ensure pt != PieceType::None to avoid index -1
         return (int(pt) - 1) + (c == Color::Black ? 6 : 0);
     }
     inline U64 Side;                 // side to move

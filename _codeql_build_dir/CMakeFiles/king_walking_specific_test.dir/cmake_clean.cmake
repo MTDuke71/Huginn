@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/king_walking_specific_test.dir/link.d"
+  "CMakeFiles/king_walking_specific_test.dir/demos/king_walking_specific_test.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/demos/king_walking_specific_test.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/attack_detection.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/attack_detection.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/bitboard.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/bitboard.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/board.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/board.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/board120.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/board120.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/chess_types.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/chess_types.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/debug.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/debug.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/evaluation.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/evaluation.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/init.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/init.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/move.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/move.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/movegen_enhanced.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/movegen_enhanced.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/position.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/position.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/search.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/search.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/uci.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/uci.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/uci_utils.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/uci_utils.cpp.o.d"
+  "CMakeFiles/king_walking_specific_test.dir/src/zobrist.cpp.o"
+  "CMakeFiles/king_walking_specific_test.dir/src/zobrist.cpp.o.d"
+  "bin/king_walking_specific_test"
+  "bin/king_walking_specific_test.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/king_walking_specific_test.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

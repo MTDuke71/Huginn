@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/opening_analyzer.dir/link.d"
+  "CMakeFiles/opening_analyzer.dir/demos/opening_analyzer.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/demos/opening_analyzer.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/attack_detection.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/attack_detection.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/bitboard.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/bitboard.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/board.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/board.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/board120.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/board120.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/chess_types.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/chess_types.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/debug.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/debug.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/evaluation.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/evaluation.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/init.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/init.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/move.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/move.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/movegen_enhanced.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/movegen_enhanced.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/position.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/position.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/search.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/search.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/uci.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/uci.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/uci_utils.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/uci_utils.cpp.o.d"
+  "CMakeFiles/opening_analyzer.dir/src/zobrist.cpp.o"
+  "CMakeFiles/opening_analyzer.dir/src/zobrist.cpp.o.d"
+  "bin/opening_analyzer"
+  "bin/opening_analyzer.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/opening_analyzer.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

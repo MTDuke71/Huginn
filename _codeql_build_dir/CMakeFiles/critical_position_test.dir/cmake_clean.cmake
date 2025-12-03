@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/critical_position_test.dir/link.d"
+  "CMakeFiles/critical_position_test.dir/demos/critical_position_test.cpp.o"
+  "CMakeFiles/critical_position_test.dir/demos/critical_position_test.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/attack_detection.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/attack_detection.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/bitboard.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/bitboard.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/board.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/board.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/board120.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/board120.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/chess_types.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/chess_types.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/debug.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/debug.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/evaluation.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/evaluation.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/init.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/init.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/move.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/move.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/movegen_enhanced.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/movegen_enhanced.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/position.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/position.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/search.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/search.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/uci.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/uci.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/uci_utils.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/uci_utils.cpp.o.d"
+  "CMakeFiles/critical_position_test.dir/src/zobrist.cpp.o"
+  "CMakeFiles/critical_position_test.dir/src/zobrist.cpp.o.d"
+  "bin/critical_position_test"
+  "bin/critical_position_test.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/critical_position_test.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
