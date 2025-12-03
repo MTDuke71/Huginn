@@ -10,6 +10,15 @@ class Position;
 
 namespace Zobrist {
     inline U64 Piece[PIECE_NB][120]; // piece on 120-square (direct indexing, no conversion needed)
+    
+    // Helper function to compute consistent 0-based piece index for Zobrist hashing
+    // Maps PieceType (1-6) and Color (0=White, 1=Black) to index 0-11
+    // White pieces: indices 0-5, Black pieces: indices 6-11
+    // Precondition: pt must not be PieceType::None (callers must validate)
+    constexpr inline int piece_index(PieceType pt, Color c) {
+        // Callers must ensure pt != PieceType::None to avoid index -1
+        return (int(pt) - 1) + (c == Color::Black ? 6 : 0);
+    }
     inline U64 Side;                 // side to move
     inline U64 Castle[16];           // castling rights mask (0..15)
     inline U64 EpFile[8];            // en-passant file a..h

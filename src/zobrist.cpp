@@ -13,7 +13,7 @@ namespace Zobrist {
                 if (is_none(piece)) continue;
                 PieceType pt = type_of(piece);
                 Color c = color_of(piece);
-                int pc = int(pt) + (c == Color::Black ? 6 : 0); // Map to legacy index if needed
+                int pc = piece_index(pt, c);  // Use helper for consistent 0-based indexing
                 key ^= Piece[pc][s120];  // Direct sq120 lookup - no conversion needed!
             }
         }
