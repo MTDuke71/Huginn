@@ -1,0 +1,1 @@
+/home/runner/work/Huginn/.codeql-scratch/dbs/cpp/working/autobuild/bin/c++ -O3 -DNDEBUG -flto -Wl,--dependency-file=CMakeFiles/test_special_moves.dir/link.d CMakeFiles/test_special_moves.dir/test_special_moves.cpp.o CMakeFiles/test_special_moves.dir/ultra_engine/ultra_attacks.cpp.o CMakeFiles/test_special_moves.dir/ultra_engine/ultra_position.cpp.o -o bin/test_special_moves

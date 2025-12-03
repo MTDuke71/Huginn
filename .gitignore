@@ -65,3 +65,4 @@ Engine2_src/
 out/build/*
 
 EngineX/*
+_codeql_build_dir/
