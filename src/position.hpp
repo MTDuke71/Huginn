@@ -259,8 +259,8 @@ public:
         PieceType piece_type = type_of(piece);
         
         // 1. Hash piece out of from square and into to square
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][from_square];
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][to_square];
+        zobrist_key ^= Zobrist::Piece[Zobrist::piece_index(type_of(piece), color_of(piece))][from_square];
+        zobrist_key ^= Zobrist::Piece[Zobrist::piece_index(type_of(piece), color_of(piece))][to_square];
         
         // 2. Update pieces array
         set(from_square, Piece::None);
@@ -305,7 +305,7 @@ public:
         PieceType piece_type = type_of(piece);
         
         // 1. Update zobrist hash (XOR out the piece using Huginn's zobrist system)
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
+        zobrist_key ^= Zobrist::Piece[Zobrist::piece_index(type_of(piece), color_of(piece))][square];
         
         // 2. Clear the board square
         set(square, Piece::None);
@@ -356,7 +356,7 @@ public:
         PieceType piece_type = type_of(piece);
         
         // 1. Update zobrist hash (XOR in the piece)
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
+        zobrist_key ^= Zobrist::Piece[Zobrist::piece_index(type_of(piece), color_of(piece))][square];
         
         // 2. Place piece on board
         set(square, piece);
@@ -528,6 +528,11 @@ public:
             }
             // Use atomic move_piece for castling rook movement
             move_piece(rook_from, rook_to);
+        }
+
+        // Update king square if king moved
+        if (moving_type == PieceType::King) {
+            king_sq[int(moving_color)] = m.get_to();
         }
 
         ep_square = -1; // Reset, then check for pawn double moves
