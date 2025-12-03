@@ -342,10 +342,14 @@ void UltraPosition::update_castling_rights(int from, int to, int piece_type) {
 bool UltraPosition::is_legal_move(const UltraMove& move) const {
     // Make a copy and test the move
     UltraPosition temp = *this;
+    const int moving_color = temp.to_move_;  // Save the color that is about to move
     temp.make_move(move);
     
     // Check if the moving side's king is in check after the move
-    return !temp.is_in_check();
+    // After make_move, to_move_ has switched, so we check the king of (1 - to_move_)
+    const int king_square = UltraEngine::get_lsb(temp.piece_boards_[moving_color][King]);
+    return !UltraAttacks::is_square_attacked(king_square, 1 - moving_color, 
+                                             (const uint64_t(*)[6])temp.piece_boards_.data(), temp.all_occupied_);
 }
 
 bool UltraPosition::is_checkmate() const {

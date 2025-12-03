@@ -131,7 +131,7 @@ public:
             while (captures != 0) {
                 const int to_sq = pop_lsb(captures);
                 const int captured_piece = pos.piece_at(to_sq);
-                moves.add_capture(from_sq, to_sq, captured_piece);
+                moves.add_capture(from_sq, to_sq, captured_piece + 1);
             }
             
             // Generate quiet moves
@@ -157,7 +157,7 @@ public:
             while (captures != 0) {
                 const int to_sq = pop_lsb(captures);
                 const int captured_piece = pos.piece_at(to_sq);
-                moves.add_capture(from_sq, to_sq, captured_piece);
+                moves.add_capture(from_sq, to_sq, captured_piece + 1);
             }
         }
     }
@@ -229,7 +229,7 @@ public:
             while (captures != 0) {
                 const int to_sq = pop_lsb(captures);
                 const int captured_piece = pos.get_piece_type_at(to_sq);
-                moves.add_capture(from_sq, to_sq, captured_piece);
+                moves.add_capture(from_sq, to_sq, captured_piece + 1);
             }
         }
         return moves.size() - initial_count;
