@@ -188,3 +188,41 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
     EXPECT_EQ(perft1, 48u);   // Depth 1: 48 moves
     EXPECT_EQ(perft2, 2039u); // Depth 2: 2039 nodes
 }
+
+// VICE-style perft function - uses MakeMove/TakeMove for validation
+// This is the preferred method for perft testing as it validates legality during move making
+static uint64_t perft_vice(Position& pos, int depth) {
+    if (depth == 0) return 1;
+    S_MOVELIST list;
+    generate_all_moves(pos, list);  // Generate pseudo-legal moves
+    uint64_t nodes = 0;
+    for (int i = 0; i < list.count; i++) {
+        const auto& m = list.moves[i];
+        // MakeMove validates legality - returns 1 if legal, 0 if illegal
+        if (pos.MakeMove(m) == 1) {
+            nodes += perft_vice(pos, depth - 1);
+            pos.TakeMove();
+        }
+    }
+    return nodes;
+}
+
+// Higher depth perft tests using VICE-style for performance
+TEST(Perft, Startpos_d4_is_197281) {
+    Position pos; pos.set_startpos();
+    EXPECT_EQ(perft_vice(pos, 4), 197281u);
+}
+
+TEST(Perft, Startpos_d5_is_4865609) {
+    Position pos; pos.set_startpos();
+    EXPECT_EQ(perft_vice(pos, 5), 4865609u);
+}
+
+// Perft6 test - the ultimate validation of move generation correctness
+// Expected result: 119,060,324 nodes for starting position
+TEST(Perft, Startpos_d6_is_119060324) {
+    Position pos; pos.set_startpos();
+    uint64_t nodes = perft_vice(pos, 6);
+    std::cout << "Perft(6) nodes: " << nodes << " (expected: 119060324)" << std::endl;
+    EXPECT_EQ(nodes, 119060324u);
+}
