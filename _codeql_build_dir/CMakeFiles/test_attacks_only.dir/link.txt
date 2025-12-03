@@ -1,0 +1,1 @@
+/home/runner/work/Huginn/.codeql-scratch/dbs/cpp/working/autobuild/bin/c++ -O3 -DNDEBUG -flto -Wl,--dependency-file=CMakeFiles/test_attacks_only.dir/link.d CMakeFiles/test_attacks_only.dir/test_attacks_only.cpp.o CMakeFiles/test_attacks_only.dir/ultra_engine/ultra_attacks.cpp.o -o bin/test_attacks_only
