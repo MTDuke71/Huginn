@@ -1,5 +1,0 @@
-if(EXISTS "/home/runner/work/Huginn/Huginn/_codeql_build_dir/huginn_tests[1]_tests.cmake")
-  include("/home/runner/work/Huginn/Huginn/_codeql_build_dir/huginn_tests[1]_tests.cmake")
-else()
-  add_test(huginn_tests_NOT_BUILT huginn_tests_NOT_BUILT)
-endif()
