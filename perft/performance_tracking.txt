@@ -65,3 +65,4 @@
 2025-09-15, 7223acb, Post namespace fixes test, 17001
 2026-04-26, edc2085, pure-bitboard-engine perft baseline, 21796
 2026-04-26, edc2085, pure-bitboard-engine perft (clean build), 21858
+2026-04-26, ad086cb, pure-bitboard-engine huginn2 bitboard perft (BITBOARD_ENGINE=1), 25251
