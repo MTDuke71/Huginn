@@ -406,10 +406,10 @@ add_huginn_executable(perft_huginn2
 # Set preprocessor define for perft test to enable bitboard features
 target_compile_definitions(perft_huginn2 PRIVATE BITBOARD_ENGINE=1)
 
-# ---- Huginn2 Perft Optimized V1 Test ----
-add_huginn_executable(perft_optimized_v1
+# ---- Huginn2 Perft Optimized Test ----
+add_huginn_executable(perft_optimized
     SOURCES
-        perft/perft_optimized_v1.cpp
+        perft/perft_optimized.cpp
         ${ENGINE_SOURCES}
         src/bitboard_benchmark.cpp  # Add bitboard performance framework
         src/bitboard_movegen.cpp    # Add actual bitboard move generation
@@ -417,92 +417,7 @@ add_huginn_executable(perft_optimized_v1
         ${HUGINN_INCLUDE_DIRS}
 )
 
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v1 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V2 Test ----
-add_huginn_executable(perft_optimized_v2
-    SOURCES
-        perft/perft_optimized_v2.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v2 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V3 Test ----
-add_huginn_executable(perft_optimized_v3
-    SOURCES
-        perft/perft_optimized_v3.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v3 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V4 Test ----
-add_huginn_executable(perft_optimized_v4
-    SOURCES
-        perft/perft_optimized_v4.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v4 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V5 Test ----
-add_huginn_executable(perft_optimized_v5
-    SOURCES
-        perft/perft_optimized_v5.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v5 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V6 Test ----
-add_huginn_executable(perft_optimized_v6
-    SOURCES
-        perft/perft_optimized_v6.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v6 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V7 Test ----
-add_huginn_executable(perft_optimized_v7
-    SOURCES
-        perft/perft_optimized_v7.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v7 PRIVATE BITBOARD_ENGINE=1)
+target_compile_definitions(perft_optimized PRIVATE BITBOARD_ENGINE=1)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
