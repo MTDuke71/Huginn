@@ -1,75 +1,38 @@
-# Huginn Chess Engine Documentation
+# Huginn Documentation
 
-This directory contains all documentation for the Huginn chess engine project.
+Index of documentation for the Huginn chess engine. Some files in this directory pre-date the move to a pure-bitboard engine and may still describe the old hybrid mailbox/bitboard design — verify against the current code in `src/` before relying on any specific claim.
 
-## Documentation Index
+## Reference
 
-### 📚 Core Documentation
-- [`API.md`](API.md) - Complete API reference and usage guide
-- [`UCI_IMPLEMENTATION.md`](UCI_IMPLEMENTATION.md) - UCI interface implementation and usage
-- [`README.md`](../README.md) - Main project overview (in root directory)
+- [API.md](API.md) — public API and usage
+- [BUILD_GUIDE.md](BUILD_GUIDE.md) — MSVC build with CMake presets
+- [WSL_BUILD_GUIDE.md](WSL_BUILD_GUIDE.md) — GCC/WSL build
+- [UCI_IMPLEMENTATION.md](UCI_IMPLEMENTATION.md) — UCI protocol
+- [CHANGELOG.md](CHANGELOG.md) — release history
+- [ToDo.md](ToDo.md) — open work
+- [CLAUDE.md](CLAUDE.md) — repo notes for Claude (currently stale; pending rewrite for `pure-bitboard-engine`)
 
-### 🏗️ Architecture & Design
-- [`POSITION_AND_MOVEGEN_ARCHITECTURE.md`](POSITION_AND_MOVEGEN_ARCHITECTURE.md) - Core position and move generation architecture
-- [`BITBOARD_IMPLEMENTATION.md`](BITBOARD_IMPLEMENTATION.md) - Bitboard system implementation details
-- [`SQATTACKED_IMPLEMENTATION.md`](SQATTACKED_IMPLEMENTATION.md) - Square attack detection implementation
+## Architecture
 
-### 🚀 Performance Analysis
-- [`PERFORMANCE_TRACKING.md`](PERFORMANCE_TRACKING.md) - Performance tracking system and results
-- [`SQATTACKED_PERFORMANCE.md`](SQATTACKED_PERFORMANCE.md) - Square attack performance analysis
-- [`MOVE_DECODING_ANALYSIS.md`](MOVE_DECODING_ANALYSIS.md) - Move decoding performance comparison
-- [`DECODE_MOVE_ANALYSIS.md`](DECODE_MOVE_ANALYSIS.md) - Analysis of decode_move() removal impact
-- [`MULTITHREADING_ANALYSIS.md`](MULTITHREADING_ANALYSIS.md) - **Comprehensive multithreading research and benchmarking**
+- [ARCHITECTURE.md](ARCHITECTURE.md) — high-level engine architecture
+- [POSITION_AND_MOVEGEN_ARCHITECTURE.md](POSITION_AND_MOVEGEN_ARCHITECTURE.md) — position representation and move generation
+- [BITBOARD_IMPLEMENTATION.md](BITBOARD_IMPLEMENTATION.md) — bitboard internals
+- [BITBOARD_MIGRATION_PLAN.md](BITBOARD_MIGRATION_PLAN.md) — migration plan from mailbox to bitboard
+- [UML_ARCHITECTURE.md](UML_ARCHITECTURE.md) — UML diagrams
+- [EVALUATE_FLOWCHART.md](EVALUATE_FLOWCHART.md) — evaluation flow
 
-### 🔧 Optimization Documentation
-- [`DECODE_MOVE_REMOVAL.md`](DECODE_MOVE_REMOVAL.md) - Complete modernization: decode_move() function removal
-- [`assembly_analysis.md`](assembly_analysis.md) - Assembly code analysis for optimizations
-- [`OPTIMIZATION_ANALYSIS.md`](OPTIMIZATION_ANALYSIS.md) - Comprehensive optimization analysis
+## Special-move validation
 
-### ✅ Validation & Testing
-- [`DEBUG_VALIDATION.md`](DEBUG_VALIDATION.md) - Debug validation system documentation
-- [`CASTLING_VALIDATION.md`](CASTLING_VALIDATION.md) - Castling move validation
-- [`EN_PASSANT_VALIDATION.md`](EN_PASSANT_VALIDATION.md) - En passant move validation
-- [`FEN_GENERATION.md`](FEN_GENERATION.md) - FEN string generation and parsing
+- [CASTLING_VALIDATION.md](CASTLING_VALIDATION.md)
+- [EN_PASSANT_VALIDATION.md](EN_PASSANT_VALIDATION.md)
+- [FEN_GENERATION.md](FEN_GENERATION.md)
+- [DEBUG_VALIDATION.md](DEBUG_VALIDATION.md)
 
-### 📋 Project Management
-- [`ToDo.md`](ToDo.md) - Current tasks and future improvements
+## Performance
 
-## Quick Navigation
-
-### For Developers
-- Start with [`API.md`](API.md) for the public interface
-- Check [`UCI_IMPLEMENTATION.md`](UCI_IMPLEMENTATION.md) for chess GUI integration
-- Review [`POSITION_AND_MOVEGEN_ARCHITECTURE.md`](POSITION_AND_MOVEGEN_ARCHITECTURE.md) for core concepts
-- Check [`PERFORMANCE_TRACKING.md`](PERFORMANCE_TRACKING.md) for optimization results
-
-### For Performance Analysis
-- [`PERFORMANCE_TRACKING.md`](PERFORMANCE_TRACKING.md) - Overall performance tracking system
-- [`DECODE_MOVE_ANALYSIS.md`](DECODE_MOVE_ANALYSIS.md) - Why micro-optimizations show different results in real tests
-- [`SQATTACKED_PERFORMANCE.md`](SQATTACKED_PERFORMANCE.md) - Attack detection performance
-- [`MULTITHREADING_ANALYSIS.md`](MULTITHREADING_ANALYSIS.md) - **Why parallel move generation fails and what to parallelize instead**
-
-### For Implementation Details
-- [`BITBOARD_IMPLEMENTATION.md`](BITBOARD_IMPLEMENTATION.md) - Bitboard system
-- [`SQATTACKED_IMPLEMENTATION.md`](SQATTACKED_IMPLEMENTATION.md) - Attack detection
-- [`CASTLING_VALIDATION.md`](CASTLING_VALIDATION.md) - Castling rules
-- [`EN_PASSANT_VALIDATION.md`](EN_PASSANT_VALIDATION.md) - En passant rules
-
-## Documentation Standards
-
-All documentation in this project follows these standards:
-- **Clear structure** with logical sections
-- **Code examples** for technical concepts
-- **Performance metrics** with concrete numbers
-- **Cross-references** between related documents
-- **Update tracking** with dates and versions
-
-**📝 Note for Contributors**: All new .md documentation files should be created in the `docs/` directory to maintain project organization.
-
-## Recent Updates
-
-All documentation is actively maintained and reflects the current state of the chess engine implementation. 
-
-**Latest**: The main `huginn.exe` executable is now a complete UCI chess engine, ready for immediate use with chess GUIs like Arena, Fritz, and ChessBase.
-
-Check git history for detailed change tracking.
+- [PERFORMANCE_TRACKING.md](PERFORMANCE_TRACKING.md) — methodology and tracked numbers
+- [OPTIMIZATION_ANALYSIS.md](OPTIMIZATION_ANALYSIS.md)
+- [OPTIMIZATION_SUMMARY.md](OPTIMIZATION_SUMMARY.md)
+- [MOVE_DECODING_ANALYSIS.md](MOVE_DECODING_ANALYSIS.md)
+- [assembly_analysis.md](assembly_analysis.md)
+- [PROFILING_TOOLS_USAGE.md](PROFILING_TOOLS_USAGE.md)
