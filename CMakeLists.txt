@@ -12,67 +12,7 @@ if(WIN32)
         unset(ENV{MANPATH})
         
         # Force CMake to not use any non-Windows paths
-      # Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v4 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Huginn2 Perft Optimized V5 Testarget_compile_target_compile_definitions(debug_move_comparison PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug Board Display ----
-add_huginn_executable(debug_board_display
-    SOURCES
-        debug_board_display.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_board_display PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug Pawn Captures ----
-add_huginn_executable(debug_pawn_captures
-    SOURCES
-        debug_pawn_captures.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_pawn_captures PRIVATE ULTRA_ENGINE=1)
-
-# ---- Test Castling Debug ----
-
-# ---- Debug Board State ----
-add_huginn_executable(debug_board_state
-    SOURCES
-        debug_board_state.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_board_state PRIVATE ULTRA_ENGINE=1)
-
-# ---- Test Castling Debug -------
-add_huginn_executable(perft_optimized_v5
-    SOURCES
-        perft/perft_optimized_v5.cpp
-        ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp  # Add bitboard performance framework
-        src/bitboard_movegen.cpp    # Add actual bitboard move generation
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for optimized perft test to enable bitboard features
-target_compile_definitions(perft_optimized_v5 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- Mirror Evaluation Test ----t(CMAKE_FIND_ROOT_PATH "")
+        set(CMAKE_FIND_ROOT_PATH "")
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
@@ -454,73 +394,6 @@ add_huginn_executable(huginn2
 # Set preprocessor define for huginn2 to enable bitboard features
 target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
 
-# ---- Ultra Engine Sliding Piece Performance Test ----
-# Excluded: out of date with current SimplePosition / UltraSlidingGen API.
-# add_huginn_executable(test_sliding_performance
-#     SOURCES
-#         test_sliding_performance.cpp
-#         ultra_engine/ultra_attacks.cpp
-#     INCLUDE_DIRS
-#         ${HUGINN_INCLUDE_DIRS}
-# )
-
-# ---- Basic Ultra Engine Test ----
-add_huginn_executable(test_basic_ultra
-    SOURCES
-        test_basic_ultra.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# ---- UltraAttacks Only Test ----
-add_huginn_executable(test_attacks_only
-    SOURCES
-        test_attacks_only.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# ---- Ultra Engine Pawn Performance Test ----
-add_huginn_executable(test_pawn_performance
-    SOURCES
-        test_pawn_performance.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# ---- Ultra Engine Position System Test ----
-add_huginn_executable(test_position_system
-    SOURCES
-        test_position_system.cpp
-        ultra_engine/ultra_attacks.cpp
-        ultra_engine/ultra_position.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# ---- Ultra Engine Special Moves Test ----
-# Excluded: out of date with current UltraMove/UltraMoveList API.
-# add_huginn_executable(test_special_moves
-#     SOURCES
-#         test_special_moves.cpp
-#         ultra_engine/ultra_attacks.cpp
-#         ultra_engine/ultra_position.cpp
-#     INCLUDE_DIRS
-#         ${HUGINN_INCLUDE_DIRS}
-# )
-
-# ---- Ultra Engine Special Moves Test (Simple) ----
-add_huginn_executable(test_special_moves_simple
-    SOURCES
-        test_special_moves_simple.cpp
-        ultra_engine/ultra_attacks.cpp
-        ultra_engine/ultra_position.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
 # ---- Huginn2 Perft Test ----
 add_huginn_executable(perft_huginn2
     SOURCES
@@ -648,84 +521,6 @@ add_huginn_executable(perft_ultra_engine
 # Set preprocessor define for UltraEngine perft test
 target_compile_definitions(perft_ultra_engine PRIVATE ULTRA_ENGINE=1)
 
-# ---- Debug UltraPosition ----
-add_huginn_executable(debug_ultra_position
-    SOURCES
-        debug_ultra_position.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_ultra_position PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug UltraEngine Moves Detailed ----
-add_huginn_executable(debug_ultra_moves_detailed
-    SOURCES
-        debug_ultra_moves_detailed.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_ultra_moves_detailed PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug King Moves ----
-add_huginn_executable(debug_king_moves
-    SOURCES
-        debug_king_moves.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_king_moves PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug Move Comparison ----
-add_huginn_executable(debug_move_comparison
-    SOURCES
-        debug_move_comparison.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_move_comparison PRIVATE ULTRA_ENGINE=1)
-
-# ---- Debug FEN Parsing ----
-add_huginn_executable(debug_fen_parsing
-    SOURCES
-        debug_fen_parsing.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(debug_fen_parsing PRIVATE ULTRA_ENGINE=1)
-
-# ---- Test Castling Debug ----
-add_huginn_executable(test_castling_debug
-    SOURCES
-        test_castling_debug.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-target_compile_definitions(test_castling_debug PRIVATE ULTRA_ENGINE=1)
-
 # ---- Ultra Engine Move System Test ----
 add_executable(test_ultra_move
     ultra_engine/test_ultra_move.cpp
@@ -768,29 +563,6 @@ endif()
 
 # Include ultra engine directory
 target_include_directories(test_ultra_attacks PRIVATE ultra_engine)
-
-# ---- Ultra Engine Knight Performance Test ----
-# Excluded: out of date with current UltraKnightGen template API.
-# add_executable(test_knight_performance
-#     ultra_engine/test_knight_performance.cpp
-#     ultra_engine/ultra_attacks.cpp
-#     ultra_engine/ultra_move.cpp
-# )
-#
-# # Ultra engine requires C++17 for constexpr features
-# target_compile_features(test_knight_performance PRIVATE cxx_std_17)
-#
-# # Optimize ultra engine test for maximum performance
-# if(MSVC)
-#     target_compile_options(test_knight_performance PRIVATE
-#         /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
-#         /fp:fast /arch:AVX2
-#     )
-#     target_link_options(test_knight_performance PRIVATE /LTCG)
-# endif()
-#
-# # Include ultra engine directory
-# target_include_directories(test_knight_performance PRIVATE ultra_engine)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
