@@ -321,8 +321,6 @@ set(COMMON_SOURCES
     src/movegen_enhanced.cpp
     src/attack_detection.cpp
     src/attack_tables.cpp
-    src/pawn_movegen_bb.cpp
-    src/pawn_movegen_native_bb.cpp
     src/move.cpp
     src/board120.cpp
     src/chess_types.cpp
