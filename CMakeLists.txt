@@ -363,12 +363,10 @@ if(ENABLE_FATHOM)
     set(HUGINN_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/fathom/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/ultra_engine
     )
 else()
     set(HUGINN_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/ultra_engine
     )
 endif()
 
@@ -505,64 +503,6 @@ add_huginn_executable(perft_optimized_v7
 
 # Set preprocessor define for optimized perft test to enable bitboard features
 target_compile_definitions(perft_optimized_v7 PRIVATE BITBOARD_ENGINE=1)
-
-# ---- TRUE UltraEngine Perft Test ----
-add_huginn_executable(perft_ultra_engine
-    SOURCES
-        perft/perft_ultra_engine.cpp
-        ultra_engine/ultra_position.cpp
-        ultra_engine/ultra_move.cpp
-        ultra_engine/ultra_attacks.cpp
-        src/epd_parser.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# Set preprocessor define for UltraEngine perft test
-target_compile_definitions(perft_ultra_engine PRIVATE ULTRA_ENGINE=1)
-
-# ---- Ultra Engine Move System Test ----
-add_executable(test_ultra_move
-    ultra_engine/test_ultra_move.cpp
-    ultra_engine/ultra_move.cpp
-)
-
-# Ultra engine requires C++17 for constexpr features
-target_compile_features(test_ultra_move PRIVATE cxx_std_17)
-
-# Optimize ultra engine test for maximum performance
-if(MSVC)
-    target_compile_options(test_ultra_move PRIVATE 
-        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
-        /fp:fast /arch:AVX2
-    )
-    target_link_options(test_ultra_move PRIVATE /LTCG)
-endif()
-
-# Include ultra engine directory
-target_include_directories(test_ultra_move PRIVATE ultra_engine)
-
-# ---- Ultra Engine Attack System Test ----
-add_executable(test_ultra_attacks
-    ultra_engine/test_ultra_attacks.cpp
-    ultra_engine/ultra_attacks.cpp
-    ultra_engine/ultra_move.cpp
-)
-
-# Ultra engine requires C++17 for constexpr features
-target_compile_features(test_ultra_attacks PRIVATE cxx_std_17)
-
-# Optimize ultra engine test for maximum performance
-if(MSVC)
-    target_compile_options(test_ultra_attacks PRIVATE 
-        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
-        /fp:fast /arch:AVX2
-    )
-    target_link_options(test_ultra_attacks PRIVATE /LTCG)
-endif()
-
-# Include ultra engine directory
-target_include_directories(test_ultra_attacks PRIVATE ultra_engine)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
@@ -715,9 +655,6 @@ add_executable(attack_benchmark benchmark/attack_benchmark.cpp ${COMMON_SOURCES}
 target_compile_features(attack_benchmark PRIVATE cxx_std_17)
 target_include_directories(attack_benchmark PRIVATE src)
 target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
-# Add ultra_engine directory to include paths globally
-include_directories(${CMAKE_SOURCE_DIR}/ultra_engine)
 
 # End of CMakeLists.txt
 

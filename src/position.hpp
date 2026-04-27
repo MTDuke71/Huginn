@@ -50,7 +50,6 @@
 #include "move.hpp"
 #include "msvc_optimizations.hpp"
 #include "zobrist.hpp"
-#include "../ultra_engine/ultra_attacks.hpp"
 
 // Forward declarations to avoid circular dependencies
 struct S_MOVELIST;
