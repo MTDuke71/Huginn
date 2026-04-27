@@ -63,3 +63,5 @@
 2025-09-14, da8203b, MSVC Release Performance Test, 16808
 2025-09-14, da8203b, WSL GCC Release Performance Test (O3 -march=native), 23050
 2025-09-15, 7223acb, Post namespace fixes test, 17001
+2026-04-26, edc2085, pure-bitboard-engine perft baseline, 21796
+2026-04-26, edc2085, pure-bitboard-engine perft (clean build), 21858

@@ -455,13 +455,14 @@ add_huginn_executable(huginn2
 target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
 
 # ---- Ultra Engine Sliding Piece Performance Test ----
-add_huginn_executable(test_sliding_performance
-    SOURCES
-        test_sliding_performance.cpp
-        ultra_engine/ultra_attacks.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
+# Excluded: out of date with current SimplePosition / UltraSlidingGen API.
+# add_huginn_executable(test_sliding_performance
+#     SOURCES
+#         test_sliding_performance.cpp
+#         ultra_engine/ultra_attacks.cpp
+#     INCLUDE_DIRS
+#         ${HUGINN_INCLUDE_DIRS}
+# )
 
 # ---- Basic Ultra Engine Test ----
 add_huginn_executable(test_basic_ultra
@@ -500,14 +501,15 @@ add_huginn_executable(test_position_system
 )
 
 # ---- Ultra Engine Special Moves Test ----
-add_huginn_executable(test_special_moves
-    SOURCES
-        test_special_moves.cpp
-        ultra_engine/ultra_attacks.cpp
-        ultra_engine/ultra_position.cpp
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
+# Excluded: out of date with current UltraMove/UltraMoveList API.
+# add_huginn_executable(test_special_moves
+#     SOURCES
+#         test_special_moves.cpp
+#         ultra_engine/ultra_attacks.cpp
+#         ultra_engine/ultra_position.cpp
+#     INCLUDE_DIRS
+#         ${HUGINN_INCLUDE_DIRS}
+# )
 
 # ---- Ultra Engine Special Moves Test (Simple) ----
 add_huginn_executable(test_special_moves_simple
@@ -768,26 +770,27 @@ endif()
 target_include_directories(test_ultra_attacks PRIVATE ultra_engine)
 
 # ---- Ultra Engine Knight Performance Test ----
-add_executable(test_knight_performance
-    ultra_engine/test_knight_performance.cpp
-    ultra_engine/ultra_attacks.cpp
-    ultra_engine/ultra_move.cpp
-)
-
-# Ultra engine requires C++17 for constexpr features
-target_compile_features(test_knight_performance PRIVATE cxx_std_17)
-
-# Optimize ultra engine test for maximum performance
-if(MSVC)
-    target_compile_options(test_knight_performance PRIVATE 
-        /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
-        /fp:fast /arch:AVX2
-    )
-    target_link_options(test_knight_performance PRIVATE /LTCG)
-endif()
-
-# Include ultra engine directory
-target_include_directories(test_knight_performance PRIVATE ultra_engine)
+# Excluded: out of date with current UltraKnightGen template API.
+# add_executable(test_knight_performance
+#     ultra_engine/test_knight_performance.cpp
+#     ultra_engine/ultra_attacks.cpp
+#     ultra_engine/ultra_move.cpp
+# )
+#
+# # Ultra engine requires C++17 for constexpr features
+# target_compile_features(test_knight_performance PRIVATE cxx_std_17)
+#
+# # Optimize ultra engine test for maximum performance
+# if(MSVC)
+#     target_compile_options(test_knight_performance PRIVATE
+#         /O2 /Ob2 /Oi /Ot /GL /DNDEBUG
+#         /fp:fast /arch:AVX2
+#     )
+#     target_link_options(test_knight_performance PRIVATE /LTCG)
+# endif()
+#
+# # Include ultra engine directory
+# target_include_directories(test_knight_performance PRIVATE ultra_engine)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
