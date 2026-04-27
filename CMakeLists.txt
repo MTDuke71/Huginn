@@ -395,7 +395,7 @@ target_compile_definitions(huginn2 PRIVATE BITBOARD_ENGINE=1)
 # ---- Huginn2 Perft Test ----
 add_huginn_executable(perft_huginn2
     SOURCES
-        perft/perft_suite_huginn2.cpp
+        perft/perft_suite.cpp
         ${ENGINE_SOURCES}
         src/bitboard_benchmark.cpp  # Add bitboard performance framework
         src/bitboard_movegen.cpp    # Add actual bitboard move generation
@@ -407,9 +407,9 @@ add_huginn_executable(perft_huginn2
 target_compile_definitions(perft_huginn2 PRIVATE BITBOARD_ENGINE=1)
 
 # ---- Huginn2 Perft Optimized Test ----
-add_huginn_executable(perft_optimized
+add_huginn_executable(perft_benchmark
     SOURCES
-        perft/perft_optimized.cpp
+        perft/perft_benchmark.cpp
         ${ENGINE_SOURCES}
         src/bitboard_benchmark.cpp  # Add bitboard performance framework
         src/bitboard_movegen.cpp    # Add actual bitboard move generation
@@ -417,7 +417,7 @@ add_huginn_executable(perft_optimized
         ${HUGINN_INCLUDE_DIRS}
 )
 
-target_compile_definitions(perft_optimized PRIVATE BITBOARD_ENGINE=1)
+target_compile_definitions(perft_benchmark PRIVATE BITBOARD_ENGINE=1)
 
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
@@ -439,9 +439,9 @@ add_huginn_executable(perft_suite_vice
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-add_huginn_executable(fast_perft_test
+add_huginn_executable(perft_quick
     SOURCES
-        perft/fast_perft_test.cpp
+        perft/perft_quick.cpp
         ${COMMON_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -501,7 +501,7 @@ if(GTEST_FOUND)
         test/test_castling.cpp
         test/test_legal_moves.cpp
         test/test_complete_movegen.cpp
-        test/test_enhanced_movegen.cpp
+        test/test_movegen.cpp
         test/test_pawn_optimization.cpp
         test/test_knight_optimization.cpp
         test/test_knight_lookup.cpp

@@ -1,4 +1,4 @@
-# Hug> **🎉 Version 1.1** - Major release featuring hybrid evaluation and dramatically improved chess playing strength  
+# Huginn 2.0
 
 ## Huginn: Odin's Thought, in Every Move
 
@@ -135,13 +135,7 @@ Complete documentation is available in the [`docs/`](docs/) directory:
 
 ### Demo Applications
 
-- **huginn.exe**: Main chess engine application (v1.1) with hybrid evaluation and single-threaded search
-- **huginn_legacy.exe**: Original engine preserved for comparison and regression testing
-- **huginn_v1.1.exe**: Versioned copy of the main chess engine
-- **debug_demo.exe**: Comprehensive validation system demonstration with passing/failing scenarios
-- **castling_demo.exe**: Interactive castling validation showing detection of various inconsistency types
-- **fen_demo.exe**: FEN generation demonstration showing round-trip conversion capabilities
-- **sq_attacked_demo.exe**: Attack detection visualization showing piece attack patterns and blocking
+- **huginn.exe**: Main chess engine application (v2.0)
 
 ### Running Tests (CTest)
 
