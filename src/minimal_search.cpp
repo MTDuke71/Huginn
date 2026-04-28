@@ -1145,7 +1145,22 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     if (info.stopped || info.quit) {
         return 0;
     }
-    
+
+    // Reverse futility / static null-move pruning.
+    // At low depth, if our static eval is so far above beta that even giving
+    // up `margin` centipawns per ply would still beat beta, we can return
+    // immediately. Cheaper than null-move pruning (no make/unmake/recurse).
+    const int REVERSE_FUTILITY_MAX_DEPTH = 6;
+    const int REVERSE_FUTILITY_MARGIN = 80;  // cp per ply
+    if (!in_check && !isRoot && depth > 0 && depth <= REVERSE_FUTILITY_MAX_DEPTH
+            && beta < MATE - 1000 && beta > -(MATE - 1000)) {
+        int eval = evalPosition(pos);
+        int margin = REVERSE_FUTILITY_MARGIN * depth;
+        if (eval - margin >= beta) {
+            return eval - margin;
+        }
+    }
+
     // VICE Part 83: Null Move Pruning
     // Only try null move if:
     // 1. We're allowed to do null move (doNull = true)
