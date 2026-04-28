@@ -249,26 +249,19 @@ int MinimalEngine::mirror_square_64(int sq64) {
 // Creates a mirrored copy of the position for symmetry testing
 Position MinimalEngine::mirrorBoard(const Position& pos) {
     Position mirrored_pos;
-    
-    // Clear the board first
-    for (int sq = 0; sq < 120; ++sq) {
-        mirrored_pos.board[sq] = pos.at(sq) == Piece::Offboard ? Piece::Offboard : Piece::None;
-    }
-    
-    // Mirror all pieces on the board
-    for (int sq = 21; sq <= 98; ++sq) {
-        if (pos.at(sq) == Piece::Offboard || pos.at(sq) == Piece::None) continue;
-        
-        // Convert 120-square to 64-square, mirror it, then back to 120-square
-        int sq64 = MAILBOX_MAPS.to64[sq];
-        if (sq64 < 0) continue; // Invalid square
-        
+    mirrored_pos.reset();
+
+    // Mirror all pieces on the board (write through the bitboard-aware set())
+    for (int sq120 = 21; sq120 <= 98; ++sq120) {
+        Piece original_piece = pos.at(sq120);
+        if (original_piece == Piece::Offboard || is_none(original_piece)) continue;
+
+        int sq64 = MAILBOX_MAPS.to64[sq120];
+        if (sq64 < 0) continue;
+
         int mirrored_sq64 = mirror64[sq64];
         int mirrored_sq120 = MAILBOX_MAPS.to120[mirrored_sq64];
-        
-        // Swap the piece color using the proper function
-        Piece original_piece = pos.at(sq);
-        mirrored_pos.board[mirrored_sq120] = swapPieceColor(original_piece);
+        mirrored_pos.set(mirrored_sq120, swapPieceColor(original_piece));
     }
     
     // Flip the side to move

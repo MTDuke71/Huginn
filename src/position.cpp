@@ -62,17 +62,6 @@ void Position::update_zobrist_key() {
 }
 
 void Position::reset() {
-    // Set all squares to offboard first
-    for (auto& square : board) {
-        square = Piece::Offboard;
-    }
-    // Set all real (playable) squares to empty
-    for (int rank = 0; rank < 8; ++rank) {
-        for (int file = 0; file < 8; ++file) {
-            int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            board[square] = Piece::None;
-        }
-    }
     material_score[0] = 0;
     material_score[1] = 0;
 
@@ -120,7 +109,7 @@ bool Position::set_from_fen(const std::string& fen) {
             return false;
         } else {
             int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            board[square] = from_char(ch);
+            set(square, from_char(ch));
             file++;
         }
     }
@@ -179,7 +168,7 @@ std::string Position::to_fen() const {
         int empty_count = 0;
         for (int file = 0; file < 8; ++file) {
             int sq120 = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            Piece piece = board[sq120];
+            Piece piece = at(sq120);
             if (is_none(piece)) {
                 empty_count++;
             } else {
@@ -228,40 +217,33 @@ void Position::save_derived_state(S_UNDO& undo) {
 }
 
 void Position::rebuild_counts() {
+    // Recompute color_bitboards / occupied_bitboard from piece_bitboards
+    // (the per-piece-type bitboards are the source of truth — set() and
+    // set_from_fen maintain them directly).
+    for (int color = 0; color < 2; ++color) {
+        uint64_t total = 0;
+        for (int type = int(PieceType::Pawn); type <= int(PieceType::King); ++type) {
+            total |= piece_bitboards[color][type];
+        }
+        color_bitboards[color] = total;
+    }
+    occupied_bitboard = color_bitboards[0] | color_bitboards[1];
+
+    // Derive king_sq[] and material_score[] from the bitboards
     material_score[0] = 0;
     material_score[1] = 0;
-
-    for (int color = 0; color < 2; ++color) {
-        color_bitboards[color] = 0ULL;
-        for (int type = 0; type < int(PieceType::_Count); ++type) {
-            piece_bitboards[color][type] = 0ULL;
-        }
-    }
-    occupied_bitboard = 0ULL;
-    
     king_sq[0] = -1;
     king_sq[1] = -1;
-
-    // Scan board and update all derived state
-    for (int sq120 = 0; sq120 < 120; ++sq120) {
-        Piece piece = board[sq120];
-        if (!is_playable(sq120) || is_none(piece) || piece == Piece::Offboard) continue;
-        Color color = color_of(piece);
-        PieceType type = type_of(piece);
-        int color_idx = int(color);
-        int type_idx = int(type);
-        if (type == PieceType::King) {
-            king_sq[color_idx] = sq120;
+    for (int color = 0; color < 2; ++color) {
+        Color c = static_cast<Color>(color);
+        uint64_t kings = piece_bitboards[color][int(PieceType::King)];
+        if (kings != 0) {
+            int king_sq64 = get_lsb(kings);
+            king_sq[color] = MAILBOX_MAPS.to120[king_sq64];
         }
-
-        int s64 = MAILBOX_MAPS.to64[sq120];
-        if (s64 >= 0) {
-            setBit(piece_bitboards[color_idx][type_idx], s64);
-            setBit(color_bitboards[color_idx], s64);
-            setBit(occupied_bitboard, s64);
-        }
-        if (type != PieceType::King) {
-            material_score[color_idx] += value_of(piece);
+        for (int type = int(PieceType::Pawn); type < int(PieceType::King); ++type) {
+            int count = popcount(piece_bitboards[color][type]);
+            material_score[color] += count * value_of(make_piece(c, static_cast<PieceType>(type)));
         }
     }
 }

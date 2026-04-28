@@ -81,7 +81,6 @@ struct S_UNDO {
 
 class Position {
 public:
-    std::array<Piece, 120> board{};  // Piece::None for empty, Piece::Offboard for offboard
     Color side_to_move{Color::White};
     int ep_square{-1};               // mailbox-120 index or -1
     uint8_t castling_rights{0};      // bitmask: CASTLE_WK|CASTLE_WQ|CASTLE_BK|CASTLE_BQ
@@ -177,7 +176,34 @@ public:
         }
         return Piece::None;  // unreachable when bitboards are consistent
     }
-    inline void set(int s, Piece p) { if (is_playable(s)) board[size_t(s)] = p; }
+    // Place / clear a piece at a 120-square index using bitboard storage.
+    // If a piece was already at this square it is removed first; passing
+    // Piece::None clears the square.
+    inline void set(int s, Piece p) {
+        if (!is_playable(s)) return;
+        int s64 = MAILBOX_MAPS.to64[s];
+        if (s64 < 0) return;
+        uint64_t bit = 1ULL << s64;
+
+        // Clear any existing occupant
+        if (occupied_bitboard & bit) {
+            int c = (color_bitboards[0] & bit) ? 0 : 1;
+            color_bitboards[c] &= ~bit;
+            for (int t = int(PieceType::Pawn); t <= int(PieceType::King); ++t) {
+                piece_bitboards[c][t] &= ~bit;
+            }
+            occupied_bitboard &= ~bit;
+        }
+
+        // Place new piece (skip None / Offboard)
+        if (!is_none(p) && p != Piece::Offboard) {
+            int ci = int(color_of(p));
+            int ti = int(type_of(p));
+            piece_bitboards[ci][ti] |= bit;
+            color_bitboards[ci] |= bit;
+            occupied_bitboard |= bit;
+        }
+    }
 
     // Atomic piece movement - follows VICE MovePiece pattern
     // Moves a piece from one square to another, updating all necessary data structures
@@ -195,12 +221,8 @@ public:
         // 1. Hash piece out of from square and into to square
         zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][from_square];
         zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][to_square];
-        
-        // 2. Update pieces array
-        set(from_square, Piece::None);
-        set(to_square, piece);
-        
-        // 3. Update all bitboard representations
+
+        // 2. Update bitboards
         int from_sq64 = MAILBOX_MAPS.to64[from_square];
         int to_sq64 = MAILBOX_MAPS.to64[to_square];
         if (from_sq64 >= 0 && to_sq64 >= 0) {
@@ -228,16 +250,13 @@ public:
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        // 1. Update zobrist hash (XOR out the piece using Huginn's zobrist system)
+        // 1. Update zobrist hash (XOR out the piece)
         zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
-        
-        // 2. Clear the board square
-        set(square, Piece::None);
-        
-        // 3. Update material score (kings can never be captured in chess)
+
+        // 2. Update material score (kings can never be captured in chess)
         material_score[size_t(piece_color)] -= value_of(piece);
-        
-        // 4. Update bitboards
+
+        // 3. Update bitboards
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
             popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
@@ -258,16 +277,13 @@ public:
         
         // 1. Update zobrist hash (XOR in the piece)
         zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
-        
-        // 2. Place piece on board
-        set(square, piece);
-        
-        // 3. Update material score
-        if (piece_type != PieceType::King) { // Don't count king value
+
+        // 2. Update material score
+        if (piece_type != PieceType::King) {
             material_score[size_t(piece_color)] += value_of(piece);
         }
-        
-        // 4. Update bitboards
+
+        // 3. Update bitboards
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
