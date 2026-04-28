@@ -25,6 +25,7 @@
 #include "uci_utils.hpp"
 #include "movegen_enhanced.hpp"
 #include <fstream>
+#include <algorithm>
 
 /**
  * @brief Constructs a new UCIInterface instance and initializes the chess engine.
@@ -439,19 +440,18 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 if (debug_mode) std::cout << "info string Classical time control: " << side_time << "ms / " << movestogo << " moves" << std::endl;
             } else {
                 // Sudden death or increment-only time control
-                alloc = std::max(50, side_time / 20 + side_inc / 4);
+                alloc = side_time / 20 + side_inc / 4;
                 if (debug_mode) std::cout << "info string Sudden death time control: " << side_time << "ms base" << std::endl;
             }
-            
-            // Apply reserve time (don't use all available time)
+
+            // Reserve some clock time so we don't flag in low-time scrambles.
+            // The reserve is a CAP on per-move usage, not a subtraction from it.
             int reserve = std::min(1000, std::max(50, side_time / 10));
-            alloc = std::max(50, alloc - reserve / std::max(1, movestogo > 0 ? movestogo : 1));
-            
-            // Cap at 60% of remaining time for safety
-            alloc = std::min(alloc, static_cast<int>(side_time * 0.6));
-            
+            int safe_max = std::max(50, side_time - reserve);
+            alloc = std::min({alloc, safe_max, static_cast<int>(side_time * 0.6)});
+
             limits.max_time_ms = std::max(50, alloc);
-            if (debug_mode) std::cout << "info string Calculated time allocation: " << limits.max_time_ms << "ms (reserve: " << reserve << "ms)" << std::endl;
+            if (debug_mode) std::cout << "info string Calculated time allocation: " << limits.max_time_ms << "ms (reserve cap: " << reserve << "ms)" << std::endl;
         } else {
             // No time available, use increment if present
             if (movestogo == 0 && (winc > 0 || binc > 0)) {
