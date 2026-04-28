@@ -32,7 +32,7 @@
         "additional_lines_rgx": [],
         "event_name": "Fastchess Tournament",
         "site": "?",
-        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn_vs_4_2.pgn",
+        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn_vs_mtlchess.pgn",
         "notation": 2,
         "append_file": true,
         "track_nodes": false,
@@ -60,7 +60,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 15722313688640532240,
+    "seed": 14258325706414156712,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -69,7 +69,7 @@
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 100,
+    "rounds": 10,
     "concurrency": 1,
     "force_concurrency": false,
     "recover": true,
@@ -79,7 +79,7 @@
     "affinity": false,
     "show_latency": false,
     "log": {
-        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\fastchess_4_2.log",
+        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\fastchess_huginn.log",
         "level": 2,
         "append_file": true,
         "compress": false,
@@ -88,9 +88,9 @@
     },
     "engines": [
         {
-            "name": "Huginn_current",
+            "name": "Huginn_2.0",
             "dir": "",
-            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn.exe",
+            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn4F.exe",
             "args": "",
             "restart": false,
             "options": [
@@ -113,17 +113,12 @@
             "variant": 0
         },
         {
-            "name": "Huginn_4_2",
+            "name": "MTLChess_v0.6",
             "dir": "",
-            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huggin_4_2.exe",
+            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\mtlChess_v06.exe",
             "args": "",
             "restart": false,
-            "options": [
-                [
-                    "OwnBook",
-                    "false"
-                ]
-            ],
+            "options": [],
             "limit": {
                 "tc": {
                     "increment": 100,
@@ -139,16 +134,16 @@
         }
     ],
     "stats": {
-        "Huginn_current vs Huginn_4_2": {
-            "wins": 85,
-            "losses": 27,
-            "draws": 32,
-            "penta_WW": 25,
-            "penta_WD": 21,
-            "penta_WL": 14,
-            "penta_DD": 2,
-            "penta_LD": 7,
-            "penta_LL": 3
+        "Huginn_2.0 vs MTLChess_v0.6": {
+            "wins": 0,
+            "losses": 20,
+            "draws": 0,
+            "penta_WW": 0,
+            "penta_WD": 0,
+            "penta_WL": 0,
+            "penta_DD": 0,
+            "penta_LD": 0,
+            "penta_LL": 10
         }
     }
 }

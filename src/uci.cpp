@@ -218,7 +218,7 @@ void UCIInterface::send_options() {
     std::cout << "option name Ponder type check default false" << std::endl;
     std::cout << "option name OwnBook type check default true" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
-    std::cout << "option name SyzygyPath type string default d:\\TB\\" << std::endl;
+    std::cout << "option name SyzygyPath type string default c:\\TB\\" << std::endl;
 }
 
 /**
