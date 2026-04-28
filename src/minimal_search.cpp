@@ -52,32 +52,20 @@ int MinimalEngine::evaluate(const Position& pos) {
     int total_material = pos.get_total_material();
     bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
     
-    // Evaluate all pieces using piece lists for efficiency
+    // Evaluate all pieces using bitboard iteration
     for (int color = 0; color <= 1; ++color) {
+        Color piece_color = static_cast<Color>(color);
         for (int piece_type = int(PieceType::Pawn); piece_type <= int(PieceType::King); ++piece_type) {
-            int count = pos.pCount[color][piece_type];
-            for (int i = 0; i < count; ++i) {
-                int sq = pos.pList[color][piece_type][i];
-                if (sq < 0 || sq >= 120) continue;
-                Piece piece = pos.board[sq];
-                if (piece == Piece::None || piece == Piece::Offboard) continue;
-                Color piece_color = static_cast<Color>(color);
-                PieceType pt = static_cast<PieceType>(piece_type);
-                // Material values (VICE-compatible) - use PIECE_VALUES_MG for consistency
-                int material_value = PIECE_VALUES_MG[static_cast<int>(pt)];
-                // Convert square120 to square64 for piece-square tables
-                int sq64 = MAILBOX_MAPS.to64[sq];
-                if (sq64 < 0) continue; // Invalid square
-                // Get piece-square table value
-                int pst_value = 0;
+            PieceType pt = static_cast<PieceType>(piece_type);
+            uint64_t bb = pos.piece_bitboards[color][piece_type];
+            int material_value = PIECE_VALUES_MG[piece_type];
+            while (bb) {
+                int sq64 = pop_lsb(bb);
                 int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
-                // VICE Part 82: Use different king tables based on pre-calculated material
+                int pst_value = 0;
                 if (pt == PieceType::King) {
-                    if (is_endgame) {
-                        pst_value = EvalParams::KING_TABLE_ENDGAME[table_index];
-                    } else {
-                        pst_value = EvalParams::KING_TABLE[table_index];
-                    }
+                    pst_value = is_endgame ? EvalParams::KING_TABLE_ENDGAME[table_index]
+                                           : EvalParams::KING_TABLE[table_index];
                 } else {
                     switch (pt) {
                         case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
@@ -85,16 +73,12 @@ int MinimalEngine::evaluate(const Position& pos) {
                         case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
                         case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
                         case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
-                        default: pst_value = 0; break;
+                        default: break;
                     }
                 }
-                // Add material + piece-square value for this piece
                 int piece_value = material_value + pst_value;
-                if (piece_color == Color::White) {
-                    score += piece_value;
-                } else {
-                    score -= piece_value;
-                }
+                if (piece_color == Color::White) score += piece_value;
+                else score -= piece_value;
             }
         }
     }
@@ -107,57 +91,34 @@ int MinimalEngine::evaluate(const Position& pos) {
     uint64_t white_pawns = pos.get_white_pawns();
     uint64_t black_pawns = pos.get_black_pawns();
     
-    // Evaluate pawn structure using piece lists for efficiency
-    // Check white pawns for isolated and passed pawn characteristics
-    int white_pawn_count = pos.pCount[int(Color::White)][int(PieceType::Pawn)];
-    for (int i = 0; i < white_pawn_count; ++i) {
-        int sq120 = pos.pList[int(Color::White)][int(PieceType::Pawn)][i];
-        if (sq120 < 0 || sq120 >= 120) continue;
-        
-        File file = file_of(sq120);
-        Rank rank = rank_of(sq120);
-        if (file == File::None || rank == Rank::None) continue;
-        
-        int file_idx = int(file);
-        int rank_idx = int(rank);
-        int sq64 = MAILBOX_MAPS.to64[sq120];
-        if (sq64 < 0) continue;
-        
-        // Check for isolated pawn using pre-computed masks (3:07)
+    // Iterate white pawns directly via bitboard
+    uint64_t bb = white_pawns;
+    while (bb) {
+        int sq64 = pop_lsb(bb);
+        int file_idx = sq64 & 7;
+        int rank_idx = sq64 >> 3;
+
         if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
             pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
         }
-        
-        // Check for passed pawn using pre-computed masks (4:25)
         if ((black_pawns & EvalParams::WHITE_PASSED_PAWN_MASKS[sq64]) == 0) {
             pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank_idx];
         }
     }
-    
-    // Check black pawns for isolated and passed pawn characteristics
-    int black_pawn_count = pos.pCount[int(Color::Black)][int(PieceType::Pawn)];
-    for (int i = 0; i < black_pawn_count; ++i) {
-        int sq120 = pos.pList[int(Color::Black)][int(PieceType::Pawn)][i];
-        if (sq120 < 0 || sq120 >= 120) continue;
-        
-        File file = file_of(sq120);
-        Rank rank = rank_of(sq120);
-        if (file == File::None || rank == Rank::None) continue;
-        
-        int file_idx = int(file);
-        int rank_idx = int(rank);
-        int sq64 = MAILBOX_MAPS.to64[sq120];
-        if (sq64 < 0) continue;
-        
-        // Check for isolated pawn using pre-computed masks  
+
+    // Iterate black pawns directly via bitboard
+    bb = black_pawns;
+    while (bb) {
+        int sq64 = pop_lsb(bb);
+        int file_idx = sq64 & 7;
+        int rank_idx = sq64 >> 3;
+
         if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
-            pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY; // Penalty for black
+            pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY;
         }
-        
-        // Check for passed pawn using pre-computed masks
         if ((white_pawns & EvalParams::BLACK_PASSED_PAWN_MASKS[sq64]) == 0) {
-            int mirror_rank = 7 - rank_idx; // Mirror rank for black (rank increases as black advances)
-            pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank]; // Bonus for black
+            int mirror_rank = 7 - rank_idx;
+            pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank];
         }
     }
     
@@ -169,90 +130,54 @@ int MinimalEngine::evaluate(const Position& pos) {
     
     uint64_t all_pawns = white_pawns | black_pawns;
     
-    // Evaluate white rooks using piece lists
-    int white_rook_count = pos.pCount[int(Color::White)][int(PieceType::Rook)];
-    for (int i = 0; i < white_rook_count; ++i) {
-        int sq = pos.pList[int(Color::White)][int(PieceType::Rook)][i];
-        if (sq < 0 || sq >= 120) continue;
-        
-        File file = file_of(sq);
-        if (file == File::None) continue;
-        
-        int file_idx = int(file);
+    // White rooks: open / semi-open file bonuses
+    uint64_t rooks_bb = pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)];
+    while (rooks_bb) {
+        int sq64 = pop_lsb(rooks_bb);
+        int file_idx = sq64 & 7;
         uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        
-        // Check for open file (no pawns from either side)
         if ((all_pawns & file_mask) == 0) {
             file_bonus_score += EvalParams::ROOK_OPEN_FILE_BONUS;
-        }
-        // Check for semi-open file (no white pawns on this file)
-        else if ((white_pawns & file_mask) == 0) {
+        } else if ((white_pawns & file_mask) == 0) {
             file_bonus_score += EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
         }
     }
-    
-    // Evaluate black rooks using piece lists
-    int black_rook_count = pos.pCount[int(Color::Black)][int(PieceType::Rook)];
-    for (int i = 0; i < black_rook_count; ++i) {
-        int sq = pos.pList[int(Color::Black)][int(PieceType::Rook)][i];
-        if (sq < 0 || sq >= 120) continue;
-        
-        File file = file_of(sq);
-        if (file == File::None) continue;
-        
-        int file_idx = int(file);
+
+    // Black rooks
+    rooks_bb = pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)];
+    while (rooks_bb) {
+        int sq64 = pop_lsb(rooks_bb);
+        int file_idx = sq64 & 7;
         uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        
-        // Check for open file (no pawns from either side)
         if ((all_pawns & file_mask) == 0) {
             file_bonus_score -= EvalParams::ROOK_OPEN_FILE_BONUS;
-        }
-        // Check for semi-open file (no black pawns on this file)
-        else if ((black_pawns & file_mask) == 0) {
+        } else if ((black_pawns & file_mask) == 0) {
             file_bonus_score -= EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
         }
     }
-    
-    // Evaluate white queens using piece lists
-    int white_queen_count = pos.pCount[int(Color::White)][int(PieceType::Queen)];
-    for (int i = 0; i < white_queen_count; ++i) {
-        int sq = pos.pList[int(Color::White)][int(PieceType::Queen)][i];
-        if (sq < 0 || sq >= 120) continue;
-        
-        File file = file_of(sq);
-        if (file == File::None) continue;
-        
-        int file_idx = int(file);
+
+    // White queens
+    uint64_t queens_bb = pos.piece_bitboards[int(Color::White)][int(PieceType::Queen)];
+    while (queens_bb) {
+        int sq64 = pop_lsb(queens_bb);
+        int file_idx = sq64 & 7;
         uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        
-        // Check for open file (no pawns from either side)
         if ((all_pawns & file_mask) == 0) {
             file_bonus_score += EvalParams::QUEEN_OPEN_FILE_BONUS;
-        }
-        // Check for semi-open file (no white pawns on this file)
-        else if ((white_pawns & file_mask) == 0) {
+        } else if ((white_pawns & file_mask) == 0) {
             file_bonus_score += EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
         }
     }
-    
-    // Evaluate black queens using piece lists
-    int black_queen_count = pos.pCount[int(Color::Black)][int(PieceType::Queen)];
-    for (int i = 0; i < black_queen_count; ++i) {
-        int sq = pos.pList[int(Color::Black)][int(PieceType::Queen)][i];
-        if (sq < 0 || sq >= 120) continue;
-        
-        File file = file_of(sq);
-        if (file == File::None) continue;
-        
-        int file_idx = int(file);
+
+    // Black queens
+    queens_bb = pos.piece_bitboards[int(Color::Black)][int(PieceType::Queen)];
+    while (queens_bb) {
+        int sq64 = pop_lsb(queens_bb);
+        int file_idx = sq64 & 7;
         uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        
-        // Check for open file (no pawns from either side)
         if ((all_pawns & file_mask) == 0) {
             file_bonus_score -= EvalParams::QUEEN_OPEN_FILE_BONUS;
-        }
-        // Check for semi-open file (no black pawns on this file)
-        else if ((black_pawns & file_mask) == 0) {
+        } else if ((black_pawns & file_mask) == 0) {
             file_bonus_score -= EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
         }
     }
@@ -260,9 +185,9 @@ int MinimalEngine::evaluate(const Position& pos) {
     score += file_bonus_score;
     
     // VICE Part 83: Bishop pair bonus
-    int white_bishops = pos.pCount[int(Color::White)][int(PieceType::Bishop)];
-    int black_bishops = pos.pCount[int(Color::Black)][int(PieceType::Bishop)];
-    
+    int white_bishops = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)]);
+    int black_bishops = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Bishop)]);
+
     if (white_bishops >= 2) {
         score += EvalParams::BISHOP_PAIR_BONUS;
     }
@@ -277,15 +202,14 @@ int MinimalEngine::evaluate(const Position& pos) {
 // VICE Part 82/83: Material draw detection - Fixed to be more conservative
 // Checks if the position is a theoretical draw based on insufficient material
 bool MinimalEngine::MaterialDraw(const Position& pos) {
-    // Use efficient piece count arrays instead of looping through all squares
-    int white_rooks = pos.pCount[int(Color::White)][int(PieceType::Rook)];
-    int black_rooks = pos.pCount[int(Color::Black)][int(PieceType::Rook)];
-    int white_queens = pos.pCount[int(Color::White)][int(PieceType::Queen)];
-    int black_queens = pos.pCount[int(Color::Black)][int(PieceType::Queen)];
-    int white_bishops = pos.pCount[int(Color::White)][int(PieceType::Bishop)];
-    int black_bishops = pos.pCount[int(Color::Black)][int(PieceType::Bishop)];
-    int white_knights = pos.pCount[int(Color::White)][int(PieceType::Knight)];
-    int black_knights = pos.pCount[int(Color::Black)][int(PieceType::Knight)];
+    int white_rooks   = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)]);
+    int black_rooks   = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)]);
+    int white_queens  = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Queen)]);
+    int black_queens  = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Queen)]);
+    int white_bishops = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)]);
+    int black_bishops = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Bishop)]);
+    int white_knights = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Knight)]);
+    int black_knights = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Knight)]);
     
     // If either side has rooks or queens, not a draw
     if (white_rooks > 0 || black_rooks > 0 || white_queens > 0 || black_queens > 0) {
