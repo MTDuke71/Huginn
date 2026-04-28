@@ -1229,26 +1229,20 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
 
-#ifdef USE_RAZORING
-    // Razoring: reduce search depth when evaluation is far below alpha
-    // If position is hopeless (evaluation way below alpha), reduce depth to save time
-    const int RAZORING_MARGIN = 400;           // Margin to apply razoring (4 pawns)
-    const int MAX_RAZORING_DEPTH = 4;          // Maximum depth to apply razoring
-    
-    if (depth <= MAX_RAZORING_DEPTH && !in_check && !isRoot && depth >= 2) {
-        // Calculate position evaluation if we haven't already (reuse from futility if available)
-        int eval = evalPosition(pos);
-        
-        // If evaluation + margin is still far below alpha, reduce search depth
-        if (eval + RAZORING_MARGIN < alpha) {
-            // Reduce depth by 1 (conservative approach)
-            depth--;
-            
-            // Track razoring statistics for debugging
-            info.razoring_cuts++;
+    // Razoring: at low depth, if static eval + a generous margin is still
+    // below alpha, the position is hopeless — reduce search depth by 1
+    // rather than full search. Soft pruning (depth reduction, not return).
+    {
+        const int RAZORING_MARGIN = 400;        // 4 pawns of slack
+        const int MAX_RAZORING_DEPTH = 4;
+        if (depth >= 2 && depth <= MAX_RAZORING_DEPTH && !in_check && !isRoot) {
+            int eval = evalPosition(pos);
+            if (eval + RAZORING_MARGIN < alpha) {
+                depth--;
+                info.razoring_cuts++;
+            }
         }
     }
-#endif
 
     // Generate all legal moves first
     S_MOVELIST move_list;
@@ -1751,14 +1745,12 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                       << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
         
-#ifdef USE_RAZORING
         // Print razoring statistics for this depth
         if (info.razoring_cuts > 0) {
-            std::cout << "info string Depth " << current_depth << " - Razoring cuts: " 
-                      << info.razoring_cuts << " (" << std::fixed << std::setprecision(1) 
+            std::cout << "info string Depth " << current_depth << " - Razoring cuts: "
+                      << info.razoring_cuts << " (" << std::fixed << std::setprecision(1)
                       << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
-#endif
         
 #ifdef USE_MULTI_CUT
         // Print multi-cut pruning statistics for this depth

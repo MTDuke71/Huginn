@@ -61,9 +61,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    # Disabled optimizations for performance testing
-    # add_compile_definitions(USE_RAZORING)
-    # add_compile_definitions(USE_MULTI_CUT)
     add_compile_options(/W3)
     
     # Suppress specific warnings that are common in this codebase and safe
@@ -89,9 +86,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    # Disabled optimizations for performance testing
-    # add_compile_definitions(USE_RAZORING)
-    # add_compile_definitions(USE_MULTI_CUT)
     # GCC optimizations for Release builds
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(
@@ -111,9 +105,6 @@ else()
     add_compile_definitions(USE_KNIGHT_LOOKUP_TABLES)
     add_compile_definitions(USE_KING_LOOKUP_TABLES)
     add_compile_definitions(USE_PAWN_LOOKUP_TABLES)
-    # Disabled optimizations for performance testing
-    # add_compile_definitions(USE_RAZORING)
-    # add_compile_definitions(USE_MULTI_CUT)
 endif()
 
 # ---- Build Type Validation ----
