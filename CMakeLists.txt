@@ -311,10 +311,6 @@ endif()
 set(COMMON_SOURCES
     src/bitboard.cpp
     src/bitboard_movegen.cpp
-    src/bitboard_position.cpp
-    src/bitboard_movegen_pure.cpp
-    src/bitboard_perft_optimized.cpp
-    src/bitboard_attacks.cpp
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp
@@ -408,14 +404,6 @@ add_huginn_executable(mirror_eval_test
 add_huginn_executable(perft_suite_vice
     SOURCES
         perft/perft_suite_vice.cpp
-        ${COMMON_SOURCES}
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-add_huginn_executable(perft_quick
-    SOURCES
-        perft/perft_quick.cpp
         ${COMMON_SOURCES}
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
