@@ -1,6 +1,5 @@
 // test_board.cpp
 #include <gtest/gtest.h>
-#include "board.hpp"
 #include "position.hpp"
 #include "chess_types.hpp"
 #include "board120.hpp"

@@ -1,6 +1,5 @@
 // test_offboard_detection.cpp - Example of how offboard detection works in move generation
 #include <gtest/gtest.h>
-#include "board.hpp"
 #include "position.hpp"
 #include "chess_types.hpp"
 #include "board120.hpp"

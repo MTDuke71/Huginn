@@ -339,8 +339,6 @@ set(COMMON_SOURCES
 set(ENGINE_SOURCES
     ${COMMON_SOURCES}
     ${FATHOM_SOURCES}
-    src/board.cpp
-
     src/uci.cpp
     src/uci_utils.cpp
     src/minimal_search.cpp
@@ -464,7 +462,6 @@ if(GTEST_FOUND)
         test/test_board.cpp
         test/test_offboard_detection.cpp
         test/test_fen.cpp
-        test/test_print_position.cpp
         test/test_incremental_updates.cpp
         test/test_zobrist_incremental.cpp
         test/test_material_tracking.cpp
