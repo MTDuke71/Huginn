@@ -1,143 +1,15 @@
-/**
- * @file attack_detection.hpp
- * @brief Helper functions for detecting attacks on chess squares by various pieces.
- *
- * This header provides inline helper functions to determine if a given square is attacked
- * by pawns, knights, kings, or sliding pieces (rooks, bishops, queens) in a chess position.
- * It also declares the main function to check if a square is attacked by any piece of a given color.
- *
- * Functions:
- * - pawn_attacks_square: Checks if a pawn on a given square attacks a target square.
- * - knight_attacks_square: Checks if a knight on a given square attacks a target square.
- * - king_attacks_square: Checks if a king on a given square attacks a target square.
- * - sliding_attacks_rank_file: Checks if a sliding piece (rook/queen) attacks along rank or file.
- * - sliding_attacks_diagonal: Checks if a sliding piece (bishop/queen) attacks along a diagonal.
- * - Huginn::SqAttacked: Main function to check if a square is attacked by any piece of a given color.
- *
- * Dependencies:
- * - position.hpp: For Position class and board state access.
- * - board120.hpp: For board representation and direction constants.
- * - chess_types.hpp: For chess type definitions (Color, File, Rank, etc.).
- * - <cmath>: For abs() function.
- */
-
 #pragma once
-#include "board120.hpp"
 #include "chess_types.hpp"
-#include <cmath>
 
-// Forward declaration to avoid circular dependency with position.hpp
 class Position;
 
 namespace Huginn {
 
-/**
- * @brief Checks if a pawn on pawn_sq attacks target_sq.
- * @param pawn_sq The square index of the pawn.
- * @param target_sq The square index of the target square.
- * @param pawn_color The color of the pawn (White or Black).
- * @return True if the pawn attacks the target square, false otherwise.
- */
-inline bool pawn_attacks_square(int pawn_sq, int target_sq, Color pawn_color)
-{
-    if (pawn_color == Color::White)
-    {
-        // White pawn attacks NE and NW
-        return (target_sq == pawn_sq + NE || target_sq == pawn_sq + NW);
-    }
-    else
-    {
-        // Black pawn attacks SE and SW
-        return (target_sq == pawn_sq + SE || target_sq == pawn_sq + SW);
-    }
-}
+/// Checks if a square (120-square mailbox index) is attacked by any piece of @p attacking_color.
+/// Thin wrapper that converts to 64-square indexing and calls SqAttackedBB.
+bool SqAttacked(int sq, const Position& pos, Color attacking_color);
 
-/**
- * @brief Checks if a knight on knight_sq attacks target_sq.
- * @param knight_sq The square index of the knight.
- * @param target_sq The square index of the target square.
- * @return True if the knight attacks the target square, false otherwise.
- */
-inline bool knight_attacks_square(int knight_sq, int target_sq)
-{
-    for (int delta : KNIGHT_DELTAS)
-    {
-        if (knight_sq + delta == target_sq)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * @brief Checks if a king on king_sq attacks target_sq.
- * @param king_sq The square index of the king.
- * @param target_sq The square index of the target square.
- * @return True if the king attacks the target square, false otherwise.
- */
-inline bool king_attacks_square(int king_sq, int target_sq)
-{
-    for (int delta : KING_DELTAS)
-    {
-        if (king_sq + delta == target_sq)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * @brief Checks if a sliding piece (rook or queen) attacks a target square along the same rank or file.
- *
- * This function determines whether a sliding piece located at piece_sq can attack the target_sq
- * along a rank or file, considering the current board state in pos. It verifies that both squares
- * are aligned on the same rank or file, determines the direction of movement, and checks that all
- * intermediate squares between the piece and the target are unoccupied.
- *
- * @param piece_sq The square index of the sliding piece.
- * @param target_sq The square index of the target square.
- * @param pos The current board position, used to check for obstructions.
- * @return True if the sliding piece can attack the target square along the rank or file, false otherwise.
- */
-bool sliding_attacks_rank_file(int piece_sq, int target_sq, const Position &pos);
-
-/**
- * @brief Checks if a sliding piece (bishop or queen) attacks a target square along a diagonal.
- *
- * This function determines whether a sliding piece located at piece_sq can attack the target_sq
- * along a diagonal, considering the current board state in pos. It verifies that both squares
- * are aligned on the same diagonal, determines the direction of movement, and checks that all
- * intermediate squares between the piece and the target are unoccupied.
- *
- * @param piece_sq The square index of the sliding piece.
- * @param target_sq The square index of the target square.
- * @param pos The current board position, used to check for obstructions.
- * @return True if the sliding piece can attack the target square along the diagonal, false otherwise.
- */
-bool sliding_attacks_diagonal(int piece_sq, int target_sq, const Position &pos);
-
-/**
- * @brief Checks if a square is attacked by any piece of the given color.
- * @param sq The square to check for attacks.
- * @param pos The current position (for board state and occupancy).
- * @param attacking_color The color of the pieces to check for attacks.
- * @return True if the square is attacked by any piece of the given color, false otherwise.
- */
-bool SqAttacked(int sq, const Position &pos, Color attacking_color);
-
-/**
- * @brief Checks if a square is attacked using bitboard-based detection (Phase 1 migration)
- * @param sq The square to check for attacks (0-63 bitboard indexing)
- * @param pos The current position (for bitboard state and occupancy).
- * @param attacking_color The color of the pieces to check for attacks.
- * @return True if the square is attacked by any piece of the given color, false otherwise.
- * 
- * This function implements the bitboard-based attack detection from the migration plan.
- * It uses pre-computed attack tables for non-sliding pieces and the existing sliding
- * piece attack functions. Performance target: 10-20% improvement over piece list iteration.
- */
-bool SqAttackedBB(int sq, const Position &pos, Color attacking_color);
+/// Bitboard-based attack detection. @p sq is 0..63 (a1=0, h8=63 in little-endian rank-file).
+bool SqAttackedBB(int sq, const Position& pos, Color attacking_color);
 
 } // namespace Huginn
