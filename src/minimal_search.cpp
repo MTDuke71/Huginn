@@ -195,8 +195,10 @@ int MinimalEngine::evaluate(const Position& pos) {
         score -= EvalParams::BISHOP_PAIR_BONUS;
     }
     
-    // Return from current side's perspective (negate if black to move)
-    return (pos.side_to_move == Color::White) ? score : -score;
+    // Return from current side's perspective (negate if black to move),
+    // then add a tempo bonus (initiative goes to whoever moves next).
+    int sided_score = (pos.side_to_move == Color::White) ? score : -score;
+    return sided_score + EvalParams::TEMPO_BONUS;
 }
 
 // VICE Part 82/83: Material draw detection - Fixed to be more conservative

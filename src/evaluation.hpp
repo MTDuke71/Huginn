@@ -91,6 +91,9 @@ inline constexpr int KNIGHT_OUTPOST_BONUS = 25;
 /** @brief Bonus for having both bishops (bishop pair advantage) */
 inline constexpr int BISHOP_PAIR_BONUS = 50;
 
+/** @brief Tempo bonus — small advantage for the side to move (initiative). */
+inline constexpr int TEMPO_BONUS = 10;
+
 // ============================================================================
 // OPEN FILE BONUSES - VICE Part 81 implementation
 // ============================================================================
