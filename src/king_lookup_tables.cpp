@@ -13,7 +13,7 @@
 #include "king_lookup_tables.hpp"
 #include "position.hpp"
 #include "move.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "board120.hpp"
 #include "msvc_intrinsics.hpp"
 #include <iostream>

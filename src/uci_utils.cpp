@@ -36,7 +36,7 @@ S_MOVE parse_uci_move(const std::string& uci_move, const Position& position) {
 		}
 	}
 	S_MOVELIST move_list;
-	generate_legal_moves_enhanced(const_cast<Position&>(position), move_list);
+	generate_legal_moves(const_cast<Position&>(position), move_list);
 	for (int i = 0; i < move_list.count; ++i) {
 		const S_MOVE& move = move_list.moves[i];
 		if (move.get_from() == from && move.get_to() == to) {

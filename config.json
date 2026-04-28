@@ -1,0 +1,154 @@
+{
+    "resign": {
+        "move_count": 1,
+        "score": 0,
+        "twosided": false,
+        "enabled": false
+    },
+    "draw": {
+        "move_number": 0,
+        "move_count": 1,
+        "score": 0,
+        "enabled": false
+    },
+    "maxmoves": {
+        "move_count": 1,
+        "enabled": false
+    },
+    "tb_adjudication": {
+        "syzygy_dirs": "",
+        "max_pieces": 0,
+        "ignore_50_move_rule": false,
+        "enabled": false
+    },
+    "opening": {
+        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\noob_3moves.epd",
+        "format": 0,
+        "order": 0,
+        "plies": -1,
+        "start": 1
+    },
+    "pgn": {
+        "additional_lines_rgx": [],
+        "event_name": "Fastchess Tournament",
+        "site": "?",
+        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn_vs_4_2.pgn",
+        "notation": 2,
+        "append_file": true,
+        "track_nodes": false,
+        "track_seldepth": false,
+        "track_nps": false,
+        "track_hashfull": false,
+        "track_tbhits": false,
+        "track_timeleft": false,
+        "track_latency": false,
+        "track_pv": false,
+        "min": false,
+        "crc": false
+    },
+    "epd": {
+        "file": "",
+        "append_file": true
+    },
+    "sprt": {
+        "alpha": 0.0,
+        "beta": 0.0,
+        "elo0": 0.0,
+        "elo1": 0.0,
+        "model": "normalized",
+        "enabled": false
+    },
+    "config_name": "config.json",
+    "output": 0,
+    "seed": 15722313688640532240,
+    "variant": 0,
+    "type": 0,
+    "gauntlet_seeds": 1,
+    "ratinginterval": 10,
+    "scoreinterval": 1,
+    "wait": 0,
+    "autosaveinterval": 20,
+    "games": 2,
+    "rounds": 100,
+    "concurrency": 1,
+    "force_concurrency": false,
+    "recover": true,
+    "noswap": false,
+    "reverse": false,
+    "report_penta": true,
+    "affinity": false,
+    "show_latency": false,
+    "log": {
+        "file": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\fastchess_4_2.log",
+        "level": 2,
+        "append_file": true,
+        "compress": false,
+        "realtime": true,
+        "engine_coms": false
+    },
+    "engines": [
+        {
+            "name": "Huginn_current",
+            "dir": "",
+            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huginn.exe",
+            "args": "",
+            "restart": false,
+            "options": [
+                [
+                    "OwnBook",
+                    "false"
+                ]
+            ],
+            "limit": {
+                "tc": {
+                    "increment": 100,
+                    "fixed_time": 0,
+                    "time": 10000,
+                    "moves": 0,
+                    "timemargin": 0
+                },
+                "nodes": 0,
+                "plies": 0
+            },
+            "variant": 0
+        },
+        {
+            "name": "Huginn_4_2",
+            "dir": "",
+            "cmd": "C:\\Users\\m_lad\\Documents\\fastchess-windows-x86-64\\huggin_4_2.exe",
+            "args": "",
+            "restart": false,
+            "options": [
+                [
+                    "OwnBook",
+                    "false"
+                ]
+            ],
+            "limit": {
+                "tc": {
+                    "increment": 100,
+                    "fixed_time": 0,
+                    "time": 10000,
+                    "moves": 0,
+                    "timemargin": 0
+                },
+                "nodes": 0,
+                "plies": 0
+            },
+            "variant": 0
+        }
+    ],
+    "stats": {
+        "Huginn_current vs Huginn_4_2": {
+            "wins": 22,
+            "losses": 8,
+            "draws": 10,
+            "penta_WW": 6,
+            "penta_WD": 6,
+            "penta_WL": 4,
+            "penta_DD": 1,
+            "penta_LD": 2,
+            "penta_LL": 1
+        }
+    }
+}

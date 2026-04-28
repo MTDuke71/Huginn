@@ -95,7 +95,7 @@ struct S_MOVELIST {
 void generate_all_moves(const Position& pos, S_MOVELIST& list);
 
 // Pseudo-legal moves filtered by Position::MakeMove legality check.
-void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list);
+void generate_legal_moves(Position& pos, S_MOVELIST& list);
 
 // Quiescence: legal captures only.
 void generate_all_caps(Position& pos, S_MOVELIST& list);

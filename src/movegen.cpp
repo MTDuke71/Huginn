@@ -1,21 +1,21 @@
 /**
- * @file movegen_enhanced.cpp
+ * @file movegen.cpp
  * @brief Move generation entry points for the Huginn chess engine
  *
  * Thin wrapper around BitboardMoveGen plus the legality and capture filters
  * used by search and quiescence.
  */
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "position.hpp"
 #include "move.hpp"
-#include "bitboard_movegen.hpp"
+#include "movegen_bb.hpp"
 
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
     BitboardMoveGen::generate_all_moves_bitboard(pos, list);
 }
 
 // Legal move generation: pseudo-legal + filter by MakeMove legality
-void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list) {
+void generate_legal_moves(Position& pos, S_MOVELIST& list) {
     S_MOVELIST pseudo_moves;
     generate_all_moves(pos, pseudo_moves);
 

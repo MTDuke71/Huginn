@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iomanip>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "init.hpp"
 
 // VICE Perft function - counts all legal move paths to a given depth using VICE MakeMove/TakeMove

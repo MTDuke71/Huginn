@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "init.hpp"
 
 // Tiny perft harness (uses legal moves; grow as you add rules)
 static uint64_t perft(Position& pos, int depth) {
     if (depth == 0) return 1;
     S_MOVELIST list; 
-    generate_legal_moves_enhanced(pos, list);
+    generate_legal_moves(pos, list);
     uint64_t nodes = 0;
     for (int i = 0; i < list.count; i++) {
         // Use production MakeMove/TakeMove pattern with error checking
@@ -86,7 +86,7 @@ TEST(Perft, Debug_Startpos_Legal_Check) {
     generate_all_moves(pos, pseudo_moves);
     
     S_MOVELIST legal_moves;
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     std::cout << "Pseudo-legal: " << pseudo_moves.size() << ", Legal: " << legal_moves.size() << std::endl;
     
@@ -182,7 +182,7 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
     
     // Generate legal moves
     S_MOVELIST legal_moves;
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     std::cout << "Generated " << legal_moves.size() << " legal moves" << std::endl;
     
     // Show all legal moves for verification

@@ -40,7 +40,7 @@
 #include <chrono>
 #include <memory>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "minimal_search.hpp"  // Changed from search.hpp
 #include "syzygy_tablebase.hpp"
 

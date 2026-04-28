@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "board120.hpp"
 #include "init.hpp"
 
@@ -64,7 +64,7 @@ TEST_F(CompleteMoveGenTest, CastlingPosition) {
     
     // Test legal moves (castling should pass legal validation)
     S_MOVELIST legal_moves;
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     print_move_summary(legal_moves, "Castling Position - Legal");
     
     EXPECT_GT(count_moves_by_type(legal_moves, "castling"), 0);

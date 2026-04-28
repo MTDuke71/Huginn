@@ -28,7 +28,7 @@
 
 #include "position.hpp"
 #include "move.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "board120.hpp"
 #include "chess_types.hpp"
 #include "msvc_intrinsics.hpp"

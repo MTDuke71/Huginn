@@ -384,4 +384,4 @@ public:
 };
 
 // Include S_MOVELIST definition after Position class declaration
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"

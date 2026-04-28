@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iomanip>
 #include "position.hpp"
-#include "bitboard_movegen.hpp"
+#include "movegen_bb.hpp"
 #include "king_lookup_tables.hpp"
 #include "knight_lookup_tables.hpp"
 #include "init.hpp"

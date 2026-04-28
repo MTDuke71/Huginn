@@ -1,5 +1,5 @@
 #pragma once
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "position.hpp"
 #include <string>
 

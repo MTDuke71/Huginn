@@ -915,7 +915,7 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
         }
         
         S_MOVELIST move_list;
-        generate_legal_moves_enhanced(pos, move_list);
+        generate_legal_moves(pos, move_list);
         
         if (move_list.count == 0) break;
         
@@ -1225,7 +1225,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
 
     // Generate all legal moves first
     S_MOVELIST move_list;
-    generate_legal_moves_enhanced(pos, move_list);
+    generate_legal_moves(pos, move_list);
     
     // Check for repetition - but only after we ensure we have moves to try
     // This prevents returning draw score at root before storing any PV move (VICE fix)
@@ -1447,7 +1447,7 @@ S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int
     if (iid_depth >= 1) {
         // Generate moves for IID search
         S_MOVELIST iid_move_list;
-        generate_legal_moves_enhanced(pos, iid_move_list);
+        generate_legal_moves(pos, iid_move_list);
         
         if (iid_move_list.count == 0) {
             return iid_move;  // No moves available
@@ -1570,7 +1570,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         if (book_move.move != 0) {
             // CRITICAL: Validate that the book move is actually legal in current position
             S_MOVELIST legal_moves;
-            generate_legal_moves_enhanced(pos, legal_moves);
+            generate_legal_moves(pos, legal_moves);
             
             // Check if book move is in the legal move list
             bool book_move_is_legal = false;
@@ -1640,7 +1640,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         
         // Root search: try all moves at root to find the best one
         S_MOVELIST move_list;
-        generate_legal_moves_enhanced(pos, move_list);
+        generate_legal_moves(pos, move_list);
         
         if (move_list.count == 0) break; // No legal moves
         

@@ -1,5 +1,5 @@
 /**
- * @file bitboard_movegen.hpp
+ * @file movegen_bb.hpp
  * @brief True bitboard-based move generation for Huginn2
  * 
  * This module implements actual bitboard move generation that should demonstrate

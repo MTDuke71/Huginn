@@ -1,6 +1,6 @@
 #include "src/position.hpp"
 #include "../src/evaluation.hpp"
-#include "src/movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "../src/minimal_search.hpp"
 #include "src/attack_detection.hpp"
 #include "src/init.hpp"
@@ -25,7 +25,7 @@ void analyze_position_detailed(Position pos, const std::string& description) {
     
     // Generate all legal moves
     S_MOVELIST legal_moves;
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     std::cout << "Legal moves count: " << legal_moves.count << std::endl;
     
     if (legal_moves.count == 0) {
@@ -43,7 +43,7 @@ void analyze_position_detailed(Position pos, const std::string& description) {
         if (temp_pos.MakeMove(legal_moves.moves[i]) == 1) {
             // Check if opponent has any legal moves after this move
             S_MOVELIST opponent_moves;
-            generate_legal_moves_enhanced(temp_pos, opponent_moves);
+            generate_legal_moves(temp_pos, opponent_moves);
             
             // Check if opponent king is in check
             int opp_king_sq = temp_pos.king_sq[int(temp_pos.side_to_move)];
@@ -80,7 +80,7 @@ void test_simple_mate_position() {
     
     // Test the mating move Qh8#
     S_MOVELIST moves;
-    generate_legal_moves_enhanced(simple_mate, moves);
+    generate_legal_moves(simple_mate, moves);
     
     Huginn::MinimalEngine engine;
     
@@ -117,7 +117,7 @@ int main() {
     
     for (const auto& move_str : moves) {
         S_MOVELIST legal_moves;
-        generate_legal_moves_enhanced(pos1, legal_moves);
+        generate_legal_moves(pos1, legal_moves);
         
         bool move_found = false;
         for (int i = 0; i < legal_moves.count; ++i) {

@@ -22,8 +22,8 @@
 #include <string>
 
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
-#include "bitboard_movegen.hpp"
+#include "movegen.hpp"
+#include "movegen_bb.hpp"
 #include "init.hpp"
 #include "board120.hpp"
 

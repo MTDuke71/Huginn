@@ -310,11 +310,11 @@ endif()
 # ---- Source file lists ----
 set(COMMON_SOURCES
     src/bitboard.cpp
-    src/bitboard_movegen.cpp
+    src/movegen_bb.cpp
     src/init.cpp
     src/position.cpp
     src/zobrist.cpp
-    src/movegen_enhanced.cpp
+    src/movegen.cpp
     src/attack_detection.cpp
     src/attack_tables.cpp
     src/move.cpp
@@ -344,7 +344,7 @@ set(ENGINE_SOURCES
 # ---- Performance Critical Sources (for assembly analysis) ----
 set(PERFORMANCE_CRITICAL_SOURCES
     src/bitboard.cpp
-    src/movegen_enhanced.cpp
+    src/movegen.cpp
     src/attack_detection.cpp
     src/position.cpp
     src/minimal_search.cpp

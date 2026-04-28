@@ -1,6 +1,6 @@
 #include "pvtable.hpp"
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include <iostream>
 
 namespace Huginn {
@@ -58,7 +58,7 @@ bool PVTable::move_exists(Position& pos, const S_MOVE& move) const {
     
     // Generate all legal moves
     S_MOVELIST move_list;
-    generate_legal_moves_enhanced(pos, move_list);
+    generate_legal_moves(pos, move_list);
     
     // Check if the move exists in the legal move list
     for (int i = 0; i < move_list.count; ++i) {

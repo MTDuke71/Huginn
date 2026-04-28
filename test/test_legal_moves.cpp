@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "board120.hpp"
 #include "init.hpp"
 
@@ -57,7 +57,7 @@ TEST_F(LegalMoveTest, KingCannotMoveIntoCheck) {
     pos.set_from_fen("8/8/8/3r4/4K3/8/8/8 w - - 0 1");
     
     generate_all_moves(pos, pseudo_moves);
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // King on e4, rook on d5
     // King cannot move to d4, e5 (attacked by rook and still defended after king moves there)
@@ -78,7 +78,7 @@ TEST_F(LegalMoveTest, BlockCheck) {
     // Add a direct check scenario
     pos.set_from_fen("8/8/8/8/4K3/8/8/3q4 w - - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // King in check from queen on d1, must move king (no pieces to block)
     int king_moves = count_moves_from_square(legal_moves, sq(File::E, Rank::R4));
@@ -92,7 +92,7 @@ TEST_F(LegalMoveTest, CaptureAttacker) {
     // Can capture attacking piece to get out of check
     pos.set_from_fen("8/8/8/8/4K3/2N5/8/3q4 w - - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Knight on c3 can capture queen on d1
     EXPECT_TRUE(has_move(legal_moves, sq(File::C, Rank::R3), sq(File::D, Rank::R1)));
@@ -107,7 +107,7 @@ TEST_F(LegalMoveTest, PinnedPieceCannotMove) {
     pos.set_from_fen("8/8/8/3K4/8/3N4/8/3r4 w - - 0 1");
     
     generate_all_moves(pos, pseudo_moves);
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Knight on d3 is pinned by rook on d1, cannot move
     int knight_pseudo_moves = count_moves_from_square(pseudo_moves, sq(File::D, Rank::R3));
@@ -121,7 +121,7 @@ TEST_F(LegalMoveTest, PinnedPieceCanMoveAlongPin) {
     // Pinned piece can move along the pin line
     pos.set_from_fen("8/8/8/3K4/8/8/3R4/3r4 w - - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Rook on d2 is pinned by rook on d1, but can move along d-file
     EXPECT_TRUE(has_move(legal_moves, sq(File::D, Rank::R2), sq(File::D, Rank::R3)));
@@ -136,7 +136,7 @@ TEST_F(LegalMoveTest, CastlingThroughCheck) {
     // Cannot castle through check
     pos.set_from_fen("r3k2r/8/8/8/8/8/8/R2qK2R w KQkq - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Queen on d1 attacks d1, e1, f1 - cannot castle kingside through f1
     bool has_kingside_castle = false;
@@ -161,7 +161,7 @@ TEST_F(LegalMoveTest, CastlingFromCheck) {
     // Cannot castle when in check
     pos.set_from_fen("r3k2r/8/8/8/8/8/8/R3K1qR w KQkq - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Queen on g1 gives check - cannot castle
     bool has_castle = false;
@@ -179,7 +179,7 @@ TEST_F(LegalMoveTest, LegalCastling) {
     // Legal castling (no checks involved)
     pos.set_from_fen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
     
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Both castling moves should be legal
     bool has_kingside_castle = false;
@@ -205,7 +205,7 @@ TEST_F(LegalMoveTest, EnPassantPinIssue) {
     pos.set_from_fen("8/8/8/2k5/3Pp3/8/8/4K2R w - e3 0 1");
     
     generate_all_moves(pos, pseudo_moves);
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Pawn on d4 could capture en passant on e3, but this would expose king to rook
     // This is a complex case - for now just verify we generate some legal moves

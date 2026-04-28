@@ -23,7 +23,7 @@
 #include "init.hpp"
 #include "board120.hpp"
 #include "uci_utils.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include <fstream>
 #include <algorithm>
 
@@ -614,7 +614,7 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     // Emergency fallback: if search took too long or returned no move, get any legal move
     if (best_move.move == 0 || should_stop) {
         S_MOVELIST moves;
-        generate_legal_moves_enhanced(position, moves);
+        generate_legal_moves(position, moves);
         if (moves.count > 0) {
             best_move = moves.moves[0]; // Use first legal move as fallback
         }

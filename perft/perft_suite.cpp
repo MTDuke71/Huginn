@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iomanip>
 #include "position.hpp"
-#include "bitboard_movegen.hpp"
+#include "movegen_bb.hpp"
 #include "init.hpp"
 
 // Huginn2 Perft function - counts all legal move paths using bitboard move generation

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <chrono>
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "position.hpp"
 #include "init.hpp"
 
@@ -33,7 +33,7 @@ TEST_F(EnhancedMoveGenTest, LegalMoveFiltering) {
     S_MOVELIST legal_moves;
     
     generate_all_moves(pos, pseudo_moves);
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // Starting position has no illegal moves
     EXPECT_EQ(pseudo_moves.size(), legal_moves.size());
@@ -183,7 +183,7 @@ TEST_F(EnhancedMoveGenTest, PinDetection) {
     S_MOVELIST legal_moves;
     
     generate_all_moves(pos, pseudo_moves);
-    generate_legal_moves_enhanced(pos, legal_moves);
+    generate_legal_moves(pos, legal_moves);
     
     // King should have fewer legal moves due to attack by rook
     EXPECT_LT(legal_moves.size(), pseudo_moves.size());

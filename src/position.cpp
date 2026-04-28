@@ -25,7 +25,7 @@
  */
 #include "position.hpp"
 #include "zobrist.hpp"
-#include "movegen_enhanced.hpp"  // For in_check function
+#include "movegen.hpp"  // For in_check function
 #include "attack_detection.hpp"  // For Huginn::SqAttacked function
 
 // Update Zobrist key incrementally for side/castling/en passant changes only

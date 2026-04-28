@@ -2,7 +2,7 @@
 
 #include "position.hpp"
 #include "move.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "pvtable.hpp"
 #include "transposition_table.hpp"
 #include "polyglot_book.hpp"

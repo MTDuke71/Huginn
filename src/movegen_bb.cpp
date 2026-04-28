@@ -1,5 +1,5 @@
 /**
- * @file bitboard_movegen.cpp  
+ * @file movegen_bb.cpp  
  * @brief Implementation of true bitboard move generation
  * 
  * This demonstrates the actual bitboard approach that should show
@@ -9,7 +9,7 @@
  * @version 1.0
  */
 
-#include "bitboard_movegen.hpp"
+#include "movegen_bb.hpp"
 #include "board120.hpp"
 #include "king_lookup_tables.hpp"
 

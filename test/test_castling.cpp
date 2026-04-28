@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
-#include "movegen_enhanced.hpp"
+#include "movegen.hpp"
 #include "board120.hpp"
 
 class CastlingTest : public ::testing::Test {
