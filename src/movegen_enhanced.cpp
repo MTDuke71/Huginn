@@ -40,10 +40,7 @@
 #include "knight_lookup_tables.hpp"  // New lookup table optimization
 #include "king_lookup_tables.hpp"    // King lookup table optimization
 #include "sliding_piece_optimizations.hpp"
-
-#ifdef BITBOARD_ENGINE
-#include "bitboard_movegen.hpp"  // Include original bitboard for fallback
-#endif
+#include "bitboard_movegen.hpp"
 
 /**
  * @brief Generate all legal moves for the current position
@@ -62,31 +59,7 @@
  * - Direct piece list iteration: Fastest traversal method
  */
 void generate_all_moves(const Position& pos, S_MOVELIST& list) {
-#ifdef BITBOARD_ENGINE
-    // Use original bitboard move generation - optimized version has API incompatibilities
     BitboardMoveGen::generate_all_moves_bitboard(pos, list);
-#else
-    // Use traditional piece list generation for huginn
-    list.count = 0;  // Direct clear - faster than function call
-    
-    Color us = pos.side_to_move;
-    
-    // Generate moves for each piece type using piece lists (fastest approach)
-    // Use optimized pawn generation (addresses 20.3% of generation time)
-    PawnOptimizations::generate_pawn_moves_template(pos, list, us);
-    
-    // Knight generation: Template functions work correctly, lookup tables have bugs - reverting temporarily
-    KnightOptimizations::generate_knight_moves_template(pos, list, us);
-    
-    // Use optimized sliding piece generation (addresses 45%+ of generation time)
-    SlidingPieceOptimizations::generate_all_sliding_moves_optimized(pos, list, us);
-    
-    // King generation: Optimized functions work correctly, lookup tables have bugs - reverting temporarily  
-    KingOptimizations::generate_king_moves_optimized(pos, list, us);
-    
-    // NOTE: Castling moves are already included in KingOptimizations::generate_king_moves_optimized()
-    // Do NOT call KingLookupTables::generate_castling_moves_optimized() separately to avoid duplicates
-#endif
 }
 
 // ====================================================================
