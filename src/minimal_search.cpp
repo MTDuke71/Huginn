@@ -1311,9 +1311,24 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
             break;
         }
 #endif
-        
+
+        // Late Move Pruning (LMP): at shallow depth, after enough quiet moves
+        // have been tried without raising alpha, the remaining quiet moves
+        // are very unlikely to be best. Skip them entirely.
+        // Move ordering puts captures/promotions early, so these are mostly
+        // already done by the time we hit the threshold.
+        const int LMP_MAX_DEPTH = 6;
+        if (depth <= LMP_MAX_DEPTH && !in_check && !isRoot
+                && !move_list.moves[i].is_capture()
+                && !move_list.moves[i].is_promotion()) {
+            int lmp_threshold = 4 + depth * depth;
+            if (i >= lmp_threshold) {
+                continue;
+            }
+        }
+
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
-        
+
         // Track move in search stack for counter-move heuristic
         if (info.ply >= 0 && info.ply < 64) {
             info.search_stack[info.ply] = move_list.moves[i];
