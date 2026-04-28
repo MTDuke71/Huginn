@@ -1618,7 +1618,22 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         if (info.stopped || info.quit) {
             break;
         }
-        
+
+        // Iteration-start time gate: if the next iteration likely won't fit in
+        // the remaining budget, return the previous depth's best move instead
+        // of wasting time on a partial iteration that we'll discard anyway.
+        // Heuristic: assume next iteration is ~3x the elapsed time so far;
+        // bail if elapsed > budget/4 (i.e. 4*elapsed > budget).
+        if (current_depth > 1 && !info.infinite && !info.depth_only
+                && info.stop_time != std::chrono::steady_clock::time_point{}) {
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time).count();
+            auto budget_ms = std::chrono::duration_cast<std::chrono::milliseconds>(info.stop_time - info.start_time).count();
+            if (budget_ms > 0 && elapsed_ms * 4 > budget_ms) {
+                break;
+            }
+        }
+
         info.depth = current_depth;
         
         // Apply periodic aging to prevent history scores from becoming too large
@@ -1733,16 +1748,9 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                       << (double(info.multi_cut_prunes) / info.nodes * 100.0) << "%)" << std::endl;
         }
 #endif
-        
-        // Time management: if we're getting close to time limit, consider stopping
-        // Skip this if depth_only is set (UCI go depth command)
-        if (!info.infinite && !info.depth_only && elapsed.count() > 3000) {  // If we've used 3+ seconds
-            // Only continue to next depth if we have reasonable time left
-            auto time_for_next_depth = elapsed.count() * 3;  // Estimate next depth takes 3x longer
-            if (time_for_next_depth > 5000) {  // Would exceed 5 second limit
-                break;
-            }
-        }
+
+        // Iteration-start time gating happens at the top of the loop; no
+        // post-iteration time check needed here.
     }
     
     return best_move;
