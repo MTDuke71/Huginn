@@ -73,9 +73,6 @@ struct S_UNDO {
     
     // Derived state for incremental updates (performance optimization)
     std::array<int, 2> king_sq_backup;        // Previous king positions
-    std::array<uint64_t, 2> pawns_bb_backup;  // Previous pawn bitboards
-    uint64_t all_pawns_bb_backup;             // Previous combined pawn bitboard
-    std::array<int, 7> piece_counts_backup;   // Previous piece counts
     std::array<int, 2> material_score_backup; // Previous material scores
     
     // Piece list backup for undo support
@@ -101,11 +98,6 @@ public:
     std::array<Bitboard, 2> color_bitboards{ 0, 0 }; // [White, Black] all pieces
     Bitboard occupied_bitboard{ 0 }; // All pieces (White | Black)
     
-    // Legacy pawn bitboards (maintained for compatibility)
-    std::array<uint64_t, 2> pawns_bb{ 0, 0 }; // [White, Black] pawn bitboards (64)
-    uint64_t all_pawns_bb{ 0 }; // Combined bitboard of all pawns (White | Black)
-    
-    std::array<int, 7> piece_counts{}; // count by PieceType (None, Pawn, ..., King)
     uint64_t zobrist_key{0};
     
     // Material score tracking for fast evaluation
@@ -144,78 +136,31 @@ public:
     
     void restore_derived_state(const S_UNDO& undo) {
         king_sq = undo.king_sq_backup;
-        pawns_bb = undo.pawns_bb_backup;
-        all_pawns_bb = undo.all_pawns_bb_backup;
-        piece_counts = undo.piece_counts_backup;
         material_score = undo.material_score_backup;
         pList = undo.pList_backup;
         pCount = undo.pCount_backup;
     }
     
-    // Update derived state incrementally for a move (much faster than rebuild_counts)
+    // Update derived state incrementally for a move (much faster than rebuild_counts).
+    // Maintains material_score and king_sq[]. Pawn bitboard updates removed in 4.8a
+    // (the legacy pawns_bb/all_pawns_bb fields are gone; piece_bitboards is the
+    // single source of truth, updated separately by move_piece).
     void update_derived_state_for_move(const S_MOVE& m, Piece moving, Piece captured) {
         Color moving_color = color_of(moving);
         PieceType moving_type = type_of(moving);
-        
-        // Handle captured piece
-        if (!is_none(captured)) {
-            --piece_counts[size_t(type_of(captured))];
-            
-            // Subtract captured piece value from opponent's material (exclude kings)
-            if (type_of(captured) != PieceType::King) {
-                Color captured_color = color_of(captured);
-                if (captured_color != Color::None) {
-                    material_score[size_t(captured_color)] -= value_of(captured);
-                }
-            }
-            
-            // Remove captured pawn from bitboard
-            if (type_of(captured) == PieceType::Pawn) {
-                int s64_to = MAILBOX_MAPS.to64[m.get_to()];
-                if (s64_to >= 0) {
-                    Color captured_color = color_of(captured);
-                    if (captured_color != Color::None) {
-                        popBit(pawns_bb[size_t(captured_color)], s64_to);
-                        popBit(all_pawns_bb, s64_to);
-                    }
-                }
+
+        if (!is_none(captured) && type_of(captured) != PieceType::King) {
+            Color captured_color = color_of(captured);
+            if (captured_color != Color::None) {
+                material_score[size_t(captured_color)] -= value_of(captured);
             }
         }
-        
-        // Handle promotion
+
         if (m.is_promotion()) {
-            // Remove pawn, add promoted piece
-            --piece_counts[size_t(PieceType::Pawn)];
-            ++piece_counts[size_t(m.get_promoted())];
-            
-            // Update material score: remove pawn value, add promoted piece value
             material_score[size_t(moving_color)] -= value_of(make_piece(moving_color, PieceType::Pawn));
             material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.get_promoted()));
-            
-            // Remove pawn from bitboard (promoted piece isn't a pawn)
-            int s64_to = MAILBOX_MAPS.to64[m.get_to()];
-            if (s64_to >= 0) {
-                popBit(pawns_bb[size_t(moving_color)], s64_to);
-                popBit(all_pawns_bb, s64_to);
-            }
-        } else {
-            // Regular move - update piece-specific derived state
-            if (moving_type == PieceType::Pawn) {
-                // Update pawn bitboard
-                int s64_from = MAILBOX_MAPS.to64[m.get_from()];
-                int s64_to = MAILBOX_MAPS.to64[m.get_to()];
-                if (s64_from >= 0 && s64_to >= 0) {
-                    popBit(pawns_bb[size_t(moving_color)], s64_from);
-                    setBit(pawns_bb[size_t(moving_color)], s64_to);
-                    popBit(all_pawns_bb, s64_from);
-                    setBit(all_pawns_bb, s64_to);
-                }
-            }
-            
-            if (moving_type == PieceType::King) {
-                // Update king square
-                king_sq[size_t(moving_color)] = m.get_to();
-            }
+        } else if (moving_type == PieceType::King) {
+            king_sq[size_t(moving_color)] = m.get_to();
         }
     }
     
@@ -330,14 +275,6 @@ public:
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], to_sq64);
             setBit(color_bitboards[size_t(piece_color)], to_sq64);
             setBit(occupied_bitboard, to_sq64);
-            
-            // Update legacy pawn bitboards for compatibility
-            if (piece_type == PieceType::Pawn) {
-                popBit(pawns_bb[size_t(piece_color)], from_sq64);
-                popBit(all_pawns_bb, from_sq64);
-                setBit(pawns_bb[size_t(piece_color)], to_sq64);
-                setBit(all_pawns_bb, to_sq64);
-            }
         }
         
         // 4. Update piece list (find piece and update its square)
@@ -375,25 +312,15 @@ public:
         // 3. Update material score (kings can never be captured in chess)
         material_score[size_t(piece_color)] -= value_of(piece);
         
-        // 4. Update piece counters
-        --piece_counts[size_t(piece_type)];
-        
-        // 5. Update all bitboard representations
+        // 4. Update bitboards
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
-            // Update new full bitboard system
             popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             popBit(color_bitboards[size_t(piece_color)], sq64);
             popBit(occupied_bitboard, sq64);
-            
-            // Update legacy pawn bitboards for compatibility
-            if (piece_type == PieceType::Pawn) {
-                popBit(pawns_bb[size_t(piece_color)], sq64);
-                popBit(all_pawns_bb, sq64);
-            }
         }
-        
-        // 6. Remove from piece list (atomic operation)
+
+        // 5. Remove from piece list (atomic operation)
         int color_idx = int(piece_color);
         int type_idx = int(piece_type);
         
@@ -434,25 +361,15 @@ public:
             material_score[size_t(piece_color)] += value_of(piece);
         }
         
-        // 4. Update piece counters
-        ++piece_counts[size_t(piece_type)];
-        
-        // 5. Update all bitboard representations
+        // 4. Update bitboards
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
-            // Update new full bitboard system
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             setBit(color_bitboards[size_t(piece_color)], sq64);
             setBit(occupied_bitboard, sq64);
-            
-            // Update legacy pawn bitboards for compatibility
-            if (piece_type == PieceType::Pawn) {
-                setBit(pawns_bb[size_t(piece_color)], sq64);
-                setBit(all_pawns_bb, sq64);
-            }
         }
-        
-        // 6. Add to piece list
+
+        // 5. Add to piece list
         int color_idx = int(piece_color);
         int type_idx = int(piece_type);
         
@@ -770,21 +687,22 @@ public:
                pCount[color_idx][int(PieceType::Knight)] > 0;
     }
     
-    // Pawn bitboard access functions
+    // Pawn bitboard access functions (derive from piece_bitboards)
     uint64_t get_pawn_bitboard(Color c) const {
-        return pawns_bb[size_t(c)];
+        return piece_bitboards[size_t(c)][size_t(PieceType::Pawn)];
     }
-    
+
     uint64_t get_all_pawns_bitboard() const {
-        return all_pawns_bb;
+        return piece_bitboards[size_t(Color::White)][size_t(PieceType::Pawn)] |
+               piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
     }
-    
+
     uint64_t get_white_pawns() const {
-        return pawns_bb[size_t(Color::White)];
+        return piece_bitboards[size_t(Color::White)][size_t(PieceType::Pawn)];
     }
-    
+
     uint64_t get_black_pawns() const {
-        return pawns_bb[size_t(Color::Black)];
+        return piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
     }
     
     // Full bitboard access functions for all piece types

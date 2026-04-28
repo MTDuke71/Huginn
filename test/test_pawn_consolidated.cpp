@@ -296,9 +296,9 @@ TEST(PawnBitboardTest, StartingPositionPawnBitboards) {
         int white_sq64 = MAILBOX_MAPS.to64[white_pawn_sq];
         int black_sq64 = MAILBOX_MAPS.to64[black_pawn_sq];
         
-        EXPECT_TRUE(getBit(pos.pawns_bb[size_t(Color::White)], white_sq64))
+        EXPECT_TRUE(getBit(pos.get_white_pawns(), white_sq64))
             << "White pawn should be on " << white_pawn_sq;
-        EXPECT_TRUE(getBit(pos.pawns_bb[size_t(Color::Black)], black_sq64))
+        EXPECT_TRUE(getBit(pos.get_black_pawns(), black_sq64))
             << "Black pawn should be on " << black_pawn_sq;
     }
 }
@@ -324,11 +324,11 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     int e4_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R4)];
     int d5_sq64 = MAILBOX_MAPS.to64[sq(File::D, Rank::R5)];
     
-    EXPECT_FALSE(getBit(pos.pawns_bb[size_t(Color::White)], e4_sq64))
+    EXPECT_FALSE(getBit(pos.get_white_pawns(), e4_sq64))
         << "White pawn should no longer be on e4";
-    EXPECT_TRUE(getBit(pos.pawns_bb[size_t(Color::White)], d5_sq64))
+    EXPECT_TRUE(getBit(pos.get_white_pawns(), d5_sq64))
         << "White pawn should now be on d5";
-    EXPECT_FALSE(getBit(pos.pawns_bb[size_t(Color::Black)], d5_sq64))
+    EXPECT_FALSE(getBit(pos.get_black_pawns(), d5_sq64))
         << "Black pawn should no longer be on d5";
 }
 
@@ -343,7 +343,7 @@ TEST(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
     
     // Verify initial state
     int e7_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R7)];
-    EXPECT_TRUE(getBit(pos.pawns_bb[size_t(Color::White)], e7_sq64))
+    EXPECT_TRUE(getBit(pos.get_white_pawns(), e7_sq64))
         << "White pawn should initially be on e7";
     
     // Make promotion move
@@ -362,25 +362,27 @@ TEST(PawnBitboardTest, MakeUnmakePawnMoveConsistency) {
     pos.set_startpos();
     
     // Save initial state
-    auto initial_pawns_bb = pos.pawns_bb;
-    
+    auto initial_white_pawns = pos.get_white_pawns();
+    auto initial_black_pawns = pos.get_black_pawns();
+
     // Make pawn move
     S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
     ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for e2-e4";
-    
+
     // Undo move
     pos.TakeMove();
-    
+
     // Check everything is restored
-    EXPECT_EQ(pos.pawns_bb, initial_pawns_bb) << "Pawn bitboards should be fully restored";
+    EXPECT_EQ(pos.get_white_pawns(), initial_white_pawns) << "White pawn bitboard restored";
+    EXPECT_EQ(pos.get_black_pawns(), initial_black_pawns) << "Black pawn bitboard restored";
 }
 
 TEST(PawnBitboardTest, EmptyPositionHasNoPawns) {
     Position pos;
     pos.reset(); // Empty position
     
-    EXPECT_EQ(pos.pawns_bb[size_t(Color::White)], 0ULL) << "Empty position should have no white pawns";
-    EXPECT_EQ(pos.pawns_bb[size_t(Color::Black)], 0ULL) << "Empty position should have no black pawns";
+    EXPECT_EQ(pos.get_white_pawns(), 0ULL) << "Empty position should have no white pawns";
+    EXPECT_EQ(pos.get_black_pawns(), 0ULL) << "Empty position should have no black pawns";
 }
 
 TEST(PawnBitboardTest, AllPawnBitboardConsistency) {
@@ -388,7 +390,7 @@ TEST(PawnBitboardTest, AllPawnBitboardConsistency) {
     pos.set_startpos();
     
     // Check that the combined pawn bitboard equals individual color bitboards
-    Bitboard all_pawns = pos.pawns_bb[size_t(Color::White)] | pos.pawns_bb[size_t(Color::Black)];
+    Bitboard all_pawns = pos.get_all_pawns_bitboard();
     
     // Count pawns manually
     int manual_pawn_count = 0;

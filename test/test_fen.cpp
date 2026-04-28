@@ -132,13 +132,16 @@ TEST_F(FENTest, SetStartPositionUsesFEN) {
     EXPECT_EQ(pos.halfmove_clock, 0);
     EXPECT_EQ(pos.fullmove_number, 1);
     
-    // Check that piece counts are correctly updated
-    EXPECT_EQ(pos.piece_counts[int(PieceType::Pawn)], 16);   // 8 white + 8 black pawns
-    EXPECT_EQ(pos.piece_counts[int(PieceType::Rook)], 4);    // 2 white + 2 black rooks
-    EXPECT_EQ(pos.piece_counts[int(PieceType::Knight)], 4);  // 2 white + 2 black knights
-    EXPECT_EQ(pos.piece_counts[int(PieceType::Bishop)], 4);  // 2 white + 2 black bishops
-    EXPECT_EQ(pos.piece_counts[int(PieceType::Queen)], 2);   // 1 white + 1 black queen
-    EXPECT_EQ(pos.piece_counts[int(PieceType::King)], 2);    // 1 white + 1 black king
+    auto piece_count = [&](PieceType pt) {
+        return popcount(pos.piece_bitboards[int(Color::White)][int(pt)])
+             + popcount(pos.piece_bitboards[int(Color::Black)][int(pt)]);
+    };
+    EXPECT_EQ(piece_count(PieceType::Pawn), 16);
+    EXPECT_EQ(piece_count(PieceType::Rook), 4);
+    EXPECT_EQ(piece_count(PieceType::Knight), 4);
+    EXPECT_EQ(piece_count(PieceType::Bishop), 4);
+    EXPECT_EQ(piece_count(PieceType::Queen), 2);
+    EXPECT_EQ(piece_count(PieceType::King), 2);
 }
 
 TEST_F(FENTest, InvalidFENFormats) {

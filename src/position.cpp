@@ -73,14 +73,9 @@ void Position::reset() {
             board[square] = Piece::None;
         }
     }
-    piece_counts.fill(0);
     material_score[0] = 0;
     material_score[1] = 0;
-    pawns_bb[0] = 0ULL;
-    pawns_bb[1] = 0ULL;
-    all_pawns_bb = 0ULL;
-    
-    // Clear new full bitboard structures (FIX: was missing in reset!)
+
     for (int color = 0; color < 2; ++color) {
         color_bitboards[color] = 0ULL;
         for (int type = 0; type < int(PieceType::_Count); ++type) {
@@ -237,9 +232,6 @@ std::string Position::to_fen() const {
 
 void Position::save_derived_state(S_UNDO& undo) {
     undo.king_sq_backup = king_sq;
-    undo.pawns_bb_backup = pawns_bb;
-    undo.all_pawns_bb_backup = all_pawns_bb;
-    undo.piece_counts_backup = piece_counts;
     undo.material_score_backup = material_score;
     undo.pList_backup = pList;
     undo.pCount_backup = pCount;
@@ -255,16 +247,9 @@ void Position::rebuild_counts() {
             }
         }
     }
-    piece_counts.fill(0);
     material_score[0] = 0;
     material_score[1] = 0;
-    
-    // Clear legacy pawn bitboards
-    pawns_bb[0] = 0ULL;
-    pawns_bb[1] = 0ULL;
-    all_pawns_bb = 0ULL;
-    
-    // Clear new full bitboard structures  
+
     for (int color = 0; color < 2; ++color) {
         color_bitboards[color] = 0ULL;
         for (int type = 0; type < int(PieceType::_Count); ++type) {
@@ -287,24 +272,15 @@ void Position::rebuild_counts() {
         int idx = pCount[color_idx][type_idx];
         pList[color_idx][type_idx][idx] = sq120;
         pCount[color_idx][type_idx]++;
-        piece_counts[type_idx]++;
         if (type == PieceType::King) {
             king_sq[color_idx] = sq120;
         }
-        
-        // Update all bitboard representations
+
         int s64 = MAILBOX_MAPS.to64[sq120];
         if (s64 >= 0) {
-            // Update new full bitboard system
             setBit(piece_bitboards[color_idx][type_idx], s64);
             setBit(color_bitboards[color_idx], s64);
             setBit(occupied_bitboard, s64);
-            
-            // Update legacy pawn bitboards for compatibility
-            if (type == PieceType::Pawn) {
-                pawns_bb[color_idx] |= (1ULL << s64);
-                all_pawns_bb |= (1ULL << s64);
-            }
         }
         if (type != PieceType::King) {
             material_score[color_idx] += value_of(piece);

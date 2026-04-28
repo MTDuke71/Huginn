@@ -41,23 +41,25 @@ TEST_F(BoardTest, ResetBoardClearsAllSquares) {
 }
 
 TEST_F(BoardTest, ResetBoardClearsPieceCountsAndBitboards) {
+    auto piece_count = [&](PieceType pt) {
+        return popcount(pos.piece_bitboards[int(Color::White)][int(pt)])
+             + popcount(pos.piece_bitboards[int(Color::Black)][int(pt)]);
+    };
+
     // Verify starting position has pieces
-    EXPECT_GT(pos.piece_counts[int(PieceType::Pawn)], 0);
-    EXPECT_GT(pos.piece_counts[int(PieceType::King)], 0);
-    EXPECT_NE(pos.pawns_bb[0], 0ULL);  // White pawns
-    EXPECT_NE(pos.pawns_bb[1], 0ULL);  // Black pawns
-    
-    // Reset the board
+    EXPECT_GT(piece_count(PieceType::Pawn), 0);
+    EXPECT_GT(piece_count(PieceType::King), 0);
+    EXPECT_NE(pos.get_white_pawns(), 0ULL);
+    EXPECT_NE(pos.get_black_pawns(), 0ULL);
+
     pos.reset();
-    
-    // Verify all piece counts are zero
-    for (int i = 0; i < 7; ++i) {
-        EXPECT_EQ(pos.piece_counts[i], 0) << "Piece count for type " << i << " should be 0";
+
+    for (int i = int(PieceType::Pawn); i <= int(PieceType::King); ++i) {
+        EXPECT_EQ(piece_count(static_cast<PieceType>(i)), 0)
+            << "Piece count for type " << i << " should be 0";
     }
-    
-    // Verify pawn bitboards are cleared
-    EXPECT_EQ(pos.pawns_bb[0], 0ULL);  // White pawns
-    EXPECT_EQ(pos.pawns_bb[1], 0ULL);  // Black pawns
+    EXPECT_EQ(pos.get_white_pawns(), 0ULL);
+    EXPECT_EQ(pos.get_black_pawns(), 0ULL);
 }
 
 TEST_F(BoardTest, ResetBoardClearsPieceLists) {

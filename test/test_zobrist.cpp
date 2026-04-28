@@ -8,8 +8,12 @@ TEST(BoardState, StartposCountsAndKeyStable) {
     const U64 key1 = Zobrist::compute(b);
 
     // sanity counts
-    EXPECT_EQ(b.piece_counts[size_t(PieceType::Pawn)], 16); // 8 white + 8 black
-    EXPECT_EQ(b.piece_counts[size_t(PieceType::King)], 2);  // 1 white + 1 black
+    auto piece_count = [&](PieceType pt) {
+        return popcount(b.piece_bitboards[int(Color::White)][int(pt)])
+             + popcount(b.piece_bitboards[int(Color::Black)][int(pt)]);
+    };
+    EXPECT_EQ(piece_count(PieceType::Pawn), 16);
+    EXPECT_EQ(piece_count(PieceType::King), 2);
     EXPECT_NE(key1, 0u);
 
     // Rebuild and recompute should match
