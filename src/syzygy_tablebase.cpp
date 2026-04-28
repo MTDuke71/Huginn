@@ -142,7 +142,7 @@ bool SyzygyTablebase::can_probe(const Position& pos) const {
     // Count total pieces on the board
     int piece_count = 0;
     for (int square = 0; square < 120; ++square) {
-        Piece piece = pos.board[square];
+        Piece piece = pos.at(square);
         if (!is_none(piece) && !is_offboard(piece)) {
             piece_count++;
         }
@@ -167,7 +167,7 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     unsigned kings = 0, queens = 0, rooks = 0, bishops = 0, knights = 0, pawns = 0;
     
     for (int square = 0; square < 120; ++square) {
-        Piece piece = pos.board[square];
+        Piece piece = pos.at(square);
         if (is_none(piece) || is_offboard(piece)) continue;
         
         unsigned fathom_square = fathom_square_from_huginn(square);

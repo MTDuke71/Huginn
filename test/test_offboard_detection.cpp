@@ -39,7 +39,7 @@ TEST(OffboardDetection, CharRepresentationShowsOffboard) {
     
     // Test that offboard squares show as '#'
     int offboard_square = 0;  // Bottom-left corner of 120-array
-    EXPECT_EQ(to_char(pos.board[offboard_square]), '#');
+    EXPECT_EQ(to_char(pos.at(offboard_square)), '#');
     
     // Test that empty playable squares show as '.'
     int e4 = sq(File::E, Rank::R4);

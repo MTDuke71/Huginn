@@ -34,10 +34,10 @@ TEST_F(BoardTest, ResetBoardClearsAllSquares) {
     
     // Verify offboard squares are set to Piece::Offboard
     // Test a few offboard squares from the frame
-    EXPECT_EQ(pos.board[0], Piece::Offboard);    // Bottom-left corner
-    EXPECT_EQ(pos.board[10], Piece::Offboard);   // Left edge of second row
-    EXPECT_EQ(pos.board[20], Piece::Offboard);   // Square just before a1
-    EXPECT_EQ(pos.board[29], Piece::Offboard);   // Square just after h1
+    EXPECT_EQ(pos.at(0), Piece::Offboard);    // Bottom-left corner
+    EXPECT_EQ(pos.at(10), Piece::Offboard);   // Left edge of second row
+    EXPECT_EQ(pos.at(20), Piece::Offboard);   // Square just before a1
+    EXPECT_EQ(pos.at(29), Piece::Offboard);   // Square just after h1
 }
 
 TEST_F(BoardTest, ResetBoardClearsPieceCountsAndBitboards) {

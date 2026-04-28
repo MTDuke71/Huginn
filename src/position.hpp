@@ -225,9 +225,23 @@ public:
     // Compute and set the Zobrist key from current position
     void update_zobrist_key();
 
-    // Access
-    inline Piece at(int s) const { 
-        return (s >= 0 && s < 120) ? board[size_t(s)] : Piece::Offboard; 
+    // Access. at() derives the piece from bitboards so that this function does
+    // not depend on board[120] — preparatory step for deleting the mailbox
+    // half of Position. Returns Offboard for sentinel squares, None for
+    // empty playable squares, or the piece otherwise.
+    inline Piece at(int s) const {
+        if (s < 0 || s >= 120) return Piece::Offboard;
+        int s64 = MAILBOX_MAPS.to64[s];
+        if (s64 < 0) return Piece::Offboard;  // 120-sq sentinel
+        uint64_t bit = 1ULL << s64;
+        if ((occupied_bitboard & bit) == 0) return Piece::None;
+        int c = (color_bitboards[0] & bit) ? 0 : 1;
+        for (int t = int(PieceType::Pawn); t <= int(PieceType::King); ++t) {
+            if (piece_bitboards[c][t] & bit) {
+                return make_piece(Color(c), PieceType(t));
+            }
+        }
+        return Piece::None;  // unreachable when bitboards are consistent
     }
     inline void set(int s, Piece p) { if (is_playable(s)) board[size_t(s)] = p; }
     

@@ -252,12 +252,12 @@ Position MinimalEngine::mirrorBoard(const Position& pos) {
     
     // Clear the board first
     for (int sq = 0; sq < 120; ++sq) {
-        mirrored_pos.board[sq] = pos.board[sq] == Piece::Offboard ? Piece::Offboard : Piece::None;
+        mirrored_pos.board[sq] = pos.at(sq) == Piece::Offboard ? Piece::Offboard : Piece::None;
     }
     
     // Mirror all pieces on the board
     for (int sq = 21; sq <= 98; ++sq) {
-        if (pos.board[sq] == Piece::Offboard || pos.board[sq] == Piece::None) continue;
+        if (pos.at(sq) == Piece::Offboard || pos.at(sq) == Piece::None) continue;
         
         // Convert 120-square to 64-square, mirror it, then back to 120-square
         int sq64 = MAILBOX_MAPS.to64[sq];
@@ -267,7 +267,7 @@ Position MinimalEngine::mirrorBoard(const Position& pos) {
         int mirrored_sq120 = MAILBOX_MAPS.to120[mirrored_sq64];
         
         // Swap the piece color using the proper function
-        Piece original_piece = pos.board[sq];
+        Piece original_piece = pos.at(sq);
         mirrored_pos.board[mirrored_sq120] = swapPieceColor(original_piece);
     }
     
@@ -509,7 +509,7 @@ void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& mov
     
     if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
     
-    Piece piece = pos.board[from];
+    Piece piece = pos.at(from);
     int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
     
     // Increase history score for this piece-to-square combination
@@ -526,7 +526,7 @@ void MinimalEngine::penalize_search_history(const Position& pos, const S_MOVE& m
     
     if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
     
-    Piece piece = pos.board[from];
+    Piece piece = pos.at(from);
     int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
     
     // Decrease history score for this piece-to-square combination
@@ -648,7 +648,7 @@ void MinimalEngine::order_moves(std::vector<S_MOVE>& moves, const Position& pos)
             
             // Get the attacking piece type from the position
             int from_sq = move.get_from();
-            Piece attacking_piece = pos.board[from_sq];
+            Piece attacking_piece = pos.at(from_sq);
             PieceType attacker = type_of(attacking_piece);
             
             score = get_mvv_lva_score(victim, attacker);
@@ -697,7 +697,7 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
             
             // Get the attacking piece type from the position
             int from_sq = move.get_from();
-            Piece attacking_piece = pos.board[from_sq];
+            Piece attacking_piece = pos.at(from_sq);
             PieceType attacker = type_of(attacking_piece);
             
             score = get_mvv_lva_score(victim, attacker);
@@ -757,8 +757,8 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
             
             // Validate square bounds and that there's a piece to move
             if (from >= 0 && from < 120 && to >= 0 && to < 120 && 
-                pos.board[from] != Piece::None && 
-                color_of(pos.board[from]) == pos.side_to_move) {
+                pos.at(from) != Piece::None && 
+                color_of(pos.at(from)) == pos.side_to_move) {
                 tt_move_valid = true;
             }
         }
@@ -790,7 +790,7 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                 
                 // Get the attacking piece type from the position
                 int from_sq = move.get_from();
-                Piece attacking_piece = pos.board[from_sq];
+                Piece attacking_piece = pos.at(from_sq);
                 PieceType attacker = type_of(attacking_piece);
                 
                 score = 1000000 + get_mvv_lva_score(victim, attacker);
@@ -845,7 +845,7 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                         int to = move.get_to();
                         
                         if (from >= 0 && from < 120 && to >= 0 && to < 120) {
-                            Piece piece = pos.board[from];
+                            Piece piece = pos.at(from);
                             int piece_index = static_cast<int>(piece) % 13;
                             score = search_history[piece_index][to];  // History score
                         } else {

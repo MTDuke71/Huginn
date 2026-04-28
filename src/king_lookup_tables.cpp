@@ -233,7 +233,7 @@ namespace KingLookupTables {
         if (us == Color::White) {
             const int e1 = WHITE_KING_START;
             // Castling requires king on its starting square
-            if (pos.board[e1] != Piece::WhiteKing) return;
+            if (pos.at(e1) != Piece::WhiteKing) return;
 
             // White kingside castling (e1-g1)
             if (pos.castling_rights & CASTLE_WK) {
@@ -241,8 +241,8 @@ namespace KingLookupTables {
                 const int g1 = sq(File::G, Rank::R1);
                 const int h1 = sq(File::H, Rank::R1);
 
-                if (pos.board[h1] == Piece::WhiteRook &&
-                    pos.board[f1] == Piece::None && pos.board[g1] == Piece::None) {
+                if (pos.at(h1) == Piece::WhiteRook &&
+                    pos.at(f1) == Piece::None && pos.at(g1) == Piece::None) {
                     if (!Huginn::SqAttacked(e1, pos, Color::Black) &&
                         !Huginn::SqAttacked(f1, pos, Color::Black) &&
                         !Huginn::SqAttacked(g1, pos, Color::Black)) {
@@ -258,8 +258,8 @@ namespace KingLookupTables {
                 const int b1 = sq(File::B, Rank::R1);
                 const int a1 = sq(File::A, Rank::R1);
 
-                if (pos.board[a1] == Piece::WhiteRook &&
-                    pos.board[d1] == Piece::None && pos.board[c1] == Piece::None && pos.board[b1] == Piece::None) {
+                if (pos.at(a1) == Piece::WhiteRook &&
+                    pos.at(d1) == Piece::None && pos.at(c1) == Piece::None && pos.at(b1) == Piece::None) {
                     if (!Huginn::SqAttacked(e1, pos, Color::Black) &&
                         !Huginn::SqAttacked(d1, pos, Color::Black) &&
                         !Huginn::SqAttacked(c1, pos, Color::Black)) {
@@ -269,7 +269,7 @@ namespace KingLookupTables {
             }
         } else {
             const int e8 = BLACK_KING_START;
-            if (pos.board[e8] != Piece::BlackKing) return;
+            if (pos.at(e8) != Piece::BlackKing) return;
 
             // Black kingside castling (e8-g8)
             if (pos.castling_rights & CASTLE_BK) {
@@ -277,8 +277,8 @@ namespace KingLookupTables {
                 const int g8 = sq(File::G, Rank::R8);
                 const int h8 = sq(File::H, Rank::R8);
 
-                if (pos.board[h8] == Piece::BlackRook &&
-                    pos.board[f8] == Piece::None && pos.board[g8] == Piece::None) {
+                if (pos.at(h8) == Piece::BlackRook &&
+                    pos.at(f8) == Piece::None && pos.at(g8) == Piece::None) {
                     if (!Huginn::SqAttacked(e8, pos, Color::White) &&
                         !Huginn::SqAttacked(f8, pos, Color::White) &&
                         !Huginn::SqAttacked(g8, pos, Color::White)) {
@@ -294,8 +294,8 @@ namespace KingLookupTables {
                 const int b8 = sq(File::B, Rank::R8);
                 const int a8 = sq(File::A, Rank::R8);
 
-                if (pos.board[a8] == Piece::BlackRook &&
-                    pos.board[d8] == Piece::None && pos.board[c8] == Piece::None && pos.board[b8] == Piece::None) {
+                if (pos.at(a8) == Piece::BlackRook &&
+                    pos.at(d8) == Piece::None && pos.at(c8) == Piece::None && pos.at(b8) == Piece::None) {
                     if (!Huginn::SqAttacked(e8, pos, Color::White) &&
                         !Huginn::SqAttacked(d8, pos, Color::White) &&
                         !Huginn::SqAttacked(c8, pos, Color::White)) {

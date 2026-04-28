@@ -282,7 +282,7 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
     for (int sq = 0; sq < 120; ++sq) {
         if (!is_valid_square(sq)) continue;
         
-        Piece piece = pos.board[sq];
+        Piece piece = pos.at(sq);
         if (piece == Piece::None) continue;
         
         // Convert to 64-square index (file=0..7, rank=0..7)
@@ -325,7 +325,7 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
             // Check left and right of the en passant square for opposing pawns
             if (ep_file > 0) {  // Check left
                 int left_sq = (ep_rank + 2) * 10 + (ep_file - 1 + 1);
-                Piece left_piece = pos.board[left_sq];
+                Piece left_piece = pos.at(left_sq);
                 if (get_piece_type(left_piece) == PieceType::Pawn && 
                     get_piece_color(left_piece) == pos.side_to_move) {
                     can_capture_ep = true;
@@ -333,7 +333,7 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
             }
             if (ep_file < 7) {  // Check right
                 int right_sq = (ep_rank + 2) * 10 + (ep_file + 1 + 1);
-                Piece right_piece = pos.board[right_sq];
+                Piece right_piece = pos.at(right_sq);
                 if (get_piece_type(right_piece) == PieceType::Pawn && 
                     get_piece_color(right_piece) == pos.side_to_move) {
                     can_capture_ep = true;
@@ -433,7 +433,7 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
     int to_120 = (to_rank + 2) * 10 + (to_file + 1);
     
     // Determine captured piece
-    Piece captured = pos.board[to_120];
+    Piece captured = pos.at(to_120);
     PieceType captured_type = (captured != Piece::None) ? get_piece_type(captured) : PieceType::None;
     
     // Check for special moves
@@ -441,7 +441,7 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
     bool is_castle = false;
     bool is_pawn_start = false;
     
-    Piece moving_piece = pos.board[from_120];
+    Piece moving_piece = pos.at(from_120);
     
     // Check for en passant
     if (get_piece_type(moving_piece) == PieceType::Pawn && to_120 == pos.ep_square) {
