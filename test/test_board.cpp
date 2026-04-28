@@ -62,29 +62,6 @@ TEST_F(BoardTest, ResetBoardClearsPieceCountsAndBitboards) {
     EXPECT_EQ(pos.get_black_pawns(), 0ULL);
 }
 
-TEST_F(BoardTest, ResetBoardClearsPieceLists) {
-    // Verify starting position has pieces in lists
-    EXPECT_GT(pos.pCount[0][int(PieceType::Pawn)], 0);  // White pawns
-    EXPECT_GT(pos.pCount[1][int(PieceType::Pawn)], 0);  // Black pawns
-    
-    // Reset the board
-    pos.reset();
-    
-    // Verify all piece counts are zero
-    for (int color = 0; color < 2; ++color) {
-        for (int type = 0; type < int(PieceType::_Count); ++type) {
-            EXPECT_EQ(pos.pCount[color][type], 0) 
-                << "Piece count for color " << color << " type " << type << " should be 0";
-            
-            // Verify piece lists are cleared
-            for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                EXPECT_EQ(pos.pList[color][type][i], -1)
-                    << "Piece list entry should be -1 (empty)";
-            }
-        }
-    }
-}
-
 TEST_F(BoardTest, ResetBoardClearsKingSquares) {
     // Verify starting position has king squares set
     EXPECT_NE(pos.king_sq[0], -1);  // White king

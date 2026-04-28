@@ -25,9 +25,9 @@ TEST(RookMoveGen, SingleRookCenter) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    // Assert rook piece list and count are correct
-    ASSERT_EQ(pos.pCount[int(Color::White)][int(PieceType::Rook)], 1);
-    ASSERT_EQ(pos.pList[int(Color::White)][int(PieceType::Rook)][0], sq(File::D, Rank::R4));
+    // Assert white rook is on d4 (single rook on the bitboard, at the right square)
+    ASSERT_EQ(popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)]), 1);
+    ASSERT_EQ(pos.at(sq(File::D, Rank::R4)), Piece::WhiteRook);
     
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
@@ -93,9 +93,9 @@ TEST(BishopMoveGen, SingleBishopCenter) {
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
-    // Assert bishop piece list and count are correct
-    ASSERT_EQ(pos.pCount[int(Color::White)][int(PieceType::Bishop)], 1);
-    ASSERT_EQ(pos.pList[int(Color::White)][int(PieceType::Bishop)][0], sq(File::D, Rank::R4));
+    // Assert white bishop is on d4
+    ASSERT_EQ(popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)]), 1);
+    ASSERT_EQ(pos.at(sq(File::D, Rank::R4)), Piece::WhiteBishop);
     
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);

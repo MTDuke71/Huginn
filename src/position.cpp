@@ -83,14 +83,6 @@ void Position::reset() {
         }
     }
     occupied_bitboard = 0ULL;
-    for (int color = 0; color < 2; ++color) {
-        for (int type = 0; type < int(PieceType::_Count); ++type) {
-            pCount[color][type] = 0;
-            for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                pList[color][type][i] = -1;
-            }
-        }
-    }
     king_sq[0] = -1;
     king_sq[1] = -1;
     side_to_move = Color::None;
@@ -233,20 +225,9 @@ std::string Position::to_fen() const {
 void Position::save_derived_state(S_UNDO& undo) {
     undo.king_sq_backup = king_sq;
     undo.material_score_backup = material_score;
-    undo.pList_backup = pList;
-    undo.pCount_backup = pCount;
 }
 
 void Position::rebuild_counts() {
-    // Clear all piece lists and counts
-    for (int color = 0; color < 2; ++color) {
-        for (int type = 0; type < int(PieceType::_Count); ++type) {
-            pCount[color][type] = 0;
-            for (int i = 0; i < MAX_PIECES_PER_TYPE; ++i) {
-                pList[color][type][i] = -1;
-            }
-        }
-    }
     material_score[0] = 0;
     material_score[1] = 0;
 
@@ -269,9 +250,6 @@ void Position::rebuild_counts() {
         PieceType type = type_of(piece);
         int color_idx = int(color);
         int type_idx = int(type);
-        int idx = pCount[color_idx][type_idx];
-        pList[color_idx][type_idx][idx] = sq120;
-        pCount[color_idx][type_idx]++;
         if (type == PieceType::King) {
             king_sq[color_idx] = sq120;
         }
