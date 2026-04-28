@@ -1640,7 +1640,11 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
     
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
-    
+
+    // Score of the previous completed iteration — used as the centre of
+    // the aspiration window for the next iteration.
+    int prev_score = 0;
+
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
@@ -1680,10 +1684,6 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         
         if (move_list.count == 0) break; // No legal moves
         
-        int best_score = -30000;
-        S_MOVE depth_best_move;
-        depth_best_move.move = 0;
-        
         // Order moves to try previous iteration's best move first for better alpha-beta cutoffs
         if (prev_best.move != 0) {
             for (int i = 0; i < move_list.count; ++i) {
@@ -1696,22 +1696,59 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                 }
             }
         }
-        
-        // Try each move at the root
-        for (int i = 0; i < move_list.count; ++i) {
+
+        // Aspiration windows: at deeper iterations, search with a narrow
+        // window around the previous iteration's score and re-search with a
+        // wider window if it fails. Saves a lot of work when scores are stable.
+        const int ASPIRATION_MIN_DEPTH = 4;
+        const int ASPIRATION_INITIAL_DELTA = 50;  // ±50 cp window — wider to
+        // tolerate Huginn's PST-driven score swings between iterations
+        int alpha, beta, delta;
+        if (current_depth >= ASPIRATION_MIN_DEPTH) {
+            delta = ASPIRATION_INITIAL_DELTA;
+            alpha = std::max(prev_score - delta, -30000);
+            beta  = std::min(prev_score + delta,  30000);
+        } else {
+            delta = 0;
+            alpha = -30000;
+            beta  =  30000;
+        }
+
+        int best_score;
+        S_MOVE depth_best_move;
+        for (;;) {
+            best_score = -30000;
+            depth_best_move.move = 0;
+            int local_alpha = alpha;
+
+            for (int i = 0; i < move_list.count; ++i) {
+                if (info.stopped || info.quit) break;
+                if (pos.MakeMove(move_list.moves[i]) != 1) continue; // illegal
+                int score = -AlphaBeta(pos, -beta, -local_alpha, current_depth - 1, info, true, false);
+                pos.TakeMove();
+                if (info.stopped || info.quit) break;
+                if (score > best_score) {
+                    best_score = score;
+                    depth_best_move = move_list.moves[i];
+                    if (best_score > local_alpha) local_alpha = best_score;
+                }
+            }
+
             if (info.stopped || info.quit) break;
-            
-            if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
-            
-            // Search this move - isRoot = false for non-root recursive calls
-            int score = -AlphaBeta(pos, -30000, 30000, current_depth - 1, info, true, false);
-            pos.TakeMove();
-            
-            if (info.stopped || info.quit) break;
-            
-            if (score > best_score) {
-                best_score = score;
-                depth_best_move = move_list.moves[i];
+
+            // Check whether the result fell outside the aspiration window
+            if (best_score <= alpha && alpha > -30000) {
+                // Fail low — widen alpha; pull beta toward midpoint
+                beta  = (alpha + beta) / 2;
+                alpha = std::max(best_score - delta, -30000);
+                delta += delta / 2;
+            } else if (best_score >= beta && beta < 30000) {
+                // Fail high — widen beta
+                beta  = std::min(best_score + delta, 30000);
+                delta += delta / 2;
+            } else {
+                // Score is inside window — accept
+                break;
             }
         }
         
@@ -1725,6 +1762,8 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             best_move = depth_best_move;
             // Store in PV table for next iteration's move ordering
             store_pv_move(pos.zobrist_key, depth_best_move);
+            // Save this score for the next iteration's aspiration window
+            prev_score = best_score;
         }
         
         // Calculate elapsed time for output
