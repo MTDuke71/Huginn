@@ -121,7 +121,17 @@ int MinimalEngine::evaluate(const Position& pos) {
             pawn_structure_score -= EvalParams::PASSED_PAWN_BONUS[mirror_rank];
         }
     }
-    
+
+    // Doubled pawn penalty: each extra own pawn on the same file is a liability.
+    // Two pawns on a file → −P; three pawns → −2P; etc.
+    for (int f = 0; f < 8; ++f) {
+        uint64_t file_mask = EvalParams::FILE_MASKS[f];
+        int wpc = popcount(white_pawns & file_mask);
+        int bpc = popcount(black_pawns & file_mask);
+        if (wpc > 1) pawn_structure_score -= (wpc - 1) * EvalParams::DOUBLED_PAWN_PENALTY;
+        if (bpc > 1) pawn_structure_score += (bpc - 1) * EvalParams::DOUBLED_PAWN_PENALTY;
+    }
+
     score += pawn_structure_score;
     
     // VICE Part 81: Open and semi-open file bonuses for rooks and queens
