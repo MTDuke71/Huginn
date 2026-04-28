@@ -140,15 +140,15 @@
     ],
     "stats": {
         "Huginn_current vs Huginn_4_2": {
-            "wins": 22,
-            "losses": 8,
-            "draws": 10,
-            "penta_WW": 6,
-            "penta_WD": 6,
-            "penta_WL": 4,
-            "penta_DD": 1,
-            "penta_LD": 2,
-            "penta_LL": 1
+            "wins": 85,
+            "losses": 27,
+            "draws": 32,
+            "penta_WW": 25,
+            "penta_WD": 21,
+            "penta_WL": 14,
+            "penta_DD": 2,
+            "penta_LD": 7,
+            "penta_LL": 3
         }
     }
 }
