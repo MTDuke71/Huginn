@@ -102,13 +102,13 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
         while (pushes != 0) {
             int to_sq64 = get_lsb(pushes);
             pushes &= pushes - 1;
-            
+
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
             int from_sq120 = to_sq120 - 20;  // Two ranks south
-            
-            list.add_quiet_move(make_move(from_sq120, to_sq120));
+
+            list.add_quiet_move(make_pawn_start(from_sq120, to_sq120));
         }
-        
+
         // White pawn captures using attack bitboards
         uint64_t pawn_copy = pos.piece_bitboards[int(us)][int(PieceType::Pawn)];
         while (pawn_copy != 0) {
@@ -161,16 +161,16 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
             }
         }
         
-        // Generate double pushes  
+        // Generate double pushes
         pushes = double_pushes;
         while (pushes != 0) {
             int to_sq64 = get_lsb(pushes);
             pushes &= pushes - 1;
-            
+
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
             int from_sq120 = to_sq120 + 20;  // Two ranks north
-            
-            list.add_quiet_move(make_move(from_sq120, to_sq120));
+
+            list.add_quiet_move(make_pawn_start(from_sq120, to_sq120));
         }
         
         // Black pawn captures

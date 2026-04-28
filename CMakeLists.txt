@@ -373,7 +373,6 @@ add_huginn_executable(huginn
     SOURCES
         src/main.cpp
         ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
@@ -383,7 +382,6 @@ add_huginn_executable(perft_suite
     SOURCES
         perft/perft_suite.cpp
         ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
@@ -393,7 +391,6 @@ add_huginn_executable(perft_benchmark
     SOURCES
         perft/perft_benchmark.cpp
         ${ENGINE_SOURCES}
-        src/bitboard_benchmark.cpp
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
@@ -481,12 +478,7 @@ if(GTEST_FOUND)
         test/test_legal_moves.cpp
         test/test_complete_movegen.cpp
         test/test_movegen.cpp
-        test/test_pawn_optimization.cpp
-        test/test_knight_optimization.cpp
-        test/test_knight_lookup.cpp
-        test/test_king_lookup.cpp
         test/test_evaluation_symmetry.cpp
-        test/debug_lookup_integration.cpp
     test/test_uci_time_and_stop_gtest.cpp
     test/test_uci_time_param_gtest.cpp
     test/test_uci_position_parsing.cpp

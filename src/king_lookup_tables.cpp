@@ -231,64 +231,75 @@ namespace KingLookupTables {
         constexpr int BLACK_QUEENSIDE_KING_TO = sq(File::C, Rank::R8);
         
         if (us == Color::White) {
+            const int e1 = WHITE_KING_START;
+            // Castling requires king on its starting square
+            if (pos.board[e1] != Piece::WhiteKing) return;
+
             // White kingside castling (e1-g1)
             if (pos.castling_rights & CASTLE_WK) {
                 const int f1 = sq(File::F, Rank::R1);
                 const int g1 = sq(File::G, Rank::R1);
-                
-                if (pos.board[f1] == Piece::None && pos.board[g1] == Piece::None) {
-                    const int e1 = WHITE_KING_START;
-                    if (!Huginn::SqAttacked(e1, pos, Color::Black) && 
-                        !Huginn::SqAttacked(f1, pos, Color::Black) && 
+                const int h1 = sq(File::H, Rank::R1);
+
+                if (pos.board[h1] == Piece::WhiteRook &&
+                    pos.board[f1] == Piece::None && pos.board[g1] == Piece::None) {
+                    if (!Huginn::SqAttacked(e1, pos, Color::Black) &&
+                        !Huginn::SqAttacked(f1, pos, Color::Black) &&
                         !Huginn::SqAttacked(g1, pos, Color::Black)) {
-                        list.add_quiet_move(make_castle(e1, WHITE_KINGSIDE_KING_TO));
+                        list.add_castle_move(make_castle(e1, WHITE_KINGSIDE_KING_TO));
                     }
                 }
             }
-            
-            // White queenside castling (e1-c1)  
+
+            // White queenside castling (e1-c1)
             if (pos.castling_rights & CASTLE_WQ) {
                 const int d1 = sq(File::D, Rank::R1);
                 const int c1 = sq(File::C, Rank::R1);
                 const int b1 = sq(File::B, Rank::R1);
-                
-                if (pos.board[d1] == Piece::None && pos.board[c1] == Piece::None && pos.board[b1] == Piece::None) {
-                    const int e1 = WHITE_KING_START;
-                    if (!Huginn::SqAttacked(e1, pos, Color::Black) && 
-                        !Huginn::SqAttacked(d1, pos, Color::Black) && 
+                const int a1 = sq(File::A, Rank::R1);
+
+                if (pos.board[a1] == Piece::WhiteRook &&
+                    pos.board[d1] == Piece::None && pos.board[c1] == Piece::None && pos.board[b1] == Piece::None) {
+                    if (!Huginn::SqAttacked(e1, pos, Color::Black) &&
+                        !Huginn::SqAttacked(d1, pos, Color::Black) &&
                         !Huginn::SqAttacked(c1, pos, Color::Black)) {
-                        list.add_quiet_move(make_castle(e1, WHITE_QUEENSIDE_KING_TO));
+                        list.add_castle_move(make_castle(e1, WHITE_QUEENSIDE_KING_TO));
                     }
                 }
             }
         } else {
+            const int e8 = BLACK_KING_START;
+            if (pos.board[e8] != Piece::BlackKing) return;
+
             // Black kingside castling (e8-g8)
             if (pos.castling_rights & CASTLE_BK) {
                 const int f8 = sq(File::F, Rank::R8);
                 const int g8 = sq(File::G, Rank::R8);
-                
-                if (pos.board[f8] == Piece::None && pos.board[g8] == Piece::None) {
-                    const int e8 = BLACK_KING_START;
-                    if (!Huginn::SqAttacked(e8, pos, Color::White) && 
-                        !Huginn::SqAttacked(f8, pos, Color::White) && 
+                const int h8 = sq(File::H, Rank::R8);
+
+                if (pos.board[h8] == Piece::BlackRook &&
+                    pos.board[f8] == Piece::None && pos.board[g8] == Piece::None) {
+                    if (!Huginn::SqAttacked(e8, pos, Color::White) &&
+                        !Huginn::SqAttacked(f8, pos, Color::White) &&
                         !Huginn::SqAttacked(g8, pos, Color::White)) {
-                        list.add_quiet_move(make_castle(e8, BLACK_KINGSIDE_KING_TO));
+                        list.add_castle_move(make_castle(e8, BLACK_KINGSIDE_KING_TO));
                     }
                 }
             }
-            
+
             // Black queenside castling (e8-c8)
             if (pos.castling_rights & CASTLE_BQ) {
                 const int d8 = sq(File::D, Rank::R8);
                 const int c8 = sq(File::C, Rank::R8);
                 const int b8 = sq(File::B, Rank::R8);
-                
-                if (pos.board[d8] == Piece::None && pos.board[c8] == Piece::None && pos.board[b8] == Piece::None) {
-                    const int e8 = BLACK_KING_START;
-                    if (!Huginn::SqAttacked(e8, pos, Color::White) && 
-                        !Huginn::SqAttacked(d8, pos, Color::White) && 
+                const int a8 = sq(File::A, Rank::R8);
+
+                if (pos.board[a8] == Piece::BlackRook &&
+                    pos.board[d8] == Piece::None && pos.board[c8] == Piece::None && pos.board[b8] == Piece::None) {
+                    if (!Huginn::SqAttacked(e8, pos, Color::White) &&
+                        !Huginn::SqAttacked(d8, pos, Color::White) &&
                         !Huginn::SqAttacked(c8, pos, Color::White)) {
-                        list.add_quiet_move(make_castle(e8, BLACK_QUEENSIDE_KING_TO));
+                        list.add_castle_move(make_castle(e8, BLACK_QUEENSIDE_KING_TO));
                     }
                 }
             }

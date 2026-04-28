@@ -91,36 +91,13 @@ struct S_MOVELIST {
     const S_MOVE* end() const { return moves + count; }
 };
 
-// Enhanced move generation function with improved organization
+// Move generation entry points (delegate to BitboardMoveGen for the bitboard core).
 void generate_all_moves(const Position& pos, S_MOVELIST& list);
 
-// ====================================================================
-// Individual Piece Move Generation Functions
-// ====================================================================
-// NOTE: These functions are NOT used in production move generation.
-// They are retained for profiling and testing purposes only.
-//
-// Production move generation uses optimized versions:
-// - PawnOptimizations::generate_pawn_moves_optimized()
-// - KnightOptimizations::generate_knight_moves_template()  
-// - SlidingPieceOptimizations::generate_all_sliding_moves_optimized()
-// - KingOptimizations::generate_king_moves_optimized()
-// ====================================================================
-void generate_pawn_moves(const Position& pos, S_MOVELIST& list, Color us);
-void generate_knight_moves(const Position& pos, S_MOVELIST& list, Color us);
-void generate_bishop_moves(const Position& pos, S_MOVELIST& list, Color us);
-void generate_rook_moves(const Position& pos, S_MOVELIST& list, Color us);
-void generate_queen_moves(const Position& pos, S_MOVELIST& list, Color us);
-void generate_king_moves(const Position& pos, S_MOVELIST& list, Color us);
-
-// Helper function for sliding pieces
-void generate_sliding_moves(const Position& pos, S_MOVELIST& list, Color us, PieceType piece_type, const int* directions, int num_directions);
-
-// Enhanced legal move generation with better performance
-// Main move generation function  
+// Pseudo-legal moves filtered by Position::MakeMove legality check.
 void generate_legal_moves_enhanced(Position& pos, S_MOVELIST& list);
 
-// VICE Part 65: Generate only capture moves for quiescence search
+// Quiescence: legal captures only.
 void generate_all_caps(Position& pos, S_MOVELIST& list);
 
 // Helper functions
