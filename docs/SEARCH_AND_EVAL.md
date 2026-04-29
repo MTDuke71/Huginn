@@ -4,6 +4,46 @@ Snapshot of what's implemented in Huginn 2.0 (post Phase 4) and what's
 planned. Reality check on each item is anchored to file:line so this
 stays accurate as the code evolves.
 
+## Strength gap diagnosis (2026-04-28)
+
+Calibration gauntlet: **huginn current 0-20 vs MTLChess_v0.3** (~1984 Elo)
+at tc=10+0.1. That's a >400 Elo gap, putting huginn current somewhere
+around **~1500-1700 Elo at this TC**.
+
+NPS bench, both engines depth 11 from startpos, single thread:
+
+| Engine | Nodes to depth 11 | Time | NPS |
+|---|---|---|---|
+| Huginn current | 17,777,636 | 8.6 s | ~2.06 Mnps |
+| MTLChess_v0.3 | 904,334 | 0.39 s | ~2.33 Mnps |
+
+**Raw NPS is at parity. The entire ~22× time-to-depth gap is search-tree
+shape**, not node speed. MTLChess prunes ~20× more aggressively per
+depth at the same NPS.
+
+(CLAUDE.md's stale "~220 knps" claim is off by ~10×; the current engine
+is ~2 Mnps.)
+
+What MTLChess has that we don't / have weaker:
+
+- **SEE-based capture ordering and qsearch pruning** (skip captures with
+  `SEE < 0` in qsearch entirely). This alone shrinks the qsearch tree
+  5-10× and is the single biggest tree-shape win available to us. It's
+  currently Tier 2 #10 in this doc — **promoted to Tier 1 next-up**.
+- **Working aspiration windows + clean PVS** — first move full window,
+  subsequent moves null-window, re-search on `score > alpha`, then full
+  window again if `alpha < score < beta`. Our attempt at this is broken
+  (see Tier 1 progress).
+- **Tuned 64×64 LMR table** computed at compile-time. Our LMR is the
+  simple "depth ≥ 3, move ≥ 4, R = 1" rule.
+- **Adaptive null-move R** (R=3 at depth ≥ 6, else R=2). We use a flat
+  R=4 — more aggressive but possibly less accurate.
+
+Conclusion: depth deficit is the dominant factor. Eval improvements
+(king safety, mobility) help a depth-deficient engine less than search
+improvements do. **Search-shape work (fix aspiration, fix LMP, add SEE,
+tune LMR) is the priority**; eval is secondary until the tree is right.
+
 ## External rating ladder (calibration)
 
 Transitive Elo estimates derived from a 2026-04-28 gauntlet run: MORA's
@@ -174,31 +214,42 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 | 20 | **Magic-bitboard slider attacks** | 1-2 days | Already partially used; verify all slider attacks go through magics not ray-tracing. |
 | 21 | **Smaller move encoding** | 4 hrs | If `S_MOVE` is migrated, the bit packing could shrink further. |
 
-## Next steps (in priority order)
+## Next steps (revised priority — search-shape first)
+
+The 22× time-to-depth gap vs MTLChess says we're losing on tree shape,
+not eval. Reorder the work accordingly:
 
 1. **Fix LMP (Tier 1 #3).** Switch from physical move index `i` to a
    per-node `quiet_count` counter; only prune at `quiet_count >= threshold`.
-   Re-test alone vs `huginn_t3` (the 1+2+3 baseline at commit `87b5b92`),
+   Re-test alone vs `huginn_t3` (1+2+3 baseline at commit `87b5b92`),
    100 games minimum. Target +20-40 Elo.
 2. **Fix aspiration windows (Tier 1 #1).** Split into two commits so
    each can be bisected: (a) add `if (best_score >= beta) break;` to
    the root inner loop (the root-PVS half of the original change),
    (b) layer the actual aspiration window logic on top. Test each
    step vs current tip, 100 games. Target +30-50 Elo combined.
-3. **Tier 2 #8 (king safety / attack zone)** — biggest single eval
-   improvement available. Full session. Target +50-100 Elo.
-4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
-   Constants `MOBILITY_WEIGHT_*` already defined. Full session.
-   Target +30-50 Elo.
-5. **Tier 2 #10 (SEE)** and **#11 (continuation history)** — both
-   substantial; one session each.
-6. After Tier 1 fixes + most of Tier 2, **target depth-9-10 against
-   MTLChess at 10+0.1**. If still losing, the gap to ~2100 is search-
-   tree-shape, not eval, and **NNUE (item 15)** becomes the next move.
+3. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
+   reference: [MTLChess src/search.zig:221](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
+   Two integration points: (a) capture ordering — split MVV-LVA captures
+   into "SEE ≥ 0" and "SEE < 0" buckets so losing trades sink to the
+   bottom; (b) qsearch — skip moves with `SEE < 0` entirely. Likely
+   the single biggest tree-shape win available. Target +30-50 Elo.
+4. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
+   compile-time 64×64 lookup table indexed by (depth, move-number).
+   Reference [MTLChess src/search.zig:63](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
+   Target +20-40 Elo.
+5. **Tier 2 #8 (king safety)** — biggest single eval improvement.
+   Target +50-100 Elo.
+6. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
+   Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
+7. **Tier 2 #11 (continuation history)** — improves move ordering,
+   compounds with SEE.
+8. Re-run calibration vs MTLChess_v0.3 after each major fix; target
+   crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191).
 
 Bisect tooling stays in place: `test_bisect_456.bat <lmp|razor|asp|t3>
-[rounds]` will keep working for any rebuild against `huginn4F` once the
-matching `huginn_t3_*.exe` is staged.
+[rounds]` for vs-4F regression matches; `test_huginn_calibration.bat
+<mtl03|mora|mtl05>` for external rating checks.
 
 ## Reference
 
