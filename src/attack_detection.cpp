@@ -7,18 +7,23 @@
 #include "position.hpp"
 #include "attack_tables.hpp"
 #include "bitboard.hpp"
+#include "msvc_optimizations.hpp"
+
+#include <cassert>
 
 namespace Huginn {
 
 bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
-    if (sq < 0 || sq >= 120) return false;
+    assert(sq >= 0 && sq < 120);
+    __assume(sq >= 0 && sq < 120);
     int sq64 = MAILBOX_MAPS.to64[sq];
     if (sq64 < 0) return false;  // off-board sentinel square
     return SqAttackedBB(sq64, pos, attacking_color);
 }
 
 bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {
-    if (sq < 0 || sq >= 64) return false;
+    assert(sq >= 0 && sq < 64);
+    __assume(sq >= 0 && sq < 64);
 
     int color_idx = static_cast<int>(attacking_color);
     uint64_t enemy_pieces = pos.color_bitboards[color_idx];

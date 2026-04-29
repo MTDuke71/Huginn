@@ -4,6 +4,8 @@
 #include "attack_detection.hpp"
 #include "board120.hpp"
 #include "input_checking.hpp"
+#include "msvc_optimizations.hpp"
+#include <cassert>
 #include <iostream>
 #include <algorithm>
 #include <iomanip>  // For std::setw
@@ -632,12 +634,12 @@ void MinimalEngine::init_mvv_lva() {
 int MinimalEngine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
     int victim_index = static_cast<int>(victim);
     int attacker_index = static_cast<int>(attacker);
-    
-    // Bounds checking
-    if (victim_index < 0 || victim_index >= 7 || attacker_index < 0 || attacker_index >= 7) {
-        return 0;
-    }
-    
+
+    assert(victim_index >= 0 && victim_index < 7);
+    assert(attacker_index >= 0 && attacker_index < 7);
+    __assume(victim_index >= 0 && victim_index < 7);
+    __assume(attacker_index >= 0 && attacker_index < 7);
+
     return mvv_lva_scores[victim_index][attacker_index];
 }
 

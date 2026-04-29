@@ -403,12 +403,12 @@ int Position::MakeMove(const S_MOVE& move) {
     
     // Check if move left current player's king in check
     // Note: side_to_move has already been flipped, so we check the previous side's king
-    Color previous_side = !side_to_move;  
+    Color previous_side = !side_to_move;
     int king_square = king_sq[int(previous_side)];
-    
-    // Re-enable legality check now that we've debugged the Zobrist issues
-    // Use Huginn::SqAttacked directly to check if king is attacked by current side
-    if (Huginn::SqAttacked(king_square, *this, side_to_move)) {
+
+    // king_square == -1 only happens in partial test positions with no king of that color;
+    // there is nothing to be in check, so treat the move as legal.
+    if (king_square >= 0 && Huginn::SqAttacked(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
         TakeMove();
         return 0;  // Illegal move

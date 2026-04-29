@@ -55,9 +55,9 @@ void generate_knight_moves_bitboard(const Position& pos, S_MOVELIST& list, Color
             attacks &= attacks - 1;  // Remove processed target
             
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-            
+
             // Check if it's a capture or quiet move
-            Piece target = pos.at(to_sq120);
+            Piece target = pos.at_sq64(to_sq64);
             if (target == Piece::None) {
                 list.add_quiet_move(make_move(from_sq120, to_sq120));
             } else {
@@ -125,8 +125,8 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
                 attacks &= attacks - 1;
                 
                 int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-                Piece captured = pos.at(to_sq120);
-                
+                Piece captured = pos.at_sq64(to_sq64);
+
                 if (to_sq64 >= 56) {  // Promotion capture
                     list.add_promotion_move(make_promotion(from_sq120, to_sq120, PieceType::Queen, type_of(captured)));
                     list.add_promotion_move(make_promotion(from_sq120, to_sq120, PieceType::Rook, type_of(captured)));
@@ -188,8 +188,8 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
                 attacks &= attacks - 1;
                 
                 int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-                Piece captured = pos.at(to_sq120);
-                
+                Piece captured = pos.at_sq64(to_sq64);
+
                 if (to_sq64 <= 7) {  // Promotion capture
                     list.add_promotion_move(make_promotion(from_sq120, to_sq120, PieceType::Queen, type_of(captured)));
                     list.add_promotion_move(make_promotion(from_sq120, to_sq120, PieceType::Rook, type_of(captured)));
@@ -250,8 +250,8 @@ void generate_king_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
         attacks &= attacks - 1;
         
         int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-        Piece target = pos.at(to_sq120);
-        
+        Piece target = pos.at_sq64(to_sq64);
+
         if (target == Piece::None) {
             list.add_quiet_move(make_move(king_sq120, to_sq120));
         } else {
@@ -279,8 +279,8 @@ void generate_bishop_moves_bitboard(const Position& pos, S_MOVELIST& list, Color
             attacks &= attacks - 1;
             
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-            Piece target = pos.at(to_sq120);
-            
+            Piece target = pos.at_sq64(to_sq64);
+
             if (target == Piece::None) {
                 list.add_quiet_move(make_move(from_sq120, to_sq120));
             } else {
@@ -309,8 +309,8 @@ void generate_rook_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
             attacks &= attacks - 1;
             
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-            Piece target = pos.at(to_sq120);
-            
+            Piece target = pos.at_sq64(to_sq64);
+
             if (target == Piece::None) {
                 list.add_quiet_move(make_move(from_sq120, to_sq120));
             } else {
@@ -339,8 +339,8 @@ void generate_queen_moves_bitboard(const Position& pos, S_MOVELIST& list, Color 
             attacks &= attacks - 1;
             
             int to_sq120 = MAILBOX_MAPS.to120[to_sq64];
-            Piece target = pos.at(to_sq120);
-            
+            Piece target = pos.at_sq64(to_sq64);
+
             if (target == Piece::None) {
                 list.add_quiet_move(make_move(from_sq120, to_sq120));
             } else {

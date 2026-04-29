@@ -188,8 +188,7 @@ TEST_F(SqAttackedTest, OwnPiecesDoNotAttack) {
 TEST_F(SqAttackedTest, OffboardSquares) {
     place(sq(File::E, Rank::R4), Piece::WhiteQueen);
 
-    // These should return false for offboard squares
-    EXPECT_FALSE(Huginn::SqAttacked(-1, pos, Color::White));
-    EXPECT_FALSE(Huginn::SqAttacked(0, pos, Color::White));   // Offboard frame
-    EXPECT_FALSE(Huginn::SqAttacked(120, pos, Color::White)); // Beyond board
+    // sq=0 is a valid 120-square index but maps to the offboard frame
+    // (MAILBOX_MAPS.to64[0] == -1), so SqAttacked must return false.
+    EXPECT_FALSE(Huginn::SqAttacked(0, pos, Color::White));
 }

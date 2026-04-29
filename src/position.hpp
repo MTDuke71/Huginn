@@ -38,6 +38,7 @@
  */
 #pragma once
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
@@ -162,10 +163,17 @@ public:
     // not depend on board[120] — preparatory step for deleting the mailbox
     // half of Position. Returns Offboard for sentinel squares, None for
     // empty playable squares, or the piece otherwise.
-    inline Piece at(int s) const {
+    FORCE_INLINE Piece at(int s) const {
         if (s < 0 || s >= 120) return Piece::Offboard;
         int s64 = MAILBOX_MAPS.to64[s];
         if (s64 < 0) return Piece::Offboard;  // 120-sq sentinel
+        return at_sq64(s64);
+    }
+    // Direct 64-square accessor for hot paths (movegen, eval) that already
+    // hold the 64-square index. Skips the 120→64 round-trip and bounds
+    // checking. Caller must guarantee s64 ∈ [0, 64).
+    FORCE_INLINE Piece at_sq64(int s64) const {
+        assert(s64 >= 0 && s64 < 64);
         uint64_t bit = 1ULL << s64;
         if ((occupied_bitboard & bit) == 0) return Piece::None;
         int c = (color_bitboards[0] & bit) ? 0 : 1;
