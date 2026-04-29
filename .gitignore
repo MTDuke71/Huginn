@@ -75,3 +75,6 @@ doxygen/Doxyfile.huginn.bak
 # Fastchess gauntlet artifacts
 *.pgn
 fastchess.log
+
+# Claude Code local agent state (per-project permission cache)
+.claude/
