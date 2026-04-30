@@ -258,7 +258,7 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 | 7 | **Mobility evaluation** | +30-50 | 4-8 hrs | Per-piece `popcount(attack_bb & ~own_pieces)` weighted by piece type. Constants `MOBILITY_WEIGHT_*` already exist. |
 | 8 | **King safety / attack zone** | +50-100 | 1-2 days | Count enemy attackers near king + weight by piece type. Big practical Elo across many positions. |
 | 9 | **Pawn shield / pawn storm** | +20-40 | 4 hrs | Bonus for pawns sheltering own king, penalty for advanced enemy pawns. |
-| 10 | **Static Exchange Evaluation (SEE)** | +30-50 | 1 day | Used in qsearch to prune losing captures, and in main search ordering to push bad-trade captures down. |
+| 10 | **Static Exchange Evaluation (SEE)** | ✅ shipped (qsearch pruning, +38 Elo); main-ordering pending | partial | Implementation: [src/see.hpp](src/see.hpp), [src/see.cpp](src/see.cpp). Currently used to skip `SEE < 0` captures in qsearch. Capture ordering in main search is still MVV-LVA only — lazy SEE in `pick_next_move` is a future optional lever. |
 | 11 | **Continuation / counter-move history** | +30-50 | 1 day | Two-ply move history (`prev_move → this_move`) for ordering. Most modern engines have this. |
 | 12 | **Singular extensions** | +20-40 | 1 day | Extend when TT move is much better than alternatives at reduced depth. |
 | 13 | **Improving heuristic** | +10-25 | 2 hrs | Track whether eval is improving plies-back; relax LMR / tighten futility when not improving. |
@@ -286,13 +286,14 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 The 22× time-to-depth gap vs MTLChess says we're losing on tree shape,
 not eval. Reorder the work accordingly:
 
-1. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
-   reference: [MTLChess src/search.zig:221](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
-   Two integration points: (a) capture ordering — split MVV-LVA captures
-   into "SEE ≥ 0" and "SEE < 0" buckets so losing trades sink to the
-   bottom; (b) qsearch — skip moves with `SEE < 0` entirely. Likely
-   the single biggest tree-shape win available. Target +30-50 Elo.
-   *Also a prerequisite for revisiting aspiration step (b) and LMP.*
+1. ~~**Add SEE — promoted from Tier 2 #10 to Tier 1.**~~ ✅ **Shipped
+   2026-04-30 as commit `1cce8de`.** SEE wired into qsearch only (skip
+   `SEE < 0` captures). Capture ordering left as MVV-LVA in main search;
+   lazy-SEE-in-pick is a future optional Elo lever. Result: +38.4 Elo
+   vs t1 / 100 games / LOS 88.98% (combined with step (a)'s +14, the
+   stack is now ~+38 over t1). Tree shape at startpos depth 11:
+   17.78M → 1.78M nodes (10× faster). *Also a prerequisite for
+   revisiting aspiration step (b) and LMP.*
 2. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
    compile-time 64×64 lookup table indexed by (depth, move-number).
    Reference [MTLChess src/search.zig:63](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
