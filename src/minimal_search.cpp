@@ -5,6 +5,7 @@
 #include "board120.hpp"
 #include "input_checking.hpp"
 #include "msvc_optimizations.hpp"
+#include "see.hpp"
 #include <cassert>
 #include <iostream>
 #include <algorithm>
@@ -1555,11 +1556,20 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, -1);  // No depth in quiescence
-        
+
         S_MOVE move = move_list.moves[i];
-        
+
+        // SEE pruning: skip captures that lose material on the recapture
+        // sequence. Promotions are searched anyway because the value gain
+        // from promotion can flip a "bad" capture into a sound one. King
+        // captures are never SEE-pruned (king is the most valuable, so
+        // SEE wouldn't classify them as losing anyway, but be explicit).
+        if (!move.is_promotion() && Huginn::see(pos, move) < 0) {
+            continue;
+        }
+
         if (pos.MakeMove(move) != 1) continue; // Skip illegal moves
-        
+
         int score = -quiescence(pos, -beta, -alpha, info, q_depth + 1);
         pos.TakeMove();
         

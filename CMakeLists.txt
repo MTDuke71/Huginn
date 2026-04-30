@@ -321,6 +321,7 @@ set(COMMON_SOURCES
     src/pawn_lookup_tables.cpp
     src/syzygy_tablebase.cpp
     src/epd_parser.cpp
+    src/see.cpp
 )
 
 set(ENGINE_SOURCES
@@ -460,6 +461,7 @@ if(GTEST_FOUND)
     test/test_uci_position_parsing.cpp
     test/test_uci_go_parsing.cpp
     test/test_input_checking.cpp
+    test/test_see.cpp
     )
 
     add_executable(huginn_tests
