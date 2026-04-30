@@ -294,10 +294,10 @@ not eval. Reorder the work accordingly:
    stack is now ~+38 over t1). Tree shape at startpos depth 11:
    17.78M → 1.78M nodes (10× faster). *Also a prerequisite for
    revisiting aspiration step (b) and LMP.*
-2. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
-   compile-time 64×64 lookup table indexed by (depth, move-number).
-   Reference [MTLChess src/search.zig:63](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
-   Target +20-40 Elo.
+2. ~~**Tune LMR.**~~ ✅ **Shipped 2026-04-30 as commit `66685f3`.**
+   Replaced the R=1/R=2 step formula with a 64×64 `log(d)*log(m)/2` table
+   computed once via lambda IIFE. Result: +14 Elo marginal vs the SEE tip,
+   +52.5 Elo cumulative vs t1 / 100 games / LOS 95.68%.
 3. **Tier 2 #8 (king safety)** — biggest single eval improvement.
    Target +50-100 Elo.
 4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
