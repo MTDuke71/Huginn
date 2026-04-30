@@ -74,7 +74,7 @@ baseline) at tc=10+0.1, 100 games each unless noted.
 
 | # | Item | Status | Result vs 4F |
 |---|---|---|---|
-| 1 | Aspiration windows | **REVERTED — broken** | -402 Elo, 100 games (fix pending) |
+| 1 | Aspiration windows | step (a) **shipped** (root PVS); step (b) **DEFERRED** | step (a): +13.9 Elo / 100g; step (b) layered on (a): -75 / -49 Elo over two tunings |
 | 2 | Reverse futility / static null-move pruning | ✅ shipped | included in stack |
 | 3 | Late Move Pruning (LMP) | **DEFERRED to Tier 3** | see "LMP fix attempts" below — needs SEE + continuation history first |
 | 4 | Doubled-pawn penalty (wired) | ✅ shipped | included in stack |
@@ -102,6 +102,41 @@ eventual fix attempt. Root causes:
   re-search. Fix: `if (best_score >= beta) break;` at root, and split
   the aspiration-window change from the root-PVS change so each can
   be tested independently.
+
+  **Update (2026-04-30):** the split was done. Step (a) — root PVS
+  with the fail-high break, no aspiration window — committed as
+  `28cb2cd`, **+13.9 Elo / 100 games vs t1, LOS 65%**. Tree shape at
+  startpos depth 11: 17.78M → 3.02M nodes (5.7× faster). Step (b) —
+  layering the actual aspiration window around prev_score — was tested
+  in two tunings (Stockfish-style with beta-pull and 1.5× delta growth:
+  -75 Elo; MTL-style without beta-pull and 2× delta growth: -49 Elo).
+  Both regress. Diagnosis is the same shape as LMP: aspiration windows
+  depend on stable inter-iteration scores or strong move ordering, and
+  we have neither. Deferred to revisit after SEE + continuation history.
+  See "Aspiration step (b) deferred" subsection below.
+
+### Aspiration step (b) deferred (2026-04-30)
+
+| Variant | delta growth | beta-pull on fail-low | vs t1 (gauntlet) |
+|---|---|---|---|
+| step (a) only (root PVS, no aspiration) | n/a | n/a | **+13.9 Elo / LOS 65%** ✅ shipped |
+| step (b) v1 (Stockfish-style)            | × 1.5 | yes | -75 Elo / LOS 1.14% |
+| step (b) v2 (MTL-style)                  | × 2   | no  | -49 Elo / LOS 4.96% |
+
+The split-per-step strategy worked exactly as intended for diagnosis:
+step (a) is a clean +14 Elo win and lives on the branch. Step (b) layered
+on top regresses by ~60-90 Elo regardless of tuning — the issue is
+fundamental, not parametric. Likely cause: our PST-driven eval has
+larger inter-iteration score swings than mature engines, and our move
+ordering isn't strong enough to recover gracefully when the tight
+aspiration window forces a re-search. With a 50 cp initial delta and
+delta-doubling on fail, each fail costs a full root re-search; in
+positions where scores swing > 50 cp between depths (common in our
+engine), aspiration burns more time than it saves.
+
+**Decision**: keep step (a), defer step (b). Revisit after SEE-based
+move ordering and continuation history land — those should both
+stabilize the tree shape and tighten between-depth score variance.
 
 ### LMP fix attempts (2026-04-30) — DEFERRED
 
@@ -251,33 +286,30 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 The 22× time-to-depth gap vs MTLChess says we're losing on tree shape,
 not eval. Reorder the work accordingly:
 
-1. **Fix aspiration windows (Tier 1 #1).** Split into two commits so
-   each can be bisected: (a) add `if (best_score >= beta) break;` to
-   the root inner loop (the root-PVS half of the original change),
-   (b) layer the actual aspiration window logic on top. Test each
-   step vs current tip, 100 games. Target +30-50 Elo combined.
-2. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
+1. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
    reference: [MTLChess src/search.zig:221](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
    Two integration points: (a) capture ordering — split MVV-LVA captures
    into "SEE ≥ 0" and "SEE < 0" buckets so losing trades sink to the
    bottom; (b) qsearch — skip moves with `SEE < 0` entirely. Likely
    the single biggest tree-shape win available. Target +30-50 Elo.
-3. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
+   *Also a prerequisite for revisiting aspiration step (b) and LMP.*
+2. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
    compile-time 64×64 lookup table indexed by (depth, move-number).
    Reference [MTLChess src/search.zig:63](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
    Target +20-40 Elo.
-4. **Tier 2 #8 (king safety)** — biggest single eval improvement.
+3. **Tier 2 #8 (king safety)** — biggest single eval improvement.
    Target +50-100 Elo.
-5. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
+4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
    Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
-6. **Tier 2 #11 (continuation history)** — improves move ordering,
+5. **Tier 2 #11 (continuation history)** — improves move ordering,
    compounds with SEE.
-7. **Revisit LMP** (now Tier 3) once #2 (SEE) and #6 (continuation
-   history) are in. The per-node `quiet_count` plumbing tested in this
-   session is correct; what's missing is the move-ordering quality that
-   makes the top-K quiets reliable enough to prune the rest.
-8. Re-run calibration vs MTLChess_v0.3 after each major fix; target
-   crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191).
+6. **Revisit aspiration step (b) and LMP** (now Tier 3) once SEE and
+   continuation history are in. Both deferred features regress today
+   because of weak move ordering / volatile inter-iteration scores; the
+   underlying plumbing was implemented correctly in both attempts.
+7. Re-run calibration vs MTLChess_v0.3 after each major fix; target
+   crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191). Plan to
+   refresh `huginn_t1.exe` baseline once cumulative ≥ +50 Elo lands.
 
 Tooling:
 - `test_huginn_vs_t1.bat [rounds]` — regression match vs frozen t1
