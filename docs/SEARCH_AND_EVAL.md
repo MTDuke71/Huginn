@@ -76,7 +76,7 @@ baseline) at tc=10+0.1, 100 games each unless noted.
 |---|---|---|---|
 | 1 | Aspiration windows | **REVERTED — broken** | -402 Elo, 100 games (fix pending) |
 | 2 | Reverse futility / static null-move pruning | ✅ shipped | included in stack |
-| 3 | Late Move Pruning (LMP) | **REVERTED — broken** | -381 Elo, 20 games (fix pending) |
+| 3 | Late Move Pruning (LMP) | **DEFERRED to Tier 3** | see "LMP fix attempts" below — needs SEE + continuation history first |
 | 4 | Doubled-pawn penalty (wired) | ✅ shipped | included in stack |
 | 5 | Tempo bonus | ✅ shipped | included in stack |
 | 6 | Razoring (enabled) | ✅ shipped | +35 Elo (LOS 87.75%, 100 games), tested alone |
@@ -93,6 +93,8 @@ eventual fix attempt. Root causes:
   positions with ≥5 captures the very first quiet move (at `i ≥ 5`,
   threshold = 5 at depth 1) is pruned outright. Fix: count quiet moves
   in a separate counter and gate on `quiet_count >= threshold`.
+  (See "LMP fix attempts" below — the index bug is necessary but not
+  sufficient for LMP to work in this engine.)
 - **Aspiration / root PVS**: when a root move returns `score >= beta`,
   the inner loop doesn't break — subsequent moves are searched with
   an inverted window `(-beta, -local_alpha)` (since `local_alpha > beta`),
@@ -100,6 +102,36 @@ eventual fix attempt. Root causes:
   re-search. Fix: `if (best_score >= beta) break;` at root, and split
   the aspiration-window change from the root-PVS change so each can
   be tested independently.
+
+### LMP fix attempts (2026-04-30) — DEFERRED
+
+The original `i`-vs-`quiet_count` bug was fixed (per-node quiet counter,
+gate on `quiet_count >= threshold`). Three iterations of conservatism
+dialing produced an asymptote toward parity but never crossed zero:
+
+| Variant | Threshold | Min depth | vs t1 (100g) |
+|---|---|---|---|
+| Fix #1 | `4 + d²` | 1 | -254 Elo |
+| Fix #2 | `4 + d²` | 3 | -56 Elo |
+| Fix #3 (planned non-PV gate) | `4 + d²` | 3 | not tested — see below |
+
+Reading: each tighter dial halves the loss but the trend asymptotes
+toward small-negative. MTLChess (which we benchmark against) doesn't
+implement LMP at all — its tight tree comes from RFP + null move +
+SEE-ordered moves + tuned LMR + working aspiration windows. LMP is a
+Stockfish-style technique that depends on continuation-history-rich
+move ordering. Without that ordering, the top-K quiets aren't reliable
+enough for safe pruning at low depth.
+
+**Decision**: drop LMP for now, revisit once SEE and continuation
+history are landed (re-classified as Tier 3). The reverted code lives
+on git tag `tier1-stack-broken`; the per-node `quiet_count` plumbing is
+the right approach when we come back.
+
+The EPD divergence harness ([tools/test_epd_diff.py](tools/test_epd_diff.py))
+written during this session is a keeper — it cut iteration time from
+~30 min (full gauntlet) to ~2 min (lct2.epd diff at depth 7) for
+spotting search-shape changes. Reuse for future search-tree work.
 
 ## Current state — Search
 
@@ -219,37 +251,43 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 The 22× time-to-depth gap vs MTLChess says we're losing on tree shape,
 not eval. Reorder the work accordingly:
 
-1. **Fix LMP (Tier 1 #3).** Switch from physical move index `i` to a
-   per-node `quiet_count` counter; only prune at `quiet_count >= threshold`.
-   Re-test alone vs `huginn_t3` (1+2+3 baseline at commit `87b5b92`),
-   100 games minimum. Target +20-40 Elo.
-2. **Fix aspiration windows (Tier 1 #1).** Split into two commits so
+1. **Fix aspiration windows (Tier 1 #1).** Split into two commits so
    each can be bisected: (a) add `if (best_score >= beta) break;` to
    the root inner loop (the root-PVS half of the original change),
    (b) layer the actual aspiration window logic on top. Test each
    step vs current tip, 100 games. Target +30-50 Elo combined.
-3. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
+2. **Add SEE — promoted from Tier 2 #10 to Tier 1.** Implementation
    reference: [MTLChess src/search.zig:221](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
    Two integration points: (a) capture ordering — split MVV-LVA captures
    into "SEE ≥ 0" and "SEE < 0" buckets so losing trades sink to the
    bottom; (b) qsearch — skip moves with `SEE < 0` entirely. Likely
    the single biggest tree-shape win available. Target +30-50 Elo.
-4. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
+3. **Tune LMR.** Replace the depth ≥ 3 / move ≥ 4 / R = 1 rule with a
    compile-time 64×64 lookup table indexed by (depth, move-number).
    Reference [MTLChess src/search.zig:63](C:\Users\m_lad\Repos\MTLChess\src\search.zig).
    Target +20-40 Elo.
-5. **Tier 2 #8 (king safety)** — biggest single eval improvement.
+4. **Tier 2 #8 (king safety)** — biggest single eval improvement.
    Target +50-100 Elo.
-6. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
+5. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
    Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
-7. **Tier 2 #11 (continuation history)** — improves move ordering,
+6. **Tier 2 #11 (continuation history)** — improves move ordering,
    compounds with SEE.
+7. **Revisit LMP** (now Tier 3) once #2 (SEE) and #6 (continuation
+   history) are in. The per-node `quiet_count` plumbing tested in this
+   session is correct; what's missing is the move-ordering quality that
+   makes the top-K quiets reliable enough to prune the rest.
 8. Re-run calibration vs MTLChess_v0.3 after each major fix; target
    crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191).
 
-Bisect tooling stays in place: `test_bisect_456.bat <lmp|razor|asp|t3>
-[rounds]` for vs-4F regression matches; `test_huginn_calibration.bat
-<mtl03|mora|mtl05>` for external rating checks.
+Tooling:
+- `test_huginn_vs_t1.bat [rounds]` — regression match vs frozen t1
+  baseline (commit `4f0ff0c`, tag `baseline-t1`).
+- `test_huginn_calibration.bat <mtl03|mora|mtl05> [rounds]` — external
+  rating ladder checks.
+- `python tools/test_epd_diff.py [epd_file] [depth]` — fast EPD-based
+  divergence harness (compares t1 vs current build, surfaces positions
+  where the two engines pick different moves at fixed depth). Useful
+  for quick search-shape diagnostics in ~2 min instead of ~30 min.
 
 ## Reference
 
