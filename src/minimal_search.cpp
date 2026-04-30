@@ -1684,21 +1684,31 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             }
         }
         
-        // Try each move at the root
+        // Try each move at the root with PVS-style alpha tightening:
+        // pass local_alpha (the best score found so far at root) as the
+        // recursion's alpha, so subsequent subtrees can produce alpha-beta
+        // cutoffs against it instead of searching with the full window.
+        // The fail-high break is dormant here (beta = 30000 only fires on
+        // found-mate) but is in place ready for aspiration windows.
+        const int root_alpha_init = -30000;
+        const int root_beta = 30000;
+        int local_alpha = root_alpha_init;
+
         for (int i = 0; i < move_list.count; ++i) {
             if (info.stopped || info.quit) break;
-            
+
             if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
-            
-            // Search this move - isRoot = false for non-root recursive calls
-            int score = -AlphaBeta(pos, -30000, 30000, current_depth - 1, info, true, false);
+
+            int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
             pos.TakeMove();
-            
+
             if (info.stopped || info.quit) break;
-            
+
             if (score > best_score) {
                 best_score = score;
                 depth_best_move = move_list.moves[i];
+                if (best_score > local_alpha) local_alpha = best_score;
+                if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
             }
         }
         
