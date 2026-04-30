@@ -309,18 +309,25 @@ not eval. Reorder the work accordingly:
    because of weak move ordering / volatile inter-iteration scores; the
    underlying plumbing was implemented correctly in both attempts.
 7. Re-run calibration vs MTLChess_v0.3 after each major fix; target
-   crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191). Plan to
-   refresh `huginn_t1.exe` baseline once cumulative ≥ +50 Elo lands.
+   crossing **+0 Elo (≥ ~1984)**, then aim at MORA (2191).
+8. Refresh the regression baseline whenever cumulative gain over the
+   current baseline crosses ~+50 Elo. **First refresh done 2026-04-30:**
+   `baseline-t2` (tag) = commit `66685f3` = t1 + step (a) + SEE qsearch
+   + LMR table = +52.5 Elo over t1 (LOS 95.68%). Future search/eval
+   changes should be matched against `huginn_t2.exe`.
 
 Tooling:
-- `test_huginn_vs_t1.bat [rounds]` — regression match vs frozen t1
-  baseline (commit `4f0ff0c`, tag `baseline-t1`).
+- `test_huginn_vs_t2.bat [rounds]` — **current regression match** vs
+  frozen `baseline-t2` (commit `66685f3`).
+- `test_huginn_vs_t1.bat [rounds]` — long-term comparison vs original
+  `baseline-t1` (commit `4f0ff0c`). Useful for cumulative-since-day-1
+  measurements; for per-feature deltas prefer `vs_t2`.
 - `test_huginn_calibration.bat <mtl03|mora|mtl05> [rounds]` — external
   rating ladder checks.
 - `python tools/test_epd_diff.py [epd_file] [depth]` — fast EPD-based
-  divergence harness (compares t1 vs current build, surfaces positions
-  where the two engines pick different moves at fixed depth). Useful
-  for quick search-shape diagnostics in ~2 min instead of ~30 min.
+  divergence harness (compares t1 vs current build by default; edit the
+  `ENGINES` list at the top to compare any pair). Useful for quick
+  search-shape diagnostics in ~2 min instead of ~30 min.
 
 ## Reference
 

@@ -17,8 +17,11 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+# Default comparison: current build (head of bisect/work) vs the most-recent
+# frozen baseline (huginn_t2 as of 2026-04-30). Edit either entry to compare
+# any pair of binaries.
 ENGINES = [
-    ("t1",      r"C:\Users\m_lad\Documents\fastchess-windows-x86-64\huginn_t1.exe"),
+    ("t2",      r"C:\Users\m_lad\Documents\fastchess-windows-x86-64\huginn_t2.exe"),
     ("current", str(REPO / "build" / "msvc-x64-release" / "bin" / "Release" / "huginn.exe")),
 ]
 
