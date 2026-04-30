@@ -7,11 +7,28 @@
 #include "msvc_optimizations.hpp"
 #include "see.hpp"
 #include <cassert>
+#include <cmath>     // for std::log used by the LMR-table initializer
+#include <array>
 #include <iostream>
 #include <algorithm>
 #include <iomanip>  // For std::setw
 
 namespace Huginn {
+
+// LMR reduction table indexed by (depth, move-index). Reduction grows
+// with both depth and move number. Formula: R = log(d) * log(m) / 2,
+// truncated. Matches the MTLChess src/search.zig:63 table. Computed
+// once at static initialization via lambda IIFE so it lives in .data
+// (no per-call cost).
+static const std::array<std::array<int, 64>, 64> LMR_TABLE = []() {
+    std::array<std::array<int, 64>, 64> t{};
+    for (int d = 1; d < 64; ++d) {
+        for (int m = 1; m < 64; ++m) {
+            t[d][m] = static_cast<int>(std::log(double(d)) * std::log(double(m)) / 2.0);
+        }
+    }
+    return t;
+}();
 
 // VICE Tutorial: Mirror arrays for evaluation symmetry testing
 // mirror64: maps 64-square indices to their vertical mirror (rank 1 <-> rank 8)
@@ -1322,20 +1339,23 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         // Reduce depth for moves that are unlikely to be best
         const int LMR_MIN_DEPTH = 3;           // Minimum depth to apply LMR
         const int LMR_FULL_DEPTH_MOVES = 4;   // First N moves searched at full depth
-        
+
         bool needs_full_search = true;
-        
-        if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES && 
-            !in_check && !move_list.moves[i].is_capture() && 
+
+        if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES &&
+            !in_check && !move_list.moves[i].is_capture() &&
             !move_list.moves[i].is_promotion()) {
-            
-            // Calculate reduction based on depth and move number
-            // More aggressive reduction for later moves and deeper searches
-            int reduction = 1;
-            if (i >= 8 && depth >= 6) {
-                reduction = 2;  // More reduction for very late moves at high depth
-            }
-            
+
+            // Tuned reduction: log(d)*log(m)/2 lookup, clamped to leave at
+            // least one ply of search after reduction. Replaces the prior
+            // R=1 / R=2 step function — provides finer granularity at high
+            // depth and high move number.
+            int d_idx = std::min(depth, 63);
+            int m_idx = std::min(i, 63);
+            int reduction = LMR_TABLE[d_idx][m_idx];
+            reduction = std::max(reduction, 1);
+            reduction = std::min(reduction, depth - 2);
+
             // Try reduced search first
             int reduced_depth = depth - 1 - reduction;
             if (reduced_depth >= 1) {
