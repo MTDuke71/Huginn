@@ -138,6 +138,46 @@ engine), aspiration burns more time than it saves.
 move ordering and continuation history land — those should both
 stabilize the tree shape and tighten between-depth score variance.
 
+### King safety attempt (2026-04-30) — DEFERRED
+
+Implemented Tier 2 #8 in three layers (pawn shield + open files near
+king + 3×3 attack zone with piece-weighted attack units), then tuned
+across three iterations. None crossed positive Elo against `huginn_t2`:
+
+| Variant | What changed | vs t2 (100 games) |
+|---|---|---|
+| v1 | Initial: `popcount(attacks & zone) × weight`, `DANGER_MAX = 400` | -20.87 Elo |
+| v2 | Presence-based attacks (`if (attacks & zone) += weight`), `DANGER_MAX = 200` | **-3.47 Elo** (best) |
+| v3 | v2 + lower file/shield penalties (open 25→18, adj 15→10, missing-shield 8→5) | -17.39 Elo |
+
+The v1→v2 jump (+18 Elo) confirmed the algorithm itself is sound — the
+attack-unit over-counting was a real bug. v3 dialed too far in the
+"don't penalize king exposure" direction and made the engine careless,
+re-confirming v2's settings were near-optimal among hand-tuned values.
+
+After 3 iterations / ~300 games, signal stays at "approximately zero."
+Reverted (no commit). Code is in git reflog if/when we revisit. Two
+plausible reasons it didn't pay out:
+
+1. **Hand-tuning has hit its ceiling.** Three iterations on six
+   parameters can't beat numerical optimization. A Texel-style tuner
+   over a few-million-position labelled corpus would likely find a
+   parameter set that lands +20-50 Elo. Worth doing once we have other
+   eval features competing for the same parameter space (mobility,
+   king-attacker-count weighting, etc).
+2. **Compounds-but-doesn't-stand-alone.** King safety pays off most
+   when paired with mobility (less mobile = harder to escape attacks)
+   and with continuation history (better move ordering surfaces the
+   tactical sequences king safety predicts). In isolation on a tactically
+   weak engine, the eval just nudges piece placement around without
+   adding decisive Elo. Re-test after mobility lands.
+
+Files NOT modified for this defer: implementation lived only in
+working tree, no commit. Eval params for king safety (`KING_SHIELD_PAWN_BONUS`
+etc.) were proposed-then-removed in [src/evaluation.hpp](src/evaluation.hpp).
+Implementation block lived in `MinimalEngine::evaluate()` in
+[src/minimal_search.cpp](src/minimal_search.cpp).
+
 ### LMP fix attempts (2026-04-30) — DEFERRED
 
 The original `i`-vs-`quiet_count` bug was fixed (per-node quiet counter,
@@ -256,7 +296,7 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 | # | Item | Estimated Elo | Effort | Notes |
 |---|---|---|---|---|
 | 7 | **Mobility evaluation** | +30-50 | 4-8 hrs | Per-piece `popcount(attack_bb & ~own_pieces)` weighted by piece type. Constants `MOBILITY_WEIGHT_*` already exist. |
-| 8 | **King safety / attack zone** | +50-100 | 1-2 days | Count enemy attackers near king + weight by piece type. Big practical Elo across many positions. |
+| 8 | **King safety / attack zone** | attempted, ~0 Elo at hand-tuned settings | 2026-04-30 attempt deferred | See "King safety attempt" subsection above for the three iterations and root-cause discussion. Revisit once mobility lands or a tuner is available. |
 | 9 | **Pawn shield / pawn storm** | +20-40 | 4 hrs | Bonus for pawns sheltering own king, penalty for advanced enemy pawns. |
 | 10 | **Static Exchange Evaluation (SEE)** | ✅ shipped (qsearch pruning, +38 Elo); main-ordering pending | partial | Implementation: [src/see.hpp](src/see.hpp), [src/see.cpp](src/see.cpp). Currently used to skip `SEE < 0` captures in qsearch. Capture ordering in main search is still MVV-LVA only — lazy SEE in `pick_next_move` is a future optional lever. |
 | 11 | **Continuation / counter-move history** | +30-50 | 1 day | Two-ply move history (`prev_move → this_move`) for ordering. Most modern engines have this. |
@@ -298,8 +338,9 @@ not eval. Reorder the work accordingly:
    Replaced the R=1/R=2 step formula with a 64×64 `log(d)*log(m)/2` table
    computed once via lambda IIFE. Result: +14 Elo marginal vs the SEE tip,
    +52.5 Elo cumulative vs t1 / 100 games / LOS 95.68%.
-3. **Tier 2 #8 (king safety)** — biggest single eval improvement.
-   Target +50-100 Elo.
+3. ~~**Tier 2 #8 (king safety)**~~ — attempted, deferred (see "King
+   safety attempt" subsection above). Revisit after mobility lands or
+   once a Texel-style tuner is available.
 4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
    Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
 5. **Tier 2 #11 (continuation history)** — improves move ordering,
