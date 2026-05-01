@@ -295,8 +295,8 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 
 | # | Item | Estimated Elo | Effort | Notes |
 |---|---|---|---|---|
-| 7 | **Mobility evaluation** | +30-50 | 4-8 hrs | Per-piece `popcount(attack_bb & ~own_pieces)` weighted by piece type. Constants `MOBILITY_WEIGHT_*` already exist. |
-| 8 | **King safety / attack zone** | attempted, ~0 Elo at hand-tuned settings | 2026-04-30 attempt deferred | See "King safety attempt" subsection above for the three iterations and root-cause discussion. Revisit once mobility lands or a tuner is available. |
+| 7 | **Mobility evaluation** | ✅ shipped 2026-04-30 (+4.34 Elo / 80g vs t2, LOS 54.86%) | commit `626257a` | Wires the existing `MOBILITY_WEIGHT_DEFAULT`/`_ENDGAME` constants. Mild positive vs t2's pure-PST eval. Combining with king-safety on top is queued. |
+| 8 | **King safety / attack zone** | attempted, ~0 Elo at hand-tuned settings | 2026-04-30 attempt deferred — re-attempt-able now mobility (#7) is in | See "King safety attempt" subsection above for the three iterations and root-cause discussion. Mobility is now committed (commit `626257a`); the "compounds-but-doesn't-stand-alone" hypothesis can be retested by re-applying the king-safety code on top of the new tip. |
 | 9 | **Pawn shield / pawn storm** | +20-40 | 4 hrs | Bonus for pawns sheltering own king, penalty for advanced enemy pawns. |
 | 10 | **Static Exchange Evaluation (SEE)** | ✅ shipped (qsearch pruning, +38 Elo); main-ordering pending | partial | Implementation: [src/see.hpp](src/see.hpp), [src/see.cpp](src/see.cpp). Currently used to skip `SEE < 0` captures in qsearch. Capture ordering in main search is still MVV-LVA only — lazy SEE in `pick_next_move` is a future optional lever. |
 | 11 | **Continuation / counter-move history** | +30-50 | 1 day | Two-ply move history (`prev_move → this_move`) for ordering. Most modern engines have this. |
@@ -341,6 +341,12 @@ not eval. Reorder the work accordingly:
 3. ~~**Tier 2 #8 (king safety)**~~ — attempted, deferred (see "King
    safety attempt" subsection above). Revisit after mobility lands or
    once a Texel-style tuner is available.
+4. ~~**Tier 2 #7 (mobility)**~~ ✅ **Shipped 2026-04-30 as commit
+   `626257a`.** Wired `MOBILITY_WEIGHT_DEFAULT`/`_ENDGAME` (5/2 cp per
+   attack square). Result: +4.34 Elo / 80 games / LOS 54.86% — mild
+   positive, well within CI noise. The combined "mobility + king
+   safety" hypothesis can now actually be tested by re-attempting
+   king safety on top of this commit.
 4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
    Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
 5. **Tier 2 #11 (continuation history)** — improves move ordering,
