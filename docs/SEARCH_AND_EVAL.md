@@ -44,6 +44,27 @@ Conclusion: depth deficit is the dominant factor. Eval improvements
 improvements do. **Search-shape work (fix aspiration, fix LMP, add SEE,
 tune LMR) is the priority**; eval is secondary until the tree is right.
 
+## WAC300 tactical-solving snapshot (2026-04-30)
+
+| Engine | Solved | Failed | Rate | Search time |
+|---|---|---|---|---|
+| MTLChess_v0.5 (~2314 Elo) | 288 | 12 | 96.0% | 5s/pos |
+| Huginn current (post-mobility) | 237 | 63 | 79.0% | 5s/pos |
+| Huginn 1.2 (2025-09-11, pre-pure-bitboard) | 231 | 69 | 77.0% | 5s/pos |
+
+Logs: `test/wac_test_log_20260430_231351.txt` (MTL),
+`test/wac_test_log_20260430_225140.txt` (huginn current),
+`test/wac_test_log_20250911_181535.txt` (huginn 1.2).
+
+**Of huginn's 63 failures, 52 are positions MTL solves** — pure
+tactical sight gap. Only 1 position is huginn-only. The 11 "both
+fail" are the genuinely hard tactical positions; 5 of those are
+knight tactics (Nxa7+, Nxd5, Nb4, Nf5, Nfg5).
+
+Pattern across both the regressions-vs-old-huginn AND the gap-vs-MTL
+sets: **check-moves dominate**. That's the diagnostic that drives
+"Priority 1" in the Next session plan above.
+
 ## External rating ladder (calibration)
 
 Transitive Elo estimates derived from a 2026-04-28 gauntlet run: MORA's
@@ -321,7 +342,104 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 | 20 | **Magic-bitboard slider attacks** | 1-2 days | Already partially used; verify all slider attacks go through magics not ray-tracing. |
 | 21 | **Smaller move encoding** | 4 hrs | If `S_MOVE` is migrated, the bit packing could shrink further. |
 
-## Next steps (revised priority — search-shape first)
+## Next session plan (recorded 2026-04-30 end-of-session)
+
+WAC300 calibration ran tonight against both engines, 5s/position:
+
+| Engine | Solved | Failed | Rate |
+|---|---|---|---|
+| MTLChess_v0.5 | 288 | 12 | **96.0%** |
+| Huginn current | 237 | 63 | **79.0%** |
+
+Of huginn's 63 failures, **52 are positions MTL solves cleanly** — pure
+tactical strength gap, not orthogonal sight. The "huginn-only" overlap
+is just 1 position. Truly hard problems both engines miss are 11; five
+of those are knight tactics (Nxa7+, Nxd5, Nb4, Nf5, Nfg5), which need
+deeper search than 5s gives.
+
+**Pattern across both the regressions-vs-old-huginn and the gap-vs-MTL
+sets: check-moves dominate.** Bh2+, Qxg7+, Qd1+, Nxg7, Bh6, Qf1+,
+Rxb7, Re8, Qxh7+, Qxg6+, Rxg2+ — all positions where the right move
+gives check or is a sacrificial check, and huginn doesn't see it.
+
+### Priority 1: Don't prune/reduce moves that give check
+
+Two well-known engine practices we don't yet observe:
+
+  (a) **Skip SEE-pruning when the candidate capture gives check.** Today
+      our qsearch has `if (!is_promotion && SEE < 0) continue;` — this
+      silently kills sacrificial-check tactics like `Qxh7+` (queen for
+      pawn = SEE −700, but the followup wins). Caller of `see()`
+      doesn't know whether the move gives check.
+
+  (b) **Skip LMR reduction when the move gives check.** Today the LMR
+      table reduces all late, non-capture, non-promotion, non-in-check
+      moves. Quiet-check moves like `Bh2+`, `Re8+`, `Rd4+` get reduced
+      and the engine doesn't see far enough into the forcing line.
+
+Implementation outline:
+
+```cpp
+// Light helper — make/test/unmake
+inline bool gives_check(Position& pos, const S_MOVE& m) {
+    if (pos.MakeMove(m) != 1) return false;
+    bool check = SqAttacked(pos.king_sq[int(pos.side_to_move)],
+                            pos, !pos.side_to_move);
+    pos.TakeMove();
+    return check;
+}
+```
+
+Costs ~MakeMove+SqAttacked+TakeMove per pruned/reduced move. The fix
+probably pays for itself: we save the entire subtree for moves we'd
+otherwise prune wrongly. If perf is an issue later, switch to
+pre-computed check-square bitboards à la Stockfish.
+
+Sites:
+- [src/minimal_search.cpp:1573](src/minimal_search.cpp#L1573) (qsearch
+  SEE prune): wrap with `&& !gives_check()`.
+- [src/minimal_search.cpp:1330](src/minimal_search.cpp#L1330) (LMR
+  block): add `&& !gives_check()` to the gate, or set R=0 for that move.
+
+Expected: recover 5-15 of the 24 huginn-vs-old regressions, plus
+several of the 51 huginn-vs-MTL gap positions. Per-feature target
++20-40 Elo. Verify with WAC re-run + gauntlet vs t2.
+
+### Priority 2: Re-attempt king safety on top of mobility
+
+The compound-features hypothesis from the king-safety defer note can now
+be tested. Cherry-pick the v2 settings (presence-based attack count,
+DANGER_MAX = 200) onto the current tip post-mobility and re-gauntlet.
+If it lands meaningfully positive, mobility was the missing companion.
+
+### Priority 3: Continuation history (Tier 2 #11)
+
+Two-ply move history (`prev_move → this_move`) for ordering. Compounds
+with SEE (better tactical move ordering) and is a prerequisite for
+revisiting LMP and aspiration step (b).
+
+### Maintenance / open items
+
+- **Investigate the fastchess hang at 80 games** seen during the
+  mobility gauntlet. Could be a one-off (cosmic ray, OS scheduler) or
+  a real engine hang on a specific position. If it recurs, capture
+  the engine state and dig.
+- **Refresh `huginn_t1.exe` / `huginn_t2.exe` baselines** if cumulative
+  gain over t2 crosses ~+50 Elo — same +50 trigger as before.
+- **Re-run `test_huginn_calibration.bat mtl03 50`** after the check-fix
+  lands. Last calibration was 2W/17L/1D vs MTL_v0.3; with the check
+  fix we should expect a meaningful improvement.
+
+### Tooling reminders for next session
+
+- `python test/wac_test.py 300 -t 5` — full tactical-solving sweep
+  (~25 min). Now accepts `--engine <path>` for any UCI binary.
+- `test_huginn_vs_t2.bat 50` — regression match vs frozen t2 baseline.
+- `test_huginn_calibration.bat <mtl03|mora|mtl05> 50` — external rating.
+- `python tools/test_epd_diff.py test/lct2.epd 7` — fast 2-min EPD
+  divergence harness for spotting search-shape changes between builds.
+
+## Historical: how we got here
 
 The 22× time-to-depth gap vs MTLChess says we're losing on tree shape,
 not eval. Reorder the work accordingly:
@@ -347,8 +465,6 @@ not eval. Reorder the work accordingly:
    positive, well within CI noise. The combined "mobility + king
    safety" hypothesis can now actually be tested by re-attempting
    king safety on top of this commit.
-4. **Tier 2 #7 (mobility)** — second-biggest eval improvement.
-   Constants `MOBILITY_WEIGHT_*` already defined. Target +30-50 Elo.
 5. **Tier 2 #11 (continuation history)** — improves move ordering,
    compounds with SEE.
 6. **Revisit aspiration step (b) and LMP** (now Tier 3) once SEE and

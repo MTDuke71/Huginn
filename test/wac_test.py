@@ -641,19 +641,28 @@ Failed positions are saved to wac_failed_positions_TIMESTAMP.txt for easy re-tes
                        help='Search time per position in seconds (default: 5)')
     parser.add_argument('--failed-file', type=str,
                        help='File containing failed position line numbers to retest')
-    
+    parser.add_argument('--engine', type=str, default=None,
+                       help='Path to UCI engine binary (default: ../build/msvc-x64-release/bin/Release/huginn.exe). '
+                            'Any UCI-compliant engine works.')
+
     args = parser.parse_args()
-    
+
+    # Resolve the engine path. We honour --engine if given; otherwise the
+    # WACTester default applies (huginn from this repo's release build).
+    engine_kwargs = {}
+    if args.engine:
+        engine_kwargs['engine_path'] = args.engine
+
     if args.failed_file:
         # Retest mode for failed positions
         if not os.path.exists(args.failed_file):
             print(f"Error: Failed positions file not found: {args.failed_file}")
             return
-            
+
         print(f"WAC Test Suite - Retesting failed positions from {args.failed_file}")
         print(f"Each position will be searched for {args.time} seconds")
-        
-        tester = WACTester(failed_positions_file=args.failed_file)
+
+        tester = WACTester(failed_positions_file=args.failed_file, **engine_kwargs)
         tester.run_test_suite(search_time=args.time)
         
     else:
@@ -675,7 +684,7 @@ Failed positions are saved to wac_failed_positions_TIMESTAMP.txt for easy re-tes
             print("\n💡 Tip: This is the default proof-of-concept test.")
             print("   Use 'python wac_test.py 300' for the full test suite.")
         
-        tester = WACTester(max_positions=args.positions)
+        tester = WACTester(max_positions=args.positions, **engine_kwargs)
         tester.run_test_suite(search_time=args.time)
 
 if __name__ == "__main__":
