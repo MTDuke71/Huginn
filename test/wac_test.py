@@ -21,7 +21,9 @@ class WACPosition:
         # Add default halfmove and fullmove counters
         fen_parts.extend(['0', '1'])
         self.fen = ' '.join(fen_parts)
-        
+        # Side to move ('w' or 'b') — needed to expand castling SAN to UCI.
+        self.side_to_move = parts[1] if len(parts) > 1 else 'w'
+
         # Find best move
         bm_match = re.search(r'bm\s+([^;]+)', line)
         self.best_moves = []
@@ -29,7 +31,7 @@ class WACPosition:
             # Handle multiple best moves separated by space or comma
             moves_str = bm_match.group(1).strip()
             self.best_moves = [move.strip() for move in re.split(r'[,\s]+', moves_str) if move.strip()]
-        
+
         # Find ID
         id_match = re.search(r'id\s+"([^"]+)"', line)
         self.id = id_match.group(1) if id_match else "Unknown"
@@ -112,49 +114,73 @@ class WACTester:
         
         return move.lower()
     
-    def moves_match(self, engine_move: str, expected_moves: List[str]) -> bool:
-        """Check if engine move matches any expected move"""
+    def _expand_castling(self, san: str, side_to_move: str):
+        """Convert 'O-O' / 'O-O-O' (or '0-0' / '0-0-0') to its UCI form
+        based on whose turn it is. Returns None if not a castling move."""
+        m = san.strip().rstrip('+#!?').replace('0', 'O')
+        if m == 'O-O':
+            return 'e1g1' if side_to_move == 'w' else 'e8g8'
+        if m == 'O-O-O':
+            return 'e1c1' if side_to_move == 'w' else 'e8c8'
+        return None
+
+    def moves_match(self, engine_move: str, expected_moves: List[str],
+                    position: 'WACPosition' = None) -> bool:
+        """Check if engine move matches any expected move.
+
+        `position` is used only to expand castling SAN (O-O / O-O-O) to its
+        side-specific UCI form. Without it, castling expectations would never
+        match the engine's UCI castling output (e1g1 etc).
+        """
         if not engine_move:
             return False
-            
+
         # Normalize engine move
         normalized_engine = self.normalize_move(engine_move)
-        
+
         # Check against all expected moves
         for expected in expected_moves:
+            # Castling: expand to UCI based on side-to-move and compare directly.
+            if position is not None:
+                castling_uci = self._expand_castling(expected, position.side_to_move)
+                if castling_uci is not None:
+                    if normalized_engine == castling_uci:
+                        return True
+                    continue  # don't fall through to SAN heuristics
+
             normalized_expected = self.normalize_move(expected)
-            
+
             # Direct match
             if normalized_engine == normalized_expected:
                 return True
-            
+
             # Handle different notation formats
             if len(normalized_engine) == 4:  # Engine move like "g5g6"
                 engine_from = normalized_engine[:2]
                 engine_to = normalized_engine[2:4]
-                
+
                 # Case 1: Expected move is just destination (like "g6" for pawn move)
                 if len(normalized_expected) == 2 and normalized_expected == engine_to:
                     return True
-                
-                # Case 2: Expected move is piece + destination (like "qg6", "kg1")  
+
+                # Case 2: Expected move is piece + destination (like "qg6", "kg1")
                 if len(normalized_expected) == 3:
                     expected_piece = normalized_expected[0]
                     expected_dest = normalized_expected[1:3]
                     if expected_dest == engine_to:
                         return True
-                
+
                 # Case 3: Expected move includes source file (like "rxb2", "nf3")
                 if len(normalized_expected) >= 3:
                     expected_dest = normalized_expected[-2:]
                     if expected_dest == engine_to:
                         return True
-                        
+
             # Handle case where expected is also in long algebraic (4 chars)
             elif len(normalized_expected) == 4:
                 if normalized_engine == normalized_expected:
                     return True
-        
+
         return False
     
     def test_position(self, position: WACPosition, search_time: int = 5) -> Dict:
@@ -171,32 +197,29 @@ class WACTester:
         self.log_file.write(f"{'='*60}\n")
         
         try:
-            # Create a temporary UCI command file
-            cmd_file = f"temp_uci_{position.id.replace('.', '_')}.txt"
-            with open(cmd_file, 'w') as f:
-                f.write("uci\n")
-                f.write("ucinewgame\n")
-                f.write("isready\n")
-                f.write(f"position fen {position.fen}\n")
-                f.write(f"go movetime {search_time * 1000}\n")
-                f.write("quit\n")
-            
-            # Run engine with command file
+            # Build the full UCI script and pipe it directly. Avoids the
+            # temp-file dance and the cleanup-on-exception risk it created.
+            # OwnBook is explicitly disabled so a book hit can't replace the
+            # engine's actual tactical search on a WAC position.
+            uci_commands = (
+                "uci\n"
+                "setoption name OwnBook value false\n"
+                "ucinewgame\n"
+                "isready\n"
+                f"position fen {position.fen}\n"
+                f"go movetime {search_time * 1000}\n"
+                "quit\n"
+            )
+
             result = subprocess.run(
                 [self.engine_path],
-                input=open(cmd_file, 'r').read(),
+                input=uci_commands,
                 capture_output=True,
                 text=True,
                 timeout=search_time + 10,
                 cwd=os.path.dirname(os.path.abspath(self.engine_path))
             )
-            
-            # Clean up command file
-            try:
-                os.remove(cmd_file)
-            except:
-                pass
-            
+
             engine_output = result.stdout.split('\n')
             
             # Log all output
@@ -217,7 +240,7 @@ class WACTester:
             # Analyze result
             success = False
             if best_move:
-                success = self.moves_match(best_move, position.best_moves)
+                success = self.moves_match(best_move, position.best_moves, position)
             
             result_data = {
                 'position': position,
