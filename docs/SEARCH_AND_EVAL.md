@@ -65,6 +65,55 @@ Pattern across both the regressions-vs-old-huginn AND the gap-vs-MTL
 sets: **check-moves dominate**. That's the diagnostic that drives
 "Priority 1" in the Next session plan above.
 
+### Depth and eval comparison — first 10 WAC positions
+
+5s/position search; columns are max depth reached and the score reported
+at that depth. `M+N` = mate-in-N from huginn (positive = mating); raw
+values near `±29000` from MTL are its mate-found encoding (`MATE - ply`).
+
+| Pos | Huginn d | Huginn score | MTL d | MTL score | Δ depth |
+|---|---:|---:|---:|---:|---:|
+| WAC.001 | 13 | M+8    | 22 | +28997 | +9  |
+| WAC.002 | 11 | +70    | 19 | +285   | +8  |
+| WAC.003 | 12 | +320   | 19 | +320   | +7  |
+| WAC.004 | 19 | M+4    | 27 | +28997 | +8  |
+| WAC.005 | 19 | M+4    | 30 | +28997 | +11 |
+| WAC.006 | 18 | +723   | 25 | +1480  | +7  |
+| WAC.007 | 12 | +525   | 18 | +491   | +6  |
+| WAC.008 | 17 | +1460  | 20 | +1284  | +3  |
+| WAC.009 | 10 | **−223**  | 26 | **+28991** | **+16** |
+| WAC.010 | 15 | +415   | 21 | +377   | +6  |
+| **Mean** | **14.6** | | **22.7** | | **+8.1** |
+
+**Mean depth gap: 8.1 ply.** With effective branching factor ~3-4 in
+the pruned tree, that's ~6.5k–65k× more lines effectively examined per
+move. The full WAC solving-rate gap (79% vs 96%) is essentially this
+depth gap manifesting on the subset of positions where 8 plies makes
+a tactical difference.
+
+**WAC.009 is the smoking gun for the check-pruning fix.** Same position,
+two engines, two completely different conclusions:
+
+- Huginn at depth 10: **−223 cp** ("I'm losing 2¼ pawns")
+- MTL at depth 26:    **+28991** ("I see a forced mate")
+
+The expected move is `Bh2+` — a check-tactic. Huginn's LMR table
+reduces exactly the move that would force the mating sequence, so the
+search never reaches the depth where the win is visible. This is the
+canonical example for the Priority-1 fix: don't reduce check-giving
+moves and the engine sees Bh2+'s followup at the same 5s budget.
+
+**Where the engines agree** (WAC.003 +320/+320, WAC.007 +525/+491,
+WAC.010 +415/+377): positions that are tactically resolved at moderate
+depth — both engines get there. Score magnitude tracks each engine's
+own search depth (WAC.006 huginn +723 vs MTL +1480 — same direction,
+MTL sees the win is bigger because it's looked further into the
+liquidation).
+
+**Mate-find depths:** when the mate is short enough (M+4 / M+8) huginn
+sees it too. The gap shows up where the forcing line is longer than
+huginn's effective depth allows.
+
 ## External rating ladder (calibration)
 
 Transitive Elo estimates derived from a 2026-04-28 gauntlet run: MORA's
