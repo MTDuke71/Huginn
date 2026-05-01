@@ -2,6 +2,8 @@
 #include "evaluation.hpp"
 #include "chess_types.hpp"
 #include "attack_detection.hpp"
+#include "attack_tables.hpp"
+#include "bitboard.hpp"
 #include "board120.hpp"
 #include "input_checking.hpp"
 #include "msvc_optimizations.hpp"
@@ -224,7 +226,54 @@ int MinimalEngine::evaluate(const Position& pos) {
     if (black_bishops >= 2) {
         score -= EvalParams::BISHOP_PAIR_BONUS;
     }
-    
+
+    // -----------------------------------------------------------------
+    // Mobility: count squares each non-pawn, non-king piece can move to
+    // (excluding squares occupied by own pieces). Weighted per phase.
+    // Pawns are excluded (their move semantics aren't "attack squares")
+    // and kings are excluded (their squares are evaluated elsewhere).
+    // -----------------------------------------------------------------
+    {
+        const int mob_weight = is_endgame ? EvalParams::MOBILITY_WEIGHT_ENDGAME
+                                          : EvalParams::MOBILITY_WEIGHT_DEFAULT;
+        int mobility_score = 0;
+        const uint64_t occ = pos.occupied_bitboard;
+
+        for (int color = 0; color <= 1; ++color) {
+            const uint64_t own = pos.color_bitboards[color];
+            int count = 0;
+
+            // Knights
+            uint64_t bb = pos.piece_bitboards[color][int(PieceType::Knight)];
+            while (bb) {
+                int sq = pop_lsb(bb);
+                count += popcount(knight_attacks[sq] & ~own);
+            }
+            // Bishops
+            bb = pos.piece_bitboards[color][int(PieceType::Bishop)];
+            while (bb) {
+                int sq = pop_lsb(bb);
+                count += popcount(bishop_attacks(sq, occ) & ~own);
+            }
+            // Rooks
+            bb = pos.piece_bitboards[color][int(PieceType::Rook)];
+            while (bb) {
+                int sq = pop_lsb(bb);
+                count += popcount(rook_attacks(sq, occ) & ~own);
+            }
+            // Queens
+            bb = pos.piece_bitboards[color][int(PieceType::Queen)];
+            while (bb) {
+                int sq = pop_lsb(bb);
+                count += popcount(queen_attacks(sq, occ) & ~own);
+            }
+
+            if (color == int(Color::White)) mobility_score += count * mob_weight;
+            else                            mobility_score -= count * mob_weight;
+        }
+        score += mobility_score;
+    }
+
     // Return from current side's perspective (negate if black to move),
     // then add a tempo bonus (initiative goes to whoever moves next).
     int sided_score = (pos.side_to_move == Color::White) ? score : -score;

@@ -79,3 +79,4 @@ config.json
 
 # Claude Code local agent state (per-project permission cache)
 .claude/
+test/__pycache__/
