@@ -4,6 +4,12 @@ Snapshot of what's implemented in Huginn 2.0 (post Phase 4) and what's
 planned. Reality check on each item is anchored to file:line so this
 stays accurate as the code evolves.
 
+> **Looking for what to work on next?** See [BACKLOG.md](BACKLOG.md) —
+> the single-file issue tracker has the live priority queue, blocked
+> items with their unblock conditions, and known bugs. This document
+> is the long-term roadmap and historical context; the backlog is
+> the action list.
+
 ## Strength gap diagnosis (2026-04-28)
 
 Calibration gauntlet: **huginn current 0-20 vs MTLChess_v0.3** (~1984 Elo)
