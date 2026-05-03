@@ -19,33 +19,77 @@ exist, what conditions to watch.
 
 ---
 
-## Open — high priority
+## Open — recently deferred (blocked by move-ordering quality)
 
-### #1: Skip SEE-prune and LMR-reduce on check-giving moves
+#1, #7 (LMP), and #8 (aspiration step b) all regressed in gauntlet
+testing despite individual diagnoses being correct. Common cause:
+weak move ordering. All three should unblock when continuation
+history (#3) lands.
 
-- status: open / unblocked
-- priority: high
+### #1: Skip SEE-prune and LMR-reduce on check-giving moves — DEFERRED
+
+- status: blocked (re-attempt after #3 lands)
+- priority: was high; now low until unblock condition met
 - type: feature
-- est: half-session (~30-40 lines + tests)
-- links: [SEARCH_AND_EVAL.md#priority-1](SEARCH_AND_EVAL.md), `src/minimal_search.cpp` qsearch + LMR blocks
+- attempted: 2026-05-02 / 2026-05-03 (this session, two iterations)
+- links: [SEARCH_AND_EVAL.md#priority-1](SEARCH_AND_EVAL.md), `src/minimal_search.cpp`
+  qsearch + LMR blocks
 
-**Evidence:** WAC.009 — huginn at depth 10 says −223 cp ("losing"),
-MTL_v0.5 at depth 26 says +28991 ("forced mate"). Expected move is
-`Bh2+`. Huginn's LMR is reducing exactly the move that would force the
-mate. Pattern repeats across 11/24 of the regressions vs old-huginn
-and roughly half of the 51 missed-vs-MTL positions.
+**Original evidence still valid.** WAC.009 — huginn at depth 10 says
+−223 cp, MTL_v0.5 at depth 26 says +28991 (forced mate). Expected move
+`Bh2+`. Huginn's LMR was reducing the exact move that drives the mate.
+Pattern: 11/24 of the regressions vs old-huginn and roughly half of
+the 51 missed-vs-MTL positions involve checks.
 
-**Plan:**
-1. `gives_check()` helper via make/SqAttacked-on-enemy-king/unmake.
-2. Qsearch SEE-prune: skip prune if `gives_check()`.
-3. LMR block: skip reduction if `gives_check()` (or set R=0).
-4. Re-run WAC test → expect 5-15 of the 24 regressions to flip to passes.
-5. Gauntlet vs `huginn_t2` → expect +20-40 Elo.
+**What we did and what happened:**
 
-**Why now:** unblocked (SEE qsearch shipped at `1cce8de`), highest
-leverage of any open item, fast verification via WAC.
+| Variant | What changed | WAC | Gauntlet vs t2 (100g) |
+|---|---|---|---|
+| P1a | LMR exempts moves that give check | 84.3% (+5.3pp from baseline) | -3.47 Elo, LOS 46% |
+| P1a opt + P1b | + qsearch SEE-prune exempts check captures | not re-measured | **-31.35 Elo, LOS 18%** |
+
+**The diagnosis was correct.** WAC tactical-solving rate jumped 5.3pp
+(16 more positions solved, 13 of them checks — exactly the target
+class). On WAC.009 specifically, huginn now finds Bh2+ at depth 8
+with mate in 11 (vs not seeing it at all up through depth 10
+previously). The fix does what it was designed to do.
+
+**The fix doesn't translate to gauntlet Elo.** Same shape as #7 (LMP)
+and #8 (aspiration step b): tactical-sight improvements that don't
+convert to game-play strength. Two probable mechanisms:
+
+1. **Time redistribution.** Skipping LMR on check-moves means those
+   moves consume more time per node. Same total clock budget, less
+   depth elsewhere → tactical wins offset by positional losses.
+2. **P1b actively hurt** (-28 Elo delta). The cost of MakeMove +
+   SqAttacked + TakeMove on every SEE-pruned capture is real overhead
+   in a hot qsearch loop, and sacrificial-check captures in qsearch
+   rarely pay out in actual games (they were already pruned earlier
+   in the search by other mechanisms when worthwhile).
+
+**Why it's blocked, not just rejected.** All four deferred features
+share the same root cause: weak move ordering. With current move
+ordering, the engine cannot reliably tell which check-giving move (or
+which late quiet, or which aspiration-bound subtree) is actually the
+critical one. Continuation history (#3) directly addresses this. Once
+ordering is strong enough that the top-K moves contain the right
+candidates, all four deferred features should yield positive Elo.
+
+**Re-attempt plan when unblocked by #3:**
+1. Cherry-pick just P1a (LMR-exempts-check) — the optimized form with
+   the lazy `gives_check` lambda. This was the half that did neutral,
+   not negative.
+2. Re-run WAC and gauntlet vs whatever-baseline-is-current.
+3. If positive, commit. Skip P1b again unless WAC shows specific
+   capture-with-check positions that P1a alone misses; those are
+   rarer than the analysis initially suggested.
+
+**Code archive:** the P1a-optimized + P1b combined diff is in the
+reflog from this session. Recoverable via `git reflog` if/when needed.
 
 ---
+
+## Open — high priority
 
 ### #2: Re-attempt king safety on top of mobility
 
