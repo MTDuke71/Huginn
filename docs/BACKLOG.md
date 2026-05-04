@@ -21,10 +21,19 @@ exist, what conditions to watch.
 
 ## Open — recently deferred (blocked by move-ordering quality)
 
-#1, #7 (LMP), and #8 (aspiration step b) all regressed in gauntlet
-testing despite individual diagnoses being correct. Common cause:
-weak move ordering. All three should unblock when continuation
-history (#3) lands.
+**Four** features now share this fingerprint: tactically-correct
+implementation, real WAC tactical-solving improvement, neutral-to-
+strongly-negative gauntlet Elo. #1, #2, #7, #8 all regressed despite
+individually-sound diagnoses. The 2026-05-04 king-safety re-attempt
+on top of mobility was the last falsifying experiment: original
+hypothesis was "mobility was the missing companion" — but the gauntlet
+landed at -126 Elo at 40 games, *worse* than the original KS-only
+runs (-21 / -3 / -17). Mobility is not the missing companion. **Move
+ordering quality is** — the engine cannot reliably distinguish
+"moves that need full attention" from "moves safe to reduce or prune."
+
+Continuation history (#3) is the universal unblocker for all four.
+When it lands, expect this entire section to become re-attemptable.
 
 ### #1: Skip SEE-prune and LMR-reduce on check-giving moves — DEFERRED
 
@@ -89,38 +98,64 @@ reflog from this session. Recoverable via `git reflog` if/when needed.
 
 ---
 
-## Open — high priority
+### #2: Re-attempt king safety on top of mobility — DEFERRED
 
-### #2: Re-attempt king safety on top of mobility
-
-- status: open / unblocked
-- priority: high
+- status: blocked (re-attempt after #3 lands)
+- priority: was high; now low until unblock condition met
 - type: feature
-- est: 1 session (cherry-pick + tune + gauntlet)
+- attempted: 2026-05-04 (this re-attempt) + 2026-04-30 (original 3 iterations)
+- worktree: `C:\Users\m_lad\Repos\Huginn.worktrees\agents-backlog-review-next-steps`
+  branch `agents/backlog-review-next-steps`
 - links: [SEARCH_AND_EVAL.md#king-safety-attempt](SEARCH_AND_EVAL.md)
   defer note from commit `30aba92`
 
-**Evidence:** Three iterations of king safety landed at -21 / -3 / -17
-Elo. v2 (presence-based attack count, `DANGER_MAX = 200`) was best.
-Hypothesis from defer note: king safety needs mobility's position-based
-penalty interaction to pay off (less mobile = harder to escape attacks).
+**Hypothesis tested:** "King safety needs mobility's position-based
+penalty interaction to pay off (less mobile = harder to escape attacks)."
+Original 3 iterations landed at -21 / -3 / -17 Elo. With mobility now
+shipped (commit `626257a`), the v2 settings should compound positively.
 
-**Plan:**
-1. Re-apply v2's eval params on top of current tip (post-mobility).
-2. Re-run gauntlet vs `huginn_t2`.
-3. If positive, commit. If still neutral, push back into Tier 3 with
-   a note that mobility wasn't the missing companion.
+**Result of re-attempt (2026-05-04):**
+- Implementation: presence-based attack zone, `DANGER_MAX = 200`, the
+  same v2 settings that scored best in the original attempt; freshly
+  added file-exposure penalties.
+- 208/208 unit tests pass; eval-symmetry test confirms mirror-equivalence.
+- Gauntlet vs `huginn_t2`: **-126 Elo at 40 games**, called early. Worse
+  than any of the original three KS iterations.
 
-**Unblocked since:** mobility shipped (commit `626257a`).
+**Hypothesis falsified.** Mobility was *not* the missing companion. The
+gauntlet result is significantly worse than the original isolated runs,
+which suggests mobility and king safety actively *anti-compound* under
+current conditions — they push the engine in different directions when
+deciding move priorities, and the search doesn't have the ordering
+quality to reconcile them.
+
+**Why it's blocked, not rejected.** Same root cause as #1, #7, #8:
+weak move ordering. The eval is correctly identifying king-safety
+threats, but the search can't sequence the moves to address them
+(or to ignore false-positive threats the eval surfaces). Continuation
+history (#3) addresses this directly.
+
+**Code state:** the implementation lives uncommitted in the worktree at
+`C:\Users\m_lad\Repos\Huginn.worktrees\agents-backlog-review-next-steps`
+on branch `agents/backlog-review-next-steps`. Cherry-pickable when #3
+ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
+
+**Re-attempt plan when unblocked by #3:**
+1. Cherry-pick the king-safety eval changes from the worktree branch.
+2. Re-run gauntlet vs whatever-baseline-is-current.
+3. If positive, commit. If still neutral, the issue is deeper than
+   move ordering and may require a Texel-style tuner (#9) to resolve
+   parameter mis-tuning.
 
 ---
 
-## Open — medium priority
+## Open — high priority
 
-### #3: Continuation history (Tier 2 #11)
+### #3: Continuation history (Tier 2 #11) — universal unblocker
 
 - status: open / unblocked
-- priority: medium
+- priority: **high** (promoted 2026-05-04 — universal unblocker for
+  the four deferred features above)
 - type: feature
 - est: 1 session
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #11
@@ -129,15 +164,25 @@ penalty interaction to pay off (less mobile = harder to escape attacks).
 Compounds with SEE (better tactical move ordering surfaces winning
 sequences earlier). Stockfish-class engines all have it.
 
-**Why important here:** prerequisite for revisiting #4 (LMP) and #5
-(aspiration step b). Both deferred features need stronger move ordering
-to pay off; continuation history is the cheapest way to get there.
+**Why this is the highest-priority remaining item.** Four features in
+this backlog (#1, #2, #7, #8) regressed in gauntlet despite individual
+diagnoses being correct. The shared root cause is move-ordering
+quality — the engine cannot reliably distinguish moves that need full
+attention from moves safe to reduce/prune. Continuation history
+addresses this directly. Once it ships, expect the entire "recently
+deferred" section above to become re-attemptable.
 
 **Plan:** add `cmh[piece][to][piece2][to2]` table. Update on quiet-move
 beta cutoff with `depth²` bonus. Use as scoring contribution in
-`pick_next_move`. Test alone vs t2.
+`pick_next_move`. Test alone vs t2 (success criterion: any positive
+Elo, not regressing). Then re-attempt the deferred trio in order:
+#1 (check-pruning, optimized P1a only) → #7 (LMP, with the `quiet_count`
+plumbing from `tier1-stack-broken`) → #8 (aspiration step b) → #2
+(king safety) — each with a fresh gauntlet on the new tip.
 
 ---
+
+## Open — medium priority
 
 ### #4: Refresh `huginn_t3` baseline when cumulative ≥ +50 over t2
 
