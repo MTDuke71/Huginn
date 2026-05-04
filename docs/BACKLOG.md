@@ -93,7 +93,7 @@ reflog from this session. Recoverable via `git reflog` if/when needed.
 
 ### #2: Re-attempt king safety on top of mobility
 
-- status: open / unblocked
+- status: in-progress (implemented 2026-05-04, pending gauntlet)
 - priority: high
 - type: feature
 - est: 1 session (cherry-pick + tune + gauntlet)
@@ -106,10 +106,30 @@ Hypothesis from defer note: king safety needs mobility's position-based
 penalty interaction to pay off (less mobile = harder to escape attacks).
 
 **Plan:**
-1. Re-apply v2's eval params on top of current tip (post-mobility).
-2. Re-run gauntlet vs `huginn_t2`.
+1. Re-apply v2's eval params on top of current tip (post-mobility). ✅ Done 2026-05-04
+2. Re-run gauntlet vs `huginn_t2`. ← **NEXT**
 3. If positive, commit. If still neutral, push back into Tier 3 with
    a note that mobility wasn't the missing companion.
+
+**Implementation (2026-05-04):**
+- `evaluation.hpp`: added `KING_DANGER_MAX=200`, `KING_OPEN_FILE_PENALTY=25`,
+  `KING_SEMI_OPEN_FILE_PENALTY=15`, `KING_ATTACK_{KNIGHT,BISHOP}=2`,
+  `KING_ATTACK_ROOK=3`, `KING_ATTACK_QUEEN=5`
+- `minimal_search.cpp`: presence-based attack zone + file-exposure penalty
+  inside `if (!is_endgame)` block in `evaluate()`
+- Quadratic danger formula: `min(attack_units² × 4, 200)` caps large attacks
+
+**Build and test command:**
+```
+cd C:\Users\m_lad\Repos\Huginn.worktrees\agents-backlog-review-next-steps
+"C:\Program Files\CMake\bin\cmake.exe" --preset msvc-x64-release
+"C:\Program Files\CMake\bin\cmake.exe" --build build/msvc-x64-release --config Release --target huginn
+copy build\msvc-x64-release\bin\Release\huginn.exe C:\Users\m_lad\Documents\fastchess-windows-x86-64\huginn.exe
+test_huginn_vs_t2.bat 50
+```
+Note: test_huginn_vs_t2.bat builds from C:\Users\m_lad\Repos\Huginn (main repo),
+so run the manual build steps above from the worktree first, then copy the exe,
+then run fastchess directly.
 
 **Unblocked since:** mobility shipped (commit `626257a`).
 

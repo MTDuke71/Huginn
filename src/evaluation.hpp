@@ -126,6 +126,19 @@ inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 inline constexpr int KING_SHIELD_MULTIPLIER = 10;
 inline constexpr int KING_ATTACK_PENALTY = 15;
 
+// King safety v2 — presence-based attack zone evaluation.
+// v2 was the best-performing hand-tuned variant (~0 Elo vs t2 before mobility).
+// Re-attempted on top of mobility (commit 626257a) per BACKLOG.md #2.
+inline constexpr int KING_DANGER_MAX = 200;
+inline constexpr int KING_OPEN_FILE_PENALTY = 25;       // fully open file adjacent to king
+inline constexpr int KING_SEMI_OPEN_FILE_PENALTY = 15;  // semi-open file (no own pawns)
+// Piece-presence weights: each piece that attacks the king zone adds this many units.
+// "Presence-based": boolean check, not popcount of attacked squares.
+inline constexpr int KING_ATTACK_KNIGHT = 2;
+inline constexpr int KING_ATTACK_BISHOP = 2;
+inline constexpr int KING_ATTACK_ROOK   = 3;
+inline constexpr int KING_ATTACK_QUEEN  = 5;
+
 inline constexpr int CASTLE_BONUS = 40;
 inline constexpr int STUCK_PENALTY = 20;
 
