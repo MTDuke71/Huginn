@@ -420,6 +420,52 @@ figure, note the bench command (`go depth 11` from startpos).
 
 ---
 
+### #14: Move-gen — bypass legality pre-filter at search call sites
+
+- status: open / unblocked
+- priority: low
+- type: feature / perf
+- est: 1 session
+
+**Evidence (from spike during 2026-05-05 session):** Replacing
+`generate_legal_moves` with the pseudo-legal generator at AlphaBeta
+call sites (and adding legal-count tracking for mate detection)
+measured **35% faster at depth 11 startpos** (4.09M / 2.6s → 2.69M
+nodes / 1.27s). The current commit `6865379` only got ~7-10% of that
+because it kept the per-move Make/Unmake filter, just removed the
+Position copy. The full filter is still redundant work — every legal
+move is make/unmade twice (once in filter, once in search).
+
+**Why low priority:** invasive change touching 5+ call sites in
+`minimal_search.cpp`. Mate detection at root and AlphaBeta needs to
+move from `move_list.count == 0` (works only with legal-only
+generation) to `legal_count == 0 after loop` (works with pseudo-legal).
+Risk: getting the mate-detection corner cases right.
+
+**Plan:**
+1. Add a thin wrapper `generate_pseudo_moves(pos, list)` that just
+   calls `generate_all_moves`. (Or use it directly — name is fine.)
+2. Update AlphaBeta main loop, IID, root loop, and the two
+   `MinimalEngine::search` call sites to use it. Track
+   `int legal_count = 0;` in each loop, increment after successful
+   `MakeMove`. Move mate detection to "after loop, if legal_count==0
+   and not stopped" pattern.
+3. Same for qsearch path: `generate_all_caps` already only-one-caller,
+   so could fully bypass the filter there. But mind the SEE-before-
+   MakeMove ordering — either reorder qsearch to MakeMove first
+   (and undo before SEE), or pre-compute a quick illegal-capture
+   filter (e.g., pinned-piece detection).
+4. Run perft tests (no change expected; they don't go through this
+   path), unit tests, gauntlet vs current tip.
+5. If gauntlet doesn't validate at ~100g, accept the bench evidence
+   and ship — same logic as #6865379.
+
+**Why now-or-never:** the bigger surgical version requires either
+this commit or a re-derivation later. Better as one commit on top of
+`6865379` than re-doing the work.
+
+---
+
 ## Open — bugs
 
 ### #12: Fastchess hang at 80 games during mobility gauntlet
@@ -468,3 +514,10 @@ investigate. Until then, ignore.
 ### Refresh `baseline-t2`
 - closed: commit `2ce78d1` (2026-04-30)
 - tag: `baseline-t2 = 66685f3`
+
+### Movegen filter — remove Position copy + preserve capture scoring
+- closed: commit `6865379` (2026-05-05)
+- bench: depth 11 startpos ~2.7s → ~2.5s (~7-10% per-node speedup, same nodes/PV)
+- gauntlet vs t2: -17 ± 73 Elo (inside CI; bench-validated, gauntlet too noisy at 100g)
+- shipped because change is correctness-preserving (perft 100%) and removes literal duplicate work + a latent capture-scoring bug
+- follow-up available: surgical search-side change (search uses `generate_all_moves` directly + legal-count mate detection) is ~3-4× the win — spike measured 35% faster at depth 11 startpos. Tracked as #14 below.
