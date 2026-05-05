@@ -151,34 +151,103 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
-### #3: Continuation history (Tier 2 #11) — universal unblocker
+### #13: Investigate dormant counter-move + TT-mate-adjustment latent bugs
 
 - status: open / unblocked
-- priority: **high** (promoted 2026-05-04 — universal unblocker for
-  the four deferred features above)
+- priority: **high** (blocks #3 cleanly + has its own latent value)
+- type: bug / research
+- est: 1-2 sessions
+
+**Discovered 2026-05-05** while attempting #3. The engine has two
+latent bugs that have been silently dormant since the start:
+
+1. **`info.ply` is never incremented across recursive AlphaBeta calls.**
+   It's set to 0 once at search start and stays 0. This silently
+   disables:
+   - The counter-move heuristic (guarded by `info.ply > 0`)
+   - The TT mate-distance adjustment (uses `info.ply` for store/probe)
+2. **The "fix" makes things significantly worse.** Adding an RAII
+   `PlyScope` guard that correctly tracks ply produced **-164 Elo at
+   100 games (LOS 0%)** vs `huginn_t2`. Fixing the dormancy without
+   re-tuning the now-active code regresses the engine.
+
+Most likely cause: **counter-move score 700K is misordered**. With
+counter-moves dormant, ordering was: TT > PV > IID > captures (1M+) >
+killers (800-900K) > promotions (25K-90K) > history. With the fix
+active, counter-moves at 700K slide between killers and promotions —
+beating queen-promotion (90K) for tactical priority. That's almost
+certainly wrong; promotions should beat counter-moves.
+
+There may be additional issues with TT mate-adjustment correctness
+that surface only when it actually fires.
+
+**Why high priority:** #3 (continuation history) was meant to be the
+universal unblocker for the four-feature deferred section. But #3's
+plumbing depends on `info.search_stack[info.ply - 1]` which only works
+when `info.ply` tracks correctly. Fixing #13 cleanly unblocks #3 —
+and likely also #1/#2/#7/#8 indirectly via better move ordering once
+the latent code is properly tuned.
+
+**Plan:**
+1. Reproduce the regression in a controlled way (small set of test
+   positions, log counter-move firings + ordering decisions).
+2. Lower counter-move score to ~15K (below queen promotion at 90K)
+   and re-test. Verify ordering: TT > PV > captures > killers >
+   promotions > counter-moves > history.
+3. Audit TT mate-distance adjustment: trace store/probe symmetry
+   under known mate positions.
+4. Test ply-fix-only vs t2 with corrected counter-move scoring.
+5. If positive: ship as a "latent-bug-fix" commit and unblock #3.
+6. If still negative: invasively pass `prev_move` as an explicit
+   AlphaBeta parameter, sidestepping the ply machinery entirely.
+
+**Code archive of failed first attempt:** the PlyScope+continuation-
+history combined diff was stashed-and-dropped during 2026-05-05
+session. Recoverable via `git reflog show stash` / `git fsck --lost-
+found` if needed; otherwise re-derive from this entry's notes.
+
+---
+
+### #3: Continuation history (Tier 2 #11) — universal unblocker
+
+- status: blocked (on #13)
+- priority: high (after #13 lands)
 - type: feature
-- est: 1 session
+- est: 1 session (re-attempt after #13)
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #11
+- attempted: 2026-05-05 (this session)
 
-**Evidence:** Two-ply move history (`prev_move → this_move`) for ordering.
-Compounds with SEE (better tactical move ordering surfaces winning
-sequences earlier). Stockfish-class engines all have it.
+**Result of first attempt (2026-05-05):** Implemented continuation
+history table + scoring contribution + aging + PlyScope guard for
+the prerequisite info.ply tracking. Combined gauntlet vs `huginn_t2`:
+**-147 Elo / LOS 0%**. Isolation test (PlyScope-only, no continuation
+history): **-164 Elo / LOS 0%**. The `PlyScope` fix alone is the
+regressor — see #13 for the root-cause analysis.
 
-**Why this is the highest-priority remaining item.** Four features in
-this backlog (#1, #2, #7, #8) regressed in gauntlet despite individual
-diagnoses being correct. The shared root cause is move-ordering
-quality — the engine cannot reliably distinguish moves that need full
-attention from moves safe to reduce/prune. Continuation history
-addresses this directly. Once it ships, expect the entire "recently
-deferred" section above to become re-attemptable.
+**Why this is the highest-priority remaining feature.** Four features
+in this backlog (#1, #2, #7, #8) regressed in gauntlet despite
+individual diagnoses being correct. The shared root cause is
+move-ordering quality. Continuation history addresses this directly.
+Once #13 lands, #3 becomes implementable and the entire "recently
+deferred" section becomes re-attemptable.
 
-**Plan:** add `cmh[piece][to][piece2][to2]` table. Update on quiet-move
-beta cutoff with `depth²` bonus. Use as scoring contribution in
-`pick_next_move`. Test alone vs t2 (success criterion: any positive
-Elo, not regressing). Then re-attempt the deferred trio in order:
-#1 (check-pruning, optimized P1a only) → #7 (LMP, with the `quiet_count`
-plumbing from `tier1-stack-broken`) → #8 (aspiration step b) → #2
-(king safety) — each with a fresh gauntlet on the new tip.
+**Plan when #13 lands:**
+1. Add `int continuation_history[13][64][13][64]` (heap-allocated to
+   avoid stack-overflow on test instances; ~2.7 MB).
+2. Update on quiet-move beta cutoff with `depth²` bonus, indexed by
+   `[prev_piece][prev_to_64][cur_piece][cur_to_64]`.
+3. Score contribution in pick_next_move's quiet-move branch, additive
+   on top of search_history.
+4. Age each search start (divide by 4) like search_history.
+5. Test alone vs t2 (success criterion: any positive Elo, not
+   regressing). Then re-attempt the deferred trio in order:
+   #1 (check-pruning, optimized P1a only) → #7 (LMP, with the
+   `quiet_count` plumbing from `tier1-stack-broken`) → #8 (aspiration
+   step b) → #2 (king safety) — each with a fresh gauntlet on the
+   new tip.
+
+The implementation details from the 2026-05-05 attempt are documented
+above. Cherry-pickable when #13 unblocks.
 
 ---
 
