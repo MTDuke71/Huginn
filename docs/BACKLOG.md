@@ -188,23 +188,74 @@ when `info.ply` tracks correctly. Fixing #13 cleanly unblocks #3 —
 and likely also #1/#2/#7/#8 indirectly via better move ordering once
 the latent code is properly tuned.
 
-**Plan:**
-1. Reproduce the regression in a controlled way (small set of test
-   positions, log counter-move firings + ordering decisions).
-2. Lower counter-move score to ~15K (below queen promotion at 90K)
-   and re-test. Verify ordering: TT > PV > captures > killers >
-   promotions > counter-moves > history.
-3. Audit TT mate-distance adjustment: trace store/probe symmetry
-   under known mate positions.
-4. Test ply-fix-only vs t2 with corrected counter-move scoring.
-5. If positive: ship as a "latent-bug-fix" commit and unblock #3.
-6. If still negative: invasively pass `prev_move` as an explicit
-   AlphaBeta parameter, sidestepping the ply machinery entirely.
+**Attempt 2 (2026-05-06):** Applied the prescribed fix —
 
-**Code archive of failed first attempt:** the PlyScope+continuation-
-history combined diff was stashed-and-dropped during 2026-05-05
-session. Recoverable via `git reflog show stash` / `git fsck --lost-
-found` if needed; otherwise re-derive from this entry's notes.
+1. Inline `++info.ply` / `--info.ply` around every recursive AlphaBeta
+   call (main loop, null-move, IID, root, test entrypoint).
+2. Wrote search_stack[ply] before each recursion, with a null S_MOVE()
+   marker for null-move so the child's counter-move guard
+   (`previous_move.move != 0`) skips it.
+3. Lowered counter-move score from 700K → 15K (slot below all
+   promotions, above the history range).
+4. Fixed leaf mate return from `-MATE + (info.max_depth - depth)` →
+   `-MATE + info.ply` so it stays consistent with the TT store/probe
+   adjustment that uses `info.ply` (the two diverge when check
+   extensions bump depth, corrupting the TT for check-extended mate
+   paths).
+
+**Result:** **-113.94 ± 63.96 Elo at 60g vs t2, LOS 0.01%, stopped
+early.** Better than attempt 1's -164 (the score+mate-distance fixes
+recovered ~50 Elo) but still clearly regressive. 208/208 unit tests
+pass; failure is gameplay-only.
+
+**What this rules out:** the 700K counter-move score was not the
+sole cause. The mate-distance leaf encoding was inconsistent
+(real bug, fixed) but fixing it was not sufficient. The remaining
+regression source is somewhere we haven't pinpointed — most likely
+candidates:
+
+- **TT pollution from now-active mate-distance writes.** Even with
+  consistent leaf encoding, there may be other paths where mate
+  scores get stored without the `+= info.ply` adjustment, or where
+  `info.ply` at store time differs from `info.ply` at the leaf
+  (e.g., null-move recursion writes at parent's ply but the child's
+  leaf was at a different effective depth).
+- **Counter-move at 15K may still be wrong.** Maybe should be
+  history-range (1000-ish) or even lower. Or counter-move scoring
+  may be conceptually broken in a way the score doesn't fix.
+- **Something else activated by `info.ply > 0`** that we didn't audit.
+
+**Plan for next session (resume here 2026-05-07):**
+1. Snapshot the regressive change as a stash/branch for reference,
+   then revert clean. (Working tree already cleaned 2026-05-06.)
+2. **Bisect the activations.** Re-apply the patch but gate each
+   activation independently:
+   - 2a. Ply tracking only, counter-move + TT-mate stays guarded by
+     a separate flag (`if (info.ply_tracked && info.ply > 0)` etc.).
+     Test: same Elo as t2 (info.ply tracks but nothing fires)?
+   - 2b. Add ply-tracked-counter-move only. Test.
+   - 2c. Add ply-tracked-TT-mate only. Test.
+   - 2d. Combinations. Find which activation regresses.
+3. **Step 6 fallback (from original plan):** if bisection
+   inconclusive or all individual activations regress, drop the
+   `info.ply` machinery entirely and pass `prev_move` as an explicit
+   AlphaBeta parameter (`AlphaBeta(..., S_MOVE prev_move = S_MOVE())`).
+   This sidesteps ply tracking completely; only the counter-move
+   heuristic uses prev_move; TT mate-distance stays dormant.
+4. **TT cap-on-mate-store:** when storing mate scores, clamp to
+   ensure `store_score < MATE` and `store_score > -MATE` even after
+   `+= info.ply`. Prevents the >MATE corruption case if check
+   extensions still cause encoding drift somewhere.
+
+**Code state:** changes were uncommitted and reverted via
+`git restore src/minimal_search.cpp`. Diff was:
+- `++/--info.ply` around recursions in main loop, null move, IID,
+  root (`searchPosition`), test entry (`MinimalEngine::search`).
+- search_stack writes at each recursion site.
+- Counter-move score 700K → 15K at line ~899.
+- Mate leaf return changed at line ~1497.
+
+Re-derive from this description tomorrow if needed.
 
 ---
 
