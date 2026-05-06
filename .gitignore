@@ -88,3 +88,4 @@ test/__pycache__/
 test/wac_test_log_*.txt
 test/wac_failed_positions_*.txt
 test/wac_retest_*.txt
+.claude/settings.local.json

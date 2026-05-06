@@ -41,7 +41,13 @@
       "Bash(./build/msvc-x64-release/Release/debug_castling_rights.exe)",
       "Bash(./build/msvc-x64-release/Release/analyze_castling_differences.exe)",
       "Bash(./build/msvc-x64-release/Release/verify_castling_moves.exe)",
-      "Bash(./build/msvc-x64-release/Release/perft_depth1_knight_positions.exe)"
+      "Bash(./build/msvc-x64-release/Release/perft_depth1_knight_positions.exe)",
+      "Bash(./build/msvc-x64-release/bin/Release/huginn.exe)",
+      "Bash(git commit -m ' *)",
+      "Bash(/c/Users/m_lad/Documents/Repos/Huginn/build/msvc-x64-release/bin/Release/huginn.exe)",
+      "Bash(git -C /c/Users/m_lad/Documents/Repos/Huginn add docs/BACKLOG.md)",
+      "Bash(git -C /c/Users/m_lad/Documents/Repos/Huginn commit -m ' *)",
+      "Bash(git -C /c/Users/m_lad/Documents/Repos/Huginn log -3 --oneline)"
     ],
     "deny": [],
     "ask": []
