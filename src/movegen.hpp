@@ -100,6 +100,13 @@ void generate_legal_moves(Position& pos, S_MOVELIST& list);
 // Quiescence: legal captures only.
 void generate_all_caps(Position& pos, S_MOVELIST& list);
 
+// Quiescence (lazy filter): pseudo-legal captures only — no MakeMove/Unmake.
+// Caller must check legality via `pos.MakeMove(...) == 1` before recursing.
+// Captures keep their pre-move MVV-LVA scoring set by the bitboard generator
+// (which is more accurate than re-scoring on the post-move position, where
+// pos.at(from)==None zeroes out the attacker-value LVA term).
+void generate_all_caps_pseudo(const Position& pos, S_MOVELIST& list);
+
 // Helper functions
 inline bool in_check(const Position& pos) {
     Color current_color = pos.side_to_move;

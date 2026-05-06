@@ -406,7 +406,7 @@ becomes near-perfect. Less impactful for opening/middlegame play.
 
 ### #11: CLAUDE.md NPS figure is stale — CLOSED
 
-- status: closed (next commit on top of `41629cf`)
+- status: closed @ `b9cc1be` (2026-05-05)
 - priority: low
 - type: maintenance
 
@@ -419,49 +419,43 @@ will reproduce on the current hardware.
 
 ---
 
-### #14: Move-gen — bypass legality pre-filter at search call sites
+### #14: Move-gen — bypass legality pre-filter at search call sites — CLOSED
 
-- status: open / unblocked
-- priority: low
+- status: closed (next commit on top of `b9cc1be`)
+- priority: was low
 - type: feature / perf
-- est: 1 session
 
-**Evidence (from spike during 2026-05-05 session):** Replacing
-`generate_legal_moves` with the pseudo-legal generator at AlphaBeta
-call sites (and adding legal-count tracking for mate detection)
-measured **35% faster at depth 11 startpos** (4.09M / 2.6s → 2.69M
-nodes / 1.27s). The current commit `6865379` only got ~7-10% of that
-because it kept the per-move Make/Unmake filter, just removed the
-Position copy. The full filter is still redundant work — every legal
-move is make/unmade twice (once in filter, once in search).
+**Result (2026-05-05):** Shipped on bench evidence. Depth 11 startpos
+(book off): 4.58M nodes / 2904ms (1.58 Mnps) → 3.70M nodes / 1659ms
+(2.23 Mnps). **+41% NPS / +43% wall-clock**, slightly above the 35%
+spike estimate. Node count and PV shifted (e2e4-line cp 25 → d2d4
+cp 30) due to a free correctness improvement in qsearch capture
+ordering: the new pseudo-caps generator preserves the bitboard
+generator's pre-move MVV-LVA score, instead of `generate_all_caps`'s
+post-MakeMove re-scoring where `pos.at(from)==None` zeroed the LVA
+term.
 
-**Why low priority:** invasive change touching 5+ call sites in
-`minimal_search.cpp`. Mate detection at root and AlphaBeta needs to
-move from `move_list.count == 0` (works only with legal-only
-generation) to `legal_count == 0 after loop` (works with pseudo-legal).
-Risk: getting the mate-detection corner cases right.
+**What shipped:**
+1. Added `generate_all_caps_pseudo` (pseudo-legal captures, no
+   Make/Unmake filter) to `movegen.{hpp,cpp}`.
+2. Converted four search call sites from `generate_legal_moves` →
+   `generate_all_moves`: `MinimalEngine::search`, `AlphaBeta` main
+   loop, IID, `searchPosition` root. Each tracks `legal_count` and
+   handles mate detection after the loop.
+3. AlphaBeta main loop: mate/stalemate detection moved from pre-loop
+   `if (move_list.count == 0)` → post-loop `if (legal_count == 0 &&
+   !stopped && !quit)` pattern.
+4. Qsearch: switched `generate_all_caps` → `generate_all_caps_pseudo`.
+   The existing `if (pos.MakeMove(m) != 1) continue;` already filters
+   illegals inline. SEE-on-pseudo-legal is safe — illegal captures
+   either get pruned by SEE or rejected by MakeMove with no harm.
+5. Left book-move legality check at `searchPosition:1675` alone —
+   one-shot, not a hot path, not worth the change risk.
 
-**Plan:**
-1. Add a thin wrapper `generate_pseudo_moves(pos, list)` that just
-   calls `generate_all_moves`. (Or use it directly — name is fine.)
-2. Update AlphaBeta main loop, IID, root loop, and the two
-   `MinimalEngine::search` call sites to use it. Track
-   `int legal_count = 0;` in each loop, increment after successful
-   `MakeMove`. Move mate detection to "after loop, if legal_count==0
-   and not stopped" pattern.
-3. Same for qsearch path: `generate_all_caps` already only-one-caller,
-   so could fully bypass the filter there. But mind the SEE-before-
-   MakeMove ordering — either reorder qsearch to MakeMove first
-   (and undo before SEE), or pre-compute a quick illegal-capture
-   filter (e.g., pinned-piece detection).
-4. Run perft tests (no change expected; they don't go through this
-   path), unit tests, gauntlet vs current tip.
-5. If gauntlet doesn't validate at ~100g, accept the bench evidence
-   and ship — same logic as #6865379.
-
-**Why now-or-never:** the bigger surgical version requires either
-this commit or a re-derivation later. Better as one commit on top of
-`6865379` than re-doing the work.
+**Validation:** 208/208 unit tests pass. Mate-in-1 detection works
+(`Ra8#` found at depth 2). Mate-already position returns clean
+`bestmove 0000` with no crash. Gauntlet not run; bench evidence
+sufficient per plan step 5.
 
 ---
 

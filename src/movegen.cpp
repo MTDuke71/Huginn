@@ -60,3 +60,19 @@ void generate_all_caps(Position& pos, S_MOVELIST& list) {
         }
     }
 }
+
+// Pseudo-legal captures only — no MakeMove/Unmake. Caller is responsible
+// for legality (qsearch already does `if (pos.MakeMove(m) != 1) continue`).
+// Preserves the pre-move MVV-LVA score set by the bitboard generator.
+void generate_all_caps_pseudo(const Position& pos, S_MOVELIST& list) {
+    S_MOVELIST all_moves;
+    generate_all_moves(pos, all_moves);
+
+    list.count = 0;
+    for (int i = 0; i < all_moves.size(); ++i) {
+        const S_MOVE& move = all_moves[i];
+        if (move.is_capture()) {
+            list.moves[list.count++] = move;
+        }
+    }
+}

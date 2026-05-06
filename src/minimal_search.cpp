@@ -996,40 +996,45 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
         }
         
         S_MOVELIST move_list;
-        generate_legal_moves(pos, move_list);
-        
+        generate_all_moves(pos, move_list);
+
         if (move_list.count == 0) break;
-        
+
         int best_score = -30000;
         S_MOVE depth_best_move;
         depth_best_move.move = 0;
-        
+        int legal_count = 0;
+
         for (int i = 0; i < move_list.count; ++i) {
             // Check time more frequently during move loop
             if (time_up()) break;
-            
+
             if (pos.MakeMove(move_list.moves[i]) != 1) continue;
-            
+            ++legal_count;
+
             // Create temporary SearchInfo for this search
             SearchInfo temp_info;
             temp_info.ply = 0;
             temp_info.stopped = false;
-            
+
             // Use consistent VICE-style AlphaBeta search (not old alpha_beta)
             int score = -AlphaBeta(pos, -INFINITE, INFINITE, depth - 1, temp_info, true, false);
             pos.TakeMove();
-            
+
             // Accumulate nodes from this search
             total_nodes += temp_info.nodes;
-            
+
             // Check time immediately after each move search
             if (time_up()) break;
-            
+
             if (score > best_score) {
                 best_score = score;
                 depth_best_move = move_list.moves[i];
             }
         }
+
+        // No legal moves at this depth: mate/stalemate. Stop iterative deepening.
+        if (legal_count == 0 && !time_up()) break;
         
         if (depth_best_move.move != 0) {
             best_move = depth_best_move;
@@ -1313,24 +1318,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
 
-    // Generate all legal moves first
+    // Generate pseudo-legal moves; legality is checked per-move via MakeMove
+    // below, and mate/stalemate is detected after the loop via legal_count.
     S_MOVELIST move_list;
-    generate_legal_moves(pos, move_list);
-    
+    generate_all_moves(pos, move_list);
+
     // Check for repetition - but only after we ensure we have moves to try
     // This prevents returning draw score at root before storing any PV move (VICE fix)
     if (!isRoot && isRepetition(pos)) {
         return 0; // Draw score
-    }    // No legal moves (checkmate or stalemate)
-    if (move_list.count == 0) {
-        int king_sq = pos.king_sq[int(pos.side_to_move)];
-    if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
-            // Checkmate: side_to_move is mated
-            // Return negative score with distance information
-            return -MATE + (info.max_depth - depth); // Negative = loss, distance = plies to mate
-        } else {
-            return 0; // Stalemate
-        }
     }
     
     // Internal Iterative Deepening for PV nodes without hash move
@@ -1349,7 +1345,8 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     int best_score = -30000;
     S_MOVE best_move;  // Track best move for transposition table storage
     best_move.move = 0;
-    
+    int legal_count = 0;  // For mate/stalemate detection after the loop
+
 #ifdef USE_MULTI_CUT
     // Multi-Cut pruning: track beta cutoffs to enable early termination
     // If multiple moves cause beta-cutoffs, remaining moves are likely also good
@@ -1358,25 +1355,26 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     const int MIN_MULTI_CUT_DEPTH = 6;  // Minimum depth to apply multi-cut
     const int MULTI_CUT_MOVES_TO_TRY = 6;  // Try this many moves before applying multi-cut
 #endif
-    
+
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, depth, iid_move);
-        
+
 #ifdef USE_MULTI_CUT
         // Multi-Cut pruning: if we've had enough beta cutoffs, prune remaining moves
-        if (depth >= MIN_MULTI_CUT_DEPTH && i >= MULTI_CUT_MOVES_TO_TRY && 
+        if (depth >= MIN_MULTI_CUT_DEPTH && i >= MULTI_CUT_MOVES_TO_TRY &&
             beta_cutoff_count >= MULTI_CUT_THRESHOLD && !in_check) {
-            
+
             // Skip remaining moves - position is too strong, remaining moves likely also good
             info.multi_cut_prunes += (move_list.count - i);
             break;
         }
 #endif
-        
+
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
-        
+        ++legal_count;
+
         // Track move in search stack for counter-move heuristic
         if (info.ply >= 0 && info.ply < 64) {
             info.search_stack[info.ply] = move_list.moves[i];
@@ -1489,13 +1487,24 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
             }
         }
     }
-    
+
+    // No legal moves found: checkmate or stalemate. Detect after the loop
+    // since pseudo-legal generation can yield moves that all turn out to be
+    // illegal (king-into-check, pinned piece, EP self-check).
+    if (legal_count == 0 && !info.stopped && !info.quit) {
+        int king_sq = pos.king_sq[int(pos.side_to_move)];
+        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
+            return -MATE + (info.max_depth - depth); // Checkmate (loss with distance)
+        }
+        return 0; // Stalemate
+    }
+
     // VICE Part 84: Store result in transposition table (6:38)
     uint8_t node_type;
     if (best_score <= alpha) {
         node_type = TTEntry::UPPER_BOUND;  // All moves failed low (upper bound)
     } else if (best_score >= beta) {
-        node_type = TTEntry::LOWER_BOUND;  // Beta cutoff (lower bound) 
+        node_type = TTEntry::LOWER_BOUND;  // Beta cutoff (lower bound)
     } else {
         node_type = TTEntry::EXACT;        // Exact score within alpha-beta window
     }
@@ -1538,12 +1547,15 @@ S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int
     // Perform shallow search to find best move
     int iid_depth = depth - IID_REDUCTION;
     if (iid_depth >= 1) {
-        // Generate moves for IID search
+        // Generate pseudo-legal moves; the inner MakeMove guard handles legality.
+        // No explicit mate detection here — IID is just an ordering hint, and
+        // returning iid_move == 0 (its initial value) is fine if all moves are
+        // illegal, since the parent AlphaBeta proceeds with its own search.
         S_MOVELIST iid_move_list;
-        generate_legal_moves(pos, iid_move_list);
-        
+        generate_all_moves(pos, iid_move_list);
+
         if (iid_move_list.count == 0) {
-            return iid_move;  // No moves available
+            return iid_move;  // No pseudo-legal moves at all
         }
         
         // Use simple move ordering for IID (no TT move dependency)
@@ -1617,9 +1629,11 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
         alpha = stand_pat;
     }
     
-    // VICE Part 65: Generate only capture moves for quiescence search
+    // VICE Part 65: Generate only capture moves for quiescence search.
+    // Pseudo-legal: the per-move `MakeMove() != 1` guard below filters illegals.
+    // Saves the per-capture Make/Unmake legality filter that the legal version did.
     S_MOVELIST move_list;
-    generate_all_caps(pos, move_list);  // Only captures - more efficient than filtering
+    generate_all_caps_pseudo(pos, move_list);
     
     // Search all capture moves
     for (int i = 0; i < move_list.count; ++i) {
@@ -1740,16 +1754,18 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
         // Store best move from previous iteration for move ordering
         S_MOVE prev_best = best_move;
         
-        // Root search: try all moves at root to find the best one
+        // Root search: try all moves at root to find the best one. Pseudo-legal
+        // generation; legality is checked per-move via MakeMove inside the loop.
         S_MOVELIST move_list;
-        generate_legal_moves(pos, move_list);
-        
-        if (move_list.count == 0) break; // No legal moves
-        
+        generate_all_moves(pos, move_list);
+
+        if (move_list.count == 0) break; // No pseudo-legal moves at all
+
         int best_score = -30000;
         S_MOVE depth_best_move;
         depth_best_move.move = 0;
-        
+        int legal_count = 0;
+
         // Order moves to try previous iteration's best move first for better alpha-beta cutoffs
         if (prev_best.move != 0) {
             for (int i = 0; i < move_list.count; ++i) {
@@ -1762,7 +1778,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                 }
             }
         }
-        
+
         // Try each move at the root with PVS-style alpha tightening:
         // pass local_alpha (the best score found so far at root) as the
         // recursion's alpha, so subsequent subtrees can produce alpha-beta
@@ -1777,6 +1793,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             if (info.stopped || info.quit) break;
 
             if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+            ++legal_count;
 
             int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
             pos.TakeMove();
@@ -1790,11 +1807,15 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
                 if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
             }
         }
-        
+
         // If search was interrupted, return previous best move (time management benefit)
         if (info.stopped || info.quit) {
             break;
         }
+
+        // No legal moves at root: mate or stalemate. Stop iterative deepening
+        // since deeper iterations would just repeat the same empty result.
+        if (legal_count == 0) break;
         
         // Update best move for this iteration
         if (depth_best_move.move != 0) {
