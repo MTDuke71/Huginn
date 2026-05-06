@@ -13,7 +13,7 @@ if "%ROUNDS%"=="" set ROUNDS=50
 
 set FC=C:\Users\m_lad\Documents\fastchess-windows-x86-64
 set FASTCHESS=%FC%\fastchess.exe
-set HUGINN_REPO=C:\Users\m_lad\Repos\Huginn
+set HUGINN_REPO=C:\Users\m_lad\Documents\Repos\Huginn
 set CMAKE="C:\Program Files\CMake\bin\cmake.exe"
 
 echo Building current Huginn (msvc-x64-release)...
