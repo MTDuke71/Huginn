@@ -77,8 +77,11 @@ doxygen/Doxyfile.huginn.bak
 fastchess.log
 config.json
 
-# Claude Code local agent state (per-project permission cache)
-.claude/
+# Claude Code local agent state (per-project permission cache).
+# Track .claude/settings.json (shared project-level allowlist) but not
+# .claude/settings.local.json (per-machine).
+.claude/*
+!.claude/settings.json
 test/__pycache__/
 
 # WAC tactical-suite test artifacts (logs are large and timestamped per run;
@@ -88,4 +91,3 @@ test/__pycache__/
 test/wac_test_log_*.txt
 test/wac_failed_positions_*.txt
 test/wac_retest_*.txt
-.claude/settings.local.json
