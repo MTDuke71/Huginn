@@ -421,7 +421,7 @@ will reproduce on the current hardware.
 
 ### #14: Move-gen — bypass legality pre-filter at search call sites — CLOSED
 
-- status: closed (next commit on top of `b9cc1be`)
+- status: closed @ `b1154c8` (2026-05-05)
 - priority: was low
 - type: feature / perf
 
