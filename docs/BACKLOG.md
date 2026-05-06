@@ -454,8 +454,13 @@ term.
 
 **Validation:** 208/208 unit tests pass. Mate-in-1 detection works
 (`Ra8#` found at depth 2). Mate-already position returns clean
-`bestmove 0000` with no crash. Gauntlet not run; bench evidence
-sufficient per plan step 5.
+`bestmove 0000` with no crash.
+
+**Gauntlet vs `huginn_t2` (100g, 10+0.1):** **+10.43 ± 56.20 Elo,
+LOS 64.32%**, 41W/38L/21D. Wide CI but non-regressive — confirms
+the bench-evidence shipping logic. Cumulative position vs t2 has
+recovered from -17 (post-mobility era at `6865379`) to +10 here.
+Not yet at the +50 trigger for refreshing t3 baseline (#4).
 
 ---
 
