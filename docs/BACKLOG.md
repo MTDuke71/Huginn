@@ -404,19 +404,18 @@ becomes near-perfect. Less impactful for opening/middlegame play.
 
 ---
 
-### #11: CLAUDE.md NPS figure is stale
+### #11: CLAUDE.md NPS figure is stale — CLOSED
 
-- status: open
+- status: closed (next commit on top of `41629cf`)
 - priority: low
 - type: maintenance
-- est: 5 minutes
 
-**State:** `CLAUDE.md` claims "~220k nodes/second" multiple times.
-Actual measurement at depth 11 startpos shows ~2.0-2.3 Mnps — off by
-~10×. This is a documentation-correctness issue, not a strength one.
-
-**Plan:** find the lines in CLAUDE.md, replace with current measured
-figure, note the bench command (`go depth 11` from startpos).
+**State:** `CLAUDE.md` claimed "~220k nodes/second" in three places.
+Replaced with ~1.5M nodes/second on this machine (measured at depth 11
+startpos with book disabled: 4.58M nodes / ~2.9s). One of the three
+sites now also notes the bench command. The prior box measured 2.0-2.3
+Mnps; using ~1.5M as the documented figure since it's what the user
+will reproduce on the current hardware.
 
 ---
 

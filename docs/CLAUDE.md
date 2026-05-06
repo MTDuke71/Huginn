@@ -9,7 +9,7 @@ Huginn is a **tournament-ready, production-quality chess engine** written in mod
 **Current Status (HugginMain Branch):**
 - ✅ **Complete Chess Engine**: 232/232 tests passing (100% pass rate)
 - ✅ **Tournament Ready**: Full UCI compliance, works with Arena, Fritz, ChessBase
-- ✅ **Strong Performance**: ~220k nodes/second search speed with systematic optimizations
+- ✅ **Strong Performance**: ~1.5M nodes/second search speed with systematic optimizations
 - ✅ **Advanced Evaluation**: Multi-factor position evaluation with game phase detection
 - ✅ **Proven Reliability**: Stable production branch suitable for competitive play
 
@@ -149,7 +149,7 @@ The engine implements two move systems for comparison:
 ### Performance Considerations
 - The engine tracks performance improvements systematically through detailed benchmarking
 - All optimizations are measured with standardized benchmark positions
-- **Current Performance**: ~220k nodes/second search speed (tournament-competitive)
+- **Current Performance**: ~1.5M nodes/second search speed (measured: `go depth 11` from startpos)
 - **Documented Improvements**: ~5.6% cumulative gain through systematic optimizations:
   - Quiescence search depth limiting: +2.0%
   - Enhanced history heuristic with aging: +1.4% 
@@ -193,7 +193,7 @@ The engine implements two move systems for comparison:
 5. **Comprehensive Testing**: 232/232 tests passing with full coverage of core functionality
 
 ### Performance Achievements
-- **Search Speed**: ~220k nodes/second (tournament-competitive)
+- **Search Speed**: ~1.5M nodes/second (tournament-competitive)
 - **Engine Strength**: Estimated ~1800-2000 Elo rating
 - **Reliability**: 100% test pass rate ensures competitive stability
 - **Memory Efficiency**: 33% reduction in move storage through S_MOVE system
