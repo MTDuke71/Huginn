@@ -151,12 +151,11 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
-### #13: Investigate dormant counter-move + TT-mate-adjustment latent bugs
+### #13: Investigate dormant counter-move + TT-mate-adjustment latent bugs — CLOSED
 
-- status: open / unblocked
-- priority: **high** (blocks #3 cleanly + has its own latent value)
+- status: **closed** (2026-05-06, TT-mate variant shipped)
+- priority: was high
 - type: bug / research
-- est: 1-2 sessions
 
 **Discovered 2026-05-05** while attempting #3. The engine has two
 latent bugs that have been silently dormant since the start:
@@ -255,16 +254,94 @@ candidates:
 - Counter-move score 700K → 15K at line ~899.
 - Mate leaf return changed at line ~1497.
 
-Re-derive from this description tomorrow if needed.
+**Resolution (2026-05-06):** four-way bisection on top of ply tracking
+isolated the regressors and rescued one feature. Each variant ran
+100g vs `huginn_t2` at tc=10+0.1.
+
+| Variant | Counter-move | TT-mate | Elo vs t2 | LOS |
+|---|---|---|---|---|
+| 2a | off | off | +10 ± 61 | 63% |
+| 2b | 15K | off | +96 ± 66 | 99.9% |
+| **2c (shipped)** | **off** | **on** | **+104 ± 62** | **99.98%** |
+| 2d | 15K | on | +31 ± 52 | 88% |
+| attempt 2 (history) | 700K | on | -114 ± 64 | 0.01% |
+
+**Findings:**
+- Attempt 2's regressor was specifically the **700K counter-move
+  score** placing counter-moves above queen-promotion (90K). With it
+  at 15K (below promotions, above history), counter-move alone is
+  +96 Elo (2b).
+- The cap-clamp on mate-store (`store_score >= MATE → MATE-1`) added
+  this session was the difference between attempt 2's TT-mate failure
+  and 2c's success at the same conceptual config. Attempt 2 had no
+  cap, allowing TT corruption from `+= info.ply` overflow.
+- **Counter-move + TT-mate anti-compound** (2d at +31 vs ~+100 each
+  alone). Likely a search-shape interaction — 2d had 25 draws vs
+  17-19 for the singles. Cause not yet pinpointed.
+
+**Shipped (2c):** TT-mate active (probe-adjust + store-adjust + cap
+clamp + leaf-encoding via `info.ply`), counter-move gated off via
+`#define ENABLE_PLY_TRACKED_COUNTERMOVE 0` in `src/minimal_search.cpp`.
+Counter-move re-attempt tracked separately as #15.
+
+**Triggers:** +104 ≥ +50, so #4 (refresh `huginn_t3` baseline) fires.
+
+---
+
+### #15: Re-attempt counter-move heuristic on top of 2c
+
+- status: open / unblocked
+- priority: medium
+- type: feature / research
+- est: 1 session
+- links: #13 closure (2c shipping commit), #3 (continuation history shares
+  the search_stack plumbing)
+
+**Evidence (from #13 bisection, 2026-05-06):**
+- 2b (counter-move @ 15K only): +96 ± 66 Elo, LOS 99.9%
+- 2c (TT-mate only, shipped):  +104 ± 62 Elo, LOS 99.98%
+- 2d (both at 2b/2c settings): +31 ± 52 Elo, LOS 88%
+
+The 2d combo gives back ~65-73 Elo vs either feature alone. CIs
+overlap at 100g so noise can't be ruled out, but the trajectory is
+consistent. 2d also drew significantly more (25 vs 17-19) which
+suggests a real search-shape interaction, not pure noise.
+
+**Hypothesis space:**
+- **Score interaction:** 15K may be wrong on top of TT-mate. With
+  TT-mate active, mate-distance scores propagate further; counter-move
+  may be over-promoting moves that lose to forced sequences. Try
+  history-range (1000-1500) or even lower.
+- **Search-stack lifetime bug:** `search_stack[ply]` is only written
+  in the main-loop recursion path. Null-move recursion now writes a
+  null marker (per the 2a-2d patch); IID, root, and test entry write
+  the move being recursed. But there may be paths where the parent's
+  search_stack[ply] entry leaks into a sibling's view. Audit.
+- **Counter-move table aging:** `counter_moves` is never aged, only
+  cleared per-search via `clear_search_tables()`. Might want depth²
+  bonus aging like history.
+- **Approach swap:** drop ply-tracked counter-move and pass `prev_move`
+  as an explicit AlphaBeta parameter (the original step-6 fallback).
+  Decouples counter-move from `info.ply`, simplifies reasoning.
+
+**Plan:**
+1. Flip `ENABLE_PLY_TRACKED_COUNTERMOVE` to 1 → 100g gauntlet. If
+   matches 2d (+31), proceed.
+2. Try score variants: 1500, 5000 (sub-killer), 50000 (above queen
+   promotion but below killers), each with a 100g gauntlet.
+3. If still anti-compound at all scores, try the prev_move parameter
+   approach as a clean-slate test.
+4. If positive, ship on top of 2c. Triggers #4 again if cumulative
+   crosses next +50 threshold.
 
 ---
 
 ### #3: Continuation history (Tier 2 #11) — universal unblocker
 
-- status: blocked (on #13)
-- priority: high (after #13 lands)
+- status: open / unblocked (ply tracking landed in #13 / 2c)
+- priority: high
 - type: feature
-- est: 1 session (re-attempt after #13)
+- est: 1 session
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #11
 - attempted: 2026-05-05 (this session)
 
@@ -279,10 +356,16 @@ regressor — see #13 for the root-cause analysis.
 in this backlog (#1, #2, #7, #8) regressed in gauntlet despite
 individual diagnoses being correct. The shared root cause is
 move-ordering quality. Continuation history addresses this directly.
-Once #13 lands, #3 becomes implementable and the entire "recently
-deferred" section becomes re-attemptable.
+Now that #13 has landed (2026-05-06), #3 is implementable and the
+entire "recently deferred" section is re-attemptable.
 
-**Plan when #13 lands:**
+**Caveat from #13 anti-compounding result:** counter-move + TT-mate
+anti-compounded (+31 Elo combined vs +96/+104 individually). Watch
+for similar interaction when continuation history layers on top of
+TT-mate. If #3 alone is positive but combined with anything else
+regresses, the fix is ordering-table tuning, not feature deletion.
+
+**Plan now that #13 has landed:**
 1. Add `int continuation_history[13][64][13][64]` (heap-allocated to
    avoid stack-overflow on test instances; ~2.7 MB).
 2. Update on quiet-move beta cutoff with `depth²` bonus, indexed by

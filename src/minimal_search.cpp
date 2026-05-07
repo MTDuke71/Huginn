@@ -15,6 +15,31 @@
 #include <algorithm>
 #include <iomanip>  // For std::setw
 
+// Backlog #13 bisection result (2026-05-06): ply tracking + TT-mate is
+// shipped; counter-move is gated off pending a separate re-attempt.
+//
+// Bisection results vs huginn_t2 (100g, tc=10+0.1):
+//   2a (both off, ply-tracking only):    +10 ± 61 Elo, LOS 63%   (neutral)
+//   2b (counter-move @ 15K only):        +96 ± 66 Elo, LOS 99.9%
+//   2c (TT-mate only, this build):      +104 ± 62 Elo, LOS 99.98%
+//   2d (both on):                        +31 ± 52 Elo, LOS 88%   (anti-compound)
+//   attempt 2 (both on, c-m at 700K):   -114 ± 64 Elo, LOS 0.01% (700K was the bug)
+//
+//   ENABLE_PLY_TRACKED_COUNTERMOVE: counter-move read in ordering + write on
+//     beta cutoff. Score 15K (below promotions, above history). Gated off
+//     because the counter-move + TT-mate combination anti-compounds — see
+//     the followup BACKLOG entry to revisit with a different score slot.
+//   ENABLE_PLY_TRACKED_TT_MATE: TT-store / TT-probe mate-distance adjustment,
+//     mate-leaf encoding via info.ply (consistent under check extensions),
+//     and a cap clamp so store_score stays inside (-MATE, MATE) after the
+//     ply-add. The cap clamp is what rescued attempt 2's TT pollution case.
+#ifndef ENABLE_PLY_TRACKED_COUNTERMOVE
+#define ENABLE_PLY_TRACKED_COUNTERMOVE 0
+#endif
+#ifndef ENABLE_PLY_TRACKED_TT_MATE
+#define ENABLE_PLY_TRACKED_TT_MATE 1
+#endif
+
 namespace Huginn {
 
 // LMR reduction table indexed by (depth, move-index). Reduction grows
@@ -890,17 +915,22 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
                 
                 // Check for counter-move (if not a killer move)
                 bool is_counter_move = false;
+#if ENABLE_PLY_TRACKED_COUNTERMOVE
                 if (!is_killer && info.ply > 0 && info.ply < 64) {
                     // Get the previous move from search stack
                     S_MOVE previous_move = info.search_stack[info.ply - 1];
                     if (previous_move.move != 0) {
                         S_MOVE counter_move = get_counter_move(previous_move);
                         if (counter_move.move == move.move) {
-                            score = 700000;  // Counter-move priority: between killers and promotions
+                            // Slot above history (~1K) and below promotions (25K-90K).
+                            // Original 700K placed counter-moves above queen promotion
+                            // which is almost certainly wrong — see BACKLOG #13.
+                            score = 15000;
                             is_counter_move = true;
                         }
                     }
                 }
+#endif
                 
                 if (!is_killer && !is_counter_move) {
                     if (move.is_promotion()) {
@@ -1017,8 +1047,14 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
             temp_info.ply = 0;
             temp_info.stopped = false;
 
+            // Track move in search stack for counter-move heuristic.
+            // temp_info.ply is 0 here; this writes search_stack[0].
+            temp_info.search_stack[0] = move_list.moves[i];
+
             // Use consistent VICE-style AlphaBeta search (not old alpha_beta)
+            ++temp_info.ply;
             int score = -AlphaBeta(pos, -INFINITE, INFINITE, depth - 1, temp_info, true, false);
+            --temp_info.ply;
             pos.TakeMove();
 
             // Accumulate nodes from this search
@@ -1158,13 +1194,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     bool tt_hit = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
     
     if (tt_hit && tt_depth >= depth && !isRoot) {
+#if ENABLE_PLY_TRACKED_TT_MATE
         // Adjust mate scores to current ply (VICE Part 84: 5:13)
         if (tt_score > MATE - 1000) {
             tt_score -= info.ply;
         } else if (tt_score < -MATE + 1000) {
             tt_score += info.ply;
         }
-        
+#endif
+
         // Use transposition table score if it provides exact bounds (6:01)
         if (tt_node_type == TTEntry::EXACT) {
             return tt_score;  // Exact score
@@ -1181,13 +1219,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         int wdl_score;
         if (probe_tablebase_wdl(pos, wdl_score)) {
             // Perfect tablebase result found
+#if ENABLE_PLY_TRACKED_TT_MATE
             // Adjust mate scores relative to current ply
             if (wdl_score > MATE - 1000) {
                 wdl_score -= info.ply;
             } else if (wdl_score < -MATE + 1000) {
                 wdl_score += info.ply;
             }
-            
+#endif
+
             // Store in transposition table with maximum depth for future use
             tt_table.store(pos.zobrist_key, wdl_score, 127, TTEntry::EXACT, 0);
             return wdl_score;
@@ -1253,10 +1293,18 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         
         // Make null move (give opponent a free move)
         pos.MakeNullMove();
-        
+
+        // Record null marker so the child's counter-move guard
+        // (previous_move.move != 0) skips lookup over a null parent move.
+        if (info.ply >= 0 && info.ply < 64) {
+            info.search_stack[info.ply] = S_MOVE();
+        }
+
         // Search with reduced depth and narrow window around beta
+        ++info.ply;
         int null_score = -AlphaBeta(pos, -beta, -beta + 1, depth - 1 - NULL_MOVE_REDUCTION, info, false, false);
-        
+        --info.ply;
+
         // Undo null move
         pos.TakeNullMove();
         
@@ -1407,8 +1455,10 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
             int reduced_depth = depth - 1 - reduction;
             if (reduced_depth >= 1) {
                 info.lmr_attempts++;  // Track LMR attempt
+                ++info.ply;
                 score = -AlphaBeta(pos, -alpha - 1, -alpha, reduced_depth, info, true, false);
-                
+                --info.ply;
+
                 // If reduced search fails high, we need full search
                 if (score > alpha) {
                     info.lmr_failures++;  // Track LMR failure (needs re-search)
@@ -1418,18 +1468,24 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                 }
             }
         }
-        
+
         // Full depth search (either initial search or re-search after LMR fail-high)
         if (needs_full_search) {
             if (i == 0 || alpha == best_score) {
                 // First move or no improvement yet - use full window
+                ++info.ply;
                 score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+                --info.ply;
             } else {
                 // PVS: Try null window first, then re-search if it fails high
+                ++info.ply;
                 score = -AlphaBeta(pos, -alpha - 1, -alpha, depth - 1, info, true, false);
+                --info.ply;
                 if (score > alpha && score < beta) {
                     // Null window search failed high, re-search with full window
+                    ++info.ply;
                     score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+                    --info.ply;
                 }
             }
         }
@@ -1469,6 +1525,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
                     
+#if ENABLE_PLY_TRACKED_COUNTERMOVE
                     // Update counter-move table if we have a previous move
                     if (info.ply > 0 && info.ply < 64) {
                         S_MOVE previous_move = info.search_stack[info.ply - 1];
@@ -1476,6 +1533,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
                             update_counter_move(previous_move, move_list.moves[i]);
                         }
                     }
+#endif
                     
                     break;
                 }
@@ -1494,7 +1552,15 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     if (legal_count == 0 && !info.stopped && !info.quit) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
+#if ENABLE_PLY_TRACKED_TT_MATE
+            // Use info.ply so the leaf encoding matches the TT store/probe
+            // adjustment that uses info.ply. The two diverge under check
+            // extensions (which bump depth) — using info.max_depth-depth
+            // would corrupt the TT for check-extended mate paths.
+            return -MATE + info.ply;
+#else
             return -MATE + (info.max_depth - depth); // Checkmate (loss with distance)
+#endif
         }
         return 0; // Stalemate
     }
@@ -1511,12 +1577,19 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     
     // Adjust mate scores for storage (VICE Part 84: 5:13)
     int store_score = best_score;
+#if ENABLE_PLY_TRACKED_TT_MATE
     if (store_score > MATE - 1000) {
         store_score += info.ply;
+        // Clamp to keep mate scores inside (-MATE, MATE) — see BACKLOG #13
+        // step 4. Prevents `>= MATE` corruption if check extensions cause
+        // encoding drift somewhere we didn't audit.
+        if (store_score >= MATE) store_score = MATE - 1;
     } else if (store_score < -MATE + 1000) {
         store_score -= info.ply;
+        if (store_score <= -MATE) store_score = -(MATE - 1);
     }
-    
+#endif
+
     tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
 
     return best_score;
@@ -1566,9 +1639,16 @@ S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int
         // Try moves in IID search
         for (int i = 0; i < iid_move_list.count; ++i) {
             if (pos.MakeMove(iid_move_list.moves[i]) != 1) continue;
-            
+
+            // Track move in search stack for counter-move heuristic
+            if (info.ply >= 0 && info.ply < 64) {
+                info.search_stack[info.ply] = iid_move_list.moves[i];
+            }
+
+            ++info.ply;
             int score = -AlphaBeta(pos, -beta, -alpha, iid_depth, info, true, false);
-            
+            --info.ply;
+
             pos.TakeMove();
             
             // Check for early termination
@@ -1795,7 +1875,15 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
             if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
             ++legal_count;
 
+            // Track move in search stack for counter-move heuristic.
+            // info.ply is 0 at root; this writes search_stack[0].
+            if (info.ply >= 0 && info.ply < 64) {
+                info.search_stack[info.ply] = move_list.moves[i];
+            }
+
+            ++info.ply;
             int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
+            --info.ply;
             pos.TakeMove();
 
             if (info.stopped || info.quit) break;
