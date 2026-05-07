@@ -418,9 +418,18 @@ LOS 99.98% / 100g) — single feature crossed the +50 threshold.
 - type: maintenance
 - est: 5 minutes per run (script auto-rebuilds)
 
-**Last MTLChess v0.3 run (2026-04-30, post-mobility):** 2W/17L/1D —
-Huginn at ~−340 Elo vs MTL_v0.3. Real progress from 0W/20L/0D the
-run before, but still firmly behind.
+**Recent MTLChess v0.3 runs:**
+- **2026-04-30, post-mobility, vs old `mtlchess003.exe` (20g):** 2W/17L/1D,
+  ~−340 Elo. Real progress from 0W/20L/0D the run before, but
+  still firmly behind.
+- **2026-05-06, post-2c TT-mate ship, vs rebuilt `mtlchessV3.exe` (100g):**
+  5W/89L/6D, **-424 ± 118 Elo, LOS 0%**. Apparent regression vs the
+  prior datapoint is opponent-side: the rebuild (Zig 0.16.0-dev,
+  modern LLVM, no AVX-512) is materially stronger than the SIGILL'd
+  pre-migration `mtlchess003.exe` it replaced — call it ~150-200 Elo.
+  Trustworthy gauge of recent Huginn progress is the internal t-chain
+  (t1 → t2 → t3 = ~+118 Elo across mobility / movegen / TT-mate),
+  not this external comparison.
 
 **Machine-migration breakage + recovery (2026-05-06):** all seven
 pre-existing `mtlchess*.exe` binaries in the fastchess folder fail
