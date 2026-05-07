@@ -16,8 +16,8 @@ inline.
 
 ## Reference
 
-- [API.md](API.md) — public API and usage. **Stale**: still describes
-  a pre-bitboard `MinimalEngine` with no TT/qsearch. Pending rewrite.
+- [API.md](API.md) — pointer page for finding the actual API surface
+  (UCI on the outside; `src/` files for each internal concern).
 - [BUILD_GUIDE.md](BUILD_GUIDE.md) — MSVC build with CMake presets.
 - [WSL_BUILD_GUIDE.md](WSL_BUILD_GUIDE.md) — GCC/WSL build.
 - [UCI-Protocol-Specification.txt](UCI-Protocol-Specification.txt) —
@@ -26,10 +26,9 @@ inline.
 ## Architecture
 
 - [POSITION_AND_MOVEGEN_ARCHITECTURE.md](POSITION_AND_MOVEGEN_ARCHITECTURE.md)
-  — position representation and move generation. Currently framed
-  as "hybrid mailbox + bitboard"; pending reframe as primary
-  bitboard with mailbox auxiliary.
+  — `Position` struct (bitboard-primary), `S_MOVE` encoding, the
+  movegen pipeline, and the `MakeMove`/`TakeMove` protocol.
 - [BITBOARD_IMPLEMENTATION.md](BITBOARD_IMPLEMENTATION.md) — bitboard
-  internals.
+  primitives, square-indexing, and how `Position` uses them.
 - [MOVEGEN_COMPARISON.md](MOVEGEN_COMPARISON.md) — comparison of
   Huginn's movegen with MTLChess. Current as of 2026-05-05.
