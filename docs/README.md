@@ -1,38 +1,35 @@
 # Huginn Documentation
 
-Index of documentation for the Huginn chess engine. Some files in this directory pre-date the move to a pure-bitboard engine and may still describe the old hybrid mailbox/bitboard design — verify against the current code in `src/` before relying on any specific claim.
+Index of documentation for the Huginn chess engine. Most surviving
+docs reflect the current `pure-bitboard-engine` branch state. A few
+listed under *Reference* still need a content refresh — flagged
+inline.
+
+## Active trackers
+
+- [BACKLOG.md](BACKLOG.md) — single-file issue tracker. Open / closed
+  features, deferred items, current priorities. Always start here.
+- [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) — Tier 1-4 roadmap for
+  search and evaluation features.
+- [CLAUDE.md](CLAUDE.md) — repo notes used by Claude Code when
+  working in this tree.
 
 ## Reference
 
-- [API.md](API.md) — public API and usage
-- [BUILD_GUIDE.md](BUILD_GUIDE.md) — MSVC build with CMake presets
-- [WSL_BUILD_GUIDE.md](WSL_BUILD_GUIDE.md) — GCC/WSL build
-- [UCI_IMPLEMENTATION.md](UCI_IMPLEMENTATION.md) — UCI protocol
-- [CHANGELOG.md](CHANGELOG.md) — release history
-- [ToDo.md](ToDo.md) — open work
-- [CLAUDE.md](CLAUDE.md) — repo notes for Claude (currently stale; pending rewrite for `pure-bitboard-engine`)
+- [API.md](API.md) — public API and usage. **Stale**: still describes
+  a pre-bitboard `MinimalEngine` with no TT/qsearch. Pending rewrite.
+- [BUILD_GUIDE.md](BUILD_GUIDE.md) — MSVC build with CMake presets.
+- [WSL_BUILD_GUIDE.md](WSL_BUILD_GUIDE.md) — GCC/WSL build.
+- [UCI-Protocol-Specification.txt](UCI-Protocol-Specification.txt) —
+  external UCI protocol spec, mirrored for offline reference.
 
 ## Architecture
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — high-level engine architecture
-- [POSITION_AND_MOVEGEN_ARCHITECTURE.md](POSITION_AND_MOVEGEN_ARCHITECTURE.md) — position representation and move generation
-- [BITBOARD_IMPLEMENTATION.md](BITBOARD_IMPLEMENTATION.md) — bitboard internals
-- [BITBOARD_MIGRATION_PLAN.md](BITBOARD_MIGRATION_PLAN.md) — migration plan from mailbox to bitboard
-- [UML_ARCHITECTURE.md](UML_ARCHITECTURE.md) — UML diagrams
-- [EVALUATE_FLOWCHART.md](EVALUATE_FLOWCHART.md) — evaluation flow
-
-## Special-move validation
-
-- [CASTLING_VALIDATION.md](CASTLING_VALIDATION.md)
-- [EN_PASSANT_VALIDATION.md](EN_PASSANT_VALIDATION.md)
-- [FEN_GENERATION.md](FEN_GENERATION.md)
-- [DEBUG_VALIDATION.md](DEBUG_VALIDATION.md)
-
-## Performance
-
-- [PERFORMANCE_TRACKING.md](PERFORMANCE_TRACKING.md) — methodology and tracked numbers
-- [OPTIMIZATION_ANALYSIS.md](OPTIMIZATION_ANALYSIS.md)
-- [OPTIMIZATION_SUMMARY.md](OPTIMIZATION_SUMMARY.md)
-- [MOVE_DECODING_ANALYSIS.md](MOVE_DECODING_ANALYSIS.md)
-- [assembly_analysis.md](assembly_analysis.md)
-- [PROFILING_TOOLS_USAGE.md](PROFILING_TOOLS_USAGE.md)
+- [POSITION_AND_MOVEGEN_ARCHITECTURE.md](POSITION_AND_MOVEGEN_ARCHITECTURE.md)
+  — position representation and move generation. Currently framed
+  as "hybrid mailbox + bitboard"; pending reframe as primary
+  bitboard with mailbox auxiliary.
+- [BITBOARD_IMPLEMENTATION.md](BITBOARD_IMPLEMENTATION.md) — bitboard
+  internals.
+- [MOVEGEN_COMPARISON.md](MOVEGEN_COMPARISON.md) — comparison of
+  Huginn's movegen with MTLChess. Current as of 2026-05-05.
