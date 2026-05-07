@@ -2,9 +2,23 @@
 
 This guide documents how to build the Huginn chess engine using GCC in Windows Subsystem for Linux (WSL), including both native Linux builds and cross-compiled Windows executables.
 
-## Performance Comparison
+## Path convention
 
-Based on testing with the perft suite demo (quick test mode) - September 2025:
+Examples below use `$HUGINN_REPO` for the repo root inside WSL.
+Set it once at the top of your shell session, e.g.:
+
+```bash
+# Replace with your actual Windows-side checkout, mounted under /mnt/<drive>
+export HUGINN_REPO=/mnt/c/Users/$USER/Documents/Repos/Huginn
+cd "$HUGINN_REPO"
+```
+
+## Performance comparison (snapshot)
+
+Numbers below are a snapshot from a September 2025 measurement run
+on a different machine (and prior to the recent search-feature
+shipping). They establish *relative* ordering between toolchains —
+treat the absolute timings as illustrative, not current.
 
 | Build Type | Performance | Notes |
 |------------|-------------|--------|
@@ -15,14 +29,14 @@ Based on testing with the perft suite demo (quick test mode) - September 2025:
 | Historical WSL GCC Linux | 57.8 seconds | Older unoptimized build |
 | Historical MinGW-w64 Windows .exe | 58.1 seconds | Cross-compiled Windows executable |
 
-**Key Findings (2025)**:
+**Headline takeaways** (still expected to hold):
 
-- MSVC Release is 37% faster than optimized GCC
-- Both compilers achieve 100% correctness on all tests
-- Debug vs Release makes 8.5x performance difference
-- WSL provides clean cross-compilation environment
-
-**Recommendation**: Use MSVC for production builds due to superior performance, WSL for cross-platform testing.
+- MSVC Release is materially faster than optimized GCC — use MSVC for
+  the binaries you actually run (gauntlets, calibration).
+- Both compilers achieve 100% correctness on all tests.
+- Debug vs Release is roughly an order-of-magnitude slowdown.
+- WSL is the convenient cross-compilation environment for portable
+  Windows binaries via MinGW-w64.
 
 ## Prerequisites
 
@@ -62,7 +76,7 @@ The simplest way to build and test Huginn with WSL:
 ```bash
 # Start WSL and navigate to source
 wsl -d Ubuntu
-cd /mnt/d/repos/Huginn_New/Huginn
+cd "$HUGINN_REPO"
 
 # Create optimized build
 rm -rf build-wsl && mkdir build-wsl && cd build-wsl
@@ -74,7 +88,7 @@ make -j8 huginn perft_suite_vice
 
 ```bash
 # Perft benchmark (from project root)
-cd /mnt/d/repos/Huginn_New/Huginn
+cd "$HUGINN_REPO"
 echo '1' | ./build-wsl/bin/perft_suite_vice
 
 # Search benchmark
@@ -86,7 +100,7 @@ python3 wsl_benchmark.py
 
 ```bash
 # Basic UCI test
-cd /mnt/d/repos/Huginn_New/Huginn/build-wsl
+cd "$HUGINN_REPO"/build-wsl
 echo -e 'uci\nposition startpos\ngo depth 3\nquit' | ./bin/huginn
 ```
 
@@ -95,7 +109,7 @@ echo -e 'uci\nposition startpos\ngo depth 3\nquit' | ./bin/huginn
 ### 1. Configure the Build
 
 ```bash
-cd /mnt/d/repos/Huginn_New/Huginn
+cd "$HUGINN_REPO"
 mkdir -p build/wsl-gcc-release
 cd build/wsl-gcc-release
 
@@ -115,15 +129,15 @@ make clean
 make -j4
 
 # Or build specific target
-make -j4 perft_suite_demo
+make -j4 perft_suite_vice
 ```
 
 ### 3. Test the Build
 
 ```bash
 # Run performance test
-cd /mnt/d/repos/Huginn_New/Huginn
-echo '1' | ./build/wsl-gcc-release/bin/perft_suite_demo
+cd "$HUGINN_REPO"
+echo '1' | ./build/wsl-gcc-release/bin/perft_suite_vice
 ```
 
 ## Cross-Compiling Windows Executable with MinGW-w64
@@ -151,7 +165,7 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-flto -s -pthread -static-libgcc -static-lib
 ### 2. Configure Cross-Compilation Build
 
 ```bash
-cd /mnt/d/repos/Huginn_New/Huginn
+cd "$HUGINN_REPO"
 mkdir -p build/mingw-w64-release
 cd build/mingw-w64-release
 
@@ -165,21 +179,21 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../../mingw-toolchain.cmake \
 
 ```bash
 # Build the Windows .exe
-make -j4 perft_suite_demo
+make -j4 perft_suite_vice
 
 # Verify it's a Windows executable
-file bin/perft_suite_demo.exe
+file bin/perft_suite_vice.exe
 # Output: PE32+ executable (console) x86-64, for MS Windows
 
 # Check dependencies (should only show system DLLs)
-x86_64-w64-mingw32-objdump -p bin/perft_suite_demo.exe | grep 'DLL Name'
+x86_64-w64-mingw32-objdump -p bin/perft_suite_vice.exe | grep 'DLL Name'
 ```
 
 ### 4. Test on Windows
 
 ```powershell
 # Copy to Windows and test
-Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite_demo.exe
+Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite_vice.exe
 ```
 
 ## Troubleshooting
@@ -223,25 +237,31 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 ### WSL Linux Build
 
 - Location: `build/wsl-gcc-release/bin/`
-- Executable: `perft_suite_demo` (Linux ELF)
+- Executable: `perft_suite_vice` (Linux ELF)
 - Size: ~90KB (stripped)
 
 ### MinGW-w64 Windows Build
 
 - Location: `build/mingw-w64-release/bin/`
-- Executable: `perft_suite_demo.exe` (Windows PE32+)
+- Executable: `perft_suite_vice.exe` (Windows PE32+)
 - Size: ~1.1MB (statically linked)
 - Dependencies: Only KERNEL32.dll and msvcrt.dll (system DLLs)
 
 ## Conclusion
 
-While WSL provides a convenient way to use GCC toolchain on Windows, the performance results show that **MSVC remains the preferred toolchain** for the Huginn chess engine on Windows, delivering significantly better performance (28.6s vs 58.1s) for the same workload.
+WSL is convenient for using the GCC toolchain on Windows, but
+**MSVC remains the preferred toolchain** for production Huginn
+binaries on Windows — it has been materially faster than optimized
+GCC in past measurements and there's no reason to expect that to
+have changed.
 
-The WSL/GCC builds are useful for:
+WSL/GCC builds are useful for:
 
 - Cross-platform compatibility testing
 - Leveraging GCC-specific features or optimizations
 - Development environments where MSVC is not available
-- Creating portable, statically-linked Windows executables
+- Creating portable, statically-linked Windows executables via
+  MinGW-w64 cross-compile
 
-For production use on Windows, continue using the MSVC build configuration for optimal performance.
+For production use on Windows, continue using the MSVC build
+configuration (see [BUILD_GUIDE.md](BUILD_GUIDE.md)).
