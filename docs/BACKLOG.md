@@ -409,6 +409,32 @@ LOS 99.98% / 100g) — single feature crossed the +50 threshold.
 - `test_huginn_vs_t2.bat` is now superseded but kept around for
   historical regression checks; new work should use t3.
 
+**Chain validation (2026-05-07, `test_t_chain_tournament.bat`):**
+3-way round-robin t1 vs t2 vs t3, 200 games per engine
+(50 rounds × 3 pairings × 2 colors), tc=10+0.1, concurrency 2.
+Tournament-average-relative Elos:
+
+| Engine | Elo (vs avg) | ± | Score |
+|---|---|---|---|
+| t3 | +77.7 | 45.9 | 61.0% |
+| t2 | −10.4 | 45.7 | 48.5% |
+| t1 | −66.8 | 44.6 | 40.5% |
+
+Pairwise differentials vs prior gauntlets:
+
+| Pair | Observed | Expected | Δ |
+|---|---|---|---|
+| t2 − t1 | +56.4 | +52.5 (baseline-t2 closing) | +3.9 |
+| t3 − t2 | +88.1 | +104 (#13 closing) | −15.9 |
+| t3 − t1 | +144.5 | +156 (additive) | −11.5 |
+
+All differentials inside the per-leg noise band (~±46 Elo at 200g).
+Chain is additive within statistical limits — no non-transitive
+interaction detected. Validates the "~+118 Elo of recent search
+work" claim from the t-chain. Slight t3−t2 under-performance vs the
+original +104 reading is consistent with the 100g CI ±62 plus
+possible concurrency=2-vs-1 compression.
+
 ---
 
 ### #5: Recalibrate vs external opponent after each major fix
