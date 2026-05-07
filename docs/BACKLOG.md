@@ -411,22 +411,39 @@ LOS 99.98% / 100g) — single feature crossed the +50 threshold.
 
 ---
 
-### #5: Recalibrate vs MTLChess_v0.3 after each major fix
+### #5: Recalibrate vs external opponent after each major fix
 
 - status: open / recurring
 - priority: medium
 - type: maintenance
 - est: 5 minutes per run (script auto-rebuilds)
 
-**Last run (2026-04-30, post-mobility):** 2W/17L/1D — Huginn at ~−340
-Elo vs MTL_v0.3. Real progress from 0W/20L/0D the run before, but
-still firmly behind.
+**Last MTLChess v0.3 run (2026-04-30, post-mobility):** 2W/17L/1D —
+Huginn at ~−340 Elo vs MTL_v0.3. Real progress from 0W/20L/0D the
+run before, but still firmly behind.
+
+**Machine-migration breakage (2026-05-06):** all seven `mtlchess*.exe`
+binaries in the fastchess folder fail with SIGILL (illegal
+instruction) on the new machine — a 13th-gen i7-13700KF (Raptor Lake).
+Root cause is almost certainly that the binaries were built with
+AVX-512 instructions on the prior box, and Intel disabled AVX-512 on
+consumer Raptor Lake P-cores. `MORA110.exe` runs fine and is the
+primary external anchor until MTLChess can be rebuilt.
+
+**Anchors:**
+- **Primary (works):** MORA, rated ~2191. New script
+  `test_huginn_vs_mora.bat`.
+- **Secondary (broken):** MTLChess v0.3 (~1984), v0.5 (~2314), and
+  the other variants. To restore: rebuild from MTLChess source on
+  this machine without `-march=native` / with `-march=alderlake` or
+  explicit AVX2-only flags. Source not in this repo; user has it.
 
 **Cadence:** run after each shipped feature that's expected to be ≥
-+10 Elo. Watch the trajectory — when we cross +0 Elo, MTL_v0.3 stops
-being the rung and MORA (2191) becomes the next target.
++10 Elo. Watch the trajectory against MORA — gap will narrow as
+features ship; once we're within ±50 of MORA, that becomes the new
+yardstick rung and we can look for a higher-rated anchor.
 
-**Command:** `test_huginn_calibration.bat mtl03 50` — auto-rebuilds.
+**Command:** `test_huginn_vs_mora.bat 50` — auto-rebuilds.
 
 ---
 
