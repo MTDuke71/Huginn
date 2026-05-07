@@ -422,28 +422,40 @@ LOS 99.98% / 100g) — single feature crossed the +50 threshold.
 Huginn at ~−340 Elo vs MTL_v0.3. Real progress from 0W/20L/0D the
 run before, but still firmly behind.
 
-**Machine-migration breakage (2026-05-06):** all seven `mtlchess*.exe`
-binaries in the fastchess folder fail with SIGILL (illegal
-instruction) on the new machine — a 13th-gen i7-13700KF (Raptor Lake).
-Root cause is almost certainly that the binaries were built with
-AVX-512 instructions on the prior box, and Intel disabled AVX-512 on
-consumer Raptor Lake P-cores. `MORA110.exe` runs fine and is the
-primary external anchor until MTLChess can be rebuilt.
+**Machine-migration breakage + recovery (2026-05-06):** all seven
+pre-existing `mtlchess*.exe` binaries in the fastchess folder fail
+with SIGILL on the new machine — a 13th-gen i7-13700KF (Raptor Lake).
+Cause is AVX-512 in the prior-machine builds; Intel disabled AVX-512
+on consumer Raptor Lake P-cores. **Rebuilt MTLChess v0.3 from source
+on this box as `mtlchessV3.exe`** (UCI handshake confirms `id name
+MTLChess v0.3`). Other versions (v0.4, v0.5, v0.6, etc.) are still
+unrunnable until similarly rebuilt.
 
 **Anchors:**
-- **Primary (works):** MORA, rated ~2191. New script
-  `test_huginn_vs_mora.bat`.
-- **Secondary (broken):** MTLChess v0.3 (~1984), v0.5 (~2314), and
-  the other variants. To restore: rebuild from MTLChess source on
-  this machine without `-march=native` / with `-march=alderlake` or
-  explicit AVX2-only flags. Source not in this repo; user has it.
+- **Primary (works):** MTLChess v0.3 / `mtlchessV3.exe`, rated ~1984.
+  Script `test_huginn_vs_mtlchess_v03.bat`. Last datapoint
+  (2026-04-30, post-mobility, on the prior machine): -340 Elo. Good
+  rung for current Huginn strength.
+- **Secondary (works, too strong):** MORA / `MORA110.exe`, rated
+  ~2191. Script `test_huginn_vs_mora.bat`. Useful once Huginn
+  closes most of the v0.3 gap; right now Huginn is comfortably losing.
+- **Broken pending rebuild:** `mtlchess003.exe`, `mtlchess002.exe`,
+  `mtlchess.exe`, `mtlchess_v05.exe`, `mtlchess_v06.exe`,
+  `MTLChess_v03_before.exe`, `MTLChess_v04_after.exe`. Rebuild path
+  same as v0.3: build from source with `-march=alderlake` or
+  explicit AVX2-only flags.
 
-**Cadence:** run after each shipped feature that's expected to be ≥
-+10 Elo. Watch the trajectory against MORA — gap will narrow as
-features ship; once we're within ±50 of MORA, that becomes the new
-yardstick rung and we can look for a higher-rated anchor.
+**Cadence:** run `test_huginn_vs_mtlchess_v03.bat 50` after each
+shipped feature expected to be ≥ +10 Elo. Watch the trajectory —
+when we cross +0 Elo vs MTL v0.3, that anchor is graduated and MORA
+becomes the new rung.
 
-**Command:** `test_huginn_vs_mora.bat 50` — auto-rebuilds.
+**Caveat on `test_huginn_calibration.bat`:** the multi-target
+calibration script hardcodes `mtlchess003.exe` for `mtl03` (broken)
+and `mtlchess_v05.exe` for `mtl05` (broken). Only its `mora` key
+works. Update or replace if needed; the standalone bats
+(`test_huginn_vs_mtlchess_v03.bat` and `test_huginn_vs_mora.bat`)
+sidestep this.
 
 ---
 

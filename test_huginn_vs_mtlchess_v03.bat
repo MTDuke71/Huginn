@@ -15,9 +15,10 @@ set FC=C:\Users\m_lad\Documents\fastchess-windows-x86-64
 set FASTCHESS=%FC%\fastchess.exe
 set HUGINN_REPO=C:\Users\m_lad\Documents\Repos\Huginn
 set CMAKE="C:\Program Files\CMake\bin\cmake.exe"
-REM Use mtlchess003.exe (same binary as test_huginn_calibration.bat mtl03)
-REM so this script's results are comparable to BACKLOG #5 calibration history.
-set OPPONENT=mtlchess003.exe
+REM Use mtlchessV3.exe (rebuilt 2026-05-06 on the new machine without
+REM AVX-512). The pre-migration mtlchess003.exe still exists in the
+REM fastchess folder but trips SIGILL on Raptor Lake — see BACKLOG #5.
+set OPPONENT=mtlchessV3.exe
 set OPPONENT_NAME=MTLChess_v0.3
 
 if not exist "%FC%\%OPPONENT%" (
