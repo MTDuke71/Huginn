@@ -49,7 +49,7 @@ int huginn_square_from_fathom(unsigned fathom_square) {
 namespace Huginn {
 
 SyzygyTablebase::SyzygyTablebase() 
-    : tablebase_path("d:\\TB\\"), is_initialized(false), max_pieces(0) {
+    : tablebase_path("c:\\TB\\"), is_initialized(false), max_pieces(0) {
 }
 
 SyzygyTablebase::~SyzygyTablebase() {
@@ -61,7 +61,7 @@ bool SyzygyTablebase::initialize(const std::string& path) {
     shutdown();
     
     // Use hardcoded path if provided path is empty, otherwise use provided path
-    std::string target_path = path.empty() ? "d:\\TB\\" : path;
+    std::string target_path = path.empty() ? "c:\\TB\\" : path;
     
     #if FATHOM_AVAILABLE
     // Real Fathom implementation
@@ -162,14 +162,18 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     }
     
     #if FATHOM_AVAILABLE
-    // Convert position to Fathom format
-    unsigned white = 0, black = 0;
-    unsigned kings = 0, queens = 0, rooks = 0, bishops = 0, knights = 0, pawns = 0;
+    // Convert position to Fathom format. These MUST be uint64_t — bits up
+    // to 63 are valid, and `unsigned` (32 bits) silently truncated kings
+    // and pieces on ranks 5-8 to zero in the OR-accumulation, which made
+    // every probe return TB_RESULT_FAILED. (Bug found 2026-05-08 while
+    // wiring up #10.)
+    uint64_t white = 0, black = 0;
+    uint64_t kings = 0, queens = 0, rooks = 0, bishops = 0, knights = 0, pawns = 0;
     
     for (int square = 0; square < 120; ++square) {
         Piece piece = pos.at(square);
         if (is_none(piece) || is_offboard(piece)) continue;
-        
+
         unsigned fathom_square = fathom_square_from_huginn(square);
         if (fathom_square >= 64) continue; // Invalid square
         
@@ -207,7 +211,7 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     if (pos.castling_rights & CASTLE_BK) castling |= TB_CASTLING_k;
     if (pos.castling_rights & CASTLE_BQ) castling |= TB_CASTLING_q;
     
-    // Probe WDL using tb_probe_wdl_impl (the working function)
+    // Probe WDL using tb_probe_wdl_impl
     unsigned result = tb_probe_wdl_impl(white, black, kings, queens, rooks, bishops, knights, pawns,
                                         ep, pos.side_to_move == Color::White);
     

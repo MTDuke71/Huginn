@@ -1213,9 +1213,11 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
     
-    // Syzygy Tablebase Probe - TEMPORARILY DISABLED FOR DEBUGGING
-    // Only probe at leaf nodes or very low depth to avoid search issues
-    if (false && depth <= 1 && tablebase && tablebase->is_available()) {
+    // Syzygy Tablebase Probe (BACKLOG #10 closure)
+    // Only probe at leaf nodes or very low depth to avoid search issues —
+    // probing has overhead, and at higher depths the search will reach
+    // the leaf via normal traversal anyway.
+    if (depth <= 1 && tablebase && tablebase->is_available()) {
         int wdl_score;
         if (probe_tablebase_wdl(pos, wdl_score)) {
             // Perfect tablebase result found
@@ -2029,16 +2031,16 @@ bool MinimalEngine::probe_tablebase_wdl(const Position& pos, int& wdl_score) con
     if (!tablebase || !tablebase->is_available()) {
         return false;  // No tablebase available
     }
-    
+
     if (!tablebase->can_probe(pos)) {
         return false;  // Position cannot be probed
     }
-    
+
     int result = tablebase->probe_wdl(pos);
     if (result == INT32_MAX) {
         return false;  // Probe failed
     }
-    
+
     wdl_score = result;
     return true;
 }

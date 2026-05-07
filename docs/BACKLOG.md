@@ -584,21 +584,65 @@ parameter-bound on multiple eval features simultaneously.
 
 ---
 
-### #10: Wire up Syzygy tablebase probe
+### #10: Wire up Syzygy tablebase probe — CLOSED
 
-- status: open / unblocked
-- priority: low
+- status: closed (2026-05-08)
+- priority: was low
 - type: feature
-- est: 1 hour (gate already exists)
 
-**State:** Probe code at `src/minimal_search.cpp:1094` is gated by
-`if (false && ...)` — fully disabled. Default `SyzygyPath` is
-`c:\TB\`. If TB files are installed there, removing the `false &&`
-gate enables it.
+**Took materially longer than the BACKLOG's "1 hour, gate already
+exists" estimate** because the original gate-flip exposed several
+upstream/integration problems that all had to be fixed first:
 
-**Estimated impact:** depends entirely on whether `.rtbw/.rtbz` files
-are installed. With 5-piece tables (small download), endgame play
-becomes near-perfect. Less impactful for opening/middlegame play.
+1. **Default-OFF Fathom**: `ENABLE_FATHOM` defaulted off in
+   `CMakeLists.txt`; Huginn was using the stub implementation that
+   could never probe (the test output's `(stub implementation)`
+   tagline made this visible). The actual probe code was reachable
+   only when configured with `-DENABLE_FATHOM=ON`. CMakeLists option
+   left default-OFF (no behavior change for casual builds; opt-in to
+   enable TB).
+2. **Default path inconsistency**: `src/syzygy_tablebase.cpp` had
+   `d:\\TB\\` as the internal default while UCI advertised `c:\\TB\\`.
+   Unified to `c:\\TB\\` (matching the actual install location on
+   this machine).
+3. **Fathom MSVC C4717 stack-overflow warnings**: enabling Fathom
+   triggered three "function will cause runtime stack overflow"
+   warnings on `tb_pop_count` / `tb_lsb` / `tb_pop_lsb`. Cause:
+   `tbprobe.c` at line 422 does `#include "tbchess.c"`, and tbchess.c
+   lines 31-33 redefine `popcount` / `lsb` / `poplsb` macros to map
+   to the helper API. The redefinitions then leak into the rest of
+   `tbprobe.c`, turning every popcount call (including those inside
+   `tb_probe_wdl_impl` itself!) into self-recursive infinite loops.
+   The first time the engine was given a TB-probable position it
+   hung. Fixed with `#pragma push_macro` / `#pragma pop_macro` around
+   the `#include "tbchess.c"` in `fathom/src/tbprobe.c`.
+4. **`unsigned`-vs-`uint64_t` truncation in probe_wdl**: the
+   `SyzygyTablebase::probe_wdl` accumulator declared
+   `unsigned white = 0, ...` (32-bit). Pieces on ranks 5-8 (sq64 ≥ 32)
+   silently truncated to zero in the OR-accumulation — kings on e8,
+   pieces on the back rank, *anything* above the 4th rank dropped
+   out. So every probe returned `TB_RESULT_FAILED` even after the
+   integration was running. Fixed to `uint64_t`.
+5. **The actual gate flip**: the `if (false && ...)` gate at
+   `src/minimal_search.cpp:1218` was removed.
+
+**Verification:** UCI handshake reports
+`Fathom tablebases initialized: c:\TB\ (max 5 pieces)`. KPK at
+`4k3/8/4K3/8/8/8/4P3/8 w - - 0 1` returns `score cp 28000` at depth 1
+(= MATE-1000, Fathom's TB_WIN). Startpos at depth 8 has no regression.
+208/208 unit tests pass.
+
+**To use TB at runtime:** configure with `-DENABLE_FATHOM=ON` (option
+defaults OFF for clean builds). Default path is `c:\TB\`; override
+via the UCI `SyzygyPath` option. Without Fathom enabled, the engine
+falls back to the stub which cleanly reports "not available" and
+plays without TB.
+
+**Strength impact:** unmeasured. Tournament gauntlet vs t3 with
+TB-on would isolate the contribution. Likely small at tc=10+0.1
+since most games end before reaching ≤5-piece endgames; matters more
+in adjudication-free long games and tournaments with longer time
+controls.
 
 ---
 

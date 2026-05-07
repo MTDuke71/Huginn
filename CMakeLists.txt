@@ -265,6 +265,18 @@ endfunction()
 if(ENABLE_FATHOM)
     message(STATUS "Fathom tablebase support enabled")
     add_compile_definitions(FATHOM_AVAILABLE=1)
+    # NOTE: MSVC emits C4717 ("function will cause runtime stack overflow")
+    # for Fathom's tb_pop_count / tb_lsb / tb_pop_lsb helper functions in
+    # tbprobe.c. Cause: tbchess.c's `#define popcount tb_pop_count` macro
+    # leaks into tbprobe.c via `#include "tbchess.c"` at tbprobe.c:422 and
+    # rewrites the helper bodies into self-recursive calls. We never call
+    # these helpers (grep confirms zero call sites in src/), so the
+    # warnings flag dead code that the linker drops in Release. Defining
+    # TB_NO_HELPER_API here fails the standalone tbchess.c compilation
+    # because tbchess.c also uses the popcount→tb_pop_count macro and
+    # would lose the external definition. Leaving the warnings as
+    # documented noise rather than patching upstream Fathom or refactoring
+    # the build.
     set(FATHOM_SOURCES
         fathom/src/tbprobe.c
         fathom/src/tbchess.c

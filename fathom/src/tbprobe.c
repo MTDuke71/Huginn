@@ -418,8 +418,25 @@ static uint32_t tbMagic[] = { 0x5d23e871, 0x88ac504b, 0xa50c66d7 };
 enum { WDL, DTM, DTZ };
 enum { PIECE_ENC, FILE_ENC, RANK_ENC };
 
-// Attack and move generation code
+// Attack and move generation code.
+// Huginn-local patch: tbchess.c (lines 31-33) does
+//   #define popcount tb_pop_count
+//   #define lsb tb_lsb
+//   #define poplsb tb_pop_lsb
+// to make its body call the helper API externally when compiled on its
+// own. When this same file is `#include`d here, those macros leak into
+// the rest of tbprobe.c and turn every popcount/lsb/poplsb call below
+// (including inside tb_probe_wdl_impl and the helper API definitions
+// themselves) into self-recursive infinite loops — MSVC C4717 confirms
+// it. Save the intrinsic popcount/poplsb macros and the bare-name lsb
+// (an inline function) before the include, then restore after.
+#pragma push_macro("popcount")
+#pragma push_macro("lsb")
+#pragma push_macro("poplsb")
 #include "tbchess.c"
+#pragma pop_macro("poplsb")
+#pragma pop_macro("lsb")
+#pragma pop_macro("popcount")
 
 struct PairsData {
   uint8_t *indexTable;
