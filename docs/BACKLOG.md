@@ -387,27 +387,27 @@ above. Cherry-pickable when #13 unblocks.
 
 ## Open — medium priority
 
-### #4: Refresh `huginn_t3` baseline when cumulative ≥ +50 over t2
+### #4: Refresh `huginn_t3` baseline when cumulative ≥ +50 over t2 — CLOSED
 
-- status: open / blocked (waiting on cumulative gain trigger)
-- priority: medium
+- status: closed @ `2e97066` (2026-05-06)
+- tag: `baseline-t3 = 2e97066`
+- priority: was medium
 - type: maintenance
-- est: 5 minutes (tag + build + copy + new vs-t3 bat)
-- links: [SEARCH_AND_EVAL.md#next-steps](SEARCH_AND_EVAL.md) #8
 
-**Trigger:** any single feature that pushes the gauntlet vs `huginn_t2`
-to ≥ +50 Elo, OR cumulative across multiple features. Today the only
-shipped feature on top of t2 is mobility (+4). #1 and #2 should each
-push us past the trigger.
+**Triggered by** the #13/2c TT-mate ship (+104 ± 62 Elo vs t2,
+LOS 99.98% / 100g) — single feature crossed the +50 threshold.
 
-**Plan:** when triggered, mirror what we did for `baseline-t2`:
-```
-git tag baseline-t3 <commit>
-build → copy huginn_t3.exe to fastchess folder
-write test_huginn_vs_t3.bat
-update tooling section in SEARCH_AND_EVAL.md
-update test_epd_diff.py default opponent to t3
-```
+**What shipped:**
+- `git tag baseline-t3 2e97066`
+- `huginn_t3.exe` copied to `fastchess-windows-x86-64/` from
+  `build/msvc-x64-release/bin/Release/huginn.exe` (the 2c build).
+- `test_huginn_vs_t3.bat` added (mirrors `test_huginn_vs_t2.bat`).
+
+**Follow-ups still pending (low priority):**
+- `SEARCH_AND_EVAL.md` tooling section update to reference t3.
+- `test_epd_diff.py` default opponent → t3.
+- `test_huginn_vs_t2.bat` is now superseded but kept around for
+  historical regression checks; new work should use t3.
 
 ---
 
