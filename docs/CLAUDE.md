@@ -4,16 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Huginn is a **tournament-ready, production-quality chess engine** written in modern C++17/20. It implements the complete UCI (Universal Chess Interface) protocol and features a sophisticated hybrid evaluation system combining bitboard analysis with mailbox position representation. 
+Huginn is a UCI-compliant chess engine written in modern C++17/20. As of
+the `pure-bitboard-engine` branch (Phase 4 of the rewrite), the data flow
+is **bitboard-primary**: piece-bitboards are the source of truth for all
+movegen and evaluation, with mailbox-120 retained as a parallel
+representation for legality / square-walking helpers.
 
-**Current Status (HugginMain Branch):**
-- ✅ **Complete Chess Engine**: 232/232 tests passing (100% pass rate)
-- ✅ **Tournament Ready**: Full UCI compliance, works with Arena, Fritz, ChessBase
-- ✅ **Strong Performance**: ~1.5M nodes/second search speed with systematic optimizations
-- ✅ **Advanced Evaluation**: Multi-factor position evaluation with game phase detection
-- ✅ **Proven Reliability**: Stable production branch suitable for competitive play
+**Current Status (`pure-bitboard-engine` branch, 2026-05-07):**
+- ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
+- ✅ **Comprehensive test suite**: ~207 GoogleTest cases across 30 files
+- ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
+  see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration
+  ladder
+- 🔬 **Performance**: ~2.06 Mnps single-threaded at depth 11 from startpos
+  (CLAUDE.md's earlier "~1.5M nps" figure was stale by ~25%)
 
-The engine emphasizes systematic performance optimization with documented improvements totaling ~5.6% cumulative gain through measured enhancements.
+For the **live inventory** of which search and evaluation techniques are
+implemented, see [SEARCH_AND_EVAL.md "Current state" sections](SEARCH_AND_EVAL.md#current-state--search).
+For **what to work on next**, see [BACKLOG.md](BACKLOG.md). This file is
+the orientation guide for new sessions; the other two are the source of
+truth for state and priorities.
 
 ## Common Commands
 
@@ -85,26 +95,36 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 
 ### Core Components
 
-- **UCI Interface** (`src/uci.cpp`, `src/uci_utils.cpp`): Complete UCI protocol implementation with full search control
-- **Position Representation**: Advanced hybrid system using both mailbox-120 and comprehensive bitboards
-  - `src/position.cpp`: Main Position class with S_MOVE system and incremental updates
-  - `src/position_bitboard.cpp`: Full bitboard infrastructure for all piece types
-  - `src/board120.cpp`: 10x12 mailbox representation with off-board sentinels
-- **Move Generation**: High-performance move generation with multiple optimization strategies
-  - `src/movegen_enhanced.cpp`: Main move generation with MVV-LVA ordering
-  - `src/movegen_bitboard.cpp`: Bitboard-based move generation
-  - `src/movegen_acceleration.cpp`: Performance-optimized variants
-- **Search Engine** (`src/minimal_search.cpp`): Complete alpha-beta search with:
-  - Quiescence search with depth limiting (10 plies max)
-  - Enhanced null move pruning (R=4 reduction) 
-  - History heuristic with aging mechanism
-  - Iterative deepening and principal variation tracking
-- **Evaluation** (`src/evaluation.cpp`): Advanced multi-factor evaluation system:
-  - Material tracking with incremental updates
-  - Piece-square tables for positional assessment
-  - Pawn structure analysis (isolated, doubled, passed pawns)
-  - King safety evaluation and piece activity scoring
-  - Game phase detection (opening/middlegame/endgame)
+- **UCI Interface** ([src/uci.cpp](../src/uci.cpp), [src/uci_utils.cpp](../src/uci_utils.cpp)):
+  Full UCI protocol — position setup, `go` parsing, search control, real-time `info` output
+- **Position Representation** — bitboard-primary, mailbox parallel:
+  - [src/position.cpp](../src/position.cpp) / [src/position.hpp](../src/position.hpp):
+    `Position` class with per-piece bitboards (`std::array<std::array<Bitboard, _Count>, 2>`),
+    `S_MOVE` system, and incremental Zobrist + material updates
+  - [src/board120.cpp](../src/board120.cpp): 10×12 mailbox with off-board sentinels
+    (used as a parallel representation for legality helpers; not a separate engine path)
+- **Move Generation** — two implementations, bitboard is the production path:
+  - [src/movegen_bb.cpp](../src/movegen_bb.cpp) / [.hpp](../src/movegen_bb.hpp):
+    bitboard-based generation — **the production movegen**
+  - [src/movegen.cpp](../src/movegen.cpp) / [.hpp](../src/movegen.hpp):
+    mailbox movegen, retained for cross-validation and tests
+  - [src/attack_tables.cpp](../src/attack_tables.cpp), [src/{knight,king,pawn}_lookup_tables.cpp](../src/):
+    pre-computed attack tables; sliders use magic bitboards
+- **Search Engine** ([src/minimal_search.cpp](../src/minimal_search.cpp)):
+  see [SEARCH_AND_EVAL.md "Current state — Search"](SEARCH_AND_EVAL.md#current-state--search)
+  for the full audited inventory. High-level: negamax + alpha-beta with PVS,
+  iterative deepening, TT, quiescence with SEE pruning, null-move (R=4),
+  RFP, futility, razoring, LMR (`log·log` table), check extension, IID,
+  killers + history + MVV-LVA + counter-move (gated off), polyglot book.
+- **Evaluation**: definitions in [src/evaluation.hpp](../src/evaluation.hpp)
+  (constants + masks + PSTs); the actual `evaluate()` lives in
+  [minimal_search.cpp:88](../src/minimal_search.cpp#L88). Hand-crafted,
+  no NNUE. Phase-aware via 3-bucket switch (no smooth taper). Terms:
+  material + PSTs (separate MG/EG king table), isolated/doubled/passed
+  pawns, bishop pair, rook/queen on open/semi-open files, mobility,
+  tempo, insufficient-material draw. See
+  [SEARCH_AND_EVAL.md "Current state — Evaluation"](SEARCH_AND_EVAL.md#current-state--evaluation)
+  for the full audited inventory.
 
 ### Key Design Patterns
 
@@ -117,17 +137,18 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 
 ### Move System Architecture
 
-The engine implements two move systems for comparison:
-- **VICE Tutorial System** (`MakeMove/TakeMove`): Tutorial-based implementation, 1.55x faster with 54.6% higher node throughput
-- **Huginn System** (`make_move_with_undo`): Modern vector-based approach with dynamic move history and automatic resizing
-
-**Current Production System**: S_MOVE with 25-bit packed encoding (from/to/promotion) providing 33% memory reduction and improved cache performance.
+**Production**: S_MOVE with 25-bit packed encoding (from/to/promotion + flags)
+plus an in-band `score` field used for move ordering. Make/unmake is
+`MakeMove`/`TakeMove` on `Position` with O(1) incremental updates to
+bitboards, mailbox, Zobrist key, material counts, and piece lists.
 
 ### Bitboard Infrastructure
 
-- **Full Bitboard Support**: All piece types have dedicated bitboards (`std::array<std::array<Bitboard, PieceType::_Count>, 2>`)
-- **Efficient Operations**: Pre-computed masks, bit manipulation macros, ASCII visualization
-- **Hybrid Access**: Both mailbox (simplicity) and bitboard (speed) available simultaneously
+- **Per-piece bitboards**: `std::array<std::array<Bitboard, PieceType::_Count>, 2>`
+- **Magic bitboards** for slider attacks (rook / bishop), pre-computed
+  attack tables for knight / king / pawn
+- **Mailbox parallel representation**: 10×12 with off-board sentinels —
+  used by legality / square-walking helpers; not a separate engine path
 
 ## Development Guidelines
 
@@ -140,22 +161,24 @@ The engine implements two move systems for comparison:
 
 ### Testing Requirements
 - All new functionality must have corresponding tests in `test/` directory
-- **Current Status**: 232/232 tests passing (100% pass rate)
+- **Current size**: ~207 GoogleTest cases across 30 files (verify the
+  pass count by running the suite — it changes as features land)
 - Perft tests for move generation validation
 - Position validation with FEN round-trip testing
-- Performance regression testing with benchmarking framework
-- Extended tactical test suites for engine strength validation
+- Evaluation symmetry tests via [test/test_evaluation_symmetry.cpp](../test/test_evaluation_symmetry.cpp)
+  and the mirror harness
+- Tactical sweeps via WAC300 ([test/WAC300.epd](../test/WAC300.epd))
+  and LCT2 ([test/lct2.epd](../test/lct2.epd))
 
 ### Performance Considerations
-- The engine tracks performance improvements systematically through detailed benchmarking
-- All optimizations are measured with standardized benchmark positions
-- **Current Performance**: ~1.5M nodes/second search speed (measured: `go depth 11` from startpos)
-- **Documented Improvements**: ~5.6% cumulative gain through systematic optimizations:
-  - Quiescence search depth limiting: +2.0%
-  - Enhanced history heuristic with aging: +1.4% 
-  - Enhanced null move pruning (R=4): +1.4%
-  - 100% bitboard representation: +0.8%
-- Assembly generation available for micro-optimization analysis
+- **Current NPS**: ~2.06 Mnps single-threaded (`go depth 11` from
+  startpos, 2026-04-28 measurement). MTLChess_v0.3 is at parity
+  (~2.33 Mnps); the strength gap is **search-tree shape**, not raw
+  speed — we visit ~22× more nodes per depth.
+- **Strength priorities** are tracked in [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md)
+  by tier; per-feature Elo deltas are gauntlet-measured at 100+ games
+- Assembly generation available for micro-optimization analysis (see
+  `cmake --preset msvc-x64-release-asm`)
 
 ### Build System Notes
 - Uses CMake 3.22+ with preset support
@@ -181,28 +204,32 @@ The engine implements two move systems for comparison:
 - **S_MOVE System**: 25-bit packed move encoding with integrated scoring
 - **UCI Protocol**: Full implementation compatible with Arena, Fritz, ChessBase, all major GUIs
 
-## Current Engine Status (HugginMain Branch)
+## Current Engine Status (`pure-bitboard-engine` branch)
 
-**Production-Ready Chess Engine** with tournament-level capabilities:
+The codebase is mid-rewrite to a pure-bitboard architecture. Phase 3 +
+Phases 4.1-4.2 are done (data flow is bitboard-only; `BITBOARD_ENGINE`
+shim removed). Sub-phases 4.3-4.10 remain on the plan.
 
-### Completed Major Features ✅
-1. **Complete UCI Implementation**: Position setup, search control, move parsing, real-time info output
-2. **Advanced Search System**: Alpha-beta with quiescence, iterative deepening, principal variation tracking
-3. **Sophisticated Evaluation**: Multi-factor analysis including material, piece-square tables, pawn structure, king safety
-4. **Performance Optimizations**: Systematic improvements documented with concrete metrics
-5. **Comprehensive Testing**: 232/232 tests passing with full coverage of core functionality
+### What works today
+1. **UCI**: position setup, search control, real-time `info` output, EPD
+   parsing
+2. **Search**: negamax + alpha-beta + PVS, iterative deepening, TT,
+   quiescence with SEE pruning, full pruning stack (null-move, RFP,
+   futility, razoring, LMR with `log·log` table), check extension, IID,
+   killers + history + counter-move (gated off) + MVV-LVA
+3. **Evaluation**: hand-crafted, phase-aware (3-bucket switch), full set
+   of standard pawn-structure / piece-activity / mobility terms
+4. **Books / TBs**: Polyglot wired and used; Syzygy probe code present
+   but gated off (`if (false && …)` at minimal_search.cpp:1218)
+5. **Test suite**: ~207 GoogleTest cases + WAC300 / LCT2 EPD sweeps
 
-### Performance Achievements
-- **Search Speed**: ~1.5M nodes/second (tournament-competitive)
-- **Engine Strength**: Estimated ~1800-2000 Elo rating
-- **Reliability**: 100% test pass rate ensures competitive stability
-- **Memory Efficiency**: 33% reduction in move storage through S_MOVE system
-
-### Systematic Optimization Results
-The project demonstrates disciplined performance improvement through measured enhancements:
-1. **Quiescence search depth limiting**: +2.0% performance gain + stack safety
-2. **Enhanced history heuristic with aging**: +1.4% improvement through better move ordering  
-3. **Enhanced null move pruning (R=4)**: +1.4% gain via aggressive branch elimination
-4. **100% bitboard representation**: +0.8% improvement + foundation for future optimizations
-
-**Total Documented Improvement**: ~5.6% cumulative performance gain with maintained functional correctness.
+### Where we are vs target strength
+- Calibration baseline: ~1500-1700 Elo at 10+0.1 (huginn current vs
+  MTLChess_v0.3 ~1984 Elo, 0-20 score). The cumulative shipped Tier 1+2
+  stack is roughly +50-100 Elo over the `t1` baseline; see
+  [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for live gauntlet numbers.
+- Near-term roadmap is in [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md)
+  Tier 1/2/3 tables; live priorities in [BACKLOG.md](BACKLOG.md).
+- Notable gaps (not yet implemented): aspiration windows, singular
+  extensions, ProbCut, continuation history, SEE in main search,
+  smooth tapered eval, king safety, NNUE, lazy SMP.
