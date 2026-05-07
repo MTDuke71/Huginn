@@ -7,6 +7,14 @@ REM
 REM Use this for every incremental search/eval change going forward, replacing
 REM the now-superseded test_huginn_vs_t2.bat.
 REM
+REM Current Huginn is built with -DENABLE_FATHOM=ON (Syzygy 5-piece TB at
+REM c:\TB\, BACKLOG #10 closure d79900a). The t3 baseline binary was built
+REM before the TB integration so it has no TB — the matchup measures both
+REM cumulative search progress AND the TB contribution.
+REM
+REM Concurrency 2: validated on 2026-05-07 t-chain round-robin
+REM (200g per engine) with no instability and tighter per-game wall clock.
+REM
 REM Usage: test_huginn_vs_t3.bat [rounds]   (default: 50 rounds = 100 games)
 
 set ROUNDS=%1
@@ -17,8 +25,16 @@ set FASTCHESS=%FC%\fastchess.exe
 set HUGINN_REPO=C:\Users\m_lad\Documents\Repos\Huginn
 set CMAKE="C:\Program Files\CMake\bin\cmake.exe"
 
-echo Building current Huginn (msvc-x64-release)...
+echo Configuring current Huginn with Fathom (Syzygy) enabled...
 cd /d %HUGINN_REPO%
+%CMAKE% --preset msvc-x64-release -DENABLE_FATHOM=ON
+if errorlevel 1 (
+    echo Configure failed!
+    pause
+    exit /b 1
+)
+
+echo Building current Huginn (msvc-x64-release)...
 %CMAKE% --build build/msvc-x64-release --config Release --target huginn
 if errorlevel 1 (
     echo Build failed!
@@ -40,7 +56,7 @@ echo.
   -each tc=10+0.1 ^
   -rounds %ROUNDS% ^
   -repeat ^
-  -concurrency 1 ^
+  -concurrency 2 ^
   -recover ^
   -openings file="%FC%\noob_3moves.epd" format=epd order=random ^
   -pgnout file="%FC%\huginn_vs_t3.pgn" notation=uci append=true ^
