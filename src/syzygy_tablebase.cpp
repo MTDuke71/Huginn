@@ -203,17 +203,26 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     if (pos.ep_square != -1) {
         ep = fathom_square_from_huginn(pos.ep_square);
     }
-    
+
     // Convert castling rights
     unsigned castling = 0;
     if (pos.castling_rights & CASTLE_WK) castling |= TB_CASTLING_K;
     if (pos.castling_rights & CASTLE_WQ) castling |= TB_CASTLING_Q;
     if (pos.castling_rights & CASTLE_BK) castling |= TB_CASTLING_k;
     if (pos.castling_rights & CASTLE_BQ) castling |= TB_CASTLING_q;
-    
-    // Probe WDL using tb_probe_wdl_impl
-    unsigned result = tb_probe_wdl_impl(white, black, kings, queens, rooks, bishops, knights, pawns,
-                                        ep, pos.side_to_move == Color::White);
+
+    // Use the safe wrapper `tb_probe_wdl` instead of `tb_probe_wdl_impl`.
+    // Fathom's TB encoding assumes castling == 0 and rule50 == 0; the
+    // wrapper returns TB_RESULT_FAILED otherwise. Calling the impl
+    // directly silently fed positions-with-castling and positions-with-
+    // a-non-zero-halfmove-counter to the probe, which returned WDL
+    // values from a no-castling, rule50=0 reading. Those wrong values
+    // got TT-cached at depth=127 EXACT and corrupted subsequent
+    // searches — measured at -63 Elo over 100g vs t3 before this fix.
+    unsigned result = tb_probe_wdl(white, black, kings, queens, rooks,
+                                   bishops, knights, pawns,
+                                   pos.halfmove_clock, castling, ep,
+                                   pos.side_to_move == Color::White);
     
     if (result == TB_RESULT_FAILED) {
         return INT32_MAX;
