@@ -587,62 +587,89 @@ parameter-bound on multiple eval features simultaneously.
 ### #10: Wire up Syzygy tablebase probe — CLOSED
 
 - status: closed (2026-05-08)
+- final commit: `5347e6d`
+- final result: **+15.65 ± 42 Elo / 200g vs t3, LOS 77%** (neutral within noise)
 - priority: was low
 - type: feature
 
-**Took materially longer than the BACKLOG's "1 hour, gate already
-exists" estimate** because the original gate-flip exposed several
-upstream/integration problems that all had to be fixed first:
+**Took dramatically longer than the BACKLOG's "1 hour, gate already
+exists" estimate.** Closure was a nine-commit fix-stack across two
+phases: integration wire-up, then a regression hunt after the first
+gauntlet measurement showed -63 Elo.
+
+**Phase 1 — Integration wire-up** (`d79900a`). The original gate-flip
+exposed five distinct integration problems that all had to be fixed
+before the engine would even produce the right TB score on a
+hand-coded smoke test:
 
 1. **Default-OFF Fathom**: `ENABLE_FATHOM` defaulted off in
    `CMakeLists.txt`; Huginn was using the stub implementation that
-   could never probe (the test output's `(stub implementation)`
-   tagline made this visible). The actual probe code was reachable
-   only when configured with `-DENABLE_FATHOM=ON`. CMakeLists option
-   left default-OFF (no behavior change for casual builds; opt-in to
-   enable TB).
+   could never probe. Left default-OFF; opt in via `-DENABLE_FATHOM=ON`.
 2. **Default path inconsistency**: `src/syzygy_tablebase.cpp` had
    `d:\\TB\\` as the internal default while UCI advertised `c:\\TB\\`.
-   Unified to `c:\\TB\\` (matching the actual install location on
-   this machine).
-3. **Fathom MSVC C4717 stack-overflow warnings**: enabling Fathom
-   triggered three "function will cause runtime stack overflow"
-   warnings on `tb_pop_count` / `tb_lsb` / `tb_pop_lsb`. Cause:
-   `tbprobe.c` at line 422 does `#include "tbchess.c"`, and tbchess.c
-   lines 31-33 redefine `popcount` / `lsb` / `poplsb` macros to map
-   to the helper API. The redefinitions then leak into the rest of
-   `tbprobe.c`, turning every popcount call (including those inside
-   `tb_probe_wdl_impl` itself!) into self-recursive infinite loops.
-   The first time the engine was given a TB-probable position it
-   hung. Fixed with `#pragma push_macro` / `#pragma pop_macro` around
-   the `#include "tbchess.c"` in `fathom/src/tbprobe.c`.
-4. **`unsigned`-vs-`uint64_t` truncation in probe_wdl**: the
-   `SyzygyTablebase::probe_wdl` accumulator declared
-   `unsigned white = 0, ...` (32-bit). Pieces on ranks 5-8 (sq64 ≥ 32)
-   silently truncated to zero in the OR-accumulation — kings on e8,
-   pieces on the back rank, *anything* above the 4th rank dropped
-   out. So every probe returned `TB_RESULT_FAILED` even after the
-   integration was running. Fixed to `uint64_t`.
-5. **The actual gate flip**: the `if (false && ...)` gate at
-   `src/minimal_search.cpp:1218` was removed.
+   Unified to `c:\\TB\\`.
+3. **Fathom MSVC C4717 stack-overflow warnings**: `tbprobe.c:422`
+   does `#include "tbchess.c"`, and tbchess.c lines 31-33 redefine
+   `popcount`/`lsb`/`poplsb` macros to map to the helper API. The
+   redefinitions leak into the rest of `tbprobe.c`, turning every
+   popcount call (including those inside `tb_probe_wdl_impl`) into
+   self-recursive infinite loops. First TB-probable position hung the
+   engine. Fixed with `#pragma push_macro` / `#pragma pop_macro`
+   around the include.
+4. **`unsigned`-vs-`uint64_t` truncation in probe_wdl**: bitboard
+   accumulators were declared `unsigned` (32-bit). Pieces on ranks 5-8
+   (sq64 ≥ 32) silently truncated to zero, so every probe returned
+   `TB_RESULT_FAILED`. Fixed to `uint64_t`.
+5. **The actual gate flip**: removed `if (false && ...)` at
+   `src/minimal_search.cpp:1218`.
 
-**Verification:** UCI handshake reports
-`Fathom tablebases initialized: c:\TB\ (max 5 pieces)`. KPK at
-`4k3/8/4K3/8/8/8/4P3/8 w - - 0 1` returns `score cp 28000` at depth 1
-(= MATE-1000, Fathom's TB_WIN). Startpos at depth 8 has no regression.
-208/208 unit tests pass.
+After phase 1: KPK smoke test returned `cp 28000` at depth 1 (TB_WIN
+encoded as MATE-1000) — the first proof of life — and 208/208 unit
+tests passed.
+
+**Phase 2 — Regression hunt** (`adb043d` → `c37f991` → `7a2311e` →
+`5347e6d`). With phase 1 working at the unit-test level, the first
+100g gauntlet vs t3 measured **-63 Elo, LOS 0.79%**. A 200g re-run
+at -57.86 / LOS 0.16% confirmed it was a real regression, not noise.
+Four more bugs got peeled off:
+
+| Commit | Fix | Gauntlet result (200g unless noted) |
+|---|---|---|
+| `d79900a` | Phase 1 (initial wire-up) | -63 Elo / 100g, LOS 0.79% |
+| `adb043d` | Use safe wrapper `tb_probe_wdl` (rule50/castling guards) — `tb_probe_wdl_impl` doesn't take those params, so positions with castling rights or non-zero halfmove silently got the no-castling/rule50=0 reading and corrupted TT | -57.86, LOS 0.16% |
+| `c37f991` | `can_probe` fast-path via `popcount(occupied_bitboard)` instead of iterating 120 squares calling `pos.at()` per leaf | -48.96, LOS 0.98% |
+| `7a2311e` | Don't TT-cache TB results (halfmove_clock isn't part of zobrist; cached TB scores returned for any rule50 value); classify CURSED_WIN/BLESSED_LOSS as draws (≈ ±1) instead of full mates | -24.36, LOS 14.4% |
+| `5347e6d` | Build TB probe inputs directly from `piece_bitboards` instead of iterating 120 squares — same sq64 layout, no per-square translation needed | **+15.65, LOS 76.9%** |
+
+**Net swing: +79 Elo across the four follow-up fixes.** Final
+position is neutral within the per-leg ±42 Elo CI at 200g.
+
+**Lessons / patterns visible in the fix-stack:**
+- Mailbox-era code paths (`pos.at()` loops over all 120 squares)
+  hidden inside what looked like cold paths still hit the hot search
+  loop because they ran at every depth-≤-1 leaf. The `can_probe` fix
+  alone recovered ~9 Elo. Worth grepping for similar 120-iterate
+  patterns elsewhere when chasing future overhead.
+- Probing TBs and storing the result in the regular TT is a known
+  pitfall when halfmove_clock isn't in the zobrist key — Stockfish
+  doesn't cache them either. We shouldn't have copied the original
+  caching pattern without thinking.
+- CURSED_WIN/BLESSED_LOSS misclassification was the most surprising
+  contributor — a small fraction of probes return these, but treating
+  them as full mates pollutes search-tree shape under fastchess's
+  standard 50-move-rule adjudication.
 
 **To use TB at runtime:** configure with `-DENABLE_FATHOM=ON` (option
-defaults OFF for clean builds). Default path is `c:\TB\`; override
-via the UCI `SyzygyPath` option. Without Fathom enabled, the engine
-falls back to the stub which cleanly reports "not available" and
-plays without TB.
+defaults OFF for clean builds). `test_huginn_vs_t3.bat` and successors
+already handle this. Default path is `c:\\TB\\`; override via the UCI
+`SyzygyPath` option. Without Fathom enabled, the engine falls back to
+the stub which cleanly reports "not available" and plays without TB.
 
-**Strength impact:** unmeasured. Tournament gauntlet vs t3 with
-TB-on would isolate the contribution. Likely small at tc=10+0.1
-since most games end before reaching ≤5-piece endgames; matters more
-in adjudication-free long games and tournaments with longer time
-controls.
+**Strength impact:** measured at neutral within noise at tc=10+0.1.
+Most games at fast time controls end before reaching the ≤5-piece
+slice where TB fires. Matters more at long time controls and in
+adjudication-free games. The integration is correct and ready;
+revisit the strength question if/when we test at tc=60+0.6 or longer.
 
 ---
 
