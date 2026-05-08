@@ -15,10 +15,10 @@ REM
 REM Concurrency 2: validated on 2026-05-07 t-chain round-robin
 REM (200g per engine) with no instability and tighter per-game wall clock.
 REM
-REM Usage: test_huginn_vs_t3.bat [rounds]   (default: 50 rounds = 100 games)
+REM Usage: test_huginn_vs_t3.bat [rounds]   (default: 100 rounds = 200 games)
 
 set ROUNDS=%1
-if "%ROUNDS%"=="" set ROUNDS=50
+if "%ROUNDS%"=="" set ROUNDS=100
 
 set FC=C:\Users\m_lad\Documents\fastchess-windows-x86-64
 set FASTCHESS=%FC%\fastchess.exe
@@ -56,10 +56,10 @@ echo.
   -each tc=10+0.1 ^
   -rounds %ROUNDS% ^
   -repeat ^
-  -concurrency 2 ^
+  -concurrency 4 ^
   -recover ^
   -openings file="%FC%\noob_3moves.epd" format=epd order=random ^
-  -pgnout file="%FC%\huginn_vs_t3.pgn" notation=uci append=true ^
+  -pgnout file="%FC%\huginn_vs_t3.pgn" notation=san append=true ^
   -log file="%FC%\fastchess_t3.log" level=warn
 
 pause
