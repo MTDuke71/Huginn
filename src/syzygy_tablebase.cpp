@@ -223,15 +223,20 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
         return INT32_MAX;
     }
     
-    // Convert Fathom result to engine format
+    // Convert Fathom result to engine format. CURSED_WIN and BLESSED_LOSS
+    // are wins/losses that exceed the 50-move counter and so adjudicate as
+    // draws under standard rules (which fastchess enforces). Return small
+    // non-zero values so the engine still has a tie-breaker preference for
+    // a cursed-win path over a forced-real-draw path, but does not commit
+    // search resources or play decisions assuming it has a real mate.
     unsigned wdl = result & TB_RESULT_WDL_MASK;
     switch (wdl) {
-        case TB_LOSS: return -MATE + 1000;  // Convert to mate score
-        case TB_BLESSED_LOSS: return -MATE + 1000;
-        case TB_DRAW: return 0;
-        case TB_CURSED_WIN: return MATE - 1000;
-        case TB_WIN: return MATE - 1000;   // Convert to mate score
-        default: return INT32_MAX;
+        case TB_LOSS:         return -MATE + 1000;
+        case TB_BLESSED_LOSS: return -1;   // effectively a draw
+        case TB_DRAW:         return 0;
+        case TB_CURSED_WIN:   return 1;    // effectively a draw
+        case TB_WIN:          return MATE - 1000;
+        default:              return INT32_MAX;
     }
     #else
     // Stub implementation - never probe

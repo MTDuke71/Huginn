@@ -1213,25 +1213,16 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
         }
     }
     
-    // Syzygy Tablebase Probe (BACKLOG #10 closure)
-    // Only probe at leaf nodes or very low depth to avoid search issues —
-    // probing has overhead, and at higher depths the search will reach
-    // the leaf via normal traversal anyway.
+    // Syzygy Tablebase Probe (BACKLOG #10 closure).
+    // Only probe at leaf nodes (depth <= 1). Do NOT store the result in TT:
+    // halfmove_clock is not part of the zobrist key, so the same key can be
+    // reached with different rule50 values, but TB scores are only valid
+    // for the rule50=0 case the safe wrapper requires. Caching a TB score
+    // pollutes the TT for any future visit to the same piece-placement at
+    // a different rule50 — measurable Elo loss in tournament play.
     if (depth <= 1 && tablebase && tablebase->is_available()) {
         int wdl_score;
         if (probe_tablebase_wdl(pos, wdl_score)) {
-            // Perfect tablebase result found
-#if ENABLE_PLY_TRACKED_TT_MATE
-            // Adjust mate scores relative to current ply
-            if (wdl_score > MATE - 1000) {
-                wdl_score -= info.ply;
-            } else if (wdl_score < -MATE + 1000) {
-                wdl_score += info.ply;
-            }
-#endif
-
-            // Store in transposition table with maximum depth for future use
-            tt_table.store(pos.zobrist_key, wdl_score, 127, TTEntry::EXACT, 0);
             return wdl_score;
         }
     }
