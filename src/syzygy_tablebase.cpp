@@ -157,41 +157,20 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     }
     
     #if FATHOM_AVAILABLE
-    // Convert position to Fathom format. These MUST be uint64_t — bits up
-    // to 63 are valid, and `unsigned` (32 bits) silently truncated kings
-    // and pieces on ranks 5-8 to zero in the OR-accumulation, which made
-    // every probe return TB_RESULT_FAILED. (Bug found 2026-05-08 while
-    // wiring up #10.)
-    uint64_t white = 0, black = 0;
-    uint64_t kings = 0, queens = 0, rooks = 0, bishops = 0, knights = 0, pawns = 0;
-    
-    for (int square = 0; square < 120; ++square) {
-        Piece piece = pos.at(square);
-        if (is_none(piece) || is_offboard(piece)) continue;
-
-        unsigned fathom_square = fathom_square_from_huginn(square);
-        if (fathom_square >= 64) continue; // Invalid square
-        
-        uint64_t piece_bb = 1ULL << fathom_square;
-        
-        // Add to color bitboards
-        if (color_of(piece) == Color::White) {
-            white |= piece_bb;
-        } else {
-            black |= piece_bb;
-        }
-        
-        // Add to piece type bitboards
-        switch (type_of(piece)) {
-            case PieceType::Pawn:   pawns |= piece_bb; break;
-            case PieceType::Knight: knights |= piece_bb; break;
-            case PieceType::Bishop: bishops |= piece_bb; break;
-            case PieceType::Rook:   rooks |= piece_bb; break;
-            case PieceType::Queen:  queens |= piece_bb; break;
-            case PieceType::King:   kings |= piece_bb; break;
-            default: break;
-        }
-    }
+    // Pull the bitboards directly from Position. Both Position and Fathom
+    // use the same sq64 layout (a1=bit 0 ... h8=bit 63), so no per-square
+    // translation is needed. Replaces a 120-square iteration that called
+    // pos.at() / color_of / type_of / 1ULL<<sq for every set piece.
+    constexpr int W = int(Color::White);
+    constexpr int B = int(Color::Black);
+    uint64_t white   = pos.color_bitboards[W];
+    uint64_t black   = pos.color_bitboards[B];
+    uint64_t kings   = pos.piece_bitboards[W][int(PieceType::King)]   | pos.piece_bitboards[B][int(PieceType::King)];
+    uint64_t queens  = pos.piece_bitboards[W][int(PieceType::Queen)]  | pos.piece_bitboards[B][int(PieceType::Queen)];
+    uint64_t rooks   = pos.piece_bitboards[W][int(PieceType::Rook)]   | pos.piece_bitboards[B][int(PieceType::Rook)];
+    uint64_t bishops = pos.piece_bitboards[W][int(PieceType::Bishop)] | pos.piece_bitboards[B][int(PieceType::Bishop)];
+    uint64_t knights = pos.piece_bitboards[W][int(PieceType::Knight)] | pos.piece_bitboards[B][int(PieceType::Knight)];
+    uint64_t pawns   = pos.piece_bitboards[W][int(PieceType::Pawn)]   | pos.piece_bitboards[B][int(PieceType::Pawn)];
     
     // Convert en passant square
     unsigned ep = 64; // Invalid square indicator for Fathom
