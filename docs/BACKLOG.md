@@ -494,6 +494,104 @@ sidestep this.
 
 ---
 
+### #16: Contempt — penalize draw scores when engine thinks it's losing
+
+- status: open / unblocked
+- priority: medium
+- type: feature / search robustness
+- est: 0.5 session
+
+**Motivating evidence (2026-05-08):** game where Huginn (white) was
+materially down in Q+P vs Q+3P endgame at FEN
+`8/8/1kp1Q3/2p5/5P1K/p2q4/8/8 w - - 0 70`. Fresh search of this
+position converges to **-287 cp** at depth 12-13 with `Qa2` (block
+the a-pawn) as best move. In the actual game, the engine searched
+to depth 14 and reported `Kg5 0.00/14` — and the `0.00` was *not*
+noise; it was the engine finding what it believed to be a forced
+3-fold-repetition / 50-move-rule draw line. The engine then
+committed to Kg5 because every alternative scored worse than 0.00
+against the position's true -290-ish baseline. Black deviated from
+the "forced" repetition, promoted the a-pawn, won the game.
+
+**Mechanism this fix targets:** when the engine is losing, it has
+no incentive to look hard at non-drawing alternatives — a 0.00
+draw line dominates a -290 cp non-drawing line. So the search
+optimistically commits to any apparent draw, even if the
+opponent's "forced" cooperation isn't actually forced. The fix:
+penalize draw scores from the engine's own perspective when its
+material/eval indicates it's losing, so the search prefers playing
+out a slightly-better-than-losing line to a fragile "draw."
+
+**Implementation sketch:**
+- Add a `contempt` parameter (cp value, e.g. 25-50).
+- At repetition / 50-move-rule / stalemate score returns, instead
+  of returning `0`, return `-contempt` from the engine's POV when
+  the engine is the side considering taking the draw.
+- Equivalently: in the search, when the score-to-return would be
+  exactly 0 due to a draw rule, subtract `contempt` if it's the
+  engine's move that triggers the draw, add `contempt` if it's the
+  opponent's.
+- Tune via gauntlet — typical contempt values are 10-50 cp;
+  too high makes the engine refuse legitimate draws when actually
+  drawn.
+
+**Caveat:** contempt is contentious in modern engines because at
+the top of the search tree the engine is supposed to play the move
+that gives the best result, and "best result" against a draw-only
+line should be 0.5 not 0. But for this exact failure mode (engine
+prefers fragile draws to playing-on-when-losing), small contempt
+is well-known to help.
+
+---
+
+### #17: Aspiration-window widening / re-search on large score swings
+
+- status: open / unblocked
+- priority: medium
+- type: feature / search robustness
+- est: 1 session
+
+**Motivating evidence (2026-05-08):** same game as #16. The in-game
+search reported Kg5 with `0.00/14`. A fresh search of the same
+position at the same nominal depth had eval around `-280` to `-290`
+and chose `Qa2`. The 280-cp gap implies that during iterative
+deepening the in-game search saw the eval collapse from "negative
+several pawns" (depth 10-12) to "exact zero" (depth 14) — a swing
+that *should* have triggered a re-search to verify, but evidently
+didn't. The engine just took the depth-14 result and played.
+
+**Mechanism this fix targets:** large score swings between
+iterative-deepening iterations are diagnostic of either a real
+tactical discovery (good — we want to find these) or a search
+artifact (bad — TT pollution, horizon effect, false repetition).
+Re-searching at full window with extended time on big swings lets
+the engine verify before committing. If the swing was real, the
+re-search confirms; if it was an artifact, the re-search uncovers
+the truth.
+
+**Implementation sketch:**
+- After each iterative-deepening iteration completes, compare the
+  new score to the prior depth's score.
+- If `|new - prev| > SWING_THRESHOLD` (e.g. 100-150 cp), and not
+  already at max depth, kick off a verification search at the same
+  depth with full window and a small time bonus.
+- If the verification confirms the swing, accept it. If it
+  contradicts, take the verification's score (which had more time
+  and a clean window).
+- Threshold and time-bonus values are gauntlet-tunable.
+
+**Relation to #8:** #8 is about aspiration-window step (b) — using
+narrow windows on the *next* iteration assuming small score
+changes. This (#17) is the inverse: detecting when the assumption
+is wrong and re-searching. Could be implemented as an aspiration
+fail-low/fail-high handler in #8's framework when that lands.
+
+**Likely impact:** small in noise-dominated middlegames, larger
+in endgames where horizon effects matter (exactly the failure mode
+that hit Kg5).
+
+---
+
 ## Open — low priority
 
 ### #6: Lazy SEE in main-search capture ordering
