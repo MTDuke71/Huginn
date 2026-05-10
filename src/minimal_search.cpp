@@ -42,6 +42,17 @@
 
 namespace Huginn {
 
+// Contempt — penalty applied to draw scores from the side-to-move's
+// perspective. Biases the search away from drawing lines: when the
+// engine has a non-draw alternative, it'll prefer that alternative
+// over a draw if the alternative is within `CONTEMPT` cp of equal.
+// Filed as BACKLOG #16, motivated by 2026-05-08 game where Huginn
+// (losing) accepted a fragile 0.00 repetition that black escaped
+// from. Single static value is the standard simple implementation;
+// can be made asymmetric (only at root) or material-dependent
+// later if needed.
+constexpr int CONTEMPT = 25;  // cp — tunable; gauntlet to validate
+
 // LMR reduction table indexed by (depth, move-index). Reduction grows
 // with both depth and move number. Formula: R = log(d) * log(m) / 2,
 // truncated. Matches the MTLChess src/search.zig:63 table. Computed
@@ -88,7 +99,7 @@ Piece swapPieceColor(Piece piece) {
 int MinimalEngine::evaluate(const Position& pos) {
     // VICE Part 82: Check for material draw first (2:03)
     if (pos.get_white_pawns() == 0 && pos.get_black_pawns() == 0 && MaterialDraw(pos)) {
-        return 0; // Return draw score for insufficient material
+        return -CONTEMPT; // Insufficient material draw — contempt-biased (BACKLOG #16)
     }
     
     // VICE Part 56: Basic Evaluation with piece-square tables
@@ -1367,7 +1378,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
     // Check for repetition - but only after we ensure we have moves to try
     // This prevents returning draw score at root before storing any PV move (VICE fix)
     if (!isRoot && isRepetition(pos)) {
-        return 0; // Draw score
+        return -CONTEMPT; // Repetition draw — contempt-biased (BACKLOG #16)
     }
     
     // Internal Iterative Deepening for PV nodes without hash move
@@ -1555,7 +1566,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
             return -MATE + (info.max_depth - depth); // Checkmate (loss with distance)
 #endif
         }
-        return 0; // Stalemate
+        return -CONTEMPT; // Stalemate — contempt-biased (BACKLOG #16)
     }
 
     // VICE Part 84: Store result in transposition table (6:38)

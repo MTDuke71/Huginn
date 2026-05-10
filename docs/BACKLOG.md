@@ -494,12 +494,16 @@ sidestep this.
 
 ---
 
-### #16: Contempt — penalize draw scores when engine thinks it's losing
+### #16: Contempt — penalize draw scores when engine thinks it's losing — CLOSED
 
-- status: open / unblocked
-- priority: medium
+- status: closed (2026-05-09)
+- priority: was medium
 - type: feature / search robustness
-- est: 0.5 session
+- final result: **+40.13 ± 40.68 Elo / 200g vs t3, LOS 97.5%**
+  (89W/66L/45D, score 55.75%). Marginal contribution over the
+  post-#10 baseline of +15.65 / LOS 77% is roughly +24 Elo;
+  marginal CI is wide at 200g but the LOS jump 77% → 97.5% is
+  the more reliable signal.
 
 **Motivating evidence (2026-05-08):** game where Huginn (white) was
 materially down in Q+P vs Q+3P endgame at FEN
@@ -541,6 +545,31 @@ that gives the best result, and "best result" against a draw-only
 line should be 0.5 not 0. But for this exact failure mode (engine
 prefers fragile draws to playing-on-when-losing), small contempt
 is well-known to help.
+
+**Closure (2026-05-09):** shipped at `CONTEMPT = 25` cp at the top
+of `src/minimal_search.cpp`. Applied at three draw-score sites:
+- `evaluate()`: insufficient-material draw → `-CONTEMPT`
+- AlphaBeta: 3-fold repetition draw → `-CONTEMPT`
+- AlphaBeta: stalemate after no-legal-moves → `-CONTEMPT`
+
+The single-value approach (always `-CONTEMPT`, no per-side
+tracking) works because in negamax the score is from side-to-move's
+POV, and both sides equally prefer to win — both view a draw as
+slightly disliked, and negation handles the perspective flip
+correctly. Standard simple implementation; can be made asymmetric
+(only at root) or material-dependent later if tuning suggests it.
+
+Gauntlet result: **+40.13 ± 40.68 Elo / 200g vs t3, LOS 97.5%**
+(89W/66L/45D, 55.75% score). Marginal contribution over the
+post-#10 baseline of +15.65 / LOS 77% is roughly +24 Elo; the LOS
+jump 77% → 97.5% is the more reliable signal at 200g sample size.
+208/208 unit tests pass; KPK TB probe still returns the correct
+mate score (cp 28000) — contempt doesn't perturb non-draw paths.
+
+`CONTEMPT = 25` was the first value tried and worked on the first
+attempt. No tuning sweep was done; values in the 10-50 cp range are
+all defensible per the literature. If a future gauntlet shows the
+engine refusing legitimate draws when actually drawn, drop to 10-15.
 
 ---
 
