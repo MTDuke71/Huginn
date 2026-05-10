@@ -2,7 +2,7 @@
 
 Huginn is a single-engineer chess engine. There is no maintained
 public API document; the prior version of this file described a
-pre-bitboard "MinimalEngine" without TT, qsearch, killers, history,
+pre-bitboard "Engine" without TT, qsearch, killers, history,
 LMR, or NMP — none of which reflects the current engine.
 
 If you're looking for an API surface, here's where to actually find it.
@@ -47,7 +47,7 @@ sees comes through stdin/stdout per the UCI spec.
 
 ## What is *not* documented anywhere
 
-- Internal C++ class APIs (Position, MinimalEngine, S_MOVE helpers).
+- Internal C++ class APIs (Position, Engine, S_MOVE helpers).
   Read the headers — they're small and self-explanatory. If you find
   a non-obvious invariant, add a one-line comment in code rather than
   a separate doc page.

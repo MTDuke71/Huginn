@@ -33,7 +33,7 @@
  * This constructor performs the essential initialization steps for the UCI interface:
  * - Initializes the Huginn chess engine core systems
  * - Sets the position to the standard starting position
- * - Creates a MinimalEngine instance for search operations
+ * - Creates a Engine instance for search operations
  * - Loads the opening book if enabled
  *
  * The constructor ensures the engine is ready to receive UCI commands immediately
@@ -52,7 +52,7 @@ UCIInterface::UCIInterface() {
     tablebase->initialize("");  // Empty string will use the hardcoded d:\TB\ path
     
     // Initialize search engine with tablebase
-    search_engine = std::make_unique<Huginn::MinimalEngine>(tablebase.get());
+    search_engine = std::make_unique<Huginn::Engine>(tablebase.get());
     
     // Load opening book if enabled
     if (own_book) {
@@ -581,7 +581,7 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     // Reset the search engine
     search_engine->reset();
     
-    // MinimalEngine uses a different search interface - searchPosition
+    // Engine uses a different search interface - searchPosition
     Huginn::SearchInfo info;
     info.max_depth = limits.max_depth;
     info.stopped = false;
@@ -592,13 +592,13 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     info.start_time = search_start;
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
     
-    // Perform the search using MinimalEngine interface
-    // Perform the search using MinimalEngine interface
+    // Perform the search using Engine interface
+    // Perform the search using Engine interface
     S_MOVE best_move;
     // Publish pointer to running SearchInfo so 'stop' can update it
     running_info.store(&info);
     try {
-        best_move = search_engine->searchPosition(position, info);  // MinimalEngine method
+        best_move = search_engine->searchPosition(position, info);  // Engine method
     } catch (const std::exception& e) {
         std::cout << "info string Search threw exception: " << e.what() << std::endl;
         std::cout.flush();
@@ -620,12 +620,12 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
         }
     }
     
-    // MinimalEngine already outputs complete UCI info during search
+    // Engine already outputs complete UCI info during search
     // No need for additional summary output here
     
-    // Send the best move - use MinimalEngine's move_to_uci
+    // Send the best move - use Engine's move_to_uci
     if (best_move.move != 0) {
-        std::string uci_move = search_engine->move_to_uci(best_move);  // MinimalEngine method
+        std::string uci_move = search_engine->move_to_uci(best_move);  // Engine method
         std::cout << "bestmove " << uci_move << std::endl;
         std::cout.flush(); // Ensure immediate output
     } else {

@@ -28,7 +28,7 @@ int main() {
     std::cout << "=== Mirror Evaluation Test for all positions in mirror.epd ===" << std::endl;
     
     init();
-    MinimalEngine engine;
+    Engine engine;
     
     // Open input file
     std::ifstream epd_file("test/mirror.epd");

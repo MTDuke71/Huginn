@@ -84,10 +84,10 @@ struct MinimalLimits {
     bool infinite = false;
 };
 
-class MinimalEngine {
+class Engine {
 public:  // Make members public for easier access
     // Constructor
-    MinimalEngine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
+    Engine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
         // Initialize MVV-LVA table
         init_mvv_lva();
         
@@ -200,7 +200,7 @@ public:  // Make members public for easier access
     
     // VICE Part 55 - Search Function Definitions
     void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
-    static void clearForSearch(MinimalEngine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
+    static void clearForSearch(Engine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
     int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);  // Core search (2:58)
     int quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth = 0);  // Quiescence search with depth limit
     int evalPosition(const Position& pos);                   // Position evaluation (0:34)

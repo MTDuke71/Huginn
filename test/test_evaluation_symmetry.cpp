@@ -98,8 +98,8 @@ protected:
         std::string mirrored_fen = mirror_fen(fen);
         ASSERT_TRUE(pos2.set_from_fen(mirrored_fen)) << "Failed to parse mirrored FEN: " << mirrored_fen;
         
-        // Evaluate both positions using stable MinimalEngine
-        Huginn::MinimalEngine engine;
+        // Evaluate both positions using stable Engine
+        Huginn::Engine engine;
         int eval1 = engine.evalPosition(pos1);
         int eval2 = engine.evalPosition(pos2);
         

@@ -25,7 +25,7 @@ void test_futility_pruning_basic() {
     Position pos;
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
-    MinimalEngine engine;
+    Engine engine;
     SearchInfo info;
     info.max_depth = 3;
     
@@ -57,7 +57,7 @@ void test_futility_pruning_tactical() {
     Position pos;
     pos.set_from_fen("2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1");
     
-    MinimalEngine engine;
+    Engine engine;
     SearchInfo info;
     info.max_depth = 4;
     
@@ -89,7 +89,7 @@ void test_futility_pruning_endgame() {
     Position pos;
     pos.set_from_fen("8/8/8/8/8/8/k1K5/8 w - - 0 1");
     
-    MinimalEngine engine;
+    Engine engine;
     SearchInfo info;
     info.max_depth = 6;
     
@@ -125,7 +125,7 @@ void test_futility_pruning_disabled_in_check() {
     check_move.move = 0;
     // This would require finding a checking move, but for testing we can simulate
     
-    MinimalEngine engine;
+    Engine engine;
     SearchInfo info;
     info.max_depth = 3;
     
@@ -165,7 +165,7 @@ void benchmark_futility_pruning_performance() {
         Position pos;
         pos.set_from_fen(test_positions[i]);
         
-        MinimalEngine engine;
+        Engine engine;
         SearchInfo info;
         info.max_depth = 4;
         

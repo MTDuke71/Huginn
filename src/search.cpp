@@ -96,7 +96,7 @@ Piece swapPieceColor(Piece piece) {
     return make_piece(new_color, type);
 }
 
-int MinimalEngine::evaluate(const Position& pos) {
+int Engine::evaluate(const Position& pos) {
     // VICE Part 82: Check for material draw first (2:03)
     if (pos.get_white_pawns() == 0 && pos.get_black_pawns() == 0 && MaterialDraw(pos)) {
         return -CONTEMPT; // Insufficient material draw — contempt-biased (BACKLOG #16)
@@ -318,7 +318,7 @@ int MinimalEngine::evaluate(const Position& pos) {
 
 // VICE Part 82/83: Material draw detection - Fixed to be more conservative
 // Checks if the position is a theoretical draw based on insufficient material
-bool MinimalEngine::MaterialDraw(const Position& pos) {
+bool Engine::MaterialDraw(const Position& pos) {
     int white_rooks   = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)]);
     int black_rooks   = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)]);
     int white_queens  = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Queen)]);
@@ -357,14 +357,14 @@ bool MinimalEngine::MaterialDraw(const Position& pos) {
 
 // Helper functions for evaluation (Part 56)
 // Mirror square for black pieces (flip vertically)
-int MinimalEngine::mirror_square_64(int sq64) {
+int Engine::mirror_square_64(int sq64) {
     if (sq64 < 0 || sq64 > 63) return sq64;
     return ((7 - (sq64 / 8)) * 8) + (sq64 % 8);
 }
 
 // VICE Tutorial: Mirror Board function for evaluation testing
 // Creates a mirrored copy of the position for symmetry testing
-Position MinimalEngine::mirrorBoard(const Position& pos) {
+Position Engine::mirrorBoard(const Position& pos) {
     Position mirrored_pos;
     mirrored_pos.reset();
 
@@ -417,7 +417,7 @@ Position MinimalEngine::mirrorBoard(const Position& pos) {
 
 // VICE Part 80: Mirror evaluation test for debugging symmetry issues
 // Tests if evaluation is symmetric when board is mirrored (0:15, 0:31)
-void MinimalEngine::MirrorAvailTest(const Position& pos) {
+void Engine::MirrorAvailTest(const Position& pos) {
     std::cout << "\n=== Mirror Evaluation Test ===" << std::endl;
     
     // Evaluate original position
@@ -444,7 +444,7 @@ void MinimalEngine::MirrorAvailTest(const Position& pos) {
     std::cout << "=========================" << std::endl;
 }
 
-bool MinimalEngine::time_up() const {
+bool Engine::time_up() const {
     if (should_stop) return true;
     if (current_limits.infinite) return false;
     
@@ -453,7 +453,7 @@ bool MinimalEngine::time_up() const {
     return elapsed.count() >= current_limits.max_time_ms;
 }
 
-void MinimalEngine::check_up(SearchInfo& info) {
+void Engine::check_up(SearchInfo& info) {
     // VICE style time checking function
     if (time_up()) {
         info.stopped = true;
@@ -475,7 +475,7 @@ void MinimalEngine::check_up(SearchInfo& info) {
     }
 }
 
-std::string MinimalEngine::format_uci_score(int score, Color side_to_move) const {
+std::string Engine::format_uci_score(int score, Color side_to_move) const {
     // Convert engine score to proper UCI format
     // UCI specification: 
     // - cp <x>: score from engine's point of view in centipawns
@@ -502,7 +502,7 @@ std::string MinimalEngine::format_uci_score(int score, Color side_to_move) const
     }
 }
 
-std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
+std::string Engine::move_to_uci(const S_MOVE& move) {
     if (move.move == 0) return "0000";
     
     std::string result;
@@ -543,7 +543,7 @@ std::string MinimalEngine::move_to_uci(const S_MOVE& move) {
 }
 
 // Simple repetition detection - VICE tutorial style (made static as per Part 55)
-bool MinimalEngine::isRepetition(const Position& pos) {
+bool Engine::isRepetition(const Position& pos) {
     // Conservative repetition detection to avoid false positives in mate searches
     // Only check for repetition in actual game positions, not during deep search
     
@@ -570,7 +570,7 @@ bool MinimalEngine::isRepetition(const Position& pos) {
 }
 
 // Clear search tables - reset history and killers
-void MinimalEngine::clear_search_tables() {
+void Engine::clear_search_tables() {
     // Age search history array instead of clearing completely
     // Aging preserves recent learning while gradually fading old patterns
     for (int piece = 0; piece < 13; ++piece) {
@@ -596,21 +596,21 @@ void MinimalEngine::clear_search_tables() {
 }
 
 // PV table helper functions
-void MinimalEngine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
+void Engine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
     pv_table.store_move(position_key, move);
 }
 
-bool MinimalEngine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
+bool Engine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
     return pv_table.probe_move(position_key, move);
 }
 
 // Get PV line for display (Part 53)
-int MinimalEngine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]) {
+int Engine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]) {
     return pv_table.get_pv_line(pos, depth, pv_array);
 }
 
 // Update search history when move improves alpha (3:55)
-void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
+void Engine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
     
     // Get piece and destination square
@@ -627,7 +627,7 @@ void MinimalEngine::update_search_history(const Position& pos, const S_MOVE& mov
 }
 
 // Penalize history for moves that fail to improve alpha (negative history scoring)
-void MinimalEngine::penalize_search_history(const Position& pos, const S_MOVE& move, int depth) {
+void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
     
     // Get piece and destination square
@@ -644,7 +644,7 @@ void MinimalEngine::penalize_search_history(const Position& pos, const S_MOVE& m
 }
 
 // Apply periodic aging to prevent history scores from becoming too large
-void MinimalEngine::age_search_history() {
+void Engine::age_search_history() {
     for (int piece = 0; piece < 13; ++piece) {
         for (int sq = 0; sq < 120; ++sq) {
             // Reduce all history scores by 12.5% to maintain discrimination
@@ -654,7 +654,7 @@ void MinimalEngine::age_search_history() {
 }
 
 // Update killer moves when move causes beta cutoff (4:37)  
-void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
+void Engine::update_killer_moves(const S_MOVE& move, int depth) {
     if (move.move == 0 || depth < 0 || depth >= 64) return;
     
     // Only store non-capture moves as killers
@@ -668,7 +668,7 @@ void MinimalEngine::update_killer_moves(const S_MOVE& move, int depth) {
 }
 
 // Update counter-move table when move causes beta cutoff
-void MinimalEngine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move) {
+void Engine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move) {
     // Validate move parameters
     if (previous_move.move == 0 || counter_move.move == 0) return;
     if (counter_move.is_capture()) return;  // Only store quiet moves as counter-moves
@@ -684,7 +684,7 @@ void MinimalEngine::update_counter_move(const S_MOVE& previous_move, const S_MOV
 }
 
 // Get counter-move for the opponent's last move
-S_MOVE MinimalEngine::get_counter_move(const S_MOVE& previous_move) const {
+S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
     // Validate move parameter
     if (previous_move.move == 0) return S_MOVE();
     
@@ -701,7 +701,7 @@ S_MOVE MinimalEngine::get_counter_move(const S_MOVE& previous_move) const {
 }
 
 // Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
-void MinimalEngine::init_mvv_lva() {
+void Engine::init_mvv_lva() {
     // Use the same piece values as evaluation for consistency
     // Note: King value set to 0 for MVV-LVA since king captures are illegal
     int piece_values[7] = {
@@ -734,7 +734,7 @@ void MinimalEngine::init_mvv_lva() {
 }
 
 // Get MVV-LVA score for a capture move
-int MinimalEngine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
+int Engine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
     int victim_index = static_cast<int>(victim);
     int attacker_index = static_cast<int>(attacker);
 
@@ -747,7 +747,7 @@ int MinimalEngine::get_mvv_lva_score(PieceType victim, PieceType attacker) const
 }
 
 // Order moves using MVV-LVA and other heuristics
-void MinimalEngine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const {
+void Engine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const {
     // Assign scores to each move for ordering
     for (auto& move : moves) {
         int score = 0;
@@ -795,7 +795,7 @@ void MinimalEngine::order_moves(std::vector<S_MOVE>& moves, const Position& pos)
 }
 
 // Order moves in S_MOVELIST using MVV-LVA and other heuristics
-void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
+void Engine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
     // Assign scores to each move for ordering
     for (int i = 0; i < move_list.count; i++) {
         S_MOVE& move = move_list.moves[i];
@@ -846,7 +846,7 @@ void MinimalEngine::order_moves(S_MOVELIST& move_list, const Position& pos) cons
 
 // VICE Part 62: Pick Next Move - Select best move from remaining moves
 // This is more efficient than sorting all moves upfront
-int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move) const {
+int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
         // VICE Part 84: Check for transposition table move (highest priority)
@@ -995,7 +995,7 @@ int MinimalEngine::pick_next_move(S_MOVELIST& move_list, int move_num, const Pos
     return best_score;
 }
 
-S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
+S_MOVE Engine::search(Position pos, const MinimalLimits& limits) {
     current_limits = limits;
     start_time = std::chrono::steady_clock::now();
     nodes_searched = 0;
@@ -1129,13 +1129,13 @@ S_MOVE MinimalEngine::search(Position pos, const MinimalLimits& limits) {
 // - quiescence: Search only captures to handle horizon effect
 
 // Position evaluation (0:34) - Returns score from current side's perspective
-int MinimalEngine::evalPosition(const Position& pos) {
+int Engine::evalPosition(const Position& pos) {
     // For now, use the existing evaluate function
     return evaluate(pos);
 }
 
 // Check time limits and GUI interrupts (1:34)
-void MinimalEngine::checkup(SearchInfo& info) {
+void Engine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
     
@@ -1169,7 +1169,7 @@ void MinimalEngine::checkup(SearchInfo& info) {
 
 // Clear search tables and PV before new search (2:25)
 // VICE Part 57 - Clear To Search: Prepare engine for clean search
-void MinimalEngine::clearForSearch(MinimalEngine& engine, SearchInfo& info) {
+void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
     // Clear the history and killers arrays (0:57)
     engine.clear_search_tables();
     
@@ -1191,7 +1191,7 @@ void MinimalEngine::clearForSearch(MinimalEngine& engine, SearchInfo& info) {
 }
 
 // Core AlphaBeta search function (2:58)
-int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot) {
+int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot) {
     // Increment node count for every position visited (except root calls)
     if (!isRoot) {
         info.nodes++;
@@ -1601,7 +1601,7 @@ int MinimalEngine::AlphaBeta(Position& pos, int alpha, int beta, int depth, Sear
 
 // Internal Iterative Deepening for PV nodes without hash move
 // Performs a shallow search to find a good move for ordering when no hash move is available
-S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info) {
+S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info) {
     S_MOVE iid_move;
     iid_move.move = 0;  // Initialize to null move
     
@@ -1679,7 +1679,7 @@ S_MOVE MinimalEngine::internal_iterative_deepening(Position& pos, int alpha, int
 }
 
 // Quiescence search to handle horizon effect (4:40)
-int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth) {
+int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth) {
     // Quiescence depth limit to prevent stack overflow and improve performance
     const int MAX_QUIESCENCE_DEPTH = 10;
     
@@ -1760,7 +1760,7 @@ int MinimalEngine::quiescence(Position& pos, int alpha, int beta, SearchInfo& in
 // Implements the two main benefits of iterative deepening:
 // 1. Time Management: Return best move if time runs out (0:49)
 // 2. Move Ordering Efficiency: Use PV and heuristics from shallower searches (1:49)
-S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
+S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     S_MOVE best_move;
     best_move.move = 0;
     
@@ -1973,7 +1973,7 @@ S_MOVE MinimalEngine::searchPosition(Position& pos, SearchInfo& info) {
 }
 
 // VICE Part 84: Print transposition table statistics
-void MinimalEngine::print_tt_stats() const {
+void Engine::print_tt_stats() const {
     uint64_t hits = tt_table.get_hits();
     uint64_t misses = tt_table.get_misses();
     uint64_t writes = tt_table.get_writes();
@@ -1994,19 +1994,19 @@ void MinimalEngine::print_tt_stats() const {
 }
 
 // VICE Part 85: Opening book functions
-bool MinimalEngine::load_opening_book(const std::string& book_path) {
+bool Engine::load_opening_book(const std::string& book_path) {
     return opening_book.load_book(book_path);
 }
 
-S_MOVE MinimalEngine::get_book_move(const Position& pos) const {
+S_MOVE Engine::get_book_move(const Position& pos) const {
     return opening_book.get_book_move(pos);
 }
 
-bool MinimalEngine::is_in_opening_book(const Position& pos) const {
+bool Engine::is_in_opening_book(const Position& pos) const {
     return opening_book.has_book_moves(pos);
 }
 
-void MinimalEngine::print_book_moves(const Position& pos) const {
+void Engine::print_book_moves(const Position& pos) const {
     auto book_moves = opening_book.get_all_book_moves(pos);
     
     if (book_moves.empty()) {
@@ -2029,7 +2029,7 @@ void MinimalEngine::print_book_moves(const Position& pos) const {
 }
 
 // Syzygy Tablebase functions
-bool MinimalEngine::probe_tablebase_wdl(const Position& pos, int& wdl_score) const {
+bool Engine::probe_tablebase_wdl(const Position& pos, int& wdl_score) const {
     if (!tablebase || !tablebase->is_available()) {
         return false;  // No tablebase available
     }
@@ -2047,7 +2047,7 @@ bool MinimalEngine::probe_tablebase_wdl(const Position& pos, int& wdl_score) con
     return true;
 }
 
-S_MOVE MinimalEngine::probe_tablebase_root(const Position& pos) const {
+S_MOVE Engine::probe_tablebase_root(const Position& pos) const {
     S_MOVE null_move;
     null_move.move = 0;
     

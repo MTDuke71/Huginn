@@ -20,7 +20,7 @@
  * - **Debug Mode**: Enhanced logging for debugging and analysis
  * 
  * ## Search Integration
- * - MinimalEngine integration for search operations
+ * - Engine integration for search operations
  * - SearchInfo structure for search state management
  * - Time management and iteration control
  * - Principal variation and score reporting
@@ -51,7 +51,7 @@ constexpr int UCI_INPUT_BUFFER_SIZE = 400 * 6; // Large buffer for GUI commands
 class UCIInterface {
 private:
     Position position;
-    std::unique_ptr<Huginn::MinimalEngine> search_engine;  // Changed from SimpleEngine
+    std::unique_ptr<Huginn::Engine> search_engine;  // Changed from SimpleEngine
     std::unique_ptr<Huginn::SyzygyTablebase> tablebase;
     std::atomic<bool> is_searching{false};
     std::atomic<bool> should_stop{false};

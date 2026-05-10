@@ -262,6 +262,6 @@ enum class GamePhase {
     Middlegame,
     Endgame
 };
-// HybridEvaluator removed: keep EvalParams and GamePhase for MinimalEngine
+// HybridEvaluator removed: keep EvalParams and GamePhase for Engine
 
 } // namespace Huginn

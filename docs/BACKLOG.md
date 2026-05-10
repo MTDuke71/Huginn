@@ -249,7 +249,7 @@ candidates:
 **Code state:** changes were uncommitted and reverted via
 `git restore src/search.cpp`. Diff was:
 - `++/--info.ply` around recursions in main loop, null move, IID,
-  root (`searchPosition`), test entry (`MinimalEngine::search`).
+  root (`searchPosition`), test entry (`Engine::search`).
 - search_stack writes at each recursion site.
 - Counter-move score 700K → 15K at line ~899.
 - Mate leaf return changed at line ~1497.
@@ -924,7 +924,7 @@ term.
 1. Added `generate_all_caps_pseudo` (pseudo-legal captures, no
    Make/Unmake filter) to `movegen.{hpp,cpp}`.
 2. Converted four search call sites from `generate_legal_moves` →
-   `generate_all_moves`: `MinimalEngine::search`, `AlphaBeta` main
+   `generate_all_moves`: `Engine::search`, `AlphaBeta` main
    loop, IID, `searchPosition` root. Each tracks `legal_count` and
    handles mate detection after the loop.
 3. AlphaBeta main loop: mate/stalemate detection moved from pre-loop

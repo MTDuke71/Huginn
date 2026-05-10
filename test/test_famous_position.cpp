@@ -13,8 +13,8 @@ void test_famous_position() {
     
     std::cout << "Position: " << pos.to_fen() << std::endl;
     
-    // First test the evaluation directly using stable MinimalEngine
-    Huginn::MinimalEngine engine;
+    // First test the evaluation directly using stable Engine
+    Huginn::Engine engine;
     int eval = engine.evalPosition(pos);
     std::cout << "Direct evaluation: " << eval << " cp" << std::endl;
     
@@ -33,7 +33,7 @@ void test_famous_position() {
         
         std::cout << "Best move: " << engine.move_to_uci(best_move) << std::endl;
         std::cout << "Nodes: " << engine.nodes_searched << std::endl;
-        // Note: MinimalEngine doesn't expose detailed stats like the old SimpleEngine
+        // Note: Engine doesn't expose detailed stats like the old SimpleEngine
     }
 }
 

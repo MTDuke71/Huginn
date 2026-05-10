@@ -251,7 +251,7 @@ plausible reasons it didn't pay out:
 Files NOT modified for this defer: implementation lived only in
 working tree, no commit. Eval params for king safety (`KING_SHIELD_PAWN_BONUS`
 etc.) were proposed-then-removed in [src/evaluation.hpp](src/evaluation.hpp).
-Implementation block lived in `MinimalEngine::evaluate()` in
+Implementation block lived in `Engine::evaluate()` in
 [src/search.cpp](src/search.cpp).
 
 ### LMP fix attempts (2026-04-30) — DEFERRED
@@ -293,7 +293,7 @@ is audited.
 ### Core
 | Technique | Where | Status |
 |---|---|---|
-| Negamax + alpha-beta | [search.cpp:1183](src/search.cpp#L1183) `MinimalEngine::AlphaBeta` | ✓ |
+| Negamax + alpha-beta | [search.cpp:1183](src/search.cpp#L1183) `Engine::AlphaBeta` | ✓ |
 | Principal Variation Search (PVS) | [search.cpp:1480](src/search.cpp#L1480) | ✓ null-window for moves ≥ 2, full re-search on score > alpha |
 | Iterative deepening | [search.cpp:1805](src/search.cpp#L1805) `searchPosition()` loop | ✓ |
 | Quiescence search | [search.cpp:1678](src/search.cpp#L1678) | ✓ captures + promotions, depth-limited (10 plies), SEE-pruned |
@@ -389,7 +389,7 @@ Hand-crafted, no NNUE. Phase-aware via discrete buckets (no smooth taper).
 
 ### Defined but not integrated
 These constants exist in [evaluation.hpp](src/evaluation.hpp) but no code path
-in `MinimalEngine::evaluate()` reads them. Wiring them up is a half-hour
+in `Engine::evaluate()` reads them. Wiring them up is a half-hour
 each, often with negligible Elo without a tuner.
 
 | Param | Where | Notes |
