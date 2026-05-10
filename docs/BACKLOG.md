@@ -334,6 +334,46 @@ suggests a real search-shape interaction, not pure noise.
 4. If positive, ship on top of 2c. Triggers #4 again if cumulative
    crosses next +50 threshold.
 
+**Attempt 2 (2026-05-09, on top of t4 = TT-mate + TB + contempt):**
+Step 1 + 2a executed. Both score variants vs t4 at 200g / tc=10+0.1 /
+concurrency 4:
+
+| Variant | Score slot | Elo vs t4 | LOS |
+|---|---|---|---|
+| 15000 | between promotions (25K+) and history (~1K) | -10.43 ± 43.28 | 31.7% |
+| 1500  | just above history (~1K)                    | +8.69 ± 41.18  | 66.1% |
+
+The 15K → 1500 shift moved the eval by +19 Elo (suggestive but not
+statistically conclusive at 200g per leg). Best variant (1500) is
+positive in expectation but at LOS 66% — well below the ~95%
+threshold for a confident ship.
+
+**Pattern:** counter-move helps slightly when treated as a small
+history-style ordering bonus, hurts slightly when treated as a
+separate promoted tier between promotions and history. Consistent
+with counter-move being conceptually history-flavored (the move that
+worked last time we were here) rather than worthy of its own tier.
+
+**Deferred (2026-05-09):** the 1500 variant is too noisy a signal
+to ship at LOS 66%. WIP preserved on branch
+`experiment/counter-move-1500` (commit `7a66f56`) for future
+revival. Search-stack write infrastructure stays in place on
+`pure-bitboard-engine` (it costs ~one store per recursion, no Elo
+penalty, and is *required* for #3 continuation history regardless
+of whether counter-move's gate is on).
+
+**Remaining hypothesis paths if/when we revisit:**
+- Tighter measurement at 1500 (400-500g gauntlet) — convert LOS
+  66% into a real signal one way or the other.
+- Score variants 700 (in-history-range), 5000 (intermediate), or a
+  sweep to find the local optimum.
+- prev_move-as-parameter approach (the original step-3 fallback) —
+  decouples counter-move from `info.ply`, possibly different
+  interaction with the rest of the stack.
+- Counter-move table aging (depth² bonus aging like history) —
+  currently the table is only cleared per-search, not aged within
+  iterative deepening.
+
 ---
 
 ### #3: Continuation history (Tier 2 #11) — universal unblocker
