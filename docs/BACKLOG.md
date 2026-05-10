@@ -387,6 +387,37 @@ above. Cherry-pickable when #13 unblocks.
 
 ## Open — medium priority
 
+### #18: Refresh `huginn_t4` baseline when cumulative ≥ +50 over t3 — CLOSED
+
+- status: closed @ `6e3a761` (2026-05-09)
+- tag: `baseline-t4 = 6e3a761`
+- priority: was medium
+- type: maintenance
+
+**Triggered by** the cumulative #10 + #16 ship crossing the +50 Elo
+threshold:
+- #10 (TB integration) shipped at `5347e6d`: **+15.65 ± 42 / 200g
+  vs t3, LOS 77%**
+- #16 (contempt 25 cp) shipped at `6e3a761`: **+40.13 ± 41 / 200g
+  vs t3, LOS 97.5%** — combined cumulative
+
+**What shipped:**
+- `git tag baseline-t4 6e3a761`
+- `huginn_t4.exe` copied to `fastchess-windows-x86-64/` from
+  `build/msvc-x64-release/bin/Release/huginn.exe` (the contempt-on
+  build with Fathom).
+- `test_huginn_vs_t4.bat` added (mirrors `test_huginn_vs_t3.bat`,
+  notation=san, concurrency 4, default 100 rounds = 200 games).
+- t4 baseline includes the Syzygy TB integration; the bat configures
+  with `-DENABLE_FATHOM=ON` so current Huginn matches.
+
+**Going forward:** `test_huginn_vs_t3.bat` is now superseded but
+kept around for historical regression checks; new search/eval work
+should use t4. The next baseline refresh fires when cumulative gain
+over t4 hits +50 Elo.
+
+---
+
 ### #4: Refresh `huginn_t3` baseline when cumulative ≥ +50 over t2 — CLOSED
 
 - status: closed @ `2e97066` (2026-05-06)
