@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "input_checking.hpp"
-#include "minimal_search.hpp"
+#include "search.hpp"
 
 namespace Huginn {
 

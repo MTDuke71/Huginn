@@ -27,7 +27,7 @@
  * 
  * @author MTDuke71
  * @version 1.2
- * @see minimal_search.hpp for search engine integration
+ * @see search.hpp for search engine integration
  * @see move.hpp for move representation
  */
 

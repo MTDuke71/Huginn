@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "minimal_search.hpp"
+#include "search.hpp"
 
 namespace Huginn {
 

@@ -1,6 +1,6 @@
 // Mirror evaluation test for all positions in mirror.epd
 #include "../src/position.hpp"
-#include "../src/minimal_search.hpp"
+#include "../src/search.hpp"
 #include "../src/init.hpp"
 #include <iostream>
 #include <fstream>

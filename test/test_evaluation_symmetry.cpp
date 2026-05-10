@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "../src/evaluation.hpp"
-#include "../src/minimal_search.hpp"
+#include "../src/search.hpp"
 #include "init.hpp"
 #include <sstream>
 #include <vector>

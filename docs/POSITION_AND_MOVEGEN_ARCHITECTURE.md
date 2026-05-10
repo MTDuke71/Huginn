@@ -178,7 +178,7 @@ single-pass selection during search:
 | Counter-move | 15,000 *(currently gated off — see BACKLOG #15)* |
 | History heuristic (quiet) | per-`[piece][to]` table |
 
-See [`src/minimal_search.cpp`](../src/minimal_search.cpp) `pick_next_move`
+See [`src/search.cpp`](../src/search.cpp) `pick_next_move`
 for the authoritative ordering logic.
 
 ## Where to look
@@ -188,4 +188,4 @@ for the authoritative ordering logic.
   and [BITBOARD_IMPLEMENTATION.md](BITBOARD_IMPLEMENTATION.md).
 - Attack tables (sliding rays, knight attacks, king attacks):
   [`src/attack_tables.cpp`](../src/attack_tables.cpp), [`src/attack_detection.cpp`](../src/attack_detection.cpp).
-- Search and how it consumes the movegen API: [`src/minimal_search.cpp`](../src/minimal_search.cpp).
+- Search and how it consumes the movegen API: [`src/search.cpp`](../src/search.cpp).

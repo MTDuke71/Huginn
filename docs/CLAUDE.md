@@ -110,7 +110,7 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
     mailbox movegen, retained for cross-validation and tests
   - [src/attack_tables.cpp](../src/attack_tables.cpp), [src/{knight,king,pawn}_lookup_tables.cpp](../src/):
     pre-computed attack tables; sliders use magic bitboards
-- **Search Engine** ([src/minimal_search.cpp](../src/minimal_search.cpp)):
+- **Search Engine** ([src/search.cpp](../src/search.cpp)):
   see [SEARCH_AND_EVAL.md "Current state — Search"](SEARCH_AND_EVAL.md#current-state--search)
   for the full audited inventory. High-level: negamax + alpha-beta with PVS,
   iterative deepening, TT, quiescence with SEE pruning, null-move (R=4),
@@ -118,7 +118,7 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
   killers + history + MVV-LVA + counter-move (gated off), polyglot book.
 - **Evaluation**: definitions in [src/evaluation.hpp](../src/evaluation.hpp)
   (constants + masks + PSTs); the actual `evaluate()` lives in
-  [minimal_search.cpp:88](../src/minimal_search.cpp#L88). Hand-crafted,
+  [search.cpp:88](../src/search.cpp#L88). Hand-crafted,
   no NNUE. Phase-aware via 3-bucket switch (no smooth taper). Terms:
   material + PSTs (separate MG/EG king table), isolated/doubled/passed
   pawns, bishop pair, rook/queen on open/semi-open files, mobility,
@@ -220,7 +220,7 @@ shim removed). Sub-phases 4.3-4.10 remain on the plan.
 3. **Evaluation**: hand-crafted, phase-aware (3-bucket switch), full set
    of standard pawn-structure / piece-activity / mobility terms
 4. **Books / TBs**: Polyglot wired and used; Syzygy probe code present
-   but gated off (`if (false && …)` at minimal_search.cpp:1218)
+   but gated off (`if (false && …)` at search.cpp:1218)
 5. **Test suite**: ~207 GoogleTest cases + WAC300 / LCT2 EPD sweeps
 
 ### Where we are vs target strength

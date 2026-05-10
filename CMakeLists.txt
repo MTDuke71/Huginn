@@ -325,7 +325,7 @@ set(COMMON_SOURCES
     src/chess_types.cpp
     src/evaluation.cpp
     src/input_checking.cpp
-    src/minimal_search.cpp
+    src/search.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
     src/knight_lookup_tables.cpp
@@ -341,7 +341,7 @@ set(ENGINE_SOURCES
     ${FATHOM_SOURCES}
     src/uci.cpp
     src/uci_utils.cpp
-    src/minimal_search.cpp
+    src/search.cpp
     src/pvtable.cpp
 )
 
@@ -351,7 +351,7 @@ set(PERFORMANCE_CRITICAL_SOURCES
     src/movegen.cpp
     src/attack_detection.cpp
     src/position.cpp
-    src/minimal_search.cpp
+    src/search.cpp
 )
 
 # ---- Huginn 1.2 - Main Executable ----
@@ -398,7 +398,7 @@ add_huginn_executable(mirror_eval_test
     SOURCES
         mirror_test/mirror_eval_test.cpp
         ${COMMON_SOURCES}
-        src/minimal_search.cpp
+        src/search.cpp
         src/pvtable.cpp
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -479,7 +479,7 @@ if(GTEST_FOUND)
     add_executable(huginn_tests
     ${TEST_SOURCES}
     ${ENGINE_SOURCES}
-    src/minimal_search.cpp
+    src/search.cpp
     )
 
     target_compile_features(huginn_tests PRIVATE cxx_std_17)

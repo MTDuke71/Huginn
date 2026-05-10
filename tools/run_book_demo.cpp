@@ -1,5 +1,5 @@
 #include "init.hpp"
-#include "minimal_search.hpp"
+#include "search.hpp"
 #include "position.hpp"
 #include <iostream>
 #include <fstream>

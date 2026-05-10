@@ -49,11 +49,11 @@ they're not behind compile flags.
 The two exceptions:
 
 - `USE_MULTI_CUT` — multi-cut pruning, defined `#ifdef
-  USE_MULTI_CUT` in `src/minimal_search.cpp`. Not defined in
+  USE_MULTI_CUT` in `src/search.cpp`. Not defined in
   `CMakeLists.txt`, so it is **disabled** by default. Define it
   per-target to experiment.
 - `ENABLE_PLY_TRACKED_COUNTERMOVE` / `ENABLE_PLY_TRACKED_TT_MATE` —
-  bisection gates at the top of `src/minimal_search.cpp`. Default is
+  bisection gates at the top of `src/search.cpp`. Default is
   TT-mate **on**, counter-move **off** (the 2c ship from BACKLOG #13;
   counter-move is gated off pending re-attempt at #15).
 

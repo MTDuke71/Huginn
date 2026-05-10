@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <cassert>
-#include "../src/minimal_search.hpp"
+#include "../src/search.hpp"
 #include "../src/position.hpp"
 #include "../src/evaluation.hpp"
 

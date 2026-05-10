@@ -22,7 +22,7 @@ sees comes through stdin/stdout per the UCI spec.
 
 | Concern | Files |
 |---|---|
-| Search | [`src/minimal_search.cpp`](../src/minimal_search.cpp), [`src/minimal_search.hpp`](../src/minimal_search.hpp) |
+| Search | [`src/search.cpp`](../src/search.cpp), [`src/search.hpp`](../src/search.hpp) |
 | Evaluation | [`src/evaluation.cpp`](../src/evaluation.cpp) |
 | Move generation | [`src/movegen.cpp`](../src/movegen.cpp), [`src/movegen_bb.cpp`](../src/movegen_bb.cpp) |
 | Position (mailbox + bitboard) | [`src/position.cpp`](../src/position.cpp), [`src/position.hpp`](../src/position.hpp) |

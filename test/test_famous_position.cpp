@@ -1,4 +1,4 @@
-#include "../src/minimal_search.hpp"
+#include "../src/search.hpp"
 #include "../src/evaluation.hpp"
 #include "../src/init.hpp"
 #include "src/position.hpp"

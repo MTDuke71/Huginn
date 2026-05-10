@@ -1,4 +1,4 @@
-#include "minimal_search.hpp"
+#include "search.hpp"
 #include "evaluation.hpp"
 #include "chess_types.hpp"
 #include "attack_detection.hpp"

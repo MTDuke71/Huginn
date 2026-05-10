@@ -1,7 +1,7 @@
 #include "src/position.hpp"
 #include "../src/evaluation.hpp"
 #include "movegen.hpp"
-#include "../src/minimal_search.hpp"
+#include "../src/search.hpp"
 #include "src/attack_detection.hpp"
 #include "src/init.hpp"
 #include <iostream>

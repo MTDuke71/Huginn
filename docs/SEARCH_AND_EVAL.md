@@ -252,7 +252,7 @@ Files NOT modified for this defer: implementation lived only in
 working tree, no commit. Eval params for king safety (`KING_SHIELD_PAWN_BONUS`
 etc.) were proposed-then-removed in [src/evaluation.hpp](src/evaluation.hpp).
 Implementation block lived in `MinimalEngine::evaluate()` in
-[src/minimal_search.cpp](src/minimal_search.cpp).
+[src/search.cpp](src/search.cpp).
 
 ### LMP fix attempts (2026-04-30) — DEFERRED
 
@@ -293,50 +293,50 @@ is audited.
 ### Core
 | Technique | Where | Status |
 |---|---|---|
-| Negamax + alpha-beta | [minimal_search.cpp:1183](src/minimal_search.cpp#L1183) `MinimalEngine::AlphaBeta` | ✓ |
-| Principal Variation Search (PVS) | [minimal_search.cpp:1480](src/minimal_search.cpp#L1480) | ✓ null-window for moves ≥ 2, full re-search on score > alpha |
-| Iterative deepening | [minimal_search.cpp:1805](src/minimal_search.cpp#L1805) `searchPosition()` loop | ✓ |
-| Quiescence search | [minimal_search.cpp:1678](src/minimal_search.cpp#L1678) | ✓ captures + promotions, depth-limited (10 plies), SEE-pruned |
-| Transposition table | [transposition_table.hpp](src/transposition_table.hpp), probe at [minimal_search.cpp:1194](src/minimal_search.cpp#L1194), store at [minimal_search.cpp:1593](src/minimal_search.cpp#L1593) | ✓ EXACT/LOWER/UPPER bounds, depth-preferred replacement, mate-distance adjusted by ply |
-| PV table (triangular hash) | [pvtable.cpp](src/pvtable.cpp), reconstruction at [minimal_search.cpp:1921](src/minimal_search.cpp#L1921) `get_pv_line` | ✓ 2 MB hash, used for UCI `info pv` output |
-| Repetition detection | [minimal_search.cpp:534](src/minimal_search.cpp#L534) `isRepetition` | ✓ 3-fold, last 12 plies, ≥ 6-ply minimum |
-| Time management | [minimal_search.cpp:436](src/minimal_search.cpp#L436) `time_up`, [minimal_search.cpp:1821](src/minimal_search.cpp#L1821) iteration gate | ✓ stop_time + iteration-start gate (`elapsed > budget/4`) + checkup every 2048 nodes + <100 ms early exit |
-| Mate-distance scoring | TT store/probe at [minimal_search.cpp:1199](src/minimal_search.cpp#L1199) and [minimal_search.cpp:1579](src/minimal_search.cpp#L1579) | ✓ ply-tracked encoding consistent with check extensions |
-| Material-draw detection | [minimal_search.cpp:310](src/minimal_search.cpp#L310) `MaterialDraw` | ✓ KvK, KNvK, KBvK |
-| Polyglot opening book | [polyglot_book.hpp](src/polyglot_book.hpp), used at [minimal_search.cpp:1764](src/minimal_search.cpp#L1764) | ✓ binary search, weighted moves |
+| Negamax + alpha-beta | [search.cpp:1183](src/search.cpp#L1183) `MinimalEngine::AlphaBeta` | ✓ |
+| Principal Variation Search (PVS) | [search.cpp:1480](src/search.cpp#L1480) | ✓ null-window for moves ≥ 2, full re-search on score > alpha |
+| Iterative deepening | [search.cpp:1805](src/search.cpp#L1805) `searchPosition()` loop | ✓ |
+| Quiescence search | [search.cpp:1678](src/search.cpp#L1678) | ✓ captures + promotions, depth-limited (10 plies), SEE-pruned |
+| Transposition table | [transposition_table.hpp](src/transposition_table.hpp), probe at [search.cpp:1194](src/search.cpp#L1194), store at [search.cpp:1593](src/search.cpp#L1593) | ✓ EXACT/LOWER/UPPER bounds, depth-preferred replacement, mate-distance adjusted by ply |
+| PV table (triangular hash) | [pvtable.cpp](src/pvtable.cpp), reconstruction at [search.cpp:1921](src/search.cpp#L1921) `get_pv_line` | ✓ 2 MB hash, used for UCI `info pv` output |
+| Repetition detection | [search.cpp:534](src/search.cpp#L534) `isRepetition` | ✓ 3-fold, last 12 plies, ≥ 6-ply minimum |
+| Time management | [search.cpp:436](src/search.cpp#L436) `time_up`, [search.cpp:1821](src/search.cpp#L1821) iteration gate | ✓ stop_time + iteration-start gate (`elapsed > budget/4`) + checkup every 2048 nodes + <100 ms early exit |
+| Mate-distance scoring | TT store/probe at [search.cpp:1199](src/search.cpp#L1199) and [search.cpp:1579](src/search.cpp#L1579) | ✓ ply-tracked encoding consistent with check extensions |
+| Material-draw detection | [search.cpp:310](src/search.cpp#L310) `MaterialDraw` | ✓ KvK, KNvK, KBvK |
+| Polyglot opening book | [polyglot_book.hpp](src/polyglot_book.hpp), used at [search.cpp:1764](src/search.cpp#L1764) | ✓ binary search, weighted moves |
 
 ### Pruning / reductions / extensions
 | Technique | Where | Status |
 |---|---|---|
-| Null-move pruning | [minimal_search.cpp:1278](src/minimal_search.cpp#L1278) | ✓ R=4, depth ≥ 5, non-pawn material required, blocked when in check |
-| Reverse futility / static null-move | [minimal_search.cpp:1263](src/minimal_search.cpp#L1263) | ✓ depth ≤ 6, margin = 80·depth |
-| Futility pruning | [minimal_search.cpp:1325](src/minimal_search.cpp#L1325) | ✓ depth ≤ 3, margin = 100 + 50·depth |
-| Razoring | [minimal_search.cpp:1354](src/minimal_search.cpp#L1354) | ✓ depth 2-4, margin 400, soft (depth-reduction not return) — **+35 Elo measured** |
-| Late Move Reductions (LMR) | [minimal_search.cpp:1433](src/minimal_search.cpp#L1433) | ✓ 64×64 `log(d)·log(m)/2` table, min depth 3 / move ≥ 4, PVS re-search on fail-high |
-| SEE pruning (qsearch) | [minimal_search.cpp:1725](src/minimal_search.cpp#L1725), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
-| Check extension | [minimal_search.cpp:1242](src/minimal_search.cpp#L1242) | ✓ `depth++` when in check |
-| Internal Iterative Deepening (IID) | [minimal_search.cpp:1598](src/minimal_search.cpp#L1598) | ✓ when no TT move; ordered as priority 1.5M |
-| Multi-cut pruning | [minimal_search.cpp:1398](src/minimal_search.cpp#L1398) | ✗ behind `#ifdef USE_MULTI_CUT`, **NOT enabled** |
+| Null-move pruning | [search.cpp:1278](src/search.cpp#L1278) | ✓ R=4, depth ≥ 5, non-pawn material required, blocked when in check |
+| Reverse futility / static null-move | [search.cpp:1263](src/search.cpp#L1263) | ✓ depth ≤ 6, margin = 80·depth |
+| Futility pruning | [search.cpp:1325](src/search.cpp#L1325) | ✓ depth ≤ 3, margin = 100 + 50·depth |
+| Razoring | [search.cpp:1354](src/search.cpp#L1354) | ✓ depth 2-4, margin 400, soft (depth-reduction not return) — **+35 Elo measured** |
+| Late Move Reductions (LMR) | [search.cpp:1433](src/search.cpp#L1433) | ✓ 64×64 `log(d)·log(m)/2` table, min depth 3 / move ≥ 4, PVS re-search on fail-high |
+| SEE pruning (qsearch) | [search.cpp:1725](src/search.cpp#L1725), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
+| Check extension | [search.cpp:1242](src/search.cpp#L1242) | ✓ `depth++` when in check |
+| Internal Iterative Deepening (IID) | [search.cpp:1598](src/search.cpp#L1598) | ✓ when no TT move; ordered as priority 1.5M |
+| Multi-cut pruning | [search.cpp:1398](src/search.cpp#L1398) | ✗ behind `#ifdef USE_MULTI_CUT`, **NOT enabled** |
 | Late Move Pruning (LMP) | — | ✗ attempted, reverted; needs SEE main-ordering + continuation history first (see Tier 1 progress) |
 | Aspiration windows at root | — | ✗ step (a) root-PVS shipped; step (b) actual window deferred (regressed) |
 
 ### Move ordering
 | Technique | Where | Status |
 |---|---|---|
-| TT best move | [minimal_search.cpp:841](src/minimal_search.cpp#L841) | ✓ priority 3,000,000, validated for legality |
-| PV move | [minimal_search.cpp:879](src/minimal_search.cpp#L879) | ✓ priority 2,000,000 |
-| IID move | [minimal_search.cpp:883](src/minimal_search.cpp#L883) | ✓ priority 1,500,000 |
-| MVV-LVA captures | [minimal_search.cpp:693](src/minimal_search.cpp#L693) `init_mvv_lva`, scoring at [minimal_search.cpp:886](src/minimal_search.cpp#L886) | ✓ base 1M + (victim·100 + 600 - attacker), EP +10k |
-| Promotions | [minimal_search.cpp:936](src/minimal_search.cpp#L936) | ✓ Q=90k, R=50k, B=33k, N=32k |
-| Killer moves | [minimal_search.cpp:646](src/minimal_search.cpp#L646) `update_killer_moves`, scoring at [minimal_search.cpp:903](src/minimal_search.cpp#L903) | ✓ 2 slots/ply, non-captures only (900k / 800k) |
-| Counter-move heuristic | [minimal_search.cpp:917](src/minimal_search.cpp#L917) (read), [minimal_search.cpp:1528](src/minimal_search.cpp#L1528) (update) | ✗ gated by `ENABLE_PLY_TRACKED_COUNTERMOVE` (=0 by default at [minimal_search.cpp:37](src/minimal_search.cpp#L37)) |
-| History heuristic | [minimal_search.cpp:602](src/minimal_search.cpp#L602) update, [minimal_search.cpp:619](src/minimal_search.cpp#L619) penalty, [minimal_search.cpp:636](src/minimal_search.cpp#L636) age, [minimal_search.cpp:947](src/minimal_search.cpp#L947) scoring | ✓ [piece][to] table, depth² bonus/penalty, ×7/8 age every 3 depths |
-| Staged move picker | [minimal_search.cpp:838](src/minimal_search.cpp#L838) `pick_next_move` | ✓ selection-sort over scored list (no separate stages) |
+| TT best move | [search.cpp:841](src/search.cpp#L841) | ✓ priority 3,000,000, validated for legality |
+| PV move | [search.cpp:879](src/search.cpp#L879) | ✓ priority 2,000,000 |
+| IID move | [search.cpp:883](src/search.cpp#L883) | ✓ priority 1,500,000 |
+| MVV-LVA captures | [search.cpp:693](src/search.cpp#L693) `init_mvv_lva`, scoring at [search.cpp:886](src/search.cpp#L886) | ✓ base 1M + (victim·100 + 600 - attacker), EP +10k |
+| Promotions | [search.cpp:936](src/search.cpp#L936) | ✓ Q=90k, R=50k, B=33k, N=32k |
+| Killer moves | [search.cpp:646](src/search.cpp#L646) `update_killer_moves`, scoring at [search.cpp:903](src/search.cpp#L903) | ✓ 2 slots/ply, non-captures only (900k / 800k) |
+| Counter-move heuristic | [search.cpp:917](src/search.cpp#L917) (read), [search.cpp:1528](src/search.cpp#L1528) (update) | ✗ gated by `ENABLE_PLY_TRACKED_COUNTERMOVE` (=0 by default at [search.cpp:37](src/search.cpp#L37)) |
+| History heuristic | [search.cpp:602](src/search.cpp#L602) update, [search.cpp:619](src/search.cpp#L619) penalty, [search.cpp:636](src/search.cpp#L636) age, [search.cpp:947](src/search.cpp#L947) scoring | ✓ [piece][to] table, depth² bonus/penalty, ×7/8 age every 3 depths |
+| Staged move picker | [search.cpp:838](src/search.cpp#L838) `pick_next_move` | ✓ selection-sort over scored list (no separate stages) |
 
 ### Disabled / broken
-- **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` ([minimal_search.cpp:37](src/minimal_search.cpp#L37)). Update path on beta cutoff and read path in ordering both compile out.
+- **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` ([search.cpp:37](src/search.cpp#L37)). Update path on beta cutoff and read path in ordering both compile out.
 - **Multi-cut** is behind `#ifdef USE_MULTI_CUT` and not defined in any preset.
-- **Syzygy tablebase probe** at [minimal_search.cpp:1218](src/minimal_search.cpp#L1218) is gated by `if (false && …)` — completely disabled. Default `SyzygyPath` is `c:\TB\`. Root-position probe path at [minimal_search.cpp:1791](src/minimal_search.cpp#L1791) (`probe_tablebase_root`) is wired but unused while the in-search gate is off.
+- **Syzygy tablebase probe** at [search.cpp:1218](src/search.cpp#L1218) is gated by `if (false && …)` — completely disabled. Default `SyzygyPath` is `c:\TB\`. Root-position probe path at [search.cpp:1791](src/search.cpp#L1791) (`probe_tablebase_root`) is wired but unused while the in-search gate is off.
 - **LMP and aspiration step (b)**: implementations attempted, reverted after gauntlet showed regression. Buggy code preserved at git tag `tier1-stack-broken`; revisit after SEE main-ordering + continuation history land (see Tier 1 progress above).
 
 ### Notable gaps (techniques not present at all)
@@ -361,31 +361,31 @@ Hand-crafted, no NNUE. Phase-aware via discrete buckets (no smooth taper).
 | Term | Where | Status |
 |---|---|---|
 | Material | `PIECE_VALUES_MG` × popcount, [see.hpp:29](src/see.hpp#L29) | ✓ P=100, N=320, B=330, R=500, Q=900 |
-| Piece-square tables | [evaluation.hpp:132-195](src/evaluation.hpp#L132-L195) (P/N/B/R/Q + dual K), used at [minimal_search.cpp:88](src/minimal_search.cpp#L88) | ✓ separate `KING_TABLE` and `KING_TABLE_ENDGAME` |
+| Piece-square tables | [evaluation.hpp:132-195](src/evaluation.hpp#L132-L195) (P/N/B/R/Q + dual K), used at [search.cpp:88](src/search.cpp#L88) | ✓ separate `KING_TABLE` and `KING_TABLE_ENDGAME` |
 | Game-phase detection | [evaluation.hpp:72-76](src/evaluation.hpp#L72-L76) (`ENDGAME_MATERIAL_THRESHOLD = 1150`) | ✓ 3-bucket (open/mid/end), discrete switch — **not a smooth taper** |
 | Side-to-move perspective | end of `evaluate()` | ✓ negate score for Black |
 
 ### Pawn structure
 | Term | Where | Status |
 |---|---|---|
-| Isolated pawns | [minimal_search.cpp:148](src/minimal_search.cpp#L148), `ISOLATED_PAWN_PENALTY = 10` | ✓ |
-| Doubled pawns | [minimal_search.cpp:172](src/minimal_search.cpp#L172), `DOUBLED_PAWN_PENALTY = 20` per extra | ✓ |
-| Passed pawns | [minimal_search.cpp:151](src/minimal_search.cpp#L151), `PASSED_PAWN_BONUS[rank]` = {0,5,10,20,35,60,100,200} | ✓ |
+| Isolated pawns | [search.cpp:148](src/search.cpp#L148), `ISOLATED_PAWN_PENALTY = 10` | ✓ |
+| Doubled pawns | [search.cpp:172](src/search.cpp#L172), `DOUBLED_PAWN_PENALTY = 20` per extra | ✓ |
+| Passed pawns | [search.cpp:151](src/search.cpp#L151), `PASSED_PAWN_BONUS[rank]` = {0,5,10,20,35,60,100,200} | ✓ |
 
 ### Pieces
 | Term | Where | Status |
 |---|---|---|
-| Bishop pair | [minimal_search.cpp:244](src/minimal_search.cpp#L244), bonus = 50 | ✓ |
-| Rook on open / semi-open file | [minimal_search.cpp:185-242](src/minimal_search.cpp#L185-L242), 10 / 5 | ✓ |
+| Bishop pair | [search.cpp:244](src/search.cpp#L244), bonus = 50 | ✓ |
+| Rook on open / semi-open file | [search.cpp:185-242](src/search.cpp#L185-L242), 10 / 5 | ✓ |
 | Queen on open / semi-open file | same block, 5 / 3 | ✓ |
-| Mobility | [minimal_search.cpp:255](src/minimal_search.cpp#L255), N/B/R/Q safe-square count, MG=5/EG=2 | ✓ |
+| Mobility | [search.cpp:255](src/search.cpp#L255), N/B/R/Q safe-square count, MG=5/EG=2 | ✓ |
 
 ### Misc
 | Term | Where | Status |
 |---|---|---|
-| Tempo bonus | [minimal_search.cpp:305](src/minimal_search.cpp#L305), `TEMPO_BONUS = 10` cp | ✓ |
-| Insufficient-material draw | [minimal_search.cpp:310](src/minimal_search.cpp#L310) `MaterialDraw` | ✓ KvK, KNvK, KBvK |
-| Mirror-evaluation symmetry test | [minimal_search.cpp:409](src/minimal_search.cpp#L409) `MirrorAvailTest` | ✓ test harness only |
+| Tempo bonus | [search.cpp:305](src/search.cpp#L305), `TEMPO_BONUS = 10` cp | ✓ |
+| Insufficient-material draw | [search.cpp:310](src/search.cpp#L310) `MaterialDraw` | ✓ KvK, KNvK, KBvK |
+| Mirror-evaluation symmetry test | [search.cpp:409](src/search.cpp#L409) `MirrorAvailTest` | ✓ test harness only |
 
 ### Defined but not integrated
 These constants exist in [evaluation.hpp](src/evaluation.hpp) but no code path
@@ -517,9 +517,9 @@ otherwise prune wrongly. If perf is an issue later, switch to
 pre-computed check-square bitboards à la Stockfish.
 
 Sites:
-- [src/minimal_search.cpp:1573](src/minimal_search.cpp#L1573) (qsearch
+- [src/search.cpp:1573](src/search.cpp#L1573) (qsearch
   SEE prune): wrap with `&& !gives_check()`.
-- [src/minimal_search.cpp:1330](src/minimal_search.cpp#L1330) (LMR
+- [src/search.cpp:1330](src/search.cpp#L1330) (LMR
   block): add `&& !gives_check()` to the gate, or set R=0 for that move.
 
 Expected: recover 5-15 of the 24 huginn-vs-old regressions, plus

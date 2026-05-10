@@ -41,7 +41,7 @@ When it lands, expect this entire section to become re-attemptable.
 - priority: was high; now low until unblock condition met
 - type: feature
 - attempted: 2026-05-02 / 2026-05-03 (this session, two iterations)
-- links: [SEARCH_AND_EVAL.md#priority-1](SEARCH_AND_EVAL.md), `src/minimal_search.cpp`
+- links: [SEARCH_AND_EVAL.md#priority-1](SEARCH_AND_EVAL.md), `src/search.cpp`
   qsearch + LMR blocks
 
 **Original evidence still valid.** WAC.009 — huginn at depth 10 says
@@ -247,7 +247,7 @@ candidates:
    extensions still cause encoding drift somewhere.
 
 **Code state:** changes were uncommitted and reverted via
-`git restore src/minimal_search.cpp`. Diff was:
+`git restore src/search.cpp`. Diff was:
 - `++/--info.ply` around recursions in main loop, null move, IID,
   root (`searchPosition`), test entry (`MinimalEngine::search`).
 - search_stack writes at each recursion site.
@@ -281,7 +281,7 @@ isolated the regressors and rescued one feature. Each variant ran
 
 **Shipped (2c):** TT-mate active (probe-adjust + store-adjust + cap
 clamp + leaf-encoding via `info.ply`), counter-move gated off via
-`#define ENABLE_PLY_TRACKED_COUNTERMOVE 0` in `src/minimal_search.cpp`.
+`#define ENABLE_PLY_TRACKED_COUNTERMOVE 0` in `src/search.cpp`.
 Counter-move re-attempt tracked separately as #15.
 
 **Triggers:** +104 ≥ +50, so #4 (refresh `huginn_t3` baseline) fires.
@@ -636,7 +636,7 @@ prefers fragile draws to playing-on-when-losing), small contempt
 is well-known to help.
 
 **Closure (2026-05-09):** shipped at `CONTEMPT = 25` cp at the top
-of `src/minimal_search.cpp`. Applied at three draw-score sites:
+of `src/search.cpp`. Applied at three draw-score sites:
 - `evaluate()`: insufficient-material draw → `-CONTEMPT`
 - AlphaBeta: 3-fold repetition draw → `-CONTEMPT`
 - AlphaBeta: stalemate after no-legal-moves → `-CONTEMPT`
@@ -837,7 +837,7 @@ hand-coded smoke test:
    (sq64 ≥ 32) silently truncated to zero, so every probe returned
    `TB_RESULT_FAILED`. Fixed to `uint64_t`.
 5. **The actual gate flip**: removed `if (false && ...)` at
-   `src/minimal_search.cpp:1218`.
+   `src/search.cpp:1218`.
 
 After phase 1: KPK smoke test returned `cp 28000` at depth 1 (TB_WIN
 encoded as MATE-1000) — the first proof of life — and 208/208 unit

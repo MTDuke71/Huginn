@@ -27,7 +27,7 @@
  * 
  * @author MTDuke71
  * @version 1.2
- * @see minimal_search.hpp for search engine interface
+ * @see search.hpp for search engine interface
  * @see https://www.shredderchess.com/chess-info/features/uci-universal-chess-interface.html
  */
 
@@ -41,7 +41,7 @@
 #include <memory>
 #include "position.hpp"
 #include "movegen.hpp"
-#include "minimal_search.hpp"  // Changed from search.hpp
+#include "search.hpp"  // Changed from search.hpp
 #include "syzygy_tablebase.hpp"
 
 // UCI constants following VICE Part 67 recommendations

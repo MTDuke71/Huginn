@@ -2,7 +2,7 @@
 #include "position.hpp"
 #include "chess_types.hpp"
 #include "board120.hpp"
-#include "minimal_search.hpp"  // For MATE constant
+#include "search.hpp"  // For MATE constant
 #include <iostream>
 #include <filesystem>
 
