@@ -484,9 +484,27 @@ possible concurrency=2-vs-1 compression.
   prior datapoint is opponent-side: the rebuild (Zig 0.16.0-dev,
   modern LLVM, no AVX-512) is materially stronger than the SIGILL'd
   pre-migration `mtlchess003.exe` it replaced — call it ~150-200 Elo.
-  Trustworthy gauge of recent Huginn progress is the internal t-chain
-  (t1 → t2 → t3 = ~+118 Elo across mobility / movegen / TT-mate),
-  not this external comparison.
+- **2026-05-09, post-#10 (TB) + post-#16 (contempt), vs `mtlchessV3.exe`
+  (100g):** 2W/95L/3D, **-576 ± 250 Elo, LOS 0%**. Wide CI overlaps
+  the 2026-05-06 reading at [-542, -326]; can't statistically claim
+  a regression. But the score percentage dropped from 7.5% → 3.5%
+  which is the kind of move you'd expect from contempt's textbook
+  downside: against a much-stronger opponent (MTL ~+400 Elo over
+  Huginn), draw-by-repetition opportunities are precious, and
+  contempt biases away from accepting them. The +40 Elo gain vs t3
+  (LOS 97.5%) is the trustworthy measurement for regression tracking
+  on peer baselines; the MTL number is consistent with contempt
+  being net-negative against opponents we have no realistic chance
+  of beating, which is its known caveat.
+
+  **Strategic implication:** contempt is well-suited to the
+  t-chain ladder (peer baselines, contempt helps vs near-equal
+  opponents) but should be revisited (drop, reduce, or make
+  asymmetric / root-only) if a future regime requires playing
+  much-stronger opponents in tournaments.
+
+Trustworthy gauge of recent Huginn progress remains the internal
+t-chain (t1 → t2 → t3 → t4), not external MTL calibration.
 
 **Machine-migration breakage + recovery (2026-05-06):** all seven
 pre-existing `mtlchess*.exe` binaries in the fastchess folder fail
