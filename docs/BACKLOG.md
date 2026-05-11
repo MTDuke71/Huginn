@@ -802,11 +802,12 @@ Pruning the rest is then safe.
 
 ### #8: Aspiration step (b) — Tier 3 revisit
 
-- status: blocked
+- status: re-deferred (2026-05-11)
 - priority: low
 - type: feature
 - est: 1 session
 - links: [SEARCH_AND_EVAL.md#aspiration-step-b-deferred](SEARCH_AND_EVAL.md)
+- WIP branch: `experiment/aspiration-step-b` (commit `fa6c66e`)
 
 **State:** Step (a) (root PVS with fail-high break) shipped at `28cb2cd`
 (+13.9 Elo). Step (b) (actual aspiration window) tried at two tunings,
@@ -814,11 +815,43 @@ both regressed (-75, -49 Elo). Same root cause as #7: weak move
 ordering causes too many fail-low/fail-high re-searches that cost more
 than the tighter-window cutoffs save.
 
-**Blocked by:** #3 (continuation history). Possibly also #2 (king
-safety) for more stable inter-iteration scores.
+**Originally blocked by:** #3 (continuation history). Possibly also
+#2 (king safety) for more stable inter-iteration scores.
 
-**On unblock:** re-apply step (b) v2 (delta×=2, no beta-pull on
-fail-low). Test against current tip.
+**Attempt 2 (2026-05-11, on top of t4 = TT-mate + TB + contempt + P1a):**
+Re-implemented step (b) v2 (delta×2 widening, no beta-pull on
+fail-low, no alpha-pull on fail-high — only widen the failing side).
+Tried two parameter sets vs t4 at 200g / tc=10+0.1 / concurrency 4:
+
+| Variant | INITIAL_DELTA | MIN_DEPTH | Elo vs t4 | LOS |
+|---|---|---|---|---|
+| v2 | 50  | 4 | -24.36 ± 41.83 | 12.5% |
+| v3 | 100 | 6 | -41.89 ± 37.07 |  1.2% |
+
+v3 was strictly worse — wider initial window meant less benefit
+when in-window, higher min-depth meant aspiration didn't help at
+the early depths where TT was building up.
+
+**Pattern matches #1 P1a:** v2's -24 vs original -49 is a +25 Elo
+swing, same magnitude as P1a's recovery (-3 → +22 = +25). The
+cumulative t2→t4 ordering work IS lifting step (b), just not by
+enough to land positive — starting point was deeper in the hole
+than P1a was.
+
+**Re-deferred.** WIP preserved on branch
+`experiment/aspiration-step-b` (commit `fa6c66e`) for future revival.
+
+**Remaining hypothesis paths if/when we revisit:**
+- Wait for #3 (continuation history) and more ordering improvements
+  to accumulate. Each +25 Elo of ordering lift makes step (b) ~25 Elo
+  closer to positive; another 1-2 features should close the gap.
+- Try **adaptive delta** based on iteration's score volatility (the
+  Stockfish approach: small delta when scores are stable, larger
+  when they swing).
+- Try **score-trend-aware widening** (asymmetric, e.g., widen alpha
+  more on fail-low if score has been dropping, less if rising).
+- Try **incremental window** (start tight at low depth, grow with
+  depth) instead of fixed initial delta.
 
 ---
 
