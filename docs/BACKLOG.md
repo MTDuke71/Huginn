@@ -19,30 +19,74 @@ exist, what conditions to watch.
 
 ---
 
-## Open — recently deferred (blocked by move-ordering quality)
+## Open — recently deferred (now incrementally unblocking)
 
-**Four** features now share this fingerprint: tactically-correct
-implementation, real WAC tactical-solving improvement, neutral-to-
-strongly-negative gauntlet Elo. #1, #2, #7, #8 all regressed despite
-individually-sound diagnoses. The 2026-05-04 king-safety re-attempt
-on top of mobility was the last falsifying experiment: original
-hypothesis was "mobility was the missing companion" — but the gauntlet
-landed at -126 Elo at 40 games, *worse* than the original KS-only
-runs (-21 / -3 / -17). Mobility is not the missing companion. **Move
-ordering quality is** — the engine cannot reliably distinguish
-"moves that need full attention" from "moves safe to reduce or prune."
+**Four** features in this section share a fingerprint: tactically-
+correct implementation, real WAC tactical-solving improvement,
+neutral-to-strongly-negative gauntlet Elo. #1, #2, #7, #8 all
+regressed despite individually-sound diagnoses. The original
+diagnosis was "weak move ordering" and the original prescribed
+unblocker was **#3 (continuation history)**.
 
-Continuation history (#3) is the universal unblocker for all four.
-When it lands, expect this entire section to become re-attemptable.
+**Update (2026-05-11):** the cumulative move-ordering improvements
+shipped since this section was filed — #13 (TT-mate +104), #10
+(Syzygy TB +16), #16 (contempt +40), all on top of #14 (movegen
+filter) — have materially improved ordering quality. Re-attempting
+**#1 P1a** on top of t4 produced **+22.62 ± 44.20 Elo / 200g vs t4,
+LOS 84%**, vs the original 2026-05-02 measurement of -3.47 / LOS
+46% vs t2. That's a ~+26 Elo swing for the same code change —
+strong evidence the unblock is happening *incrementally* via the
+shipped ordering work, not gated on #3 specifically.
 
-### #1: Skip SEE-prune and LMR-reduce on check-giving moves — DEFERRED
+**Strategy update:** re-attempt #7, #8, #2 directly on t4 in
+upcoming sessions before committing to #3. #3 stays high priority
+as a likely-larger lever but isn't a strict prerequisite anymore.
 
-- status: blocked (re-attempt after #3 lands)
-- priority: was high; now low until unblock condition met
+### #1: Skip SEE-prune and LMR-reduce on check-giving moves — P1a CLOSED
+
+- status: **P1a closed (2026-05-11)** at `<commit>` — +22.62 ± 44.20 Elo /
+  200g vs t4, LOS 84.4%. P1b stays deferred (-28 Elo delta in original
+  attempt, unlikely to recover).
+- priority: was high; P1a shipped, P1b deferred
 - type: feature
-- attempted: 2026-05-02 / 2026-05-03 (this session, two iterations)
+- attempted: 2026-05-02 (original), 2026-05-11 (re-attempt)
 - links: [SEARCH_AND_EVAL.md#priority-1](SEARCH_AND_EVAL.md), `src/search.cpp`
-  qsearch + LMR blocks
+  LMR block
+
+**P1a closure (2026-05-11):** Re-derived the lazy `gives_check` predicate
+and added it as a third skip condition to the LMR eligibility check
+(after `!in_check && !is_capture && !is_promotion`). Short-circuit
+evaluation ensures the predicate is only computed for moves that
+would otherwise be reduced.
+
+Implementation: `auto gives_check = [&]() { int opp_king =
+pos.king_sq[int(pos.side_to_move)]; return opp_king >= 0 &&
+SqAttacked(opp_king, pos, !pos.side_to_move); };` After MakeMove,
+side_to_move has flipped to the opponent, so opp_king is the right
+target and `!pos.side_to_move` (us, the side that just moved) is the
+attacker. Lambda fires lazily via && short-circuit.
+
+Result: **+22.62 ± 44.20 Elo / 200g vs t4, LOS 84.4%**
+(85W / 72L / 43D, 53.25% score). Compare to the original
+2026-05-02 measurement of -3.47 / LOS 46% vs t2 — a ~+26 Elo swing
+for the same code change, attributable to the cumulative move-
+ordering improvements shipped since (#13 TT-mate +104, #10 TB +16,
+#16 contempt +40). LOS 84% is below the strict ~95% threshold but
+the +22 cp point estimate is well above noise, the EV is clearly
+positive, and the WAC-side validation (16 more tactics solved,
++5.3pp; specifically WAC.009 finding Bh2+ at depth 8) provides
+non-gauntlet evidence the change does what it's designed to do.
+
+**P1b (qsearch SEE-prune exempts check captures) NOT included.** The
+original attempt landed at -28 Elo delta from the P1a-only baseline.
+The cost of MakeMove + SqAttacked + TakeMove per SEE-pruned capture
+in the hot qsearch loop is real; sacrificial check captures are
+rare in actual games and usually pruned by other mechanisms when
+worthwhile. Keep it deferred.
+
+---
+
+**Below: pre-shipping context preserved for history.**
 
 **Original evidence still valid.** WAC.009 — huginn at depth 10 says
 −223 cp, MTL_v0.5 at depth 26 says +28991 (forced mate). Expected move

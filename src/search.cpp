@@ -1433,7 +1433,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
         
         int score;
-        
+
         // Late Move Reduction (LMR) implementation
         // Reduce depth for moves that are unlikely to be best
         const int LMR_MIN_DEPTH = 3;           // Minimum depth to apply LMR
@@ -1441,9 +1441,22 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
 
         bool needs_full_search = true;
 
+        // BACKLOG #1 (P1a re-attempt): also exempt moves that give check.
+        // Check-giving moves drive forcing sequences and shouldn't be
+        // depth-reduced. After MakeMove, pos.side_to_move is the opponent,
+        // so opp_king = pos.king_sq[side_to_move] and the attacker side
+        // is !side_to_move. Computed lazily via lambda — only fires when
+        // the other LMR conditions are already met, so per-move cost is
+        // paid only on the small subset that would otherwise be reduced.
+        auto gives_check = [&]() {
+            int opp_king = pos.king_sq[int(pos.side_to_move)];
+            return opp_king >= 0 && SqAttacked(opp_king, pos, !pos.side_to_move);
+        };
+
         if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES &&
             !in_check && !move_list.moves[i].is_capture() &&
-            !move_list.moves[i].is_promotion()) {
+            !move_list.moves[i].is_promotion() &&
+            !gives_check()) {
 
             // Tuned reduction: log(d)*log(m)/2 lookup, clamped to leave at
             // least one ply of search after reduction. Replaces the prior
