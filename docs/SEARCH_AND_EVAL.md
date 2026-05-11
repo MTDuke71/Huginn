@@ -10,7 +10,19 @@ stays accurate as the code evolves.
 > is the long-term roadmap and historical context; the backlog is
 > the action list.
 
-## Strength gap diagnosis (2026-04-28)
+## Strength gap diagnosis (2026-04-28, updated 2026-05-11)
+
+> **Status update 2026-05-11:** the bullet points below identified four
+> search-shape gaps vs MTLChess. **Three have been addressed**: tuned
+> 64×64 LMR table (shipped), SEE qsearch pruning (shipped, +38 Elo),
+> aspiration step (a) root-PVS (shipped, +13.9 Elo). Step (b)
+> aspiration window is still deferred (BACKLOG #8); adaptive null-move
+> R is still flat R=4. Subsequent search work has been search-quality
+> improvements (TT-mate +104, TB +16, contempt +40, P1a +22) rather
+> than the original tree-shape gaps. **Cumulative ~+180-220 Elo over
+> `baseline-t1`** per the Tier 1 progress table. The current
+> calibration (2026-05-09 vs rebuilt `mtlchessV3.exe`) is much further
+> from "0/20" but still well behind — see External rating ladder.
 
 Calibration gauntlet: **huginn current 0-20 vs MTLChess_v0.3** (~1984 Elo)
 at tc=10+0.1. That's a >400 Elo gap, putting huginn current somewhere
@@ -129,9 +141,9 @@ MTLChess_v0.3 (100 games, same TC). Working backward:
 
 | Opponent | Estimated Elo | Binary in fastchess folder |
 |---|---|---|
-| MTLChess_v0.3 | ~1984 | `mtlchess003.exe` |
+| MTLChess_v0.3 | ~1984 | `mtlchessV3.exe` (rebuilt on new machine; the older `mtlchess003.exe` and friends SIGILL on Raptor Lake — BACKLOG #5) |
 | MORA | 2191 (anchor) | `MORA110.exe` |
-| MTLChess_v0.5 | ~2314 | `mtlchess_v05.exe` |
+| MTLChess_v0.5 | ~2314 | `mtlchess_v05.exe` (SIGILL on this machine, needs rebuild) |
 
 The earlier "MTLChess ~2100" reference in this doc was probably v0.4,
 which sits between v0.3 and v0.5. Huginn's old 0-20 vs "MTLChess" was
@@ -139,27 +151,50 @@ almost certainly against v0.4 or v0.5, which explains the lopsided
 result. The realistic near-term rung is **MTLChess_v0.3 (~1984)**;
 once we beat that, **MORA (2191)** is the next target.
 
-Use `test_huginn_calibration.bat <mtl03|mora|mtl05> [rounds]` to run
-huginn current against any of these. The script rebuilds and copies
-`huginn.exe` automatically.
+**Recent MTL v0.3 calibrations (`test_huginn_vs_mtlchess_v03.bat`):**
 
-## Tier 1 progress (2026-04-28)
+| Date | Stack | Score | Elo |
+|---|---|---|---|
+| 2026-04-30 | post-mobility, prior machine, old binary | 2W/17L/1D / 20g | ~-340 |
+| 2026-05-06 | post-2c TT-mate, rebuilt v0.3 | 5W/89L/6D / 100g | -424 ± 118, LOS 0% |
+| 2026-05-09 | post-TB + post-contempt | 2W/95L/3D / 100g | -576 ± 250, LOS 0% |
+
+The 2026-05-09 drop vs 2026-05-06 is consistent with contempt's
+textbook downside against much-stronger opponents — contempt biases
+away from drawing, and against an opponent we're ~400 Elo behind,
+draws are precious. Internal t-chain (t1→t4) remains the trustworthy
+regression gauge; external MTL calibration is for long-horizon
+position tracking only.
+
+## Tier 1 progress (2026-04-28, updated 2026-05-11)
 
 Bisected each Tier 1 item individually vs `huginn4F` (Phase-4-final
 baseline) at tc=10+0.1, 100 games each unless noted.
 
 | # | Item | Status | Result vs 4F |
 |---|---|---|---|
-| 1 | Aspiration windows | step (a) **shipped** (root PVS); step (b) **DEFERRED** | step (a): +13.9 Elo / 100g; step (b) layered on (a): -75 / -49 Elo over two tunings |
+| 1 | Aspiration windows | step (a) **shipped** (root PVS); step (b) **RE-DEFERRED 2026-05-11** | step (a): +13.9 Elo / 100g; step (b) re-attempt on t4: -24 / -42 Elo (BACKLOG #8). +25 Elo recovered since original but still net-negative. |
 | 2 | Reverse futility / static null-move pruning | ✅ shipped | included in stack |
-| 3 | Late Move Pruning (LMP) | **DEFERRED to Tier 3** | see "LMP fix attempts" below — needs SEE + continuation history first |
+| 3 | Late Move Pruning (LMP) | **DEFERRED to Tier 3** | see "LMP fix attempts" below — incrementally unblocking via shipped ordering work (BACKLOG #7) |
 | 4 | Doubled-pawn penalty (wired) | ✅ shipped | included in stack |
 | 5 | Tempo bonus | ✅ shipped | included in stack |
 | 6 | Razoring (enabled) | ✅ shipped | +35 Elo (LOS 87.75%, 100 games), tested alone |
 
-Cumulative shipped stack (items 2 + 4 + 5 + 6) = razoring + RFP +
-doubled pawns + tempo. 1+2+3 baseline (before razoring) measured at
-+7 Elo / 100 games; full stack roughly **+30 to +60 Elo** over 4F.
+**Subsequently shipped on top of t1/t2/t3/t4 (search-side, 2026-05-06 → 2026-05-11):**
+
+| # | Item | Result | Notes |
+|---|---|---|---|
+| #13 | TT-mate-distance adjustment with cap clamp (the "2c" variant) | +104 ± 62 Elo / 100g vs t2 LOS 99.98% | Ply-tracked, fixes leaf-encoding inconsistency under check extensions. Anchor for `baseline-t3 = 2e97066`. |
+| #14 | Movegen pseudo-legal at search call sites | +10 ± 56 Elo / 100g vs t2 | Bench: +41% NPS / +43% wall-clock at depth 11 startpos. |
+| #10 | Syzygy tablebase via Fathom | +15.65 ± 42 Elo / 200g vs t3 LOS 77% | Neutral within noise at fast TC; matters more at long TC. |
+| #16 | Contempt = 25 cp at draw-score returns | +40.13 ± 41 Elo / 200g vs t3 LOS 97.5% | Anchor for `baseline-t4 = 6e3a761`. |
+| #1 P1a | LMR-exempt-check (skip LMR on check-giving moves) | +22.62 ± 44 Elo / 200g vs t4 LOS 84% | Validates the "deferred section unblocks incrementally" hypothesis. Recovers +25 Elo over original 2026-05-02 measurement. |
+
+Cumulative shipped stack across t1 → t4: roughly **+180 to +220 Elo**
+over `huginn_t1` (the original Tier 1 base). Internal regression
+ladder: `baseline-t1 = 4f0ff0c` → `baseline-t2 = 66685f3` →
+`baseline-t3 = 2e97066` → `baseline-t4 = 6e3a761`. Use
+`test_huginn_vs_t4.bat` for current-tip gauntlets.
 
 Broken commits preserved at git tag `tier1-stack-broken` for the
 eventual fix attempt. Root causes:
@@ -213,6 +248,23 @@ engine), aspiration burns more time than it saves.
 **Decision**: keep step (a), defer step (b). Revisit after SEE-based
 move ordering and continuation history land — those should both
 stabilize the tree shape and tighten between-depth score variance.
+
+**Re-attempt 2026-05-11 (on top of t4 = TT-mate + TB + contempt + P1a):**
+
+| Variant | INITIAL_DELTA | MIN_DEPTH | vs t4 (200g) |
+|---|---|---|---|
+| v2 (MTL-style, no beta-pull) | 50  | 4 | -24.36 ± 41.83 Elo, LOS 12.5% |
+| v3 (wider, higher min-depth)  | 100 | 6 | -41.89 ± 37.07 Elo, LOS  1.2% |
+
+v3 was strictly worse — wider window meant less in-window cutoff
+benefit. The cumulative t2→t4 ordering work (TT-mate +104, TB +16,
+contempt +40, P1a +22) lifted v2 by +25 Elo over the original -49 vs
+t2, same magnitude as #1 P1a got, but starting deeper in the hole
+means it's still net-negative. Re-deferred; WIP on branch
+`experiment/aspiration-step-b` (commit `fa6c66e`). The bottleneck is
+inter-iteration score stability; aspiration unlocks when continuation
+history (#3) or further ordering work lands, not via parameter tuning
+of this variant.
 
 ### King safety attempt (2026-04-30) — DEFERRED
 
@@ -304,6 +356,8 @@ is audited.
 | Mate-distance scoring | TT store/probe at [search.cpp:1199](src/search.cpp#L1199) and [search.cpp:1579](src/search.cpp#L1579) | ✓ ply-tracked encoding consistent with check extensions |
 | Material-draw detection | [search.cpp:310](src/search.cpp#L310) `MaterialDraw` | ✓ KvK, KNvK, KBvK |
 | Polyglot opening book | [polyglot_book.hpp](src/polyglot_book.hpp), used at [search.cpp:1764](src/search.cpp#L1764) | ✓ binary search, weighted moves |
+| Syzygy tablebase probe | [syzygy_tablebase.cpp](src/syzygy_tablebase.cpp), in-search probe in `AlphaBeta` | ✓ shipped 2026-05-08 via Fathom (BACKLOG #10). In-search probe fires at depth ≤ 1 when ≤ max_pieces; safe wrapper enforces castling=0 and rule50=0 guards; CURSED_WIN/BLESSED_LOSS classify as draws (±1 cp). Direct bitboard-load probe inputs from `Position::piece_bitboards`. No TT-cache on probe success (halfmove not in zobrist). Default `SyzygyPath` is `c:\TB\`. Requires `-DENABLE_FATHOM=ON` at configure time. |
+| Contempt | `evaluate()` insufficient-material, `AlphaBeta` repetition, `AlphaBeta` stalemate | ✓ shipped 2026-05-09 (BACKLOG #16). CONTEMPT = 25 cp returned at all three draw-score sites in negamax-correct sign (always -CONTEMPT from side-to-move POV). +40 Elo / LOS 97.5% vs t3. Caveat: net-negative vs much-stronger opponents — see BACKLOG #5 MTL calibration. |
 
 ### Pruning / reductions / extensions
 | Technique | Where | Status |
@@ -312,13 +366,13 @@ is audited.
 | Reverse futility / static null-move | [search.cpp:1263](src/search.cpp#L1263) | ✓ depth ≤ 6, margin = 80·depth |
 | Futility pruning | [search.cpp:1325](src/search.cpp#L1325) | ✓ depth ≤ 3, margin = 100 + 50·depth |
 | Razoring | [search.cpp:1354](src/search.cpp#L1354) | ✓ depth 2-4, margin 400, soft (depth-reduction not return) — **+35 Elo measured** |
-| Late Move Reductions (LMR) | [search.cpp:1433](src/search.cpp#L1433) | ✓ 64×64 `log(d)·log(m)/2` table, min depth 3 / move ≥ 4, PVS re-search on fail-high |
+| Late Move Reductions (LMR) | [search.cpp:1433](src/search.cpp#L1433) | ✓ 64×64 `log(d)·log(m)/2` table, min depth 3 / move ≥ 4, PVS re-search on fail-high. **P1a exemption (BACKLOG #1, shipped 2026-05-11)**: also skip LMR on moves that give check (lazy `gives_check` lambda using `SqAttacked(opp_king, pos, !side_to_move)` after MakeMove). +22 Elo / LOS 84% vs t4. |
 | SEE pruning (qsearch) | [search.cpp:1725](src/search.cpp#L1725), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
 | Check extension | [search.cpp:1242](src/search.cpp#L1242) | ✓ `depth++` when in check |
 | Internal Iterative Deepening (IID) | [search.cpp:1598](src/search.cpp#L1598) | ✓ when no TT move; ordered as priority 1.5M |
 | Multi-cut pruning | [search.cpp:1398](src/search.cpp#L1398) | ✗ behind `#ifdef USE_MULTI_CUT`, **NOT enabled** |
 | Late Move Pruning (LMP) | — | ✗ attempted, reverted; needs SEE main-ordering + continuation history first (see Tier 1 progress) |
-| Aspiration windows at root | — | ✗ step (a) root-PVS shipped; step (b) actual window deferred (regressed) |
+| Aspiration windows at root | — | ✗ step (a) root-PVS shipped (+13.9 Elo / `28cb2cd`); step (b) re-deferred 2026-05-11 — recovered +25 Elo since original attempt but still net-negative (BACKLOG #8) |
 
 ### Move ordering
 | Technique | Where | Status |
@@ -329,15 +383,15 @@ is audited.
 | MVV-LVA captures | [search.cpp:693](src/search.cpp#L693) `init_mvv_lva`, scoring at [search.cpp:886](src/search.cpp#L886) | ✓ base 1M + (victim·100 + 600 - attacker), EP +10k |
 | Promotions | [search.cpp:936](src/search.cpp#L936) | ✓ Q=90k, R=50k, B=33k, N=32k |
 | Killer moves | [search.cpp:646](src/search.cpp#L646) `update_killer_moves`, scoring at [search.cpp:903](src/search.cpp#L903) | ✓ 2 slots/ply, non-captures only (900k / 800k) |
-| Counter-move heuristic | [search.cpp:917](src/search.cpp#L917) (read), [search.cpp:1528](src/search.cpp#L1528) (update) | ✗ gated by `ENABLE_PLY_TRACKED_COUNTERMOVE` (=0 by default at [search.cpp:37](src/search.cpp#L37)) |
+| Counter-move heuristic | [search.cpp:917](src/search.cpp#L917) (read), [search.cpp:1528](src/search.cpp#L1528) (update) | ✗ gated by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0`. Re-attempted 2026-05-11 (BACKLOG #15) at scores 15K and 1500 on t4 — both noise-bound (LOS 32% and 66%), deferred. WIP on branch `experiment/counter-move-1500`. |
 | History heuristic | [search.cpp:602](src/search.cpp#L602) update, [search.cpp:619](src/search.cpp#L619) penalty, [search.cpp:636](src/search.cpp#L636) age, [search.cpp:947](src/search.cpp#L947) scoring | ✓ [piece][to] table, depth² bonus/penalty, ×7/8 age every 3 depths |
 | Staged move picker | [search.cpp:838](src/search.cpp#L838) `pick_next_move` | ✓ selection-sort over scored list (no separate stages) |
 
 ### Disabled / broken
-- **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` ([search.cpp:37](src/search.cpp#L37)). Update path on beta cutoff and read path in ordering both compile out.
+- **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` near the top of `src/search.cpp`. Update path on beta cutoff and read path in ordering both compile out. Re-attempted 2026-05-11 (BACKLOG #15) at scores 15K and 1500 on top of t4 — both ~noise-bound (LOS 32% and 66%), deferred. WIP preserved on branch `experiment/counter-move-1500`.
 - **Multi-cut** is behind `#ifdef USE_MULTI_CUT` and not defined in any preset.
-- **Syzygy tablebase probe** at [search.cpp:1218](src/search.cpp#L1218) is gated by `if (false && …)` — completely disabled. Default `SyzygyPath` is `c:\TB\`. Root-position probe path at [search.cpp:1791](src/search.cpp#L1791) (`probe_tablebase_root`) is wired but unused while the in-search gate is off.
-- **LMP and aspiration step (b)**: implementations attempted, reverted after gauntlet showed regression. Buggy code preserved at git tag `tier1-stack-broken`; revisit after SEE main-ordering + continuation history land (see Tier 1 progress above).
+- **LMP**: implementation attempted, reverted after gauntlet showed regression. Buggy code preserved at git tag `tier1-stack-broken`; deferred section in BACKLOG #7 is now incrementally unblocking via shipped ordering work.
+- **Aspiration step (b)**: re-attempted 2026-05-11 (BACKLOG #8) at two tunings on t4 (delta=50/min-depth=4: -24 Elo / LOS 12%; delta=100/min-depth=6: -42 Elo / LOS 1%). Recovered +25 Elo from original -49 vs t2 — same lift magnitude as #1 P1a got, but starting point was deeper. Re-deferred. WIP on branch `experiment/aspiration-step-b`.
 
 ### Notable gaps (techniques not present at all)
 - **Aspiration windows** around `prev_score` at root (step (b) deferred)
@@ -441,7 +495,7 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 | 8 | **King safety / attack zone** | attempted, ~0 Elo at hand-tuned settings | 2026-04-30 attempt deferred — re-attempt-able now mobility (#7) is in | See "King safety attempt" subsection above for the three iterations and root-cause discussion. Mobility is now committed (commit `626257a`); the "compounds-but-doesn't-stand-alone" hypothesis can be retested by re-applying the king-safety code on top of the new tip. |
 | 9 | **Pawn shield / pawn storm** | +20-40 | 4 hrs | Bonus for pawns sheltering own king, penalty for advanced enemy pawns. |
 | 10 | **Static Exchange Evaluation (SEE)** | ✅ shipped (qsearch pruning, +38 Elo); main-ordering pending | partial | Implementation: [src/see.hpp](src/see.hpp), [src/see.cpp](src/see.cpp). Currently used to skip `SEE < 0` captures in qsearch. Capture ordering in main search is still MVV-LVA only — lazy SEE in `pick_next_move` is a future optional lever. |
-| 11 | **Continuation / counter-move history** | +30-50 | 1 day | Two-ply move history (`prev_move → this_move`) for ordering. Most modern engines have this. |
+| 11 | **Continuation / counter-move history** | +30-50 | 1 day | Two-ply move history (`prev_move → this_move`) for ordering. **Status update 2026-05-11:** ply tracking machinery shipped via #13 (TT-mate), so counter-move and continuation history are both unblocked at the infrastructure level. Counter-move at scores 15K/1500 noise-bound (BACKLOG #15). Continuation history (BACKLOG #3) still pending implementation; expected to be the next significant lever. |
 | 12 | **Singular extensions** | +20-40 | 1 day | Extend when TT move is much better than alternatives at reduced depth. |
 | 13 | **Improving heuristic** | +10-25 | 2 hrs | Track whether eval is improving plies-back; relax LMR / tighten futility when not improving. |
 | 14 | **Probcut** | +20-40 | 1 day | At high depth, do a reduced-depth search with raised beta to safely prune. |
@@ -452,7 +506,7 @@ CIs. Effort is "from scratch" — not counting tuning iterations.
 |---|---|---|---|---|
 | 15 | **NNUE evaluation** | +200-300 | 1-2 weeks | Modern small-net evaluation. Drop in a pretrained net (e.g. nnue-pytorch) plus eval+search integration. Single biggest available upgrade. |
 | 16 | **Lazy SMP** | +50-80 | 2-3 days | Multi-threaded search via shared TT. Hardware-dependent. |
-| 17 | **TB probing wired up** | +5-50 | 4 hrs | The Syzygy probe code exists; the `if (false &&` gate just needs removing. Useful only with `.rtbw/.rtbz` files installed. |
+| 17 | **TB probing wired up** | shipped 2026-05-08 | actual: ~1.5 days of fix-stack | ✅ Shipped via Fathom — BACKLOG #10. "Just removing the gate" turned into four follow-up bugs (uint64_t truncation, popcount macro leak via tbchess.c, rule50/castling guards, TT-cache pollution from halfmove-blind zobrist). +15.65 ± 42 Elo / 200g vs t3 LOS 77% — neutral within noise at tc=10+0.1 as expected; matters more at long TC. Requires `-DENABLE_FATHOM=ON`. |
 
 ### Tier 4 — Architectural / nice-to-have
 
@@ -484,6 +538,8 @@ Rxb7, Re8, Qxh7+, Qxg6+, Rxg2+ — all positions where the right move
 gives check or is a sacrificial check, and huginn doesn't see it.
 
 ### Priority 1: Don't prune/reduce moves that give check
+
+**Status update 2026-05-11:** Part (b) — **LMR-exempt-check (P1a) shipped at `2dbd856`** — +22.62 ± 44.20 Elo / 200g vs t4 LOS 84% (BACKLOG #1). Part (a) — qsearch-SEE-exempt-check (P1b) — remains deferred; the original -28 Elo delta from MakeMove+SqAttacked+TakeMove per SEE-pruned capture in the qsearch hot loop is unlikely to be recovered by ordering improvements alone. Pre-shipping analysis preserved below.
 
 Two well-known engine practices we don't yet observe:
 
