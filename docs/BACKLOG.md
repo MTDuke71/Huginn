@@ -44,7 +44,7 @@ as a likely-larger lever but isn't a strict prerequisite anymore.
 
 ### #1: Skip SEE-prune and LMR-reduce on check-giving moves — P1a CLOSED
 
-- status: **P1a closed (2026-05-11)** at `<commit>` — +22.62 ± 44.20 Elo /
+- status: **P1a closed @ `2dbd856` (2026-05-11)** — +22.62 ± 44.20 Elo /
   200g vs t4, LOS 84.4%. P1b stays deferred (-28 Elo delta in original
   attempt, unlikely to recover).
 - priority: was high; P1a shipped, P1b deferred
