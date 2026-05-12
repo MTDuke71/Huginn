@@ -420,14 +420,15 @@ of whether counter-move's gate is on).
 
 ---
 
-### #3: Continuation history (Tier 2 #11) — universal unblocker
+### #3: Continuation history (Tier 2 #11) — deferred (universal-unblocker hypothesis falsified)
 
-- status: open / unblocked (ply tracking landed in #13 / 2c)
-- priority: high
+- status: deferred 2026-05-12 (was: high-priority unblocker)
+- priority: was high, downgraded
 - type: feature
-- est: 1 session
+- est: 1 session (re-attempted; clean implementation lives on branch)
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #11
-- attempted: 2026-05-05 (this session)
+- WIP branch: `experiment/continuation-history` (commit `182ec87`)
+- attempted: 2026-05-05 (first; conflated with ply-tracking bug), 2026-05-12 (clean re-attempt)
 
 **Result of first attempt (2026-05-05):** Implemented continuation
 history table + scoring contribution + aging + PlyScope guard for
@@ -466,6 +467,50 @@ regresses, the fix is ordering-table tuning, not feature deletion.
 
 The implementation details from the 2026-05-05 attempt are documented
 above. Cherry-pickable when #13 unblocks.
+
+**Re-attempt 2026-05-12 (clean implementation on top of t4):**
+Implemented fresh as a heap-allocated `std::unique_ptr<int[]>` of
+size 13×64×13×64 (~2.7 MB). Indexed by
+`[prev_piece][prev_to_64][cur_piece][cur_to_64]`. Read in
+`pick_next_move`'s quiet branch, additive on top of `search_history`.
+Updated on quiet beta-cutoff with `depth²` bonus. Aged ÷4 at
+`clear_search_tables` (search start) and ×7/8 every 3 depths during
+iterative deepening (paired with `age_search_history`).
+
+**Gauntlet result:** **-1.74 ± 40.32 Elo / 200g vs t4, LOS 46.6%**.
+79W / 80L / 41D, score 49.75%. Dead-center neutral. The textbook
++30-50 Elo did **not** materialize.
+
+**Findings:**
+- Same shape as #15 counter-move re-attempt: history-style additive
+  bonuses using `info.search_stack[info.ply - 1]` as the prev-move
+  signal are marginal-at-best in this search stack.
+- **The "universal unblocker" hypothesis is falsified.** With the
+  current ordering quality (TT/PV/IID/captures/killers/history/P1a),
+  another additive prev-move bonus is redundant. #3 is *not* the
+  lever that opens up #7/#8/#2.
+- The deferred section unblocks **per-feature via specific search-
+  quality work** (the 2026-05-11 P1a result was the proof) rather
+  than via a single generic ordering boost.
+
+**Deferred.** WIP preserved on `experiment/continuation-history`
+(commit `182ec87`) for future revival. Cherry-pickable when we have
+reason to believe the heuristic will land positive (e.g., after
+other ordering work shifts the equilibrium, or with a different
+scoring formula).
+
+**Remaining hypothesis paths if/when we revisit:**
+- Scaling tweaks: scale the depth² bonus by some constant, cap the
+  per-entry magnitude, or use linear depth bonus instead of depth².
+- Different signal: try 2-ply continuation
+  `[prev_prev_piece][prev_prev_to][prev_piece][prev_to]` (the "follow-up"
+  rather than "counter") to see if a deeper temporal signal is more
+  discriminative.
+- Wait for more ordering improvements to land, then re-test. The
+  break-even may shift as other heuristics mature.
+- Bonus-vs-history-only ordering: try replacing search_history's
+  contribution with continuation_history's for a side-by-side, rather
+  than additive.
 
 ---
 
