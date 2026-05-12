@@ -19,7 +19,7 @@ exist, what conditions to watch.
 
 ---
 
-## Open — recently deferred (now incrementally unblocking)
+## Open — recently deferred (unblocking per-feature via specific fixes, not via one universal lever)
 
 **Four** features in this section share a fingerprint: tactically-
 correct implementation, real WAC tactical-solving improvement,
@@ -28,19 +28,29 @@ regressed despite individually-sound diagnoses. The original
 diagnosis was "weak move ordering" and the original prescribed
 unblocker was **#3 (continuation history)**.
 
-**Update (2026-05-11):** the cumulative move-ordering improvements
-shipped since this section was filed — #13 (TT-mate +104), #10
-(Syzygy TB +16), #16 (contempt +40), all on top of #14 (movegen
-filter) — have materially improved ordering quality. Re-attempting
-**#1 P1a** on top of t4 produced **+22.62 ± 44.20 Elo / 200g vs t4,
-LOS 84%**, vs the original 2026-05-02 measurement of -3.47 / LOS
-46% vs t2. That's a ~+26 Elo swing for the same code change —
-strong evidence the unblock is happening *incrementally* via the
-shipped ordering work, not gated on #3 specifically.
+**Status as of 2026-05-12 — two informative datapoints have falsified
+the original model:**
 
-**Strategy update:** re-attempt #7, #8, #2 directly on t4 in
-upcoming sessions before committing to #3. #3 stays high priority
-as a likely-larger lever but isn't a strict prerequisite anymore.
+| Date | Feature tested | Type | Result | Interpretation |
+|---|---|---|---|---|
+| 2026-05-11 | #1 P1a (LMR-exempt-check) | **specific** tactical fix | +22.62 ± 44 Elo / 200g vs t4, LOS 84% — **shipped** | The deferred-section regression *can* recover when re-attempted on better-ordered tip. ~+26 Elo swing from the same code's 2026-05-02 measurement vs t2. |
+| 2026-05-12 | #3 continuation history (clean) | **generic** ordering bonus | -1.74 ± 40 Elo / 200g vs t4, LOS 46.6% — **deferred** | The universal-unblocker hypothesis is wrong. With current ordering quality, another additive prev-move bonus is redundant. |
+
+**The deferred section unblocks per-feature via specific search-quality
+work, not via one generic lever.** P1a was the proof of concept;
+continuation history was the falsifying experiment. The remaining
+deferred features (#2/#7/#8) likely need either further cumulative
+ordering improvements *or* their own specific fixes (not from the
+generic-bonus toolbox: counter-move, continuation history, history
+already saturated).
+
+**Strategy update:**
+- **#7 LMP** original -56 Elo. By the +25 Elo "P1a lift" heuristic, would land around -31. Worth one cheap re-test (`tier1-stack-broken` cherry-pick + 200g) since the LMP-specific implementation may have benefitted more than P1a from cumulative ordering improvements.
+- **#8 aspiration b** re-tested 2026-05-11, still -24/-42. Bottleneck is inter-iteration score stability, not parameter tuning. Wait for further search-quality work before retrying.
+- **#2 king safety** original -126 Elo. Too far to recover from cumulative lift alone; needs Texel tuning (#9) or fundamentally different implementation.
+- **#3 continuation history** deferred until a different scoring formula or a different temporal signal (2-ply follow-up, e.g.) is worth trying.
+
+Highest-EV next experiments: **#7 LMP re-attempt** (cheap test, completes the deferred-trio re-attempt sweep), then **#17 aspiration re-search on swings** (small scope, addresses #8's score-stability bottleneck), then **#6 lazy SEE in main-search** (specific search-shape lever, similar to P1a in spirit).
 
 ### #1: Skip SEE-prune and LMR-reduce on check-giving moves — P1a CLOSED
 
