@@ -900,6 +900,64 @@ that hit Kg5).
 
 ## Open — low priority
 
+### #20: Trapped-bishop eval pattern (a7/h7/a2/h2) — deferred
+
+- status: deferred (2026-05-13)
+- priority: low
+- type: feature
+- est: half-session (impl) + tuning iterations
+- WIP branch: `experiment/trapped-bishop` (commit `c4a330e`)
+
+**Pattern:** classic textbook trap — a white bishop on h7 with black
+pawns on g6 AND f7 has no safe retreat. Eventually lost for a pawn
+or two over the search horizon. Eval flags this directly with a
+fixed penalty per matching pattern. Four mirror patterns:
+- WB on a7 trapped by BP on b6 + c7
+- WB on h7 trapped by BP on g6 + f7
+- BB on a2 trapped by WP on b3 + c2
+- BB on h2 trapped by WP on g3 + f2
+
+**Implementation:** four bitboard AND-mask comparisons in `evaluate()`
+right after the bishop-pair bonus. Added `TRAPPED_BISHOP_PENALTY = 150 cp`
+to `EvalParams`. Mirror-symmetric (208/208 unit tests pass including
+all 8 eval-symmetry tests).
+
+**Gauntlet result vs t4 (200g, tc=10+0.1, concurrency 4):**
+
+  **-41.89 ± 44.80 Elo, LOS 3.13%**
+  69W / 93L / 38D, score 44.0%
+
+Clear regression — 96.87% confidence it's truly negative.
+
+**Hypotheses for the regression** (all speculative without instrumentation):
+- **Penalty too large at 150 cp.** Stockfish uses ~50 mg / 50 eg for
+  this exact pattern. Could be over-correcting.
+- **Search-shape disruption.** Even when the bishop can escape via
+  Bg8, the static eval at every node shows -150, biasing the search
+  to over-prioritize the escape over better alternatives elsewhere.
+  E.g., the engine plays Bg8 when a better tactical option existed.
+- **Rare-but-impactful.** Pattern fires in <5% of games but when it
+  fires the engine plays disruptively across the whole game.
+- **The pattern is too narrow.** It only fires when the bishop is
+  ALREADY on h7/a7 — but real "trapped" situations also include
+  approaches *toward* the trap that the engine should avoid. This
+  doesn't catch those.
+
+**Deferred** with WIP preserved on `experiment/trapped-bishop`
+(commit `c4a330e`).
+
+**Remaining hypothesis paths if/when we revisit:**
+- Lower penalty (try 50 or 75 instead of 150). Match Stockfish's value.
+- Add a "but can the bishop escape?" check — only penalize if the
+  escape square (g8 / a8 / g1 / a1) is occupied or attacked.
+- Broaden the pattern set: knight on a8/h8/a1/h1, rook on h1 behind
+  king after castling failures.
+- Defer until other eval work (king safety re-attempt, mobility
+  tuning) lands — the strategic effect may interact better with a
+  more sophisticated eval baseline.
+
+---
+
 ### #6: Lazy SEE in main-search capture ordering
 
 - status: open / unblocked
