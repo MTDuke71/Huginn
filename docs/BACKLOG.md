@@ -526,6 +526,95 @@ scoring formula).
 
 ## Open — medium priority
 
+### #19: Two-machine gauntlet workflow + SPRT — planned for weekend revisit
+
+- status: open / planned (2026-05-13)
+- priority: medium
+- type: tooling / infrastructure
+- est: ~1 hour (Part A) + ~30-45 min one-time (Part B)
+
+**Goal:** double gauntlet throughput (13700K + 7800X3D in parallel)
+plus statistical efficiency via SPRT early-stop. Borderline LOS
+results from recent features (P1a 84%, counter-move 66%, today's
+LMP) would either clear or fail the ≥95% threshold faster, and
+clearer-cut results would stop early instead of running the full
+200g.
+
+**Part A — `-sprt` mode in `test_huginn_vs_t4.bat` (do first, free
+throughput win on existing hardware):**
+
+Replace the fixed `-rounds 100 -repeat` with fastchess SPRT mode:
+
+```
+-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05 -rounds 500 -repeat
+```
+
+This runs games until the test statistic crosses the H1 (LOS ≥ 95%
+that true Elo > 10) or H0 (LOS ≤ 5%) bound, or hits the rounds cap.
+Clear positives may stop at 100-200g; clear negatives similarly;
+borderline runs can use up to the cap. Same wall-clock as today
+when result is borderline, much faster when result is clear.
+
+Tune `elo1` based on what's "shippable" — 10 is conservative;
+some engines use 0 (any positive) for new features. Tune `alpha/
+beta` for confidence (0.05/0.05 = standard 95%).
+
+**Part B — Add the 7800X3D as a second worker:**
+
+The 7800X3D's 96 MB 3D V-cache is actually a strong fit for chess
+TT-bound workloads — likely matches or slightly beats 13700K
+per-thread despite the lower clock.
+
+Setup checklist (one-time):
+1. Install MSVC Build Tools + CMake (same versions as 13700K for
+   bit-equivalent builds).
+2. Clone repo, build via `cmake --preset msvc-x64-release
+   -DENABLE_FATHOM=ON` then `cmake --build ...`. Verify 208/208
+   tests pass.
+3. Replicate `fastchess-windows-x86-64/` folder: `fastchess.exe`,
+   `noob_3moves.epd`, `huginn_t1.exe` / `t2.exe` / `t3.exe` /
+   `t4.exe`, `mtlchessV3.exe`, `MORA110.exe`, `src/performance.bin`.
+   ~5 MB total.
+4. (Optional, for TB-on testing) Copy `c:\TB\` Syzygy files.
+5. Copy `test_huginn_vs_t4.bat`; edit `HUGINN_REPO` path to its
+   local checkout.
+
+**Workflow once both are set up:**
+- Kick off the same SPRT gauntlet on both machines simultaneously.
+- Each picks independent openings via `order=random` (uses
+  separate random streams).
+- When both stop (each at its own SPRT decision or rounds cap),
+  concat the two PGN files and run
+  `fastchess.exe -pgnin merged.pgn` for the combined Elo /
+  LOS, or just add the W/L/D tallies for a quick sanity check.
+
+**Expected throughput improvement:**
+- 13700K solo at concurrency 4: ~480g/hour
+- + 7800X3D at concurrency 4 (V-cache parity): ~500-550g/hour
+- Combined: ~1000g/hour, roughly 2×
+
+**Statistical impact:**
+- 200g gauntlet CI today: ±42 Elo
+- 400g effective (two machines, 200g each): ±30 Elo
+- 800g effective (two machines, 400g each): ±21 Elo
+
+With SPRT on top, borderline results can run to ~400-800g for
+tighter CI in the same wall-clock you'd spend on one 200g today.
+
+**Sequencing:**
+1. Add `-sprt` to `test_huginn_vs_t4.bat` this weekend (free on
+   13700K alone).
+2. Then set up 7800X3D worker.
+3. Compose: SPRT on each, run in parallel, merge PGNs.
+
+**Why not OpenBench:** the distributed SPRT framework is overkill
+for a one-engineer project without community contributors. The big
+OpenBench wins (worker farms, web UI for many concurrent tests)
+don't apply here. DIY two-machine + SPRT captures ~90% of the
+benefit with ~10% of the setup cost.
+
+---
+
 ### #18: Refresh `huginn_t4` baseline when cumulative ≥ +50 over t3 — CLOSED
 
 - status: closed @ `6e3a761` (2026-05-09)
