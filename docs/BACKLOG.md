@@ -923,24 +923,71 @@ Worth doing eventually but not blocking anything.
 
 ### #7: LMP fix — Tier 3 revisit
 
-- status: blocked
+- status: re-deferred (2026-05-13)
 - priority: low
 - type: feature
-- est: 1 session (impl already done in `tier1-stack-broken` tag,
-  needs tuning)
+- est: 1 session (impl on branch `experiment/lmp-quiet-count`,
+  needs further upstream search-quality work to land positive)
 - links: [SEARCH_AND_EVAL.md#lmp-fix-attempts](SEARCH_AND_EVAL.md),
   defer commit `5ada94c`
+- WIP branch: `experiment/lmp-quiet-count` (commit `a715ef4`)
 
-**State:** Two iterations attempted (depth-1-2 incl, then min-depth-3
-only). Both regressed (-254, -56 Elo). The per-node `quiet_count`
-plumbing is correct; the issue is move-ordering quality.
+**State:** Two iterations attempted originally (depth-1-2 incl, then
+min-depth-3 only). Both regressed (-254, -56 Elo). The per-node
+`quiet_count` plumbing was the necessary fix.
 
-**Blocked by:** #3 (continuation history) — need stronger ordering so
-that "first K quiet moves" actually contains the best tactical choices.
-Pruning the rest is then safe.
+**Originally blocked by:** #3 (continuation history) — but that
+hypothesis is now falsified (see #3 closure 2026-05-12). LMP unblocks
+the same way as other deferred features: via incremental cumulative
+search-quality improvements, not via one specific lever.
 
-**On unblock:** cherry-pick the `quiet_count` change from
-`tier1-stack-broken`, set `LMP_MIN_DEPTH = 3`, gauntlet.
+**Attempt 2 (2026-05-13, on top of t4 = TT-mate + TB + contempt + P1a):**
+
+Implemented the `quiet_count`-based LMP fresh on top of t4, with
+`LMP_MIN_DEPTH = 3`, `LMP_MAX_DEPTH = 6`, threshold = `4 + depth²`
+(= 13, 20, 29, 40 at d=3..6). Pruning fires before MakeMove to save
+the make-then-unmake cost.
+
+Bench (depth 10 startpos): **1.07M nodes / 462 ms** — a clean 40%
+node reduction from the no-LMP path. The pruning **IS doing real
+work**; the freed time just isn't translating to better Elo at
+fast TC.
+
+Gauntlet results vs t4 at tc=10+0.1, concurrency 4:
+
+| Run | W/L/D | Score | Elo | LOS |
+|---|---|---|---|---|
+| Run 1 (200g) | 76 / 80 / 44 | 49.0% | -6.95 ± 41.33 | 37.0% |
+| Run 2 (200g) | 71 / 88 / 41 | 45.75% | -29.60 ± 41.08 | 7.7% |
+| **Combined (400g)** | **147 / 168 / 85** | **47.4%** | **~-18 ± 30** | ~negative |
+
+**+49 Elo lift** from original -56 to current -7 (run 1) or -18
+(combined). Biggest swing of any deferred-trio re-attempt yet
+(vs +25 for P1a, +25 for aspiration b). The cumulative ordering
+work IS lifting LMP, just not by enough to clear zero.
+
+**Pattern across all deferred-trio re-attempts:**
+- #1 P1a: original -3 → +22 (lift +25) → **shipped**
+- #8 aspiration b: original -49 → -24 (lift +25) → deferred
+- #7 LMP: original -56 → ~-18 (lift +38-49) → **deferred**
+- #2 king safety: original -126 → not yet tested; predicted ~-78-100
+
+So we have a consistent lift mechanism but the original starting
+depth determines where each lands. Only P1a was close enough to
+zero to clear.
+
+**Re-deferred.** WIP preserved on `experiment/lmp-quiet-count`
+(commit `a715ef4`) for future revival.
+
+**Remaining hypothesis paths if/when we revisit:**
+- Wait for further ordering improvements to land; the lift trend
+  may push LMP positive after 1-2 more search-quality features.
+- Less aggressive threshold (e.g., `6 + depth²` or `LMP_MIN_DEPTH = 4`)
+  to reduce false-pruning rate.
+- Combine with continuation history score in `pick_next_move` once
+  CH ships (if it ever does) — better quiet-move ordering would
+  make LMP's "first K quiet moves contain the best ones" assumption
+  more reliable.
 
 ---
 
