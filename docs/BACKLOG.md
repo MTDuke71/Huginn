@@ -958,13 +958,14 @@ Clear regression — 96.87% confidence it's truly negative.
 
 ---
 
-### #6: Lazy SEE in main-search capture ordering
+### #6: Lazy SEE in main-search capture ordering — deferred (2026-05-13)
 
-- status: open / unblocked
+- status: deferred (2026-05-13)
 - priority: low
 - type: feature
 - est: half-session
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #10 partial
+- WIP branch: `experiment/lazy-see-main` (commit `59b0fad`)
 
 **Status:** SEE is wired in qsearch (commit `1cce8de`) but main-search
 capture ordering still uses pure MVV-LVA. Splitting captures into
@@ -973,9 +974,57 @@ trades below quiets. Eager SEE during move generation costs too much
 (measured at king-safety attempt time); lazy SEE at pick time is the
 standard approach.
 
-**Why low priority:** the qsearch wiring captured the bulk of the SEE
-Elo gain (+24 marginal). Main-search ordering is incremental on top.
-Worth doing eventually but not blocking anything.
+**Attempt 1 (2026-05-13, on top of t4 = TT-mate + TB + contempt + P1a):**
+
+Implemented split:
+- Good captures (SEE >= 0): score = 1,000,000 + MVV-LVA (existing)
+- Bad captures (SEE  < 0): score = MVV-LVA (below history-positive quiets)
+
+SEE computed once per capture during the initial scoring pass; cached
+in `move.score` for subsequent selection-sort calls.
+
+**Bench (depth 10 startpos): 868k nodes / 384 ms** — ~50% fewer
+nodes than baseline. Tree shape materially smaller at the same NPS.
+
+**Gauntlet result vs t4 (200g, tc=10+0.1, concurrency 4):**
+
+  **-15.65 ± 48.09 Elo, LOS 26.03%**
+  78W / 87L / 35D, score 47.75%
+
+Neutral-trending-negative. Smaller tree but worse decisions on net.
+
+**Diagnosis — textbook asymmetry between qsearch SEE and main-search
+SEE:**
+
+- **qsearch SEE *prunes*** the move entirely (skip): saves a small
+  amount of time per losing capture, no decision risk because qsearch
+  is for static-eval refinement.
+- **main-search SEE *reorders*** (still searches, just later): saves
+  nothing if the move is needed; potentially harms when the SEE-losing
+  capture is a real tactical sacrifice (Bxh7+, knight sacs,
+  queen-takes-defended-but-forks).
+
+Static SEE doesn't see follow-up tactics. By demoting SEE<0 captures
+after positive-history quiets, we examine them too late in some
+positions where they're the actual best move.
+
+**Deferred.** WIP preserved on `experiment/lazy-see-main` (commit
+`59b0fad`).
+
+**Remaining hypothesis paths if/when we revisit:**
+- **More conservative threshold**: only demote captures where
+  SEE < -100 (or some other negative threshold) instead of SEE < 0.
+  Preserves "obviously bad" demotion without affecting "borderline"
+  cases that might be tactical sacrifices.
+- **Don't demote captures that give check**: check-giving captures
+  drive forcing sequences regardless of static SEE. Add a
+  `gives_check()` exemption like P1a does for LMR.
+- **Different demotion magnitude**: instead of `score = MVV-LVA`,
+  try `score = -1000 + MVV-LVA` (well below history but still
+  positively ordered). May change interaction with the search.
+- **Combine with main-search SEE *pruning*** (vs ordering): at
+  certain depths, actually skip SEE<0 captures entirely (mirror
+  of qsearch). More aggressive but cleaner trade-off than reorder.
 
 ---
 
