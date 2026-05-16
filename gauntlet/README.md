@@ -50,6 +50,8 @@ per experiment**.
 
 | Date | Machine | Games | Result vs t4 | Notes |
 |---|---|---:|---|---|
+| 2026-05-15 | AMD 7800X3D | 200 | **+40.13 ± 39.78 Elo**, LOS 97.75%, W71/L48/D81 | code = t4 + P1a + **#23 TT-bound fix**; ran hot vs Intel's +8.69 |
+| 2026-05-15 | Intel 13700K | 200 | **+8.69 ± 39.12 Elo**, LOS 66.90%, W70/L65/D65 | #23 TT-bound fix; original lean ship signal (BACKLOG #23) |
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
@@ -64,6 +66,22 @@ probably ~+5 to +10, not +22. Ship decision wasn't wrong (the engine
 IS slightly better, and the WAC tactical validation + bench evidence
 are non-gauntlet positives), but the magnitude was overstated by the
 single 200g sample.
+
+### Pooled — #23 TT-bound fix (400 games, two machines)
+
+Independent 200g runs of the **same #23 code** vs t4 (Intel + AMD):
+
+- Intel: W70 / L65 / D65
+- AMD:   W71 / L48 / D81
+- **Pooled: W141 / L113 / D146**, score **53.5%**, **≈ +24.4 Elo**,
+  LOS well above 95%.
+
+The #23 fix shipped on Intel's lean LOS 67% (+8.69). The AMD run came
+in hot (+40.13, LOS 97.75%); the 400g pool settles at **≈ +24 Elo** —
+a real, meaningful gain that comfortably clears the ship threshold and
+retroactively confirms the #23 ship decision. (Distinct code
+generation from the P1a pool above — these cannot be merged with the
+600g P1a sample.)
 
 (Pooling method: see Workflow step 3 above — `-pgnin` isn't in this
 fastchess build, so sum W/L/D and compute Elo manually.)

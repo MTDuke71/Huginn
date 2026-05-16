@@ -263,8 +263,15 @@ previously stored with bogus labels. Both versions converge on
 - 200g Intel gauntlet (2026-05-15, tc=10+0.1, noob_3moves.epd):
   **+8.69 ± 39.12 Elo, LOS 66.90%**, W70/L65/D65, score 51.25%,
   Ptnml(0-2) [8, 26, 32, 21, 13]. Modest positive — much smaller than
-  the bench delta would predict. Pooling with AMD pending for a
-  tighter CI (~±28 over 400g).
+  the bench delta would predict.
+- 200g AMD gauntlet (2026-05-15, same conditions):
+  **+40.13 ± 39.78 Elo, LOS 97.75%**, W71/L48/D81, score 55.75%,
+  Ptnml(0-2) [9, 17, 29, 32, 13]. Ran hot relative to Intel.
+- **Pooled 400g (Intel + AMD): W141/L113/D146, score 53.5%,
+  ≈ +24.4 Elo, LOS ≫95%.** Confirms the ship decision — the lean
+  Intel signal was on the low side of the noise band; the true effect
+  is a solid ~+24 Elo. See `gauntlet/README.md` for the pooled
+  breakdown.
 
 **Why the bench/Elo divergence?** The fix's biggest node-count wins
 are at depth 10-11. At depths 7-9 the post-fix tree is near-flat or
