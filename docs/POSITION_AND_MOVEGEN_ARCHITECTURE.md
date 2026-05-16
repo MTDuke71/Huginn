@@ -26,14 +26,61 @@ squares are `[21..98]` with file/rank constraints; sentinels return
 arithmetic in code that pre-dates the bitboard layer (king-square
 tracking, en-passant target, sliding-piece direction tables).
 
+### Full 10×12 layout with sentinels
+
 ```
- 21  22  23  24  25  26  27  28      Rank 1: A1=21, B1=22, ..., H1=28
- 31  32  33  34  35  36  37  38      Rank 2
- ...                                  ...
- 91  92  93  94  95  96  97  98      Rank 8: A8=91, ..., H8=98
+       File A   B   C   D   E   F   G   H
+       ┌────────────────────────────────────┐
+   .   │   0   1   2   3   4   5   6   7   8   9  │  sentinel row
+   .   │  10  11  12  13  14  15  16  17  18  19  │  sentinel row
+Rank 1 │  20  21  22  23  24  25  26  27  28  29  │  21..28 playable
+Rank 2 │  30  31  32  33  34  35  36  37  38  39  │
+Rank 3 │  40  41  42  43  44  45  46  47  48  49  │
+Rank 4 │  50  51  52  53  54  55  56  57  58  59  │
+Rank 5 │  60  61  62  63  64  65  66  67  68  69  │
+Rank 6 │  70  71  72  73  74  75  76  77  78  79  │
+Rank 7 │  80  81  82  83  84  85  86  87  88  89  │
+Rank 8 │  90  91  92  93  94  95  96  97  98  99  │  91..98 playable
+   .   │ 100 101 102 103 104 105 106 107 108 109  │  sentinel row
+   .   │ 110 111 112 113 114 115 116 117 118 119  │  sentinel row
+       └────────────────────────────────────┘
+         ^                              ^
+         file-A sentinel column        file-H sentinel column
+         (index % 10 == 0)             (index % 10 == 9)
 ```
 
-Direction offsets:
+The sentinel border is what lets sliding-piece direction-offset code
+walk a ray until it hits `Piece::Offboard` rather than masking each
+step against file/rank bounds.
+
+### Combined sq120 / sq64 view (playable squares only)
+
+Each cell shows `120-index / 64-index`. Both numberings grow
+northward (A1 → A8) and eastward (A1 → H1), so the conversion is
+pure modular arithmetic.
+
+| | A | B | C | D | E | F | G | H |
+|---|---|---|---|---|---|---|---|---|
+| **8** | 91/56 | 92/57 | 93/58 | 94/59 | 95/60 | 96/61 | 97/62 | 98/63 |
+| **7** | 81/48 | 82/49 | 83/50 | 84/51 | 85/52 | 86/53 | 87/54 | 88/55 |
+| **6** | 71/40 | 72/41 | 73/42 | 74/43 | 75/44 | 76/45 | 77/46 | 78/47 |
+| **5** | 61/32 | 62/33 | 63/34 | 64/35 | 65/36 | 66/37 | 67/38 | 68/39 |
+| **4** | 51/24 | 52/25 | 53/26 | 54/27 | 55/28 | 56/29 | 57/30 | 58/31 |
+| **3** | 41/16 | 42/17 | 43/18 | 44/19 | 45/20 | 46/21 | 47/22 | 48/23 |
+| **2** | 31/8  | 32/9  | 33/10 | 34/11 | 35/12 | 36/13 | 37/14 | 38/15 |
+| **1** | 21/0  | 22/1  | 23/2  | 24/3  | 25/4  | 26/5  | 27/6  | 28/7  |
+
+Conversion formulas (the `MAILBOX_MAPS` table is just a precomputed
+projection of these):
+
+```
+file = (sq120 - 21) % 10  =  sq64 % 8        // 0..7
+rank = (sq120 - 21) / 10  =  sq64 / 8        // 0..7
+sq64  =  rank * 8 + file
+sq120 =  rank * 10 + file + 21               // playable iff sq64 ∈ [0, 64)
+```
+
+### Direction offsets (120-space)
 
 ```
 NORTH = +10    SOUTH = -10    EAST = +1     WEST = -1
@@ -41,10 +88,83 @@ NE = +11       NW = +9        SE = -9       SW = -11
 KNIGHT_DELTAS = ±21, ±19, ±12, ±8
 ```
 
+Why these specific numbers: NORTH=+10 follows from rows being 10 wide
+in the 120-grid (8 playable + 2 sentinel columns). Knight deltas
+combine two NORTH/SOUTH offsets with one EAST/WEST offset
+(e.g., `+21 = 2*NORTH + EAST`). In 64-space these offsets become
+`±8`, `±1`, etc., but you lose the free off-board detection — hence
+the 120-grid is still kept for ray-walking helpers.
+
 The `MAILBOX_MAPS` table provides bidirectional 120 ↔ 64 conversion;
 `Position::at(sq120)` uses it to project into `piece_bitboards`.
 
 ## Position struct
+
+The state held by `Position` falls into four groups: source-of-truth
+piece bitboards, incrementally-updated derived state, mailbox-domain
+fields, and the undo stack. The diagram below highlights those groups
+and the `Position ↔ S_UNDO ↔ S_MOVE` relationship that drives
+make/take.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'lineColor':'#888888', 'primaryBorderColor':'#888888'}}}%%
+classDiagram
+    direction LR
+
+    class Position {
+        +Color side_to_move
+        +int ep_square : mailbox-120
+        +uint8_t castling_rights : bitmask
+        +uint16_t halfmove_clock
+        +uint16_t fullmove_number
+        +int ply
+        +array~int,2~ king_sq : mailbox-120, incremental
+        +array~array~Bitboard,6~,2~ piece_bitboards : SOURCE OF TRUTH
+        +array~Bitboard,2~ color_bitboards : derived
+        +Bitboard occupied_bitboard : derived
+        +uint64_t zobrist_key : incremental XOR
+        +array~int,2~ material_score : incremental
+        +vector~S_UNDO~ move_history : undo stack
+        +MakeMove(S_MOVE) int
+        +TakeMove() void
+        +MakeNullMove() void
+        +TakeNullMove() void
+        +at(sq120) Piece
+        +at_sq64(s64) Piece
+    }
+
+    class S_UNDO {
+        +S_MOVE move
+        +uint8_t castling_rights
+        +int ep_square
+        +uint16_t halfmove_clock
+        +uint64_t zobrist_key
+        +Piece captured
+        +array~int,2~ king_sq_backup
+        +array~int,2~ material_score_backup
+    }
+
+    class S_MOVE {
+        +int move : 25-bit packed
+        +int score : ordering tag
+        +get_from() int
+        +get_to() int
+        +is_capture() bool
+        +is_promotion() bool
+        +is_en_passant() bool
+        +is_castle() bool
+        +get_captured() PieceType
+        +get_promoted() PieceType
+    }
+
+    Position "1" o-- "0..*" S_UNDO : move_history
+    S_UNDO "1" *-- "1" S_MOVE : embeds
+
+    note for Position "Source of truth: piece_bitboards only.\ncolor_bitboards + occupied_bitboard are derived\naggregates kept in sync inside add/clear/move_piece.\nking_sq, material_score, zobrist_key are incrementally\nupdated alongside the bitboards (not derivable in O(1))."
+    note for S_UNDO "Pushed in MakeMove, popped in TakeMove.\nHolds everything needed to roll back state\nthat isn't trivially recomputable from the\nbitboards after a move."
+```
+
+For the literal layout (canonical reference):
 
 ```cpp
 class Position {
@@ -111,6 +231,7 @@ generation + inline legality filtering via `MakeMove`, and cold-path
 callers (book move validation) using the wrapper that pre-filters.
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'lineColor':'#888888', 'primaryBorderColor':'#888888', 'clusterBkg':'transparent', 'clusterBorder':'#888888'}}}%%
 flowchart TD
     subgraph callers["Callers"]
         SEARCH["search.cpp<br/>AlphaBeta / quiescence / IID / root<br/>(hot path)"]
@@ -171,10 +292,80 @@ flowchart TD
   The add-helpers (`add_quiet_move`, `add_capture_move`,
   `add_promotion_move`, `add_en_passant_move`) tag each move with
   an ordering score at insertion time (see "Move ordering" below).
-- Attack tables backing the bitboard generators:
-  - **Knight / King**: precomputed lookup tables ([`src/attack_tables.cpp`](../src/attack_tables.cpp))
-  - **Pawn**: bitboard shift operations (no table)
-  - **Bishop / Rook / Queen**: magic bitboards (Queen = Bishop ∪ Rook)
+- Attack-set sources for each generator are broken down in
+  **"Attack set sources"** below — three strategies (shifts, precomputed
+  lookups, magic bitboards) with the cost gradient that implies.
+
+## Attack set sources
+
+Each per-piece generator gets its attack set from one of three sources.
+The colors below also rank the cost gradient: shifts < lookup < magic.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'lineColor':'#888888', 'primaryBorderColor':'#888888', 'clusterBkg':'transparent', 'clusterBorder':'#888888'}}}%%
+flowchart LR
+    subgraph generators["Per-piece generators (movegen_bb.cpp)"]
+        PAWN["generate_pawn_moves"]
+        KNIGHT["generate_knight_moves"]
+        BISHOP["generate_bishop_moves"]
+        ROOK["generate_rook_moves"]
+        QUEEN["generate_queen_moves"]
+        KING["generate_king_moves"]
+    end
+
+    subgraph shifts["Bitboard shifts (no table)"]
+        SHIFT["pawns &lt;&lt; 8 / &gt;&gt; 8 &amp; ~occupied<br/>(single + double push)"]
+    end
+
+    subgraph tables["Precomputed lookups — O(1)"]
+        PAWN_TBL["PawnLookupTables::<br/>get_pawn_attacks[color][sq64]"]
+        KNIGHT_TBL["KnightLookupTables::<br/>KNIGHT_ATTACKS[sq64]"]
+        KING_TBL["KingLookupTables::<br/>KING_ATTACKS[sq64]"]
+    end
+
+    subgraph magic["Magic bitboards — bitboard.hpp"]
+        MAGIC_B["bishop_attacks(sq, occupied)"]
+        MAGIC_R["rook_attacks(sq, occupied)"]
+        MAGIC_Q["queen_attacks(sq, occupied)<br/>= bishop ∪ rook"]
+    end
+
+    PAWN -->|pushes| SHIFT
+    PAWN -->|captures + EP| PAWN_TBL
+    KNIGHT --> KNIGHT_TBL
+    KING --> KING_TBL
+    BISHOP --> MAGIC_B
+    ROOK --> MAGIC_R
+    QUEEN --> MAGIC_Q
+    MAGIC_Q -.->|delegates| MAGIC_B
+    MAGIC_Q -.->|delegates| MAGIC_R
+
+    classDef shift fill:#ffe8d4,stroke:#cc6600,color:#000
+    classDef table fill:#d4ffe8,stroke:#00aa44,color:#000
+    classDef magicstyle fill:#ffd4e8,stroke:#cc0066,color:#000
+
+    class SHIFT shift
+    class PAWN_TBL,KNIGHT_TBL,KING_TBL table
+    class MAGIC_B,MAGIC_R,MAGIC_Q magicstyle
+```
+
+**Notes:**
+
+- **Pawn is the only piece using two sources.** Pushes are pure bit
+  shifts (`<<8` / `>>8` masked against `~occupied`); captures and EP
+  use a small precomputed table because the attack pattern depends on
+  side-to-move (asymmetric diagonals) which shifts can't express
+  generically.
+- **Knight and king are precomputed tables** because their attack sets
+  are fixed per-square — no occupancy dependence — so a 64-entry array
+  is the cheapest possible source (one indexed load).
+- **Sliders use magic bitboards** because their attack sets *do* depend
+  on the full occupancy bitboard; magic multiplication + a perfect-hash
+  table lookup is the standard fast-path. Queen is just `bishop | rook`,
+  not a separate table.
+- **Lookup tables are computed once at startup** (see
+  [`src/attack_tables.cpp`](../src/attack_tables.cpp) and the
+  `*_lookup_tables.cpp` files); the magic tables are also generated at
+  startup from precomputed magic numbers.
 
 ## Make/Take protocol
 
@@ -183,6 +374,40 @@ if (pos.MakeMove(move) != 1) continue;     // illegal — already restored
 // ... search recurses with new state ...
 pos.TakeMove();                            // restore prior state
 ```
+
+The caller-side loop, the asymmetric rollback (illegal moves restore
+themselves inside `MakeMove`; legal moves are paired with `TakeMove`),
+and the per-step state mutations look like this:
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'lineColor':'#888888', 'actorBkg':'#2a2a2a', 'actorTextColor':'#eeeeee', 'actorLineColor':'#888888', 'noteBkgColor':'#3a3a3a', 'noteTextColor':'#eeeeee', 'noteBorderColor':'#888888', 'signalColor':'#ff6666', 'signalTextColor':'#ff6666', 'labelTextColor':'#ff6666', 'sequenceNumberColor':'#ff6666'}}}%%
+sequenceDiagram
+    participant S as Search<br/>(AlphaBeta loop)
+    participant P as Position
+    participant H as move_history<br/>(undo stack)
+
+    loop for each move m in movelist
+        S->>+P: MakeMove(m)
+        P->>H: push S_UNDO<br/>(zobrist, castling, ep,<br/>halfmove, captured,<br/>king_sq, material)
+        P->>P: mutate bitboards<br/>(from→to, capture, promo,<br/>castle rook, ep target)
+        P->>P: XOR zobrist incrementally<br/>(pieces, castling, ep, stm)
+        alt own king attacked after move
+            P->>H: pop S_UNDO + restore<br/>bitboards & derived state
+            P-->>-S: return 0 (illegal)
+            Note over S: continue<br/>(no TakeMove needed)
+        else legal
+            P-->>S: return 1
+            S->>S: -AlphaBeta(depth-1, ...)
+            S->>+P: TakeMove()
+            P->>H: pop S_UNDO
+            P->>P: invert bitboard mutations
+            P->>P: restore king_sq,<br/>material_score, zobrist_key
+            P-->>-S: void
+        end
+    end
+```
+
+In prose:
 
 `MakeMove`:
 1. Saves derived state (king_sq, material_score, zobrist) in `S_UNDO`.
@@ -194,6 +419,11 @@ pos.TakeMove();                            // restore prior state
 
 `TakeMove` pops the last `S_UNDO` and restores piece bitboards plus
 derived state — O(1).
+
+**Key invariant:** `TakeMove` is only called after `MakeMove` returned
+1. An illegal pseudo-legal move (king-into-check) is fully rolled back
+inside `MakeMove` itself before it returns 0 — pairing it with a
+`TakeMove` would double-pop the undo stack.
 
 `MakeNullMove` / `TakeNullMove` are used by null-move pruning; they
 flip `side_to_move`, clear `ep_square`, and update zobrist without
