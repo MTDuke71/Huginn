@@ -205,6 +205,77 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
+### #23: TT bound classification bug — fix (CLOSED, pending gauntlet)
+
+- status: **closed code-side** (2026-05-15, shipped pending 200g gauntlet)
+- priority: was latent-high (never knew it was broken)
+- type: bug
+- source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
+  Priority 1), verified against `src/search.cpp:1519-1593`.
+
+**The bug.** Inside `AlphaBeta`, the move loop raises the local
+`alpha` variable whenever a move beats it (`alpha = score`). At the
+end of the loop, node-type classification used the **mutated** alpha:
+
+```cpp
+if (best_score <= alpha)       node_type = UPPER_BOUND;
+else if (best_score >= beta)   node_type = LOWER_BOUND;
+else                           node_type = EXACT;
+```
+
+After the loop raises alpha to `best_score`, `best_score <= alpha`
+is trivially true. Consequence:
+
+| Node behavior | What alpha looked like at line 1587 | Stored as | Should have been |
+|---|---|---|---|
+| All-fail-low | unchanged at original_alpha | UPPER | UPPER ✓ |
+| Alpha-improving (exact PV) | raised to best_score | UPPER | **EXACT** ✗ |
+| Beta cutoff | raised to best_score (≥ beta) | UPPER | **LOWER** ✗ |
+
+So **EXACT and LOWER_BOUND entries were structurally unreachable**.
+Every alpha-improving node and every beta-cutoff was mis-stored as
+UPPER_BOUND. UPPER bounds are the weakest TT pruning material (they
+can only cut when probed score ≤ alpha), so the TT was doing roughly
+1/3 of its potential work for years.
+
+**The fix.** Capture `original_alpha` before the move loop, use it
+(not the mutated `alpha`) in classification. One-line behavior
+change, bit-equivalent for movegen.
+
+**Bench evidence** (depth 11 startpos, OwnBook off, single thread):
+
+| Metric | Pre-fix | Post-fix | Δ |
+|---|---:|---:|---:|
+| Nodes @ d11 | 5,062,280 | 1,203,168 | **−76%** (4.2×) |
+| Time @ d11 | 2285 ms | 516 ms | **−78%** (4.4×) |
+| TT writes @ d11 | 503,909 | 110,567 | **−78%** |
+| NPS | 2.21 Mnps | 2.33 Mnps | basically flat |
+
+NPS is unchanged because this isn't a raw-speed fix — it's a
+tree-shape fix. The TT is finally cutting on entries that were
+previously stored with bogus labels. Both versions converge on
+`d2d4 score cp 25` at depth 11.
+
+**Validation.**
+- All 208 GoogleTests pass (200g run not yet executed).
+- Perft suite (8 tests covering startpos d1-d3 + Kiwipete d1-d2) passes
+  — confirms movegen unchanged.
+- Pending: 200g gauntlet vs `baseline-t4` at tc=10+0.1 to size the
+  Elo delta. A 4× node reduction at depth 11 *should* convert to a
+  meaningful Elo gain at fixed-time control because the engine
+  effectively searches deeper in the same wall time. But ordering
+  changes can also expose latent bugs, so the gauntlet is the truth.
+
+**Why this dwarfs the recent deferral pattern.** Counter-move, LMP,
+continuation history, lazy SEE — every recently-deferred experiment
+was operating inside a search whose TT was throwing away most of its
+pruning power. Some of those experiments may behave differently on
+top of the fixed TT. Worth keeping the experiment branches around
+(`experiment/counter-move-1500`, `experiment/lmp-quiet-count`,
+`experiment/continuation-history`, `experiment/lazy-see-main`,
+`experiment/aspiration-step-b`) and revisiting after this gauntlet
+lands.
+
 ### #13: Investigate dormant counter-move + TT-mate-adjustment latent bugs — CLOSED
 
 - status: **closed** (2026-05-06, TT-mate variant shipped)

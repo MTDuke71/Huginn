@@ -1399,6 +1399,13 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     best_move.move = 0;
     int legal_count = 0;  // For mate/stalemate detection after the loop
 
+    // Capture alpha as it was on entry — the move loop below mutates `alpha`
+    // when a move improves it, but TT bound classification must compare
+    // best_score against the ORIGINAL window. Using the mutated alpha caused
+    // every alpha-improving and beta-cutoff node to be stored as UPPER_BOUND,
+    // crippling TT pruning. See PERFORMANCE_ARCHITECTURE_REVIEW.md (Priority 1).
+    const int original_alpha = alpha;
+
 #ifdef USE_MULTI_CUT
     // Multi-Cut pruning: track beta cutoffs to enable early termination
     // If multiple moves cause beta-cutoffs, remaining moves are likely also good
@@ -1583,8 +1590,10 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     }
 
     // VICE Part 84: Store result in transposition table (6:38)
+    // NOTE: must compare against `original_alpha` (captured pre-loop), not the
+    // mutated `alpha`. See comment at the original_alpha declaration above.
     uint8_t node_type;
-    if (best_score <= alpha) {
+    if (best_score <= original_alpha) {
         node_type = TTEntry::UPPER_BOUND;  // All moves failed low (upper bound)
     } else if (best_score >= beta) {
         node_type = TTEntry::LOWER_BOUND;  // Beta cutoff (lower bound)
