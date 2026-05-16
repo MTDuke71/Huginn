@@ -79,6 +79,12 @@ doxygen/Doxyfile.huginn.bak
 fastchess.log
 config.json
 
+# ...except gauntlet/ results, which are git-shuttled between the
+# AMD and Intel boxes (BACKLOG #19). Scoped negation keeps scratch
+# PGNs/logs in the fastchess folder ignored.
+!gauntlet/*.pgn
+!gauntlet/*.log
+
 # Claude Code local agent state (per-project permission cache).
 # Track .claude/settings.json (shared project-level allowlist) but not
 # .claude/settings.local.json (per-machine).
