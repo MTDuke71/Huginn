@@ -50,8 +50,15 @@ copy /Y build\msvc-x64-release\bin\Release\huginn.exe "%FC%\huginn.exe"
 if not exist "%FC%\src" mkdir "%FC%\src"
 copy /Y src\performance.bin "%FC%\src\performance.bin"
 
+REM Results go INTO the repo (gauntlet\) so git shuttles them between
+REM machines. _intel suffix pairs with the AMD box's _amd files; the
+REM two never collide on a git merge (distinct paths). Pool both PGNs
+REM for the combined 400g estimate (see gauntlet\README.md).
+set RESULTS=%HUGINN_REPO%\gauntlet
+if not exist "%RESULTS%" mkdir "%RESULTS%"
+
 echo.
-echo Running %ROUNDS% rounds (= %ROUNDS%*2 games): Huginn current vs huginn_t4 tc=10+0.1
+echo [Intel 13700K] Running %ROUNDS% rounds (= %ROUNDS%*2 games): Huginn current vs huginn_t4 tc=10+0.1
 echo.
 
 "%FASTCHESS%" ^
@@ -63,7 +70,7 @@ echo.
   -concurrency 4 ^
   -recover ^
   -openings file="%FC%\noob_3moves.epd" format=epd order=random ^
-  -pgnout file="%FC%\huginn_vs_t4.pgn" notation=san append=true ^
-  -log file="%FC%\fastchess_t4.log" level=warn
+  -pgnout file="%RESULTS%\huginn_vs_t4_intel.pgn" notation=san append=true ^
+  -log file="%RESULTS%\fastchess_t4_intel.log" level=warn
 
 pause

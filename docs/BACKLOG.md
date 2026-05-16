@@ -1367,6 +1367,42 @@ investigate. Until then, ignore.
 
 ---
 
+### #21: PV continues past threefold repetition (cosmetic, pollutes analysis)
+
+- status: open (filed 2026-05-15)
+- priority: low
+- type: bug
+
+**State:** During the 2026-05-15 AMD t4 baseline gauntlet
+(`huginn_vs_t4_amd.pgn`), fastchess logged repeated
+`Warning; PV continues after threefold repetition` from both builds,
+e.g. `info depth 20 score cp 25 ... pv h7g8 f4e3 f7e5 e3f4 e5f7 f4e3
+f7e5 …` — a 2-cycle move loop padded out to the full PV array, with a
+static score and depth still climbing 17→20.
+
+**Diagnosis (likely, unconfirmed):** `get_pv_line`
+([minimal_search.cpp:597](src/minimal_search.cpp#L597)) walks the
+PV/TT chain without a repetition guard, so in a drawn-by-repetition
+line it follows the cycle until the 64-slot PV array fills. The
+reported `score cp 25` equals the shipped contempt value (#16,
+`CONTEMPT = 25`), which indicates the search itself *is* correctly
+scoring the position as a (contempt-adjusted) draw — only the printed
+PV and the still-incrementing depth are garbage.
+
+**Impact:** none on playing strength (the draw is scored correctly).
+Cosmetic in GUIs, but it **pollutes any PV/depth/score-based
+analysis** — e.g. the WAC depth-comparison tables in
+[SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md): any position that resolves
+to a repetition will show a meaningless looping PV and an inflated
+depth at a flat contempt score.
+
+**Action:** in `get_pv_line`, stop appending once the reconstructed
+line hits a position key seen earlier in the same walk (or once the
+half-move/repetition state would be a draw). Low priority — fix when
+next touching PV extraction or analysis tooling.
+
+---
+
 ## Closed (kept as history)
 
 ### LMR table tuning — log(d)·log(m)/2 lookup
