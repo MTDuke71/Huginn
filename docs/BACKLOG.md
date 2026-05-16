@@ -637,6 +637,109 @@ benefit with ~10% of the setup cost.
 
 ---
 
+### #22: Gauntlet results archive (off-repo, Intel-master) — POLICY
+
+- status: established 2026-05-15
+- priority: medium (workflow infrastructure)
+- type: tooling / methodology
+- location: `C:\Users\m_lad\HuginnGauntletArchive\` (outside Huginn repo)
+- pairs with: #19 (two-machine workflow), in-repo `gauntlet/` shuttle folder
+
+**Problem this solves:** the in-repo `gauntlet/` folder is the
+two-machine shuttle — it overwrites every run (`append=false`, files
+deleted at start). That keeps git diffs clean (one experiment per
+commit) and avoids ever-growing PGN files in the repo, but **loses
+the historical record**. After three runs of the same experiment,
+the first two results are gone unless somebody captured them
+elsewhere.
+
+The off-repo archive is that "elsewhere." Persistent, owned by the
+Intel master (the one machine that has both halves of every pull),
+keeps the repo clean.
+
+**Layout:**
+
+```
+C:\Users\m_lad\HuginnGauntletArchive\
+├── YYYY-MM-DD_<label>\
+│   ├── huginn_vs_t<n>_amd.pgn        (~700 KB per 200g)
+│   ├── huginn_vs_t<n>_intel.pgn      (~700 KB per 200g)
+│   ├── fastchess_t<n>_amd.log
+│   ├── fastchess_t<n>_intel.log
+│   └── summary.md                    (REQUIRED — see template below)
+├── 2026-05-15_p1a_vs_t4_baseline\
+└── ...
+```
+
+**`summary.md` template** (required for every archived experiment):
+
+```markdown
+# YYYY-MM-DD — `<label>`
+
+One-line description of what was tested.
+
+## What was tested
+- Engine under test: `<commit>` (one-line description of what this
+  commit changes vs the reference)
+- Reference engine: `<tag/commit>`
+- Effective code delta: <what's actually different>
+
+## Setup
+- Time control, concurrency, opening book, round count.
+
+## Per-machine results
+Table: date | machine | games | W/L/D | score | Elo ± CI | LOS
+
+## Pooled (Ng across N runs)
+- Combined W/L/D
+- Pooled Elo and LOS
+
+## Interpretation
+Short paragraph: what does this tell us; was it surprising; what
+follow-ups (if any).
+
+## Why archived
+Per the policy: meaningful baselines, ships, anomalies. NOT routine
+failed/deferred experiments (the BACKLOG entry handles those).
+```
+
+**Archive policy — when to keep, when to skip:**
+
+| Archive | Skip |
+|---|---|
+| First two-machine cycle on a new ship-candidate | Routine deferral with clear LOS < 50% |
+| Baseline reference for a long-running experiment | Failed runs where the BACKLOG entry captures everything |
+| Anomalies worth re-investigating later | Quick sanity-check sniff tests |
+| Magnitude-correction pools (multiple runs of same experiment) | Aborted runs / known-bad binaries |
+| Long-TC verifications | Re-runs that match an existing archived result |
+
+The BACKLOG entry for each feature is the **authoritative narrative**
+(why, what, hypothesis paths, outcome). The archive is the
+**evidence locker** for the small number of experiments where raw
+data may still matter later. Most BACKLOG entries don't need an
+archive companion.
+
+**Workflow for archiving an experiment:**
+
+After both machines finish a pair of runs and both halves are pulled
+into the Intel master's `gauntlet/`:
+
+1. Decide: is this worth archiving (per policy above)?
+2. `mkdir C:\Users\m_lad\HuginnGauntletArchive\YYYY-MM-DD_<label>`
+3. Copy `huginn_vs_*.pgn` + `fastchess_*.log` from `gauntlet/` to
+   the new folder.
+4. Write `summary.md` from the template above.
+5. (Future) maybe add `archive_gauntlet.bat` to automate steps 2-4
+   with a label argument; for now the manual flow is fine.
+
+**First archived experiment (2026-05-15):**
+`2026-05-15_p1a_vs_t4_baseline\` — the magnitude-correction pool
+that revised P1a from "+22 Elo / LOS 84%" (Sunday's single 200g)
+to "+6 Elo / LOS 69%" (600g pooled across both machines + Sunday).
+First full validation of the two-machine workflow end-to-end.
+
+---
+
 ### #18: Refresh `huginn_t4` baseline when cumulative ≥ +50 over t3 — CLOSED
 
 - status: closed @ `6e3a761` (2026-05-09)
