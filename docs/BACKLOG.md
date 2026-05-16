@@ -528,10 +528,32 @@ scoring formula).
 
 ### #19: Two-machine gauntlet workflow + SPRT — planned for weekend revisit
 
-- status: open / planned (2026-05-13)
+- status: in progress (2026-05-15) — Part B largely done on the AMD box; Part A (SPRT) still open
 - priority: medium
 - type: tooling / infrastructure
 - est: ~1 hour (Part A) + ~30-45 min one-time (Part B)
+
+**Progress update (2026-05-15) — AMD 7800X3D worker stood up:**
+- `test_huginn_vs_t4_amd.bat` created in the repo root: AMD-machine
+  variant with the correct `HUGINN_REPO=C:\Users\m_lad\Repos\Huginn`
+  (the Intel bat hard-codes `Documents\Repos`, which does not exist on
+  this box). Concurrency held at **4 to match the Intel bat** so the
+  two 200g halves pool into a homogeneous 400g sample; separate
+  `huginn_vs_t4_amd.pgn` / `fastchess_t4_amd.log` so each half is
+  machine-identifiable before merge. Engine names + frozen t4 binary
+  kept identical to the Intel bat for clean pooling.
+- Current Huginn and the frozen t4 baseline (commit `6e3a761`, built in
+  an isolated `git worktree`) both configured `-DENABLE_FATHOM=ON` and
+  verified UCI-runnable on the 7800X3D — no SIGILL (the AVX-512 SIGILL
+  was Intel Raptor Lake disabling AVX-512; Zen 4 is unaffected, and
+  these are freshly local builds regardless).
+- `baseline-t4` tag created locally at `6e3a761` — #18 documented it
+  but the tag only existed on the Intel box; now reproducible here.
+- First 200-game current-vs-t4 baseline match running on the AMD box.
+- Setup-checklist status (Part B below): items 1-3 + 5 effectively
+  satisfied on the AMD box; item 4 (Syzygy `c:\TB\`) still optional.
+- Still open: Part A (`-sprt` mode in both bats) and exercising the
+  PGN-merge composition step once both machines have a run on disk.
 
 **Goal:** double gauntlet throughput (13700K + 7800X3D in parallel)
 plus statistical efficiency via SPRT early-stop. Borderline LOS
