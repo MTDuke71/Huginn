@@ -257,14 +257,34 @@ previously stored with bogus labels. Both versions converge on
 `d2d4 score cp 25` at depth 11.
 
 **Validation.**
-- All 208 GoogleTests pass (200g run not yet executed).
+- All 208 GoogleTests pass.
 - Perft suite (8 tests covering startpos d1-d3 + Kiwipete d1-d2) passes
   — confirms movegen unchanged.
-- Pending: 200g gauntlet vs `baseline-t4` at tc=10+0.1 to size the
-  Elo delta. A 4× node reduction at depth 11 *should* convert to a
-  meaningful Elo gain at fixed-time control because the engine
-  effectively searches deeper in the same wall time. But ordering
-  changes can also expose latent bugs, so the gauntlet is the truth.
+- 200g Intel gauntlet (2026-05-15, tc=10+0.1, noob_3moves.epd):
+  **+8.69 ± 39.12 Elo, LOS 66.90%**, W70/L65/D65, score 51.25%,
+  Ptnml(0-2) [8, 26, 32, 21, 13]. Modest positive — much smaller than
+  the bench delta would predict. Pooling with AMD pending for a
+  tighter CI (~±28 over 400g).
+
+**Why the bench/Elo divergence?** The fix's biggest node-count wins
+are at depth 10-11. At depths 7-9 the post-fix tree is near-flat or
+slightly worse (different TT contents reorder some lines). At
+tc=10+0.1 the engine typically reaches **depth 9-10** in the
+middlegame — exactly the depth band where the fix is mixed/marginal.
+The 4× depth-11 win is largely theoretical at this TC.
+
+**Pattern to file:** infrastructure fixes can over-promise at fast
+TC. The fix is correct (TT bounds now match alpha-beta semantics),
+the bench is real (4.2× node reduction at d11 is reproducible), but
+TC-bound Elo only converts in proportion to the depth band the
+engine actually plays at. A longer TC (e.g. 60+0.6) would likely
+show a much larger Elo because deeper search benefits compound.
+
+**Ship decision: SHIPPED.** LOS 67% is lean positive, the fix is
+objectively more correct than the buggy code it replaced (TT
+metadata now matches alpha-beta semantics), and there's no
+regression evidence — perft + 208 tests + positive LOS all clean.
+Reverting because "Elo gain was modest" would be the wrong call.
 
 **Why this dwarfs the recent deferral pattern.** Counter-move, LMP,
 continuation history, lazy SEE — every recently-deferred experiment
