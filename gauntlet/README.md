@@ -49,3 +49,22 @@ per experiment**.
 | Date | Machine | Games | Result vs t4 | Notes |
 |---|---|---:|---|---|
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
+| 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
+| 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled (all three runs above, 600 games total)
+**W 246 / L 235 / D 119**, score 50.92%, **~+6.4 Elo**, LOS ~69%.
+
+The original Sunday +22 / LOS 84% was on the favorable side of the
+noise band. Two subsequent independent runs (one on each machine,
+both today) settled toward neutral-positive. P1a's true Elo is
+probably ~+5 to +10, not +22. Ship decision wasn't wrong (the engine
+IS slightly better, and the WAC tactical validation + bench evidence
+are non-gauntlet positives), but the magnitude was overstated by the
+single 200g sample.
+
+**Note**: `fastchess.exe -pgnin <file>` doesn't exist in this
+build — the pooled-PGN recipe in the Workflow section above
+needs adjustment. For now, sum the per-run W/L/D from each
+machine's "Results of..." block and compute pooled Elo manually:
+`Elo = -400 × log10(1/score - 1)` where `score = (W + D/2) / N`.
