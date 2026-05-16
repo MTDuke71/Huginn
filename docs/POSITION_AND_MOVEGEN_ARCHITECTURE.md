@@ -106,21 +106,75 @@ and per-add helpers that auto-score for ordering.
 
 ## Move generation pipeline
 
-Two layers:
+Two layers, with hot-path callers going through pseudo-legal
+generation + inline legality filtering via `MakeMove`, and cold-path
+callers (book move validation) using the wrapper that pre-filters.
 
-| Layer | File | Role |
-|---|---|---|
-| Public API | [`src/movegen.hpp`](../src/movegen.hpp) | `generate_all_moves`, `generate_legal_moves`, `generate_all_caps_pseudo`, `generate_all_caps` |
-| Per-piece bitboard | [`src/movegen_bb.hpp`](../src/movegen_bb.hpp) | `generate_*_moves_bitboard` for each piece type |
+```mermaid
+flowchart TD
+    subgraph callers["Callers"]
+        SEARCH["search.cpp<br/>AlphaBeta / quiescence / IID / root<br/>(hot path)"]
+        BOOK["searchPosition<br/>book move validation<br/>(cold path, once per search)"]
+    end
 
-The search calls **pseudo-legal** generators (`generate_all_moves`
-and `generate_all_caps_pseudo`) and uses `MakeMove != 1` to filter
-illegals inline. This was a +41% NPS win at depth 11 startpos
-versus the older legal-pre-filter approach (BACKLOG #14, commit
-`b1154c8`).
+    subgraph public_api["Public API (movegen.hpp)"]
+        GEN_ALL["generate_all_moves<br/>pseudo-legal, all moves"]
+        GEN_CAPS_PSEUDO["generate_all_caps_pseudo<br/>pseudo-legal, captures only"]
+        GEN_LEGAL["generate_legal_moves<br/>legal-pre-filtered"]
+        GEN_CAPS["generate_all_caps<br/>legal-pre-filtered, captures"]
+    end
 
-`generate_legal_moves` still exists for non-hot-path callers (book
-move validation in `searchPosition`).
+    subgraph per_piece["Per-piece bitboard (movegen_bb.hpp)"]
+        BB_PAWN["generate_pawn_moves_bitboard"]
+        BB_KNIGHT["generate_knight_moves_bitboard"]
+        BB_BISHOP["generate_bishop_moves_bitboard"]
+        BB_ROOK["generate_rook_moves_bitboard"]
+        BB_QUEEN["generate_queen_moves_bitboard"]
+        BB_KING["generate_king_moves_bitboard"]
+    end
+
+    LIST["S_MOVELIST<br/>(max 256 moves)<br/>scored on add"]
+
+    FILTER["pos.MakeMove(m) != 1 ?<br/>→ continue<br/>(in-loop legality filter)"]
+
+    SEARCH -->|main loop| GEN_ALL
+    SEARCH -->|quiescence| GEN_CAPS_PSEUDO
+    BOOK --> GEN_LEGAL
+
+    GEN_ALL --> BB_PAWN & BB_KNIGHT & BB_BISHOP & BB_ROOK & BB_QUEEN & BB_KING
+    GEN_CAPS_PSEUDO --> BB_PAWN & BB_KNIGHT & BB_BISHOP & BB_ROOK & BB_QUEEN & BB_KING
+    GEN_LEGAL --> GEN_ALL
+    GEN_LEGAL -.legality pre-filter.-> LIST
+    GEN_CAPS --> GEN_CAPS_PSEUDO
+
+    BB_PAWN & BB_KNIGHT & BB_BISHOP & BB_ROOK & BB_QUEEN & BB_KING --> LIST
+    LIST --> FILTER
+
+    classDef hot fill:#ffe8d4,stroke:#cc6600,color:#000
+    classDef cold fill:#d4e8ff,stroke:#0066cc,color:#000
+    class SEARCH,GEN_ALL,GEN_CAPS_PSEUDO,FILTER hot
+    class BOOK,GEN_LEGAL,GEN_CAPS cold
+```
+
+**Key flow facts:**
+
+- The search calls **pseudo-legal** generators (`generate_all_moves`,
+  `generate_all_caps_pseudo`) and uses `if (pos.MakeMove(m) != 1)
+  continue;` as the per-move legality filter. This was a **+41% NPS
+  win** at depth 11 startpos versus the older legal-pre-filter
+  approach (BACKLOG #14, commit `b1154c8`).
+- `generate_legal_moves` and `generate_all_caps` still exist for
+  cold-path callers (book move validation in `searchPosition`).
+  They wrap the pseudo-legal generators and pay the MakeMove/TakeMove
+  cost up-front to return only legal moves; fine for one-shot use.
+- All six per-piece generators write into the same `S_MOVELIST`.
+  The add-helpers (`add_quiet_move`, `add_capture_move`,
+  `add_promotion_move`, `add_en_passant_move`) tag each move with
+  an ordering score at insertion time (see "Move ordering" below).
+- Attack tables backing the bitboard generators:
+  - **Knight / King**: precomputed lookup tables ([`src/attack_tables.cpp`](../src/attack_tables.cpp))
+  - **Pawn**: bitboard shift operations (no table)
+  - **Bishop / Rook / Queen**: magic bitboards (Queen = Bishop ∪ Rook)
 
 ## Make/Take protocol
 
