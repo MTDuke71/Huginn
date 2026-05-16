@@ -57,6 +57,11 @@ REM for the combined 400g estimate (see gauntlet\README.md).
 set RESULTS=%HUGINN_REPO%\gauntlet
 if not exist "%RESULTS%" mkdir "%RESULTS%"
 
+REM Each run is its own experiment: wipe this machine's prior PGN+log
+REM so games never accumulate across runs (paired with append=false).
+if exist "%RESULTS%\huginn_vs_t4_intel.pgn" del /q "%RESULTS%\huginn_vs_t4_intel.pgn"
+if exist "%RESULTS%\fastchess_t4_intel.log" del /q "%RESULTS%\fastchess_t4_intel.log"
+
 echo.
 echo [Intel 13700K] Running %ROUNDS% rounds (= %ROUNDS%*2 games): Huginn current vs huginn_t4 tc=10+0.1
 echo.
@@ -70,7 +75,7 @@ echo.
   -concurrency 4 ^
   -recover ^
   -openings file="%FC%\noob_3moves.epd" format=epd order=random ^
-  -pgnout file="%RESULTS%\huginn_vs_t4_intel.pgn" notation=san append=true ^
+  -pgnout file="%RESULTS%\huginn_vs_t4_intel.pgn" notation=san append=false ^
   -log file="%RESULTS%\fastchess_t4_intel.log" level=warn
 
 pause

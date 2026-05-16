@@ -22,20 +22,22 @@ per experiment**.
    openings, so the two halves are independent samples).
 2. `git add gauntlet/ && git commit && git push` from each; `git pull`
    on the other to collect both halves.
-3. Combined estimate from the pooled PGNs:
+3. Combined estimate: `fastchess.exe -pgnin` does **not** exist in
+   this build, so pool manually. Read each machine's
+   `Results of Huginn_current vs Huginn_t4` block (or the tail of its
+   `.log`), sum the W / L / D across both runs, then:
 
    ```
-   fastchess.exe -pgnin gauntlet/huginn_vs_t4_amd.pgn ^
-                 -pgnin gauntlet/huginn_vs_t4_intel.pgn
+   score = (W + D/2) / N
+   Elo   = -400 * log10(1/score - 1)
    ```
-
-   (or just sum the W/L/D tallies for a quick sanity check).
 
 ## Notes
 
-- `append=true`: re-running a bat **adds** games to that machine's
-  file. Delete the machine's `.pgn`/`.log` before a run if you want a
-  fresh experiment rather than a cumulative one.
+- **Each run is its own experiment.** Both bats delete that machine's
+  `.pgn`/`.log` and use `append=false`, so games never accumulate
+  across runs. Commit/push the result before the next run if you want
+  to keep it (the following run overwrites it).
 - Files are machine-tagged by name, so an AMD pull never conflicts
   with an Intel push (different paths) — clean git merges.
 - Logs are committed too (per request). They are large and noisy;
@@ -63,8 +65,5 @@ IS slightly better, and the WAC tactical validation + bench evidence
 are non-gauntlet positives), but the magnitude was overstated by the
 single 200g sample.
 
-**Note**: `fastchess.exe -pgnin <file>` doesn't exist in this
-build — the pooled-PGN recipe in the Workflow section above
-needs adjustment. For now, sum the per-run W/L/D from each
-machine's "Results of..." block and compute pooled Elo manually:
-`Elo = -400 × log10(1/score - 1)` where `score = (W + D/2) / N`.
+(Pooling method: see Workflow step 3 above — `-pgnin` isn't in this
+fastchess build, so sum W/L/D and compute Elo manually.)
