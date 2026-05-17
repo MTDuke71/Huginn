@@ -233,15 +233,16 @@ public:
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        // 1. Hash piece out of from square and into to square
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][from_square];
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][to_square];
-
-        // 2. Update bitboards
+        // 1. Convert to 64-square indices (shared by zobrist + bitboard updates)
         int from_sq64 = MAILBOX_MAPS.to64[from_square];
         int to_sq64 = MAILBOX_MAPS.to64[to_square];
         if (from_sq64 >= 0 && to_sq64 >= 0) {
-            // Update new full bitboard system
+            // 2. Hash piece out of from square and into to square
+            int zpc = int(piece_type) + (piece_color == Color::Black ? 6 : 0);
+            zobrist_key ^= Zobrist::Piece[zpc][from_sq64];
+            zobrist_key ^= Zobrist::Piece[zpc][to_sq64];
+
+            // 3. Update bitboards
             popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], from_sq64);
             popBit(color_bitboards[size_t(piece_color)], from_sq64);
             popBit(occupied_bitboard, from_sq64);
@@ -265,15 +266,16 @@ public:
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        // 1. Update zobrist hash (XOR out the piece)
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
-
-        // 2. Update material score (kings can never be captured in chess)
+        // 1. Update material score (kings can never be captured in chess)
         material_score[size_t(piece_color)] -= value_of(piece);
 
-        // 3. Update bitboards
+        // 2. Convert to 64-square index (shared by zobrist + bitboard updates)
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
+            // 3. Update zobrist hash (XOR out the piece)
+            zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
+
+            // 4. Update bitboards
             popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             popBit(color_bitboards[size_t(piece_color)], sq64);
             popBit(occupied_bitboard, sq64);
@@ -290,17 +292,18 @@ public:
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
         
-        // 1. Update zobrist hash (XOR in the piece)
-        zobrist_key ^= Zobrist::Piece[int(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0)][square];
-
-        // 2. Update material score
+        // 1. Update material score
         if (piece_type != PieceType::King) {
             material_score[size_t(piece_color)] += value_of(piece);
         }
 
-        // 3. Update bitboards
+        // 2. Convert to 64-square index (shared by zobrist + bitboard updates)
         int sq64 = MAILBOX_MAPS.to64[square];
         if (sq64 >= 0) {
+            // 3. Update zobrist hash (XOR in the piece)
+            zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
+
+            // 4. Update bitboards
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             setBit(color_bitboards[size_t(piece_color)], sq64);
             setBit(occupied_bitboard, sq64);

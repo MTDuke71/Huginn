@@ -10,7 +10,7 @@
  * en-passant possibilities.
  *
  * Globals:
- * - Piece[PIECE_NB][120]: Zobrist keys for each piece type on each square (0..119).
+ * - Piece[PIECE_NB][64]: Zobrist keys for each piece type on each square (0..63).
  * - Side: Zobrist key for the side to move.
  * - Castle[16]: Zobrist keys for each possible castling rights combination (0..15).
  * - EpFile[8]: Zobrist keys for en-passant files (a..h).
@@ -24,7 +24,7 @@
  *     Computes the Zobrist hash for the given chess position.
  *
  * @note The SplitMix64 PRNG is used for fast and high-quality random number generation.
- * @note The Piece table uses 120 squares for direct indexing (including off-board squares).
+ * @note The Piece table uses 64 squares; callers convert 120->64 via MAILBOX_MAPS.to64.
  * @note Forward declaration of Position is used to avoid circular dependencies.
  */
 #pragma once
@@ -38,7 +38,7 @@ constexpr int PIECE_NB = 12;
 class Position;
 
 namespace Zobrist {
-    inline U64 Piece[PIECE_NB][120]; // piece on 120-square (direct indexing, no conversion needed)
+    inline U64 Piece[PIECE_NB][64];  // piece on 64-square index
     inline U64 Side;                 // side to move
     inline U64 Castle[16];           // castling rights mask (0..15)
     inline U64 EpFile[8];            // en-passant file a..h
@@ -63,7 +63,7 @@ namespace Zobrist {
         auto r64 = [&](){ return rng(); };
 
         for (int p = 0; p < PIECE_NB; ++p)
-            for (int s = 0; s < 120; ++s)  // Initialize all 120 squares (includes off-board)
+            for (int s = 0; s < 64; ++s)
                 Piece[p][s] = r64();
 
         Side = r64();

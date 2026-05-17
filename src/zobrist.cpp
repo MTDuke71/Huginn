@@ -41,7 +41,7 @@ namespace Zobrist {
                 PieceType pt = type_of(piece);
                 Color c = color_of(piece);
                 int pc = int(pt) + (c == Color::Black ? 6 : 0); // Map to legacy index if needed
-                key ^= Piece[pc][s120];  // Direct sq120 lookup - no conversion needed!
+                key ^= Piece[pc][MAILBOX_MAPS.to64[s120]];  // s120 is always playable here
             }
         }
         if (b.side_to_move == Color::Black) key ^= Side;
