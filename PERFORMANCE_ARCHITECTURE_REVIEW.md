@@ -1,8 +1,38 @@
 # Huginn Performance Architecture Review
 
-Date: 2026-05-15
+Original review: 2026-05-15 (GPT)
+Last status update: 2026-05-17
 
 Scope reviewed: architecture docs in [docs/](docs/), especially [docs/POSITION_AND_MOVEGEN_ARCHITECTURE.md](docs/POSITION_AND_MOVEGEN_ARCHITECTURE.md), [docs/BITBOARD_IMPLEMENTATION.md](docs/BITBOARD_IMPLEMENTATION.md), [docs/MOVEGEN_COMPARISON.md](docs/MOVEGEN_COMPARISON.md), [docs/SEARCH_AND_EVAL.md](docs/SEARCH_AND_EVAL.md), [docs/BACKLOG.md](docs/BACKLOG.md), and the hot engine code in [src/](src/).
+
+## Completion Status
+
+Tracking the priorities below against actual ships. Updated alongside each
+shipped item.
+
+| Priority | Status | Commit | Bench Δ | Measured Elo |
+|---|---|---|---|---|
+| 1. TT bound classification fix | ✅ SHIPPED | `7d11f23` (#23) | nodes @d11 −76% (5.06M → 1.20M) | +24.4 / 400g pooled, LOS >>95% |
+| 2. Real magic bitboards | ✅ SHIPPED | `3eab266` (#24) | NPS +52% (2.33 → 3.55 Mnps) | +77.7 / 400g pooled vs t4 (combined w/ #23+P1a), LOS >>99.99% |
+| 3. `board64[64]` piece cache | ✅ SHIPPED (code) | `e61f6e5` (#26) | NPS +12% (3.55 → 3.98 Mnps) | 200g Intel gauntlet vs t5 running (Sun 2026-05-17 afternoon) |
+| 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
+| 5. Staged move picker | ⏳ pending | — | — | — |
+| 6. Cache static eval per node | ⏳ pending | — | — | (cheapest remaining; ~+5-15 Elo expected) |
+| 7. Remove dead undo-state writes | ⏳ pending | — | — | (small; can bundle with #6) |
+| 8. Gate TT stats counters behind flag | ⏳ pending | — | — | — |
+| 9. TT cluster layout + generations | ⏳ pending | — | — | (after #4-7) |
+| 10. Incremental PST/phase + pawn hash | ⏳ pending | — | — | (largest remaining speed work) |
+
+**Shipped to date: 3 of 10 priorities**, contributing the bulk of the
+~+78 Elo t4 → t5 jump plus pending #26 result. Cumulative wall-clock
+to depth 11 startpos: **2285 ms → 234 ms (9.8× faster)**, NPS
+**2.21 → 3.98 Mnps (+80%)**.
+
+Related deferral: [BACKLOG #27](docs/BACKLOG.md) — early-queen-PV
+eval-quality issue identified during post-#26 bench review. Filed as
+low-priority on the grounds that the symptom is search-depth-bound,
+not an eval-design flaw; revisit if a future depth ship leaves the
+same PV unchanged. Documented in [BACKLOG #27](docs/BACKLOG.md).
 
 ## Executive Summary
 
@@ -30,6 +60,11 @@ The documentation overstates how far the engine has moved toward a fast pure-bit
 That matters because you can make bad engineering decisions from stale docs. Right now the docs make the slider and square-lookup costs look solved when they are not.
 
 ## Priority 1: Fix TT Bound Classification
+
+> **✅ SHIPPED** in commit `7d11f23` (BACKLOG #23, 2026-05-15).
+> Bench: depth-11 startpos nodes 5.06M → 1.20M (−76%), time 2285ms → 516ms.
+> Gauntlet: pooled 400g vs t4 baseline, **+24.4 Elo, LOS >>95%**.
+> See [BACKLOG #23](docs/BACKLOG.md) for full details + ship rationale.
 
 Evidence: [src/search.cpp](src/search.cpp#L1586-L1592)
 
@@ -77,6 +112,16 @@ Validation:
 
 ## Priority 2: Implement Real Slider Attack Tables
 
+> **✅ SHIPPED** in commit `3eab266` (BACKLOG #24, 2026-05-16).
+> Plain magic with fixed shifts (rook 52, bishop 55), ~2.25 MB tables,
+> magics found at init from a deterministic PRNG seed + exhaustive
+> verifier against ray-walk reference.
+> Bench: NPS 2.33 → 3.55 Mnps (+52%), time-to-d11 516ms → 263ms.
+> Gauntlet: combined with #23+P1a, pooled 400g vs baseline-t4 = **+77.7 Elo,
+> LOS >>99.99%** — promoted to `baseline-t5 = 3eab266` (BACKLOG #25).
+> Dead-code follow-up `704d84c` removed `generate_ray_attacks` and
+> direction constants (no remaining callers).
+
 Evidence: [src/bitboard.cpp](src/bitboard.cpp#L88-L156)
 
 The code uses runtime ray walking:
@@ -113,6 +158,14 @@ Validation:
 Expected payoff: high. This is one of the rare speed changes that improves movegen, king safety checks, SEE, and eval at once.
 
 ## Priority 3: Add Direct Piece-On-Square Storage
+
+> **✅ SHIPPED (code-side)** in commit `e61f6e5` (BACKLOG #26, 2026-05-17).
+> Added `std::array<Piece, 64> board64;` to Position; every mutator
+> (`set`, `move_piece`, `clear_piece`, `add_piece`) updates it in
+> lock-step with the bitboards. `at_sq64()` is now a single array load.
+> Bench: NPS 3.55 → 3.98 Mnps (+12%), time-to-d11 263ms → 234ms.
+> Gauntlet vs t5: 200g Intel running 2026-05-17 afternoon.
+> See [BACKLOG #26](docs/BACKLOG.md) for full details.
 
 Evidence: [src/position.hpp](src/position.hpp#L175-L187)
 
