@@ -14,7 +14,7 @@ shipped item.
 |---|---|---|---|---|
 | 1. TT bound classification fix | ✅ SHIPPED | `7d11f23` (#23) | nodes @d11 −76% (5.06M → 1.20M) | +24.4 / 400g pooled, LOS >>95% |
 | 2. Real magic bitboards | ✅ SHIPPED | `3eab266` (#24) | NPS +52% (2.33 → 3.55 Mnps) | +77.7 / 400g pooled vs t4 (combined w/ #23+P1a), LOS >>99.99% |
-| 3. `board64[64]` piece cache | ✅ SHIPPED (code), AMD pool pending | `e61f6e5` (#26) | NPS +12% (3.55 → 3.98 Mnps) | Intel 200g: +12.17 ± 31.80, LOS 77%. Pool with AMD for LOS-95%. |
+| 3. `board64[64]` piece cache | ❌ DEFERRED — reverted | `e61f6e5` (#26) reverted | NPS +12% (real bench gain) | Intel +12.17/LOS 77%; AMD −38.37/LOS 0.86%; pool ≈ −13 Elo. Invariant test ruled out desync; cache footprint cost ≈ scan savings on this codebase. |
 | 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
 | 5. Staged move picker | ⏳ pending | — | — | — |
 | 6. Cache static eval per node | ⏳ pending | — | — | (cheapest remaining; ~+5-15 Elo expected) |
@@ -23,10 +23,21 @@ shipped item.
 | 9. TT cluster layout + generations | ⏳ pending | — | — | (after #4-7) |
 | 10. Incremental PST/phase + pawn hash | ⏳ pending | — | — | (largest remaining speed work) |
 
-**Shipped to date: 3 of 10 priorities**, contributing the bulk of the
-~+78 Elo t4 → t5 jump plus pending #26 result. Cumulative wall-clock
-to depth 11 startpos: **2285 ms → 234 ms (9.8× faster)**, NPS
-**2.21 → 3.98 Mnps (+80%)**.
+**Shipped to date: 2 of 10 priorities** (#23 TT bound fix + #24 magic
+bitboards) — together they delivered the ~+78 Elo t4 → t5 jump.
+Priority 3 (board64 cache) was attempted at `e61f6e5` and reverted
+after a negative 400g pool — see Priority 3 row for the post-mortem.
+Cumulative wall-clock to depth 11 startpos at the current tip:
+**2285 ms → 263 ms (8.7× faster)**, NPS **2.21 → 3.55 Mnps (+61%)**.
+
+**First negative result of the session.** #26 falsified the
+"1 Elo per 1% NPS" heuristic. Caches that mirror already-hot,
+already-cheap data can cost as much in memory-footprint pressure
+as they save in instruction count. Going forward, the heuristic
+should be downgraded to a rule-of-thumb that applies cleanly to
+*new* hot work (#24's slider lookups: previously not cached → now
+cached) and not to *redundant* caching of already-cache-resident
+loops.
 
 Related deferral: [BACKLOG #27](docs/BACKLOG.md) — early-queen-PV
 eval-quality issue identified during post-#26 bench review. Filed as
@@ -159,13 +170,20 @@ Expected payoff: high. This is one of the rare speed changes that improves moveg
 
 ## Priority 3: Add Direct Piece-On-Square Storage
 
-> **✅ SHIPPED (code-side)** in commit `e61f6e5` (BACKLOG #26, 2026-05-17).
-> Added `std::array<Piece, 64> board64;` to Position; every mutator
-> (`set`, `move_piece`, `clear_piece`, `add_piece`) updates it in
-> lock-step with the bitboards. `at_sq64()` is now a single array load.
-> Bench: NPS 3.55 → 3.98 Mnps (+12%), time-to-d11 263ms → 234ms.
-> Gauntlet vs t5: 200g Intel running 2026-05-17 afternoon.
-> See [BACKLOG #26](docs/BACKLOG.md) for full details.
+> **❌ DEFERRED — reverted** (BACKLOG #26, 2026-05-17).
+> Attempted at `e61f6e5`: `std::array<Piece, 64> board64;` mirror cache
+> maintained by every Position mutator. Bench gained +12% NPS as
+> predicted. Gauntlet vs t5 came in **Intel +12.17 / LOS 77%**, **AMD
+> −38.37 / LOS 0.86%** — pool ≈ −13 Elo. Built an invariant walker
+> (`test/test_position_invariant.cpp`, `b8cd310`) that confirms board64
+> is **NOT desyncing** on any of promotion / EP / castling / undo paths
+> across 5 diverse FENs — so the regression isn't a correctness bug.
+> Most parsimonious explanation: at_sq64's 6-iteration bitboard scan was
+> already cheap enough (cache-resident, ~10 ANDs) that the +64 bytes of
+> Position footprint cost as much as the scan saves. Reverted; bitboard
+> scan retained.
+> See [BACKLOG #26](docs/BACKLOG.md) for full post-mortem +
+> revisit triggers.
 
 Evidence: [src/position.hpp](src/position.hpp#L175-L187)
 

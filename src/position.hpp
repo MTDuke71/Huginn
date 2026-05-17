@@ -93,12 +93,6 @@ public:
     std::array<std::array<Bitboard, int(PieceType::_Count)>, 2> piece_bitboards{};
     std::array<Bitboard, 2> color_bitboards{ 0, 0 }; // [White, Black] all pieces
     Bitboard occupied_bitboard{ 0 }; // All pieces (White | Black)
-
-    // BACKLOG #26: piece-on-square cache for O(1) at_sq64 / at(sq120)
-    // reads. Mirrors the piece bitboards; mutators (set, move_piece,
-    // clear_piece, add_piece) update both in lock-step. Replaces the
-    // 6-piece-type loop that at_sq64() used to do over the bitboards.
-    std::array<Piece, 64> board64{};
     
     uint64_t zobrist_key{0};
     
@@ -165,21 +159,37 @@ public:
     // Compute and set the Zobrist key from current position
     void update_zobrist_key();
 
-    // Access. at() returns Offboard for sentinel squares, otherwise
-    // delegates to at_sq64 which reads the board64 piece cache.
+    // Access. at() derives the piece from bitboards so that this function does
+    // not depend on board[120] — preparatory step for deleting the mailbox
+    // half of Position. Returns Offboard for sentinel squares, None for
+    // empty playable squares, or the piece otherwise.
     FORCE_INLINE Piece at(int s) const {
         if (s < 0 || s >= 120) return Piece::Offboard;
         int s64 = MAILBOX_MAPS.to64[s];
         if (s64 < 0) return Piece::Offboard;  // 120-sq sentinel
         return at_sq64(s64);
     }
-    // Direct 64-square accessor for hot paths (movegen, eval, MakeMove)
-    // that already hold the 64-square index. BACKLOG #26: this is now a
-    // single array load instead of a bitboard scan with a 6-iteration
-    // piece-type loop. Maintained by every Position mutator.
+    // Direct 64-square accessor for hot paths (movegen, eval) that already
+    // hold the 64-square index. Skips the 120→64 round-trip and bounds
+    // checking. Caller must guarantee s64 ∈ [0, 64).
+    //
+    // History: BACKLOG #26 (e61f6e5) added a board64[64] piece-on-square
+    // cache to make this an array load; bench gained +12% NPS but pooled
+    // 400g vs t5 came in at -13 Elo (Intel +12 / AMD -38). The invariant
+    // test (b8cd310) confirmed the cache was NOT desyncing — the +64
+    // bytes of cache footprint cost as much as the loop saved on this
+    // codebase. Reverted; bitboard scan kept.
     FORCE_INLINE Piece at_sq64(int s64) const {
         assert(s64 >= 0 && s64 < 64);
-        return board64[s64];
+        uint64_t bit = 1ULL << s64;
+        if ((occupied_bitboard & bit) == 0) return Piece::None;
+        int c = (color_bitboards[0] & bit) ? 0 : 1;
+        for (int t = int(PieceType::Pawn); t <= int(PieceType::King); ++t) {
+            if (piece_bitboards[c][t] & bit) {
+                return make_piece(Color(c), PieceType(t));
+            }
+        }
+        return Piece::None;  // unreachable when bitboards are consistent
     }
     // Place / clear a piece at a 120-square index using bitboard storage.
     // If a piece was already at this square it is removed first; passing
@@ -207,9 +217,6 @@ public:
             piece_bitboards[ci][ti] |= bit;
             color_bitboards[ci] |= bit;
             occupied_bitboard |= bit;
-            board64[s64] = p;  // #26: piece-on-square cache
-        } else {
-            board64[s64] = Piece::None;  // #26
         }
     }
 
@@ -242,10 +249,6 @@ public:
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], to_sq64);
             setBit(color_bitboards[size_t(piece_color)], to_sq64);
             setBit(occupied_bitboard, to_sq64);
-
-            // #26: keep board64 in sync
-            board64[from_sq64] = Piece::None;
-            board64[to_sq64]   = piece;
         }
     }
     
@@ -274,7 +277,6 @@ public:
             popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             popBit(color_bitboards[size_t(piece_color)], sq64);
             popBit(occupied_bitboard, sq64);
-            board64[sq64] = Piece::None;  // #26
         }
     }
 
@@ -302,7 +304,6 @@ public:
             setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
             setBit(color_bitboards[size_t(piece_color)], sq64);
             setBit(occupied_bitboard, sq64);
-            board64[sq64] = piece;  // #26
         }
     }
     

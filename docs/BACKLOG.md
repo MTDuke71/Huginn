@@ -205,13 +205,15 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
-### #26: `board64[64]` piece-on-square cache (REOPENED — cross-machine disagreement)
+### #26: `board64[64]` piece-on-square cache — DEFERRED (negative gauntlet, no bug)
 
-- status: **REOPENED 2026-05-17** — Intel +12.17 / LOS 77% vs AMD
-  −38.37 / LOS 0.86% on identical binaries (~50 Elo machine-dependent
-  swing); does NOT ship, revert + invariant test (see Status below)
-- priority: was medium-high (speed win, low risk) — reclassified:
-  latent, machine-dependent — uninitialised `board64` suspected
+- status: **DEFERRED 2026-05-17** — reverted in this commit after the
+  400g pool came in net-negative AND the invariant walker (`b8cd310`)
+  ruled out the obvious desync bug. See "What we actually know" below.
+- priority: was medium-high (speed win, low risk); now low — likely
+  needs profiling evidence before retry
+- ~~REOPENED 2026-05-17~~  (the cross-machine framing was a hypothesis,
+  not a finding; the invariant test ruled it out — see below)
 - ~~closed code-side (2026-05-17, shipped pending 200g gauntlet)~~
 - type: speed
 - source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
@@ -275,41 +277,89 @@ the t5 stack already shipped ~+78 Elo over t4 (#25).
   **−38.37 ± 31.90 Elo, LOS 0.86%**, W38/L60/D102, score 44.50%,
   Ptnml(0-2) [10, 24, 46, 18, 2]. Decisive negative.
 
-**Headline: the two machines disagree by ~50 Elo on byte-identical
-binaries** (current `e61f6e5` vs frozen t5; same openings, tc,
-concurrency). Intel +12.17 / LOS 77% vs AMD −38.37 / LOS 0.86%. The
-gap far exceeds the combined CI — the samples are **statistically
-inconsistent and must NOT be pooled into one number** (a naive pool
-≈ −13 Elo is meaningless; it averages a real disagreement). The
-disagreement *is* the finding.
+**Headline: the two machines disagree on the sign** (Intel +12.17 /
+LOS 77% vs AMD −38.37 / LOS 0.86%). Naive pool ≈ −13 Elo, score
+48.1%. The disagreement is wider than typical for byte-identical
+binaries at 200g each, but **not impossibly so**: with a true Elo
+near zero or slightly negative and per-sample SD ~20-25, two samples
+landing 25 Elo above and below the mean is a low-but-not-vanishing
+joint probability (~few percent). Whether this is "machine-dependent
+bug" or "antipodal noise around small true Elo" can't be decided from
+just these two samples — but see "What we actually know" below.
 
-**Revised diagnosis.** A bug that flipped decisions would regress on
-*both* machines; a clean speed win would help both. A swing whose
-sign depends on the host most plausibly means **`board64` is read
-holding indeterminate values** — some Position construction / copy /
-restore path sets up the bitboards but leaves `board64` uninitialised
-or stale, and the garbage differs by machine/allocator/run. `reset()`
-zeros it and `rebuild_counts()` re-derives it, but anything bypassing
-both (copy ctor / pass-by-value `Position`, `memcpy`, a search-stack
-snapshot, null-move make/unmake, a FEN path skipping
-`rebuild_counts`) reads junk. Special-move desync (promotion / EP /
-castling rook hop / asymmetric `TakeMove`) is still possible and
-would compound it, but the machine-dependence specifically fingers
-uninitialised memory. This falsifies the "Why this is accuracy-safe"
-claim above for at least one code path.
+**What we actually know (post-investigation).**
 
-**Status: REOPENED — does NOT ship.** Recommended:
-1. Revert #26 on the branch (commit/tag preserves it) so the tip is
-   back to clean t5-equivalent.
-2. Add a Position invariant test: after every `MakeMove`/`TakeMove`
-   over a perft walk of Kiwipete + a promo/EP/castling-rich position,
-   assert `board64[s]` == bitboard-derived piece for all 64 squares.
-3. Audit every `board64` init path — copy ctor, pass-by-value,
-   search-stack snapshots, null-move, FEN — for one skipping
-   `reset()`/`rebuild_counts()`. Run the test under MSVC `/RTCu` or
-   ASan to catch the uninitialised read directly.
-4. Re-gauntlet on BOTH machines once the invariant is green; never
-   trust a single-machine read for this change again.
+Worried the cache was desyncing on a special-move path the bench
+misses, we built `test/test_position_invariant.cpp` (committed at
+`b8cd310`) that walked every legal move on five diverse FENs
+(startpos, Kiwipete, promotion-rich, EP available, both-sides-castle)
+to depths 3-4, asserting `board64[sq64]` matches the
+bitboard-derived piece after **every** MakeMove and **every**
+TakeMove. **All 5 cases PASSED.** The cache was correct across
+promotion, en passant, castling, and the corresponding undo paths.
+
+Additional checks:
+- No `Position` copy / pass-by-value / `memcpy` paths exist in
+  `src/` (verified by grep) — board64 zero-init via brace-init
+  `std::array<Piece, 64>{}` is sufficient; there's no construction
+  path that could leave it uninitialized.
+- `MakeNullMove` / `TakeNullMove` don't touch pieces, so they
+  correctly leave board64 alone.
+- `set_from_fen` calls `reset()` (zeros board64) and
+  `rebuild_counts()` (rebuilds board64 from the bitboards).
+
+So the "uninitialized `board64`" hypothesis from the original
+REOPENED framing is **not supported by evidence**. The cache really
+was correct.
+
+**Most parsimonious explanation now.** The +12% NPS bench gain is
+real (instruction-count savings on `at_sq64`), but at TC=10+0.1 the
+engine is bottlenecked by total work-per-node, not by this one
+function. The +64 bytes that `board64` adds to `Position`'s
+memory footprint costs as much in L1/L2 access overhead (across the
+~80 `Position::at*` calls per node and the hot-path traversal of
+the Position struct itself) as the array load saves vs the bitboard
+scan. Net true Elo is likely near zero or slightly negative; the
+pooled −13 is consistent with that. The Intel/AMD swing is then
+just two samples on opposite sides of the small true value.
+
+This **falsifies a default intuition**: "always cache a hot lookup"
+is not free when the lookup is already cache-resident and cheap
+(`at_sq64`'s 6-iteration loop is ~10 ANDs + branches from already-hot
+cache lines, well under a nanosecond on modern CPUs). The
+1-Elo-per-1%-NPS slope observed for #23 (+5% NPS → +24 pooled) and
+#24 (+52% NPS → +78 pooled) does **not** generalize to caches that
+displace surrounding hot data.
+
+**Revert (this commit):**
+- Removed `board64` field + all mutator updates from `position.hpp`.
+- Restored bitboard-scan `at_sq64` (with a comment block recording
+  the failed attempt + revert reason).
+- Removed `board64.fill` from `reset()` and the rebuild loop from
+  `rebuild_counts()`.
+- Removed `test/test_position_invariant.cpp` from CMakeLists and
+  from disk (it references `pos.board64` which no longer exists).
+  The test design is documented in `b8cd310`'s commit message + this
+  entry for future-self if any cache is re-attempted.
+
+**Revisit triggers** (when to attempt again):
+- A profiling pass (callgrind / VTune / Intel PCM) shows `at_sq64`
+  consuming a measurable fraction (≥5%) of search time. Currently
+  nothing suggests that.
+- The `Position` struct gets a memory-layout reorganization that
+  reduces footprint elsewhere — a cache could land in freed cache
+  capacity at neutral total size.
+- A smaller cache variant (e.g., 4-bit per square in 32 bytes
+  instead of 8-bit in 64 bytes) might fit the same usage at half
+  the memory cost and tip the trade-off.
+
+**Methodology note.** This is the first case in this session where
+"speed bench up" did **not** convert to "gauntlet Elo up." The
+1-Elo-per-1%-NPS slope is a heuristic, not a law — works for hot
+functions that are NOT already cache-resident, breaks down for ones
+that are. Going forward, if bench shows < 15% NPS gain and the
+function being optimized was already small/cheap, treat the
+expected Elo gain as 0 ± noise rather than projecting linearly.
 
 ---
 

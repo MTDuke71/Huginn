@@ -72,7 +72,6 @@ void Position::reset() {
         }
     }
     occupied_bitboard = 0ULL;
-    board64.fill(Piece::None);  // #26: piece-on-square cache
     king_sq[0] = -1;
     king_sq[1] = -1;
     side_to_move = Color::None;
@@ -248,24 +247,6 @@ void Position::rebuild_counts() {
         }
     }
 
-    // #26: rebuild the piece-on-square cache from the bitboards. Called
-    // from set_from_fen and other paths that bypass the per-square
-    // mutators. set() already maintains board64 in lock-step, but if any
-    // code path manipulates piece_bitboards directly (e.g. tests) this
-    // restores the invariant.
-    board64.fill(Piece::None);
-    for (int color = 0; color < 2; ++color) {
-        Color c = static_cast<Color>(color);
-        for (int type = int(PieceType::Pawn); type <= int(PieceType::King); ++type) {
-            Bitboard bb = piece_bitboards[color][type];
-            const Piece p = make_piece(c, static_cast<PieceType>(type));
-            while (bb) {
-                int sq64 = get_lsb(bb);
-                bb &= bb - 1;
-                board64[sq64] = p;
-            }
-        }
-    }
 }
 
 // Set up the standard chess starting position using FEN
