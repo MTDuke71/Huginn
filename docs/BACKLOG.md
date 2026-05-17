@@ -264,7 +264,13 @@ just as much as deep ones.
   **+75.88 ± 41.00 Elo, LOS 99.99%**, W82/L39/D79, score 60.75%,
   Ptnml(0-2) [4, 20, 26, 29, 21]. Combined #23+#24 stack vs t4;
   marginal #24 contribution ≈ +50 Elo over the #23 pooled ~+24.
-  AMD pool pending for tighter CI (~±28 over 400g).
+- 200g AMD gauntlet (2026-05-17, direct frozen t4 vs t5):
+  **t5 +79.53 ± 40.59 Elo over t4, LOS ~100%**, t5 W97/L52/D51,
+  score 61.25%. Near-identical to Intel's +75.88.
+- **Pooled 400g (Intel + AMD): t5 W179/L91/D130, score 61.0%,
+  ≈ +77.7 Elo over t4, LOS ≫99.99%.** Exceptionally tight
+  cross-machine agreement confirms the #24/#25 ship and the
+  `baseline-t5 = 3eab266` freeze. See `gauntlet/README.md`.
 
 **Why this converts cleanly (unlike #23).** #23's bench gain was
 concentrated at depth 10+, but TC=10+0.1 plays mostly at depth 9-10,

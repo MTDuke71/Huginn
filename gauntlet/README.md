@@ -48,8 +48,9 @@ per experiment**.
 
 ## History
 
-| Date | Machine | Games | Result vs t4 | Notes |
+| Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
+| 2026-05-17 | AMD 7800X3D | 200 | **t5 +79.53 ± 40.59 Elo over t4**, LOS ~100%, t5 W97/L52/D51 | frozen **t4 vs t5** baseline-delta (not current-vs-tN); full t5 stack = P1a + #23 + #24 magic bitboards |
 | 2026-05-15 | AMD 7800X3D | 200 | **+40.13 ± 39.78 Elo**, LOS 97.75%, W71/L48/D81 | code = t4 + P1a + **#23 TT-bound fix**; ran hot vs Intel's +8.69 |
 | 2026-05-15 | Intel 13700K | 200 | **+8.69 ± 39.12 Elo**, LOS 66.90%, W70/L65/D65 | #23 TT-bound fix; original lean ship signal (BACKLOG #23) |
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
@@ -82,6 +83,20 @@ a real, meaningful gain that comfortably clears the ship threshold and
 retroactively confirms the #23 ship decision. (Distinct code
 generation from the P1a pool above — these cannot be merged with the
 600g P1a sample.)
+
+### Pooled — t5 over t4 (#24 full stack, 400 games, two machines)
+
+Frozen **t4 vs t5** baseline-delta (P1a + #23 TT-fix + #24 magic
+bitboards combined), t5 perspective:
+
+- Intel (BACKLOG #24 current-vs-t4 @ #24 = t5): W82 / L39 / D79
+- AMD   (t4-vs-t5 direct):                      W97 / L52 / D51
+- **Pooled: W179 / L91 / D130**, score **61.0%**, **≈ +77.7 Elo**,
+  LOS ≫ 99.99%.
+
+Exceptionally tight cross-machine agreement (Intel +75.88, AMD
++79.53). The t5 stack is a rock-solid **~+78 Elo over t4** —
+confirms the #24/#25 ship and the `baseline-t5 = 3eab266` freeze.
 
 (Pooling method: see Workflow step 3 above — `-pgnin` isn't in this
 fastchess build, so sum W/L/D and compute Elo manually.)
