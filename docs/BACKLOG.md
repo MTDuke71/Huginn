@@ -205,10 +205,14 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
-### #26: `board64[64]` piece-on-square cache (CLOSED, pending gauntlet)
+### #26: `board64[64]` piece-on-square cache (REOPENED — cross-machine disagreement)
 
-- status: **closed code-side** (2026-05-17, shipped pending 200g gauntlet)
-- priority: was medium-high (speed win at every depth, low risk)
+- status: **REOPENED 2026-05-17** — Intel +12.17 / LOS 77% vs AMD
+  −38.37 / LOS 0.86% on identical binaries (~50 Elo machine-dependent
+  swing); does NOT ship, revert + invariant test (see Status below)
+- priority: was medium-high (speed win, low risk) — reclassified:
+  latent, machine-dependent — uninitialised `board64` suspected
+- ~~closed code-side (2026-05-17, shipped pending 200g gauntlet)~~
 - type: speed
 - source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
   Priority 3).
@@ -266,18 +270,46 @@ the t5 stack already shipped ~+78 Elo over t4 (#25).
   (mod ±5-node input-polling noise from faster wall-clock).
 - 200g Intel gauntlet (2026-05-17, tc=10+0.1, noob_3moves.epd):
   **+12.17 ± 31.80 Elo, LOS 77.42%**, W47/L40/D113, score 51.75%,
-  Ptnml(0-2) [4, 23, 40, 28, 5]. Lean positive; DrawRatio 56.5%
-  is unusually high (t5 and #26 are close in strength → draws
-  dominate, which tightens the CI from typical ±41 to ±32).
-- AMD 200g pool pending to push LOS above 95% (predicted pooled
-  CI ~±22; if AMD lands similar +10-15 the pooled LOS exceeds
-  95% with point estimate ~+12).
+  Ptnml(0-2) [4, 23, 40, 28, 5]. Lean positive, DrawRatio 56.5%.
+- 200g AMD gauntlet (2026-05-17, same conditions):
+  **−38.37 ± 31.90 Elo, LOS 0.86%**, W38/L60/D102, score 44.50%,
+  Ptnml(0-2) [10, 24, 46, 18, 2]. Decisive negative.
 
-**Expected vs measured.** Predicted +15-30 Elo from +12% NPS;
-measured +12.17. At the low edge of the band, consistent with
-the linear "1 Elo per 1% NPS" pattern observed for #24
-(+52% NPS → ~+50 Elo single-Intel) — this slope appears
-reliable for accuracy-safe speed wins at TC=10+0.1.
+**Headline: the two machines disagree by ~50 Elo on byte-identical
+binaries** (current `e61f6e5` vs frozen t5; same openings, tc,
+concurrency). Intel +12.17 / LOS 77% vs AMD −38.37 / LOS 0.86%. The
+gap far exceeds the combined CI — the samples are **statistically
+inconsistent and must NOT be pooled into one number** (a naive pool
+≈ −13 Elo is meaningless; it averages a real disagreement). The
+disagreement *is* the finding.
+
+**Revised diagnosis.** A bug that flipped decisions would regress on
+*both* machines; a clean speed win would help both. A swing whose
+sign depends on the host most plausibly means **`board64` is read
+holding indeterminate values** — some Position construction / copy /
+restore path sets up the bitboards but leaves `board64` uninitialised
+or stale, and the garbage differs by machine/allocator/run. `reset()`
+zeros it and `rebuild_counts()` re-derives it, but anything bypassing
+both (copy ctor / pass-by-value `Position`, `memcpy`, a search-stack
+snapshot, null-move make/unmake, a FEN path skipping
+`rebuild_counts`) reads junk. Special-move desync (promotion / EP /
+castling rook hop / asymmetric `TakeMove`) is still possible and
+would compound it, but the machine-dependence specifically fingers
+uninitialised memory. This falsifies the "Why this is accuracy-safe"
+claim above for at least one code path.
+
+**Status: REOPENED — does NOT ship.** Recommended:
+1. Revert #26 on the branch (commit/tag preserves it) so the tip is
+   back to clean t5-equivalent.
+2. Add a Position invariant test: after every `MakeMove`/`TakeMove`
+   over a perft walk of Kiwipete + a promo/EP/castling-rich position,
+   assert `board64[s]` == bitboard-derived piece for all 64 squares.
+3. Audit every `board64` init path — copy ctor, pass-by-value,
+   search-stack snapshots, null-move, FEN — for one skipping
+   `reset()`/`rebuild_counts()`. Run the test under MSVC `/RTCu` or
+   ASan to catch the uninitialised read directly.
+4. Re-gauntlet on BOTH machines once the invariant is green; never
+   trust a single-machine read for this change again.
 
 ---
 
