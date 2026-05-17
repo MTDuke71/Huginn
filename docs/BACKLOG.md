@@ -1329,6 +1329,61 @@ that hit Kg5).
 
 ## Open — low priority
 
+### #27: Unorthodox early-queen PV (d1d3 / d8d6) — deferred
+
+- status: **deferred** (2026-05-17, Option D selected)
+- priority: low (cosmetic / opening-only symptom; doesn't show in
+  middlegame or endgame)
+- type: evaluation quality
+
+**Symptom.** Depth-11 startpos search converges on
+`d2d4 d7d5 d1d3 d8d6` (PV from the post-#26 bench). The d1→d3 and
+d8→d6 queen moves are bad opening chess — they expose the queen to
+harassment before minors are developed.
+
+**Root cause** (`src/evaluation.hpp:172`, `QUEEN_TABLE`). The queen
+PST has a +5 cp gradient toward center ranks 3-6 / files c-f, with
+−5 on the back rank. Net **+10 cp incentive** to move queen d1→d3 or
+d8→d6. There is **no compensating term** for early-queen development
+(no "minors out first" heuristic, no phase-gated queen PST, no
+mobility-quality scoring that distinguishes "queen has many safe
+squares" from "queen on a square enemy minors will hit").
+
+At our search depth of 9-10 plies in tc=10+0.1 middlegame play, the
+engine can't see far enough into "queen harassed, lost tempi, lost
+the resulting position" to override the immediate +10 cp PST gain.
+A deeper search (MTL likely reaches depth 12-13 at the same TC)
+would find the punishment naturally.
+
+**Fix options considered:**
+
+| Option | Effort | Estimated Elo | Risk |
+|---|---|---|---|
+| A. Flatten queen PST center to 0 | 5 min | +5-15 | low |
+| B. Tempered queen PST + back-rank bonus, phase-gated | 30 min | +10-25 | low-medium |
+| C. Minor-development penalty (-15-25 cp if queen off back rank but minors home) | 60-90 min | +15-30 | medium |
+| D. Defer; rely on future depth/pruning improvements | 0 | +0 directly | n/a |
+
+**Why D (deferred).** The early-queen PV is a *symptom* of search
+depth, not a fundamental eval flaw. Adding a hand-tuned penalty fixes
+the immediate cosmetic issue but doesn't address the underlying
+"engine can't see deep enough" problem — and the penalty itself can
+mis-fire in positions where an early queen move IS the correct play
+(early-attack openings, gambits, some defensive setups). Investing
+in tree-shape improvements (aspiration windows that work post-#23 TT
+fix, LMP retry, continuation history retry) targets the real
+limitation. The d1d3 / d8d6 line is also opening-only — it goes away
+once we're out of book-ish positions, so its real-game cost is small.
+
+**When to revisit.** If a future tree-shape ship pushes effective
+search depth to 11+ at tc=10+0.1 and the PV is *still* d1d3/d8d6,
+that means the PST gradient is the real driver and Option A or B
+becomes worth shipping. Or if a strong external opponent (MTL,
+MORA) starts winning specifically on early-queen exploitation, the
+eval fix moves up in priority.
+
+---
+
 ### #20: Trapped-bishop eval pattern (a7/h7/a2/h2) — deferred
 
 - status: deferred (2026-05-13)
