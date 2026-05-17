@@ -80,74 +80,15 @@ bool is_set(Bitboard bb, int square) {
     return getBit(bb, square) != 0;
 }
 
-int sq64_to_sq120(int sq64) {
-    if (sq64 < 0 || sq64 >= 64) return -1;
-    return MAILBOX_MAPS.to120[sq64];
-}
-
-int sq120_to_sq64(int sq120) {
-    if (sq120 < 0 || sq120 >= 120) return -1;
-    return MAILBOX_MAPS.to64[sq120];
-}
-
 // ============================================================================
 // SLIDING PIECE ATTACK GENERATION
 // ============================================================================
 
-uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy) {
-    uint64_t attacks = 0ULL;
-    int file = square % 8;
-    int rank = square / 8;
-    
-    // Calculate direction offsets correctly
-    int rank_offset, file_offset;
-    switch (direction) {
-        case 9:   // NE
-            rank_offset = 1; file_offset = 1; break;
-        case 7:   // NW  
-            rank_offset = 1; file_offset = -1; break;
-        case -7:  // SE
-            rank_offset = -1; file_offset = 1; break;
-        case -9:  // SW
-            rank_offset = -1; file_offset = -1; break;
-        case 8:   // N
-            rank_offset = 1; file_offset = 0; break;
-        case -8:  // S
-            rank_offset = -1; file_offset = 0; break;
-        case 1:   // E
-            rank_offset = 0; file_offset = 1; break;
-        case -1:  // W
-            rank_offset = 0; file_offset = -1; break;
-        default:
-            return 0ULL; // Invalid direction
-    }
-    
-    for (int step = 1; step < 8; ++step) {
-        int new_rank = rank + rank_offset * step;
-        int new_file = file + file_offset * step;
-        
-        // Check board boundaries
-        if (new_rank < 0 || new_rank >= 8 || new_file < 0 || new_file >= 8) {
-            break;
-        }
-        
-        int target_square = new_rank * 8 + new_file;
-        attacks |= (1ULL << target_square);
-        
-        // Stop if we hit an occupied square
-        if (occupancy & (1ULL << target_square)) {
-            break;
-        }
-    }
-    
-    return attacks;
-}
-
 // BACKLOG #24: bishop_attacks/rook_attacks delegate to real magic
-// bitboards (src/magic_bitboards.{hpp,cpp}). The ray-walker
-// generate_ray_attacks() above is preserved for any debug/diagnostic
-// callers that may want a ground-truth comparison; the magic init has
-// its own self-contained ray-walker for table population + verification.
+// bitboards (src/magic_bitboards.{hpp,cpp}). The old ray-walker
+// (generate_ray_attacks) was removed in #26 follow-up — the magic init
+// has its own self-contained ray walker for table population +
+// verification, so the bitboard.cpp ray walker had no remaining callers.
 uint64_t bishop_attacks(int square, uint64_t occupancy) {
     return Magic::magic_bishop_attacks(square, occupancy);
 }

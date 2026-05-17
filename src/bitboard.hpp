@@ -245,33 +245,17 @@ constexpr int rank_of_square(int square) {
     return RANK_OF_SQUARE[square];
 }
 
-// Convert between different square representations
-// Uses pre-computed MAILBOX_MAPS arrays for consistency and reliability
-int sq64_to_sq120(int sq64);        // Convert 64-square to 120-square index
-int sq120_to_sq64(int sq120);       // Convert 120-square to 64-square index
-
-// Convenient macros for square conversion (direct MAILBOX_MAPS access)
+// Square-conversion macros for direct MAILBOX_MAPS access. The wrapper
+// functions (sq64_to_sq120 / sq120_to_sq64) that used to live alongside
+// these were removed in BACKLOG #26 follow-up — they only had test
+// callers; production code has always used the macros directly.
+// Caller is responsible for in-range arguments (no bounds check).
 #define SQ64(sq120)  (MAILBOX_MAPS.to64[sq120])    // Convert sq120 → sq64
 #define SQ120(sq64)  (MAILBOX_MAPS.to120[sq64])    // Convert sq64 → sq120
 
 // ============================================================================
 // SLIDING PIECE ATTACK FUNCTIONS
 // ============================================================================
-
-// Direction constants for sliding pieces
-constexpr int BISHOP_DIRECTIONS[] = {9, 7, -7, -9};  // NE, NW, SE, SW
-constexpr int ROOK_DIRECTIONS[] = {8, -8, 1, -1};    // N, S, E, W
-constexpr int NUM_BISHOP_DIRECTIONS = 4;
-constexpr int NUM_ROOK_DIRECTIONS = 4;
-
-/**
- * @brief Generate ray attacks in a specific direction from a square
- * @param square Starting square (0-63)
- * @param direction Direction offset (-9, -8, -7, -1, 1, 7, 8, 9)
- * @param occupancy Bitboard of occupied squares
- * @return Bitboard of attacked squares in that direction
- */
-uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy);
 
 /**
  * @brief Get bishop attack bitboard for a square with occupancy

@@ -79,57 +79,37 @@ TEST_F(BitboardTest, SquareIndexing) {
     EXPECT_EQ(rank_of_square(28), 3);  // e4 -> rank 4 (3)
 }
 
-// Test square conversion between 64 and 120 indexing
+// Test square conversion between 64 and 120 indexing. The wrapper
+// functions sq64_to_sq120 / sq120_to_sq64 were removed in the #26
+// follow-up cleanup — production code has always used the SQ64 / SQ120
+// macros directly (raw MAILBOX_MAPS access). The macros do not bounds
+// check; the off-board cases here exercise that the underlying tables
+// hold -1 for sentinel rows/columns.
 TEST_F(BitboardTest, SquareConversion) {
-    // Test some known conversions
-    EXPECT_EQ(sq64_to_sq120(0), 21);   // a1: 0 -> 21
-    EXPECT_EQ(sq64_to_sq120(7), 28);   // h1: 7 -> 28
-    EXPECT_EQ(sq64_to_sq120(56), 91);  // a8: 56 -> 91
-    EXPECT_EQ(sq64_to_sq120(63), 98);  // h8: 63 -> 98
-    EXPECT_EQ(sq64_to_sq120(28), 55);  // e4: 28 -> 55
-    
-    // Test reverse conversion
-    EXPECT_EQ(sq120_to_sq64(21), 0);   // a1: 21 -> 0
-    EXPECT_EQ(sq120_to_sq64(28), 7);   // h1: 28 -> 7
-    EXPECT_EQ(sq120_to_sq64(91), 56);  // a8: 91 -> 56
-    EXPECT_EQ(sq120_to_sq64(98), 63);  // h8: 98 -> 63
-    EXPECT_EQ(sq120_to_sq64(55), 28);  // e4: 55 -> 28
-    
-    // Test new conversion macros match function results
-    EXPECT_EQ(SQ120(0), 21);     // a1: 0 -> 21
-    EXPECT_EQ(SQ120(7), 28);     // h1: 7 -> 28  
-    EXPECT_EQ(SQ120(56), 91);    // a8: 56 -> 91
-    EXPECT_EQ(SQ120(63), 98);    // h8: 63 -> 98
-    EXPECT_EQ(SQ120(28), 55);    // e4: 28 -> 55
-    
-    EXPECT_EQ(SQ64(21), 0);      // a1: 21 -> 0
-    EXPECT_EQ(SQ64(28), 7);      // h1: 28 -> 7
-    EXPECT_EQ(SQ64(91), 56);     // a8: 91 -> 56
-    EXPECT_EQ(SQ64(98), 63);     // h8: 98 -> 63
-    EXPECT_EQ(SQ64(55), 28);     // e4: 55 -> 28
-    
-    // Verify macros match functions for all valid squares
-    for (int sq64 = 0; sq64 < 64; ++sq64) {
-        EXPECT_EQ(SQ120(sq64), sq64_to_sq120(sq64)) << "Macro/function mismatch at sq64=" << sq64;
-    }
-    for (int sq120 = 21; sq120 <= 98; ++sq120) {
-        if ((sq120 % 10) >= 1 && (sq120 % 10) <= 8) { // Valid file
-            EXPECT_EQ(SQ64(sq120), sq120_to_sq64(sq120)) << "Macro/function mismatch at sq120=" << sq120;
-        }
-    }
-    
-    // Test invalid squares
-    EXPECT_EQ(sq64_to_sq120(-1), -1);
-    EXPECT_EQ(sq64_to_sq120(64), -1);
-    EXPECT_EQ(sq120_to_sq64(20), -1);  // Off-board
-    EXPECT_EQ(sq120_to_sq64(29), -1);  // Off-board
+    // Known sq64 → sq120 conversions
+    EXPECT_EQ(SQ120(0),  21);  // a1
+    EXPECT_EQ(SQ120(7),  28);  // h1
+    EXPECT_EQ(SQ120(56), 91);  // a8
+    EXPECT_EQ(SQ120(63), 98);  // h8
+    EXPECT_EQ(SQ120(28), 55);  // e4
+
+    // Reverse: sq120 → sq64
+    EXPECT_EQ(SQ64(21), 0);    // a1
+    EXPECT_EQ(SQ64(28), 7);    // h1
+    EXPECT_EQ(SQ64(91), 56);   // a8
+    EXPECT_EQ(SQ64(98), 63);   // h8
+    EXPECT_EQ(SQ64(55), 28);   // e4
+
+    // Sentinel-row squares in MAILBOX_MAPS.to64 hold -1.
+    EXPECT_EQ(SQ64(20), -1);   // Off-board (sentinel column)
+    EXPECT_EQ(SQ64(29), -1);   // Off-board
 }
 
-// Test round-trip conversion
+// Test round-trip conversion across all 64 playable squares.
 TEST_F(BitboardTest, RoundTripConversion) {
     for (int sq64 = 0; sq64 < 64; ++sq64) {
-        int sq120 = sq64_to_sq120(sq64);
-        int back_to_64 = sq120_to_sq64(sq120);
+        const int sq120 = SQ120(sq64);
+        const int back_to_64 = SQ64(sq120);
         EXPECT_EQ(back_to_64, sq64) << "Failed round-trip for square " << sq64;
     }
 }
