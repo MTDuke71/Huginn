@@ -14,7 +14,7 @@ shipped item.
 |---|---|---|---|---|
 | 1. TT bound classification fix | ✅ SHIPPED | `7d11f23` (#23) | nodes @d11 −76% (5.06M → 1.20M) | +24.4 / 400g pooled, LOS >>95% |
 | 2. Real magic bitboards | ✅ SHIPPED | `3eab266` (#24) | NPS +52% (2.33 → 3.55 Mnps) | +77.7 / 400g pooled vs t4 (combined w/ #23+P1a), LOS >>99.99% |
-| 3. `board64[64]` piece cache | ✅ SHIPPED (code) | `e61f6e5` (#26) | NPS +12% (3.55 → 3.98 Mnps) | 200g Intel gauntlet vs t5 running (Sun 2026-05-17 afternoon) |
+| 3. `board64[64]` piece cache | ✅ SHIPPED (code), AMD pool pending | `e61f6e5` (#26) | NPS +12% (3.55 → 3.98 Mnps) | Intel 200g: +12.17 ± 31.80, LOS 77%. Pool with AMD for LOS-95%. |
 | 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
 | 5. Staged move picker | ⏳ pending | — | — | — |
 | 6. Cache static eval per node | ⏳ pending | — | — | (cheapest remaining; ~+5-15 Elo expected) |

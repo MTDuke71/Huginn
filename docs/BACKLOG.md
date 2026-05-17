@@ -264,12 +264,20 @@ the t5 stack already shipped ~+78 Elo over t4 (#25).
 - Perft suite passes (movegen bit-identical).
 - d11 startpos PV and node count match the t5 binary exactly
   (mod ±5-node input-polling noise from faster wall-clock).
-- Pending: 200g gauntlet vs `baseline-t5` at tc=10+0.1.
+- 200g Intel gauntlet (2026-05-17, tc=10+0.1, noob_3moves.epd):
+  **+12.17 ± 31.80 Elo, LOS 77.42%**, W47/L40/D113, score 51.75%,
+  Ptnml(0-2) [4, 23, 40, 28, 5]. Lean positive; DrawRatio 56.5%
+  is unusually high (t5 and #26 are close in strength → draws
+  dominate, which tightens the CI from typical ±41 to ±32).
+- AMD 200g pool pending to push LOS above 95% (predicted pooled
+  CI ~±22; if AMD lands similar +10-15 the pooled LOS exceeds
+  95% with point estimate ~+12).
 
-**Expected Elo.** Extrapolating from #24's 52% NPS → ~+50 Elo,
-a +12% NPS win should land in the +15-30 Elo band on a 200g.
-Single-200g CI is ±41 so a clean LOS-95% read is possible but
-not guaranteed; pool with AMD for confidence if borderline.
+**Expected vs measured.** Predicted +15-30 Elo from +12% NPS;
+measured +12.17. At the low edge of the band, consistent with
+the linear "1 Elo per 1% NPS" pattern observed for #24
+(+52% NPS → ~+50 Elo single-Intel) — this slope appears
+reliable for accuracy-safe speed wins at TC=10+0.1.
 
 ---
 
