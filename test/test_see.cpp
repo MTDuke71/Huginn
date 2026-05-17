@@ -17,12 +17,12 @@ namespace {
 // Find a move from -> to (in algebraic, e.g. "e4", "d5") in the legal move
 // list of `pos`. Returns the matching S_MOVE, or .move=0 if not found.
 S_MOVE find_move(const Position& pos, const std::string& from_alg, const std::string& to_alg) {
-    int from120 = (from_alg[0] - 'a') + (from_alg[1] - '1') * 10 + 21;
-    int to120   = (to_alg[0]   - 'a') + (to_alg[1]   - '1') * 10 + 21;
+    int from64 = (from_alg[0] - 'a') + (from_alg[1] - '1') * 8;
+    int to64   = (to_alg[0]   - 'a') + (to_alg[1]   - '1') * 8;
     S_MOVELIST list;
     generate_legal_moves(const_cast<Position&>(pos), list);
     for (int i = 0; i < list.count; ++i) {
-        if (list.moves[i].get_from() == from120 && list.moves[i].get_to() == to120) {
+        if (list.moves[i].get_from() == from64 && list.moves[i].get_to() == to64) {
             return list.moves[i];
         }
     }

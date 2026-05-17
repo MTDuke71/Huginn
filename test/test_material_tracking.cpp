@@ -50,7 +50,7 @@ TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     int black_material_before = pos.get_material_score(Color::Black);
     
     // Make a capture move: d2 pawn captures e4 pawn
-    S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
+    S_MOVE move = make_capture(sq64(File::D, Rank::R2), sq64(File::E, Rank::R4), PieceType::Pawn);
     
     // Make the move using VICE MakeMove function
     int move_result = pos.MakeMove(move);
@@ -90,7 +90,7 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
     int initial_black_material = pos.get_material_score(Color::Black);
     
     // Make a promotion move: e7-e8=Q
-    S_MOVE move = make_promotion(sq(File::E, Rank::R7), sq(File::E, Rank::R8), PieceType::Queen);
+    S_MOVE move = make_promotion(sq64(File::E, Rank::R7), sq64(File::E, Rank::R8), PieceType::Queen);
     
     // Make the move using VICE MakeMove function
     int move_result = pos.MakeMove(move);
@@ -117,9 +117,9 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
 TEST_F(MaterialTrackingTest, MaterialConsistencyWithRebuildCounts) {
     // Make several moves and verify incremental material matches rebuild_counts
     std::vector<S_MOVE> moves = {
-        make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4)),                    // e2-e4
-        make_move(sq(File::D, Rank::R7), sq(File::D, Rank::R5)),                    // d7-d5
-        make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn), // exd5 (capture)
+        make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4)),                    // e2-e4
+        make_move(sq64(File::D, Rank::R7), sq64(File::D, Rank::R5)),                    // d7-d5
+        make_capture(sq64(File::E, Rank::R4), sq64(File::D, Rank::R5), PieceType::Pawn), // exd5 (capture)
     };
     
     for (const auto& move : moves) {

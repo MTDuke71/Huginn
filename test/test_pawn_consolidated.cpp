@@ -35,12 +35,12 @@ TEST(PawnMovegen, PawnForwardMoves) {
     bool found_single_move = false, found_double_move = false;
     
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
-            if (moves[i].get_to() == sq(File::E, Rank::R3)) {
+            if (moves[i].get_to() == sq64(File::E, Rank::R3)) {
                 found_single_move = true;
             }
-            if (moves[i].get_to() == sq(File::E, Rank::R4) && moves[i].is_pawn_start()) {
+            if (moves[i].get_to() == sq64(File::E, Rank::R4) && moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -72,12 +72,12 @@ TEST(PawnMovegen, PawnCaptures) {
     bool found_left_capture = false, found_right_capture = false, found_forward = false;
     
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn) {
             if (moves[i].is_capture()) {
                 capture_moves++;
-                if (moves[i].get_to() == sq(File::D, Rank::R5)) found_left_capture = true;
-                if (moves[i].get_to() == sq(File::F, Rank::R5)) found_right_capture = true;
-            } else if (moves[i].get_to() == sq(File::E, Rank::R5)) {
+                if (moves[i].get_to() == sq64(File::D, Rank::R5)) found_left_capture = true;
+                if (moves[i].get_to() == sq64(File::F, Rank::R5)) found_right_capture = true;
+            } else if (moves[i].get_to() == sq64(File::E, Rank::R5)) {
                 found_forward = true;
             }
         }
@@ -104,7 +104,7 @@ TEST(PawnMovegen, PawnPromotions) {
     // Count promotion moves (should be 4: Queen, Rook, Bishop, Knight)
     int promotion_moves = 0;
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn && moves[i].is_promotion()) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn && moves[i].is_promotion()) {
             promotion_moves++;
         }
     }
@@ -130,7 +130,7 @@ TEST(PawnMovegen, PawnCapturePromotions) {
     // Count capture-promotion moves
     int capture_promotions = 0;
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn && 
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn && 
             moves[i].is_promotion() && moves[i].is_capture()) {
             capture_promotions++;
         }
@@ -159,8 +159,8 @@ TEST(PawnMovegen, EnPassantCaptures) {
     for (int i = 0; i < moves.size(); i++) {
         if (moves[i].is_en_passant()) {
             found_en_passant = true;
-            EXPECT_EQ(moves[i].get_from(), sq(File::E, Rank::R5));
-            EXPECT_EQ(moves[i].get_to(), sq(File::D, Rank::R6));
+            EXPECT_EQ(moves[i].get_from(), sq64(File::E, Rank::R5));
+            EXPECT_EQ(moves[i].get_to(), sq64(File::D, Rank::R6));
             break;
         }
     }
@@ -185,12 +185,12 @@ TEST(PawnMovegen, BlackPawnMoves) {
     bool found_single_move = false, found_double_move = false;
     
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::BlackPawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::BlackPawn) {
             pawn_moves++;
-            if (moves[i].get_to() == sq(File::E, Rank::R6)) {
+            if (moves[i].get_to() == sq64(File::E, Rank::R6)) {
                 found_single_move = true;
             }
-            if (moves[i].get_to() == sq(File::E, Rank::R5) && moves[i].is_pawn_start()) {
+            if (moves[i].get_to() == sq64(File::E, Rank::R5) && moves[i].is_pawn_start()) {
                 found_double_move = true;
             }
         }
@@ -216,7 +216,7 @@ TEST(PawnMovegen, BlackPawnPromotions) {
     // Count promotion moves
     int promotion_moves = 0;
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::BlackPawn && moves[i].is_promotion()) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::BlackPawn && moves[i].is_promotion()) {
             promotion_moves++;
         }
     }
@@ -241,7 +241,7 @@ TEST(PawnMovegen, PawnBlockedByOwnPiece) {
     // Pawn should have no moves (blocked)
     int pawn_moves = 0;
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
         }
     }
@@ -268,7 +268,7 @@ TEST(PawnMovegen, PawnCantCaptureOwnPieces) {
     int pawn_moves = 0;
     int pawn_captures = 0;
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn) {
             pawn_moves++;
             if (moves[i].is_capture()) {
                 pawn_captures++;
@@ -309,7 +309,7 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     
     // Make a pawn capture move: e4 (after e2-e4, d7-d5, exd5)
     // First move pawn to e4
-    S_MOVE e2e4 = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
+    S_MOVE e2e4 = make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4));
     ASSERT_EQ(pos.MakeMove(e2e4), 1) << "MakeMove should succeed for e2-e4";
     
     // Place black pawn on d5 for capture
@@ -317,7 +317,7 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     pos.rebuild_counts();
     
     // Make capture move
-    S_MOVE exd5 = make_capture(sq(File::E, Rank::R4), sq(File::D, Rank::R5), PieceType::Pawn);
+    S_MOVE exd5 = make_capture(sq64(File::E, Rank::R4), sq64(File::D, Rank::R5), PieceType::Pawn);
     ASSERT_EQ(pos.MakeMove(exd5), 1) << "MakeMove should succeed for exd5 capture";
     
     // Check bitboards are updated correctly
@@ -347,7 +347,7 @@ TEST(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
         << "White pawn should initially be on e7";
     
     // Make promotion move
-    S_MOVE promote = make_promotion(sq(File::E, Rank::R7), sq(File::E, Rank::R8), PieceType::Queen);
+    S_MOVE promote = make_promotion(sq64(File::E, Rank::R7), sq64(File::E, Rank::R8), PieceType::Queen);
     ASSERT_EQ(pos.MakeMove(promote), 1) << "MakeMove should succeed for pawn promotion";
     
     // Check that promotion worked
@@ -366,7 +366,7 @@ TEST(PawnBitboardTest, MakeUnmakePawnMoveConsistency) {
     auto initial_black_pawns = pos.get_black_pawns();
 
     // Make pawn move
-    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
+    S_MOVE move = make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4));
     ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for e2-e4";
 
     // Undo move
@@ -432,7 +432,7 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     int normal_moves = 0, double_moves = 0, captures = 0, promotions = 0, en_passant = 0;
     
     for (int i = 0; i < moves.size(); i++) {
-        if (pos.at(moves[i].get_from()) == Piece::WhitePawn) {
+        if (pos.at_sq64(moves[i].get_from()) == Piece::WhitePawn) {
             if (moves[i].is_en_passant()) {
                 en_passant++;
             } else if (moves[i].is_promotion()) {
@@ -471,7 +471,7 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     int pawn_moves = 0, knight_moves = 0;
     
     for (int i = 0; i < moves.size(); i++) {
-        Piece piece = pos.at(moves[i].get_from());
+        Piece piece = pos.at_sq64(moves[i].get_from());
         if (piece == Piece::WhitePawn) {
             pawn_moves++;
         } else if (piece == Piece::WhiteKnight) {

@@ -20,8 +20,8 @@ TEST_F(ZobristIncrementalTest, IncrementalXORMatchesFullComputation) {
     EXPECT_EQ(pos.zobrist_key, full_key_before) << "Position zobrist_key should match computed key";
     
     // Make a simple pawn move: e2-e4
-    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
-    
+    S_MOVE move = make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4));
+
     // Make the move using production MakeMove (this uses incremental XOR updates)
     ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for legal move";
     
@@ -56,7 +56,7 @@ TEST_F(ZobristIncrementalTest, CaptureMovesUpdateCorrectly) {
     pos.zobrist_key = full_key_before; // Sync the position's key
     
     // Make a safe capture move: d4xe5 (this won't expose the king)
-    S_MOVE move = make_capture(sq(File::D, Rank::R4), sq(File::E, Rank::R5), PieceType::Pawn);
+    S_MOVE move = make_capture(sq64(File::D, Rank::R4), sq64(File::E, Rank::R5), PieceType::Pawn);
     
     // Make the move using VICE MakeMove function (this uses incremental XOR updates)
     int move_result = pos.MakeMove(move);
@@ -82,9 +82,9 @@ TEST_F(ZobristIncrementalTest, MultipleMovesInSequence) {
     
     // Make several moves in sequence
     std::vector<S_MOVE> moves = {
-        make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4)),  // e2-e4
-        make_move(sq(File::D, Rank::R2), sq(File::D, Rank::R3)),  // d2-d3
-        make_move(sq(File::F, Rank::R1), sq(File::E, Rank::R2))   // Bf1-e2
+        make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4)),  // e2-e4
+        make_move(sq64(File::D, Rank::R2), sq64(File::D, Rank::R3)),  // d2-d3
+        make_move(sq64(File::F, Rank::R1), sq64(File::E, Rank::R2))   // Bf1-e2
     };
     
     for (const auto& move : moves) {
@@ -118,8 +118,8 @@ TEST_F(ZobristIncrementalTest, XORPropertyWorks) {
     uint64_t original_key = Zobrist::compute(pos);
     pos.zobrist_key = original_key;
     
-    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
-    
+    S_MOVE move = make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4));
+
     // Apply the same move 1000 times (even number) using production MakeMove/TakeMove
     for (int i = 0; i < 1000; ++i) {
         ASSERT_EQ(pos.MakeMove(move), 1) << "MakeMove should succeed for legal move on iteration " << i;

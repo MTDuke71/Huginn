@@ -23,7 +23,7 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     int initial_pawn_count = total_count(pos, PieceType::Pawn);
 
     // Make a simple pawn move: e2-e4
-    S_MOVE move = make_move(sq(File::E, Rank::R2), sq(File::E, Rank::R4));
+    S_MOVE move = make_move(sq64(File::E, Rank::R2), sq64(File::E, Rank::R4));
     int move_result = pos.MakeMove(move);
     EXPECT_EQ(move_result, 1) << "Move should be legal";
 
@@ -43,8 +43,8 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     EXPECT_EQ(pos.get_white_pawns(), initial_white_pawns) << "White pawn bitboard restored";
     EXPECT_EQ(total_count(pos, PieceType::Pawn), initial_pawn_count) << "Pawn count restored";
 
-    EXPECT_EQ(pos.at(move.get_from()), make_piece(Color::White, PieceType::Pawn));
-    EXPECT_EQ(pos.at(move.get_to()), Piece::None);
+    EXPECT_EQ(pos.at_sq64(move.get_from()), make_piece(Color::White, PieceType::Pawn));
+    EXPECT_EQ(pos.at_sq64(move.get_to()), Piece::None);
 }
 
 TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
@@ -56,7 +56,7 @@ TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     uint64_t initial_white_pawns = pos.get_white_pawns();
 
     // Make a capture move: d2xe4
-    S_MOVE move = make_capture(sq(File::D, Rank::R2), sq(File::E, Rank::R4), PieceType::Pawn);
+    S_MOVE move = make_capture(sq64(File::D, Rank::R2), sq64(File::E, Rank::R4), PieceType::Pawn);
     int move_result = pos.MakeMove(move);
     EXPECT_EQ(move_result, 1) << "Move should be legal";
 
@@ -80,11 +80,11 @@ TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
 
     auto initial_king_sq = pos.king_sq;
 
-    S_MOVE move = make_move(sq(File::E, Rank::R1), sq(File::E, Rank::R2));
+    S_MOVE move = make_move(sq64(File::E, Rank::R1), sq64(File::E, Rank::R2));
     int move_result = pos.MakeMove(move);
     EXPECT_EQ(move_result, 1) << "King move should be legal";
 
-    EXPECT_EQ(pos.king_sq[size_t(Color::White)], sq(File::E, Rank::R2));
+    EXPECT_EQ(pos.king_sq[size_t(Color::White)], sq64(File::E, Rank::R2));
     EXPECT_EQ(pos.king_sq[size_t(Color::Black)], initial_king_sq[size_t(Color::Black)]);
 
     pos.TakeMove();

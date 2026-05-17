@@ -62,13 +62,13 @@ TEST_F(LegalMoveTest, KingCannotMoveIntoCheck) {
     // King on e4, rook on d5
     // King cannot move to d4, e5 (attacked by rook and still defended after king moves there)
     // But king CAN capture the rook on d5 (legal capture - removes the attacker)
-    EXPECT_FALSE(has_move(legal_moves, sq(File::E, Rank::R4), sq(File::D, Rank::R4)));
-    EXPECT_TRUE(has_move(legal_moves, sq(File::E, Rank::R4), sq(File::D, Rank::R5)));  // Capturing rook is legal
-    EXPECT_FALSE(has_move(legal_moves, sq(File::E, Rank::R4), sq(File::E, Rank::R5)));
+    EXPECT_FALSE(has_move(legal_moves, sq64(File::E, Rank::R4), sq64(File::D, Rank::R4)));
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::E, Rank::R4), sq64(File::D, Rank::R5)));  // Capturing rook is legal
+    EXPECT_FALSE(has_move(legal_moves, sq64(File::E, Rank::R4), sq64(File::E, Rank::R5)));
     
     // But can move to other squares
-    EXPECT_TRUE(has_move(legal_moves, sq(File::E, Rank::R4), sq(File::F, Rank::R4)));
-    EXPECT_TRUE(has_move(legal_moves, sq(File::E, Rank::R4), sq(File::E, Rank::R3)));
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::E, Rank::R4), sq64(File::F, Rank::R4)));
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::E, Rank::R4), sq64(File::E, Rank::R3)));
 }
 
 TEST_F(LegalMoveTest, BlockCheck) {
@@ -81,7 +81,7 @@ TEST_F(LegalMoveTest, BlockCheck) {
     generate_legal_moves(pos, legal_moves);
     
     // King in check from queen on d1, must move king (no pieces to block)
-    int king_moves = count_moves_from_square(legal_moves, sq(File::E, Rank::R4));
+    int king_moves = count_moves_from_square(legal_moves, sq64(File::E, Rank::R4));
     EXPECT_GT(king_moves, 0); // King must have some legal moves
     
     // Total legal moves should be only king moves (no other pieces can help)
@@ -95,10 +95,10 @@ TEST_F(LegalMoveTest, CaptureAttacker) {
     generate_legal_moves(pos, legal_moves);
     
     // Knight on c3 can capture queen on d1
-    EXPECT_TRUE(has_move(legal_moves, sq(File::C, Rank::R3), sq(File::D, Rank::R1)));
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::C, Rank::R3), sq64(File::D, Rank::R1)));
     
     // King can also move
-    int king_moves = count_moves_from_square(legal_moves, sq(File::E, Rank::R4));
+    int king_moves = count_moves_from_square(legal_moves, sq64(File::E, Rank::R4));
     EXPECT_GT(king_moves, 0);
 }
 
@@ -110,8 +110,8 @@ TEST_F(LegalMoveTest, PinnedPieceCannotMove) {
     generate_legal_moves(pos, legal_moves);
     
     // Knight on d3 is pinned by rook on d1, cannot move
-    int knight_pseudo_moves = count_moves_from_square(pseudo_moves, sq(File::D, Rank::R3));
-    int knight_legal_moves = count_moves_from_square(legal_moves, sq(File::D, Rank::R3));
+    int knight_pseudo_moves = count_moves_from_square(pseudo_moves, sq64(File::D, Rank::R3));
+    int knight_legal_moves = count_moves_from_square(legal_moves, sq64(File::D, Rank::R3));
     
     EXPECT_GT(knight_pseudo_moves, 0); // Knight has pseudo-legal moves
     EXPECT_EQ(knight_legal_moves, 0);  // But no legal moves (pinned)
@@ -124,12 +124,12 @@ TEST_F(LegalMoveTest, PinnedPieceCanMoveAlongPin) {
     generate_legal_moves(pos, legal_moves);
     
     // Rook on d2 is pinned by rook on d1, but can move along d-file
-    EXPECT_TRUE(has_move(legal_moves, sq(File::D, Rank::R2), sq(File::D, Rank::R3)));
-    EXPECT_TRUE(has_move(legal_moves, sq(File::D, Rank::R2), sq(File::D, Rank::R1))); // Capture
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::D, Rank::R2), sq64(File::D, Rank::R3)));
+    EXPECT_TRUE(has_move(legal_moves, sq64(File::D, Rank::R2), sq64(File::D, Rank::R1))); // Capture
     
     // But cannot move to other files
-    EXPECT_FALSE(has_move(legal_moves, sq(File::D, Rank::R2), sq(File::E, Rank::R2)));
-    EXPECT_FALSE(has_move(legal_moves, sq(File::D, Rank::R2), sq(File::C, Rank::R2)));
+    EXPECT_FALSE(has_move(legal_moves, sq64(File::D, Rank::R2), sq64(File::E, Rank::R2)));
+    EXPECT_FALSE(has_move(legal_moves, sq64(File::D, Rank::R2), sq64(File::C, Rank::R2)));
 }
 
 TEST_F(LegalMoveTest, CastlingThroughCheck) {
@@ -144,10 +144,10 @@ TEST_F(LegalMoveTest, CastlingThroughCheck) {
     
     for (size_t i = 0; i < legal_moves.size(); ++i) {
         if (legal_moves[i].is_castle()) {
-            if (legal_moves[i].get_to() == sq(File::G, Rank::R1)) {
+            if (legal_moves[i].get_to() == sq64(File::G, Rank::R1)) {
                 has_kingside_castle = true;
             }
-            if (legal_moves[i].get_to() == sq(File::C, Rank::R1)) {
+            if (legal_moves[i].get_to() == sq64(File::C, Rank::R1)) {
                 has_queenside_castle = true;
             }
         }
@@ -187,10 +187,10 @@ TEST_F(LegalMoveTest, LegalCastling) {
     
     for (size_t i = 0; i < legal_moves.size(); ++i) {
         if (legal_moves[i].is_castle()) {
-            if (legal_moves[i].get_to() == sq(File::G, Rank::R1)) {
+            if (legal_moves[i].get_to() == sq64(File::G, Rank::R1)) {
                 has_kingside_castle = true;
             }
-            if (legal_moves[i].get_to() == sq(File::C, Rank::R1)) {
+            if (legal_moves[i].get_to() == sq64(File::C, Rank::R1)) {
                 has_queenside_castle = true;
             }
         }

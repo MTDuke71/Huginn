@@ -42,7 +42,7 @@ TEST_F(CastlingTest, WhiteKingsideCastling) {
     generate_all_moves(pos, moves);
     
     // Should have kingside castling (e1-g1)
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::G, Rank::R1)));
     
     // Count total castling moves (should be 2: kingside and queenside)
     EXPECT_EQ(count_castling_moves(moves), 2);
@@ -55,7 +55,7 @@ TEST_F(CastlingTest, WhiteQueensideCastling) {
     generate_all_moves(pos, moves);
     
     // Should have queenside castling (e1-c1)
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::C, Rank::R1)));
 }
 
 TEST_F(CastlingTest, BlackKingsideCastling) {
@@ -65,7 +65,7 @@ TEST_F(CastlingTest, BlackKingsideCastling) {
     generate_all_moves(pos, moves);
     
     // Should have kingside castling (e8-g8)
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R8), sq(File::G, Rank::R8)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R8), sq64(File::G, Rank::R8)));
     
     // Count total castling moves (should be 2: kingside and queenside)
     EXPECT_EQ(count_castling_moves(moves), 2);
@@ -78,7 +78,7 @@ TEST_F(CastlingTest, BlackQueensideCastling) {
     generate_all_moves(pos, moves);
     
     // Should have queenside castling (e8-c8)
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R8), sq(File::C, Rank::R8)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R8), sq64(File::C, Rank::R8)));
 }
 
 TEST_F(CastlingTest, NoCastlingRightsWhite) {
@@ -88,8 +88,8 @@ TEST_F(CastlingTest, NoCastlingRightsWhite) {
     generate_all_moves(pos, moves);
     
     // Should have no castling moves for white
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::G, Rank::R1)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::C, Rank::R1)));
 }
 
 TEST_F(CastlingTest, NoCastlingRightsBlack) {
@@ -99,8 +99,8 @@ TEST_F(CastlingTest, NoCastlingRightsBlack) {
     generate_all_moves(pos, moves);
     
     // Should have no castling moves for black
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R8), sq(File::G, Rank::R8)));
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R8), sq(File::C, Rank::R8)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R8), sq64(File::G, Rank::R8)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R8), sq64(File::C, Rank::R8)));
 }
 
 TEST_F(CastlingTest, BlockedKingsideCastling) {
@@ -110,10 +110,10 @@ TEST_F(CastlingTest, BlockedKingsideCastling) {
     generate_all_moves(pos, moves);
     
     // Should not have kingside castling (blocked by bishop on f1)
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::G, Rank::R1)));
     
     // Should still have queenside castling
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::C, Rank::R1)));
 }
 
 TEST_F(CastlingTest, BlockedQueensideCastling) {
@@ -123,10 +123,10 @@ TEST_F(CastlingTest, BlockedQueensideCastling) {
     generate_all_moves(pos, moves);
     
     // Should not have queenside castling (blocked by knight on b1)
-    EXPECT_FALSE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::C, Rank::R1)));
+    EXPECT_FALSE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::C, Rank::R1)));
     
     // Should still have kingside castling
-    EXPECT_TRUE(has_castling_move(moves, sq(File::E, Rank::R1), sq(File::G, Rank::R1)));
+    EXPECT_TRUE(has_castling_move(moves, sq64(File::E, Rank::R1), sq64(File::G, Rank::R1)));
 }
 
 TEST_F(CastlingTest, KingNotOnStartingSquare) {
