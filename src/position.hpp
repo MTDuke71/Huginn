@@ -309,6 +309,70 @@ public:
             setBit(occupied_bitboard, sq64);
         }
     }
+
+    // ---- 64-square-native variants (S_MOVE 120->64 migration) -------------
+    // Same semantics as move_piece/clear_piece/add_piece but the caller passes
+    // a 64-square index directly: no MAILBOX_MAPS.to64 round-trip, no 120
+    // is_playable/at() guard. Caller must guarantee the index is in [0,64).
+    void move_piece_sq64(int from_sq64, int to_sq64) {
+        DEBUG_ASSERT(from_sq64 >= 0 && from_sq64 < 64, "Invalid source sq64 for piece move");
+        DEBUG_ASSERT(to_sq64 >= 0 && to_sq64 < 64, "Invalid destination sq64 for piece move");
+
+        Piece piece = at_sq64(from_sq64);
+        DEBUG_ASSERT(!is_none(piece), "Cannot move piece from empty square");
+        DEBUG_ASSERT(is_none(at_sq64(to_sq64)), "Cannot move piece to occupied square");
+
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+        int zpc = int(piece_type) + (piece_color == Color::Black ? 6 : 0);
+
+        zobrist_key ^= Zobrist::Piece[zpc][from_sq64];
+        zobrist_key ^= Zobrist::Piece[zpc][to_sq64];
+
+        popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], from_sq64);
+        popBit(color_bitboards[size_t(piece_color)], from_sq64);
+        popBit(occupied_bitboard, from_sq64);
+
+        setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], to_sq64);
+        setBit(color_bitboards[size_t(piece_color)], to_sq64);
+        setBit(occupied_bitboard, to_sq64);
+    }
+
+    void clear_piece_sq64(int sq64) {
+        DEBUG_ASSERT(sq64 >= 0 && sq64 < 64, "Cannot clear piece from invalid sq64");
+
+        Piece piece = at_sq64(sq64);
+        if (is_none(piece)) return; // Nothing to clear
+        DEBUG_ASSERT(!is_offboard(piece), "Cannot clear offboard piece");
+
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+
+        material_score[size_t(piece_color)] -= value_of(piece);
+        zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
+
+        popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
+        popBit(color_bitboards[size_t(piece_color)], sq64);
+        popBit(occupied_bitboard, sq64);
+    }
+
+    void add_piece_sq64(int sq64, Piece piece) {
+        DEBUG_ASSERT(sq64 >= 0 && sq64 < 64, "Cannot add piece to invalid sq64");
+        DEBUG_ASSERT(!is_none(piece) && !is_offboard(piece), "Cannot add invalid piece");
+        DEBUG_ASSERT(is_none(at_sq64(sq64)), "Cannot add piece to occupied square");
+
+        Color piece_color = color_of(piece);
+        PieceType piece_type = type_of(piece);
+
+        if (piece_type != PieceType::King) {
+            material_score[size_t(piece_color)] += value_of(piece);
+        }
+        zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
+
+        setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
+        setBit(color_bitboards[size_t(piece_color)], sq64);
+        setBit(occupied_bitboard, sq64);
+    }
     
 
     // (make_move_with_undo / undo_move dead code removed in Phase 4.8b � only

@@ -262,10 +262,32 @@ namespace CastlingLookup {
     
     // Compile-time generated lookup table
     constexpr auto CASTLING_MASK = create_castling_mask_table();
-    
+
     // Fast castling rights update: AND with masks for both from and to squares
     constexpr inline uint8_t update_castling_rights(uint8_t current_rights, int from_sq, int to_sq) {
         return current_rights & CASTLING_MASK[from_sq] & CASTLING_MASK[to_sq];
+    }
+
+    // 64-square variant (a1=0, e1=4, h1=7, a8=56, e8=60, h8=63) — mirrors the
+    // 120-square table above for the S_MOVE 120->64 migration.
+    constexpr std::array<uint8_t, 64> create_castling_mask_table_sq64() {
+        std::array<uint8_t, 64> table{};
+        for (size_t i = 0; i < 64; ++i) {
+            table[i] = CASTLE_WK | CASTLE_WQ | CASTLE_BK | CASTLE_BQ;
+        }
+        table[0]  = CASTLE_WK | CASTLE_BK | CASTLE_BQ;  // a1 - clear white queenside
+        table[4]  = CASTLE_BK | CASTLE_BQ;              // e1 - clear both white rights
+        table[7]  = CASTLE_WQ | CASTLE_BK | CASTLE_BQ;  // h1 - clear white kingside
+        table[56] = CASTLE_WK | CASTLE_WQ | CASTLE_BK;  // a8 - clear black queenside
+        table[60] = CASTLE_WK | CASTLE_WQ;              // e8 - clear both black rights
+        table[63] = CASTLE_WK | CASTLE_WQ | CASTLE_BQ;  // h8 - clear black kingside
+        return table;
+    }
+
+    constexpr auto CASTLING_MASK_SQ64 = create_castling_mask_table_sq64();
+
+    constexpr inline uint8_t update_castling_rights_sq64(uint8_t current_rights, int from_sq64, int to_sq64) {
+        return current_rights & CASTLING_MASK_SQ64[from_sq64] & CASTLING_MASK_SQ64[to_sq64];
     }
 }
 

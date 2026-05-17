@@ -85,6 +85,11 @@ constexpr inline int sq(File f, Rank r) {
     return 21 + ff + rr * 10;
 }
 
+// Convert (File, Rank) -> square64 (a1=0, h1=7, a8=56, h8=63)
+constexpr inline int sq64(File f, Rank r) {
+    return static_cast<int>(f) + static_cast<int>(r) * 8;
+}
+
 // -------------- Lookup tables for file/rank extraction --------------
 struct FileRankLookups {
     std::array<File, 120> files{};
