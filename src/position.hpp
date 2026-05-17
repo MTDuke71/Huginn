@@ -191,13 +191,10 @@ public:
         }
         return Piece::None;  // unreachable when bitboards are consistent
     }
-    // Place / clear a piece at a 120-square index using bitboard storage.
+    // Place / clear a piece at a 64-square index using bitboard storage.
     // If a piece was already at this square it is removed first; passing
-    // Piece::None clears the square.
-    inline void set(int s, Piece p) {
-        if (!is_playable(s)) return;
-        int s64 = MAILBOX_MAPS.to64[s];
-        if (s64 < 0) return;
+    // Piece::None clears the square. Caller guarantees s64 in [0,64).
+    inline void set_sq64(int s64, Piece p) {
         uint64_t bit = 1ULL << s64;
 
         // Clear any existing occupant
@@ -218,6 +215,14 @@ public:
             color_bitboards[ci] |= bit;
             occupied_bitboard |= bit;
         }
+    }
+
+    // 120-square convenience wrapper (debug / tests / non-hot callers).
+    inline void set(int s, Piece p) {
+        if (!is_playable(s)) return;
+        int s64 = MAILBOX_MAPS.to64[s];
+        if (s64 < 0) return;
+        set_sq64(s64, p);
     }
 
     // ---- 64-square-native atomic piece ops (sole make/unmake path) --------

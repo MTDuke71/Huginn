@@ -108,8 +108,8 @@ bool Position::set_from_fen(const std::string& fen) {
         } else if (from_char(ch) == Piece::None) {
             return false;
         } else {
-            int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            set(square, from_char(ch));
+            int square = sq64(static_cast<File>(file), static_cast<Rank>(rank));
+            set_sq64(square, from_char(ch));
             file++;
         }
     }
@@ -167,8 +167,8 @@ std::string Position::to_fen() const {
     for (int rank = 7; rank >= 0; --rank) {
         int empty_count = 0;
         for (int file = 0; file < 8; ++file) {
-            int sq120 = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            Piece piece = at(sq120);
+            int sq_idx = sq64(static_cast<File>(file), static_cast<Rank>(rank));
+            Piece piece = at_sq64(sq_idx);
             if (is_none(piece)) {
                 empty_count++;
             } else {
