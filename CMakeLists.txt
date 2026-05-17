@@ -475,6 +475,7 @@ if(GTEST_FOUND)
     test/test_uci_go_parsing.cpp
     test/test_input_checking.cpp
     test/test_see.cpp
+    test/test_position_invariant.cpp
     )
 
     add_executable(huginn_tests
