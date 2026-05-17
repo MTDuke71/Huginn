@@ -260,7 +260,19 @@ just as much as deep ones.
   pure-implementation swap verified against the ray walker).
 - Init-time verifier walks 64 × max(2^12, 2^9) = ~290K (square,
   occupancy) pairs and confirms magic == ray-walk for every one.
-- Pending: 200g gauntlet vs `baseline-t4` at tc=10+0.1.
+- 200g Intel gauntlet (2026-05-16, tc=10+0.1, noob_3moves.epd):
+  **+75.88 ± 41.00 Elo, LOS 99.99%**, W82/L39/D79, score 60.75%,
+  Ptnml(0-2) [4, 20, 26, 29, 21]. Combined #23+#24 stack vs t4;
+  marginal #24 contribution ≈ +50 Elo over the #23 pooled ~+24.
+  AMD pool pending for tighter CI (~±28 over 400g).
+
+**Why this converts cleanly (unlike #23).** #23's bench gain was
+concentrated at depth 10+, but TC=10+0.1 plays mostly at depth 9-10,
+so only a fraction of the bench delta reached Elo. #24's 52% NPS gain
+applies at *every* depth — every search node touches slider attacks
+through movegen, attack detection, SEE, or mobility eval. The bench
+prediction (~+50 Elo from +52% NPS) matched the gauntlet marginal
+almost exactly.
 
 **Doc accuracy.** After this lands, the magic-bitboard claims in
 `POSITION_AND_MOVEGEN_ARCHITECTURE.md` (the "Attack set sources"
