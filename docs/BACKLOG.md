@@ -205,6 +205,69 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
+### #24: Real magic-bitboard slider attacks (CLOSED, pending gauntlet)
+
+- status: **closed code-side** (2026-05-16, shipped pending 200g gauntlet)
+- priority: was high (latent — docs lied; code was ray-walking)
+- type: speed / correctness
+- source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
+  Priority 2), verified against `src/bitboard.cpp:96-165`.
+
+**The lie that wasn't.** `MOVEGEN_COMPARISON.md` and `CLAUDE.md` both
+claimed Huginn used magic bitboards for sliders. `bishop_attacks()` /
+`rook_attacks()` in `src/bitboard.cpp` actually called
+`generate_ray_attacks()` four times each: switch on direction, loop
+up to 7 steps, bounds-check + occupancy-test per step. This was a
+runtime ray walker dressed up as "magic" in the prose. Every search
+node paid this cost through movegen, attack detection, SEE, and
+mobility eval — four hot paths simultaneously.
+
+**The fix.** New `src/magic_bitboards.{hpp,cpp}` implementing plain
+magic with fixed per-piece shifts (rook 52, bishop 55) and ~2.25 MB
+of attack tables. `bishop_attacks` / `rook_attacks` in `bitboard.cpp`
+now delegate to `Magic::magic_*_attacks()`; every caller stays
+unchanged. Magic numbers are **found at init via a deterministic
+xorshift64 PRNG seeded with a hardcoded constant** — functionally
+equivalent to hardcoded magics (deterministic across runs/machines)
+but expressed as ~30 lines of generator instead of 128
+hand-transcribed uint64s. Init adds ~200 ms one-time; subsequent
+lookups are O(1) (mask + multiply + shift + indexed load).
+
+**Init verifier.** After finding magics, exhaustively walks every
+(square, every subset of mask) and confirms the magic result matches
+a ray-walk reference. `std::abort` on any mismatch — better to fail
+loudly at startup than silently corrupt search.
+
+**Bench evidence** (depth 11 startpos, OwnBook off, single thread,
+post-#23 ray-walk baseline):
+
+| Metric | Pre-#24 (ray-walk) | Post-#24 (magic) | Δ |
+|---|---:|---:|---:|
+| Depth-11 time | 516 ms | **263 ms** | **−49%** |
+| Depth-11 NPS | 2.33 Mnps | **3.55 Mnps** | **+52%** |
+| Depth-11 nodes | 1,203,168 | 932,229 | −22% |
+| Init cost | ~0 | +200 ms | one-time |
+
+The NPS jump is the headline: a 52% speed increase on every slider
+attack call, compounding across four hot paths. Unlike #23 (which
+mostly helped depths 10+), this gain applies at *every* depth — so
+TC=10+0.1 should see the full benefit since shallow searches benefit
+just as much as deep ones.
+
+**Validation.**
+- All 208 GoogleTests pass.
+- Perft suite passes (movegen bit-identical, as expected for a
+  pure-implementation swap verified against the ray walker).
+- Init-time verifier walks 64 × max(2^12, 2^9) = ~290K (square,
+  occupancy) pairs and confirms magic == ray-walk for every one.
+- Pending: 200g gauntlet vs `baseline-t4` at tc=10+0.1.
+
+**Doc accuracy.** After this lands, the magic-bitboard claims in
+`POSITION_AND_MOVEGEN_ARCHITECTURE.md` (the "Attack set sources"
+diagram I added in `cd3d56f`), `MOVEGEN_COMPARISON.md`, and
+`CLAUDE.md` are finally truthful. No doc edits needed — the code now
+matches what the prose has been claiming for months.
+
 ### #23: TT bound classification bug — fix (CLOSED, pending gauntlet)
 
 - status: **closed code-side** (2026-05-15, shipped pending 200g gauntlet)

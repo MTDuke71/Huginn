@@ -27,6 +27,7 @@
 #include "knight_lookup_tables.hpp"
 #include "king_lookup_tables.hpp"
 #include "pawn_lookup_tables.hpp"
+#include "magic_bitboards.hpp"
 
 namespace Huginn {
     
@@ -62,7 +63,12 @@ namespace Huginn {
         
         // Initialize attack tables for bitboard move generation (Phase 1 migration)
         init_attack_tables();
-        
+
+        // Initialize real magic-bitboard slider attack tables (BACKLOG #24).
+        // Finds magics via deterministic PRNG seed + verifies every
+        // (square, occupancy) against the ray-walker before returning.
+        Magic::init_magic_bitboards();
+
         initialized = true;
     }
 

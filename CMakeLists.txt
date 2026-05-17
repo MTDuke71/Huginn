@@ -320,6 +320,7 @@ set(COMMON_SOURCES
     src/movegen.cpp
     src/attack_detection.cpp
     src/attack_tables.cpp
+    src/magic_bitboards.cpp
     src/move.cpp
     src/board120.cpp
     src/chess_types.cpp

@@ -20,6 +20,7 @@
 #include "bitboard.hpp"
 #include "bit_utils.hpp"   // Cross-platform bit manipulation utilities
 #include "board120.hpp"    // For MAILBOX_MAPS conversion arrays
+#include "magic_bitboards.hpp"  // BACKLOG #24: real magic sliders
 #include <iostream>
 #include <iomanip>
 
@@ -142,24 +143,15 @@ uint64_t generate_ray_attacks(int square, int direction, uint64_t occupancy) {
     return attacks;
 }
 
+// BACKLOG #24: bishop_attacks/rook_attacks delegate to real magic
+// bitboards (src/magic_bitboards.{hpp,cpp}). The ray-walker
+// generate_ray_attacks() above is preserved for any debug/diagnostic
+// callers that may want a ground-truth comparison; the magic init has
+// its own self-contained ray-walker for table population + verification.
 uint64_t bishop_attacks(int square, uint64_t occupancy) {
-    uint64_t attacks = 0ULL;
-    
-    // Generate attacks in all four diagonal directions
-    for (int i = 0; i < 4; ++i) {
-        attacks |= generate_ray_attacks(square, BISHOP_DIRECTIONS[i], occupancy);
-    }
-    
-    return attacks;
+    return Magic::magic_bishop_attacks(square, occupancy);
 }
 
 uint64_t rook_attacks(int square, uint64_t occupancy) {
-    uint64_t attacks = 0ULL;
-    
-    // Generate attacks in all four orthogonal directions
-    for (int i = 0; i < 4; ++i) {
-        attacks |= generate_ray_attacks(square, ROOK_DIRECTIONS[i], occupancy);
-    }
-    
-    return attacks;
+    return Magic::magic_rook_attacks(square, occupancy);
 }
