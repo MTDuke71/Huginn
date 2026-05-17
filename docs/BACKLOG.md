@@ -913,6 +913,63 @@ First full validation of the two-machine workflow end-to-end.
 
 ---
 
+### #25: Refresh `huginn_t5` baseline when cumulative ≥ +50 over t4 — CLOSED
+
+- status: closed @ `3eab266` (2026-05-16)
+- tag: `baseline-t5 = 3eab266`
+- priority: was medium
+- type: maintenance
+
+**Triggered by** the cumulative ship of P1a + #23 + #24 crossing
+the +50 Elo threshold over t4 in a single session:
+- #1 P1a (LMR-exempt-check) shipped at `2dbd856`: **~+6 Elo pooled
+  600g** (single-200g originally +22 but settled to +6 on
+  three-machine pool — see gauntlet/README.md history)
+- #23 TT bound classification fix shipped at `7d11f23`: **~+24
+  Elo pooled 400g**, LOS >>95%
+- #24 real magic-bitboard slider attacks shipped at `3eab266`:
+  **+75.88 ± 41 / 200g Intel vs t4, LOS 99.99%** (measures the
+  combined stack; marginal #24 contribution ≈ +50 Elo on top of
+  the pre-#24 cumulative)
+
+The #24 single-200g result alone clears the +50 threshold with
+LOS 99.99%, so AMD pool verification was skipped — the ship
+direction is unambiguous.
+
+**What shipped:**
+- `git tag baseline-t5 3eab266`
+- `huginn_t5.exe` copied to `fastchess-windows-x86-64/` from
+  `build/msvc-x64-release/bin/Release/huginn.exe` (the #24 magic
+  bitboards build with Fathom, 210,944 bytes).
+- `test_huginn_vs_t5.bat` (Intel) and `test_huginn_vs_t5_amd.bat`
+  (AMD) added, mirroring the t4 versions. Same `-DENABLE_FATHOM=ON`
+  configure, same concurrency 4, same `tc=10+0.1`, same opening
+  book — so future gauntlets stay apples-to-apples.
+
+**Bench delta** (depth 11 startpos, OwnBook off):
+
+| | t4 (ray-walk) | t5 (magic) | Δ |
+|---|---:|---:|---|
+| NPS | ~2.3 Mnps | **~3.55 Mnps** | **+52%** |
+| Time-to-d11 | ~2280 ms (pre-#23) / ~516 ms (post-#23) | **263 ms** | **−88% vs t4 / −49% vs post-#23** |
+
+The total speed gain stacks the #23 tree-shape win and the #24
+raw-throughput win — together they give us ~4.3× faster wall-clock
+to depth 11 vs the t4 baseline.
+
+**Going forward:** `test_huginn_vs_t4.bat` and `test_huginn_vs_t4_amd.bat`
+are now superseded but kept around for historical regression checks;
+new search/eval work should use t5. The next baseline refresh fires
+when cumulative gain over t5 hits +50 Elo.
+
+**Notable doc-correctness side-effect:** the magic-bitboard claims
+in `MOVEGEN_COMPARISON.md`, `CLAUDE.md`, and the "Attack set
+sources" diagram I added to `POSITION_AND_MOVEGEN_ARCHITECTURE.md`
+in `cd3d56f` are now truthful — the code finally matches what the
+prose has claimed for months.
+
+---
+
 ### #18: Refresh `huginn_t4` baseline when cumulative ≥ +50 over t3 — CLOSED
 
 - status: closed @ `6e3a761` (2026-05-09)

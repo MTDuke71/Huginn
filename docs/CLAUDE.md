@@ -10,14 +10,16 @@ is **bitboard-primary**: piece-bitboards are the source of truth for all
 movegen and evaluation, with mailbox-120 retained as a parallel
 representation for legality / square-walking helpers.
 
-**Current Status (`pure-bitboard-engine` branch, 2026-05-07):**
+**Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Comprehensive test suite**: ~207 GoogleTest cases across 30 files
+- ✅ **Baseline tag**: `baseline-t5 = 3eab266` (P1a + TT-bound fix + real
+  magic bitboards; ~+75 Elo over t4, LOS 99.99% / 200g)
+- ✅ **Comprehensive test suite**: 208 GoogleTest cases
 - ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
   see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration
   ladder
-- 🔬 **Performance**: ~2.06 Mnps single-threaded at depth 11 from startpos
-  (CLAUDE.md's earlier "~1.5M nps" figure was stale by ~25%)
+- 🔬 **Performance**: **~3.55 Mnps** single-threaded at depth 11 from
+  startpos (post-#24 magic bitboards; up from ~2.06 Mnps pre-t5)
 
 For the **live inventory** of which search and evaluation techniques are
 implemented, see [SEARCH_AND_EVAL.md "Current state" sections](SEARCH_AND_EVAL.md#current-state--search).
@@ -171,10 +173,11 @@ bitboards, mailbox, Zobrist key, material counts, and piece lists.
   and LCT2 ([test/lct2.epd](../test/lct2.epd))
 
 ### Performance Considerations
-- **Current NPS**: ~2.06 Mnps single-threaded (`go depth 11` from
-  startpos, 2026-04-28 measurement). MTLChess_v0.3 is at parity
-  (~2.33 Mnps); the strength gap is **search-tree shape**, not raw
-  speed — we visit ~22× more nodes per depth.
+- **Current NPS**: **~3.55 Mnps** single-threaded (`go depth 11` from
+  startpos, 2026-05-16 measurement, post-#24 magic bitboards). Now
+  ~1.5× MTLChess_v0.3 (~2.33 Mnps). Speed-side parity reached; the
+  remaining strength gap is **search-tree shape and eval quality**,
+  not raw speed.
 - **Strength priorities** are tracked in [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md)
   by tier; per-feature Elo deltas are gauntlet-measured at 100+ games
 - Assembly generation available for micro-optimization analysis (see
