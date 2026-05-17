@@ -50,7 +50,8 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
-| 2026-05-17 | Intel 13700K | 200 | **−1.74 ± 29.95 Elo vs t5**, LOS 45.46%, W41/L42/D117 | **Mailbox 120→64 migration** (Zobrist `cbb615b` + S_MOVE/king_sq Stages 0–3, HEAD `24e51e4`). Statistical dead heat — footprint-neutral as expected; perft d6/Kiwipete + 208 gtests already proved correctness. **AMD 200g still needed** to pool→400g and check for #26-style cross-machine split before any keep/revert verdict. |
+| 2026-05-17 | Intel 13700K | 200 | **−1.74 ± 29.95 Elo vs t5**, LOS 45.46%, W41/L42/D117 | **Mailbox 120→64 migration** (Zobrist `cbb615b` + S_MOVE/king_sq Stages 0–3, HEAD `24e51e4`). Statistical dead heat — footprint-neutral. Pools with the AMD row → see Pooled section. |
+| 2026-05-17 | AMD 7800X3D | 200 | **+19.13 ± 32.82 Elo vs t5**, LOS 87.45%, W53/L42/D105 | Same `24e51e4` mailbox-elimination stack. Lean positive, no regression. Pools with the Intel row → see Pooled section. |
 | 2026-05-17 | AMD 7800X3D | 200 | **−38.37 ± 31.90 Elo vs t5**, LOS 0.86%, W38/L60/D102 | **#26 board64 cache — cross-machine disagreement.** AMD −38 / LOS 0.86% vs **Intel +12.17 / LOS 77%** on identical binaries (~50 Elo, machine-dependent). NOT poolable; uninitialised `board64` suspected. Reopened (BACKLOG #26) |
 | 2026-05-17 | AMD 7800X3D | 200 | **t5 +79.53 ± 40.59 Elo over t4**, LOS ~100%, t5 W97/L52/D51 | frozen **t4 vs t5** baseline-delta (not current-vs-tN); full t5 stack = P1a + #23 + #24 magic bitboards |
 | 2026-05-15 | AMD 7800X3D | 200 | **+40.13 ± 39.78 Elo**, LOS 97.75%, W71/L48/D81 | code = t4 + P1a + **#23 TT-bound fix**; ran hot vs Intel's +8.69 |
@@ -58,6 +59,27 @@ per experiment**.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — mailbox 120→64 migration (400 games, two machines)
+
+Current = full mailbox-elimination stack at `24e51e4` (Zobrist Piece
+`[120]→[64]` `cbb615b` + S_MOVE/`king_sq` 120→64 Stages 0–3 +
+search-table shrink) vs frozen **t5**:
+
+- Intel 13700K: W41 / L42 / D117  (−1.74, LOS 45.46%)
+- AMD 7800X3D:  W53 / L42 / D105  (+19.13, LOS 87.45%)
+- **Pooled: W94 / L84 / D222**, score **51.25%**, **≈ +8.7 Elo**,
+  LOS ≈ 77%.
+
+**Verdict: KEEP.** No regression and — unlike BACKLOG #26 (Intel +12 /
+AMD −38, opposite signs, ~50 Elo split) — **no cross-machine
+disagreement**: both halves sit neutral-to-positive (−2 / +19, same
+side) and pool cleanly to a lean **+8.7 Elo**. Below the 95% LOS ship
+bar for an Elo *claim*, but the refactor's goal was architectural
+(single 64-square representation, ~85 KB less hot footprint) at zero
+Elo cost — delivered, with a slight positive lean and correctness
+proven independently (perft d6 = 119060324, Kiwipete d5, 208 gtests,
+400 legal gauntlet games).
 
 ### Pooled (all three runs above, 600 games total)
 **W 246 / L 235 / D 119**, score 50.92%, **~+6.4 Elo**, LOS ~69%.
