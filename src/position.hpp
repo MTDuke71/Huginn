@@ -8,9 +8,10 @@
  * optimized for fast move making/unmaking and efficient position analysis.
  * 
  * ## Position Representation
- * - **Mailbox 120**: Primary board representation for fast move validation
- * - **Bitboards**: Secondary representation for attack detection and pattern recognition
- * - **Piece Lists**: Efficient iteration over pieces by type and color
+ * - **Bitboards**: Per-piece bitboards are the single source of truth for
+ *   placement, movegen, and evaluation
+ * - **sq64 indexing**: squares are 0..63 (a1=0, h8=63); the mailbox-120
+ *   scheme survives only as the MAILBOX_MAPS conversion helper
  * - **Zobrist Hashing**: Incremental hash updates for transposition table
  * 
  * ## State Management
@@ -87,7 +88,7 @@ public:
     uint8_t castling_rights{0};      // bitmask: CASTLE_WK|CASTLE_WQ|CASTLE_BK|CASTLE_BQ
     uint16_t halfmove_clock{0};
     uint16_t fullmove_number{1};
-    std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (120)
+    std::array<int, 2> king_sq{ -1, -1 }; // [White, Black] king locations (sq64, or -1)
     
     // Full bitboard representation for all piece types [Color][PieceType]
     std::array<std::array<Bitboard, int(PieceType::_Count)>, 2> piece_bitboards{};
