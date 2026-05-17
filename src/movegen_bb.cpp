@@ -193,7 +193,7 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
 
     // Generate en passant captures
     if (pos.ep_square != -1) {
-        int ep_sq64 = MAILBOX_MAPS.to64[pos.ep_square];  // ep_square field stays 120
+        int ep_sq64 = pos.ep_square;  // ep_square is now sq64
 
         if (ep_sq64 >= 0) {  // Valid 64-square position
             uint64_t ep_attackers = 0;

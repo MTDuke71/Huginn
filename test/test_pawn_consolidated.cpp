@@ -146,7 +146,7 @@ TEST(PawnMovegen, EnPassantCaptures) {
     // Set up en passant scenario
     pos.set(sq(File::E, Rank::R5), Piece::WhitePawn);
     pos.set(sq(File::D, Rank::R5), Piece::BlackPawn);
-    pos.ep_square = sq(File::D, Rank::R6); // Black pawn just moved d7-d5
+    pos.ep_square = sq64(File::D, Rank::R6); // Black pawn just moved d7-d5
     
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
@@ -421,7 +421,7 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     
     pos.set(sq(File::G, Rank::R5), Piece::BlackPawn);  // For capture by f4 pawn
     pos.set(sq(File::G, Rank::R8), Piece::BlackRook);  // For promotion capture
-    pos.ep_square = sq(File::G, Rank::R6);             // En passant square
+    pos.ep_square = sq64(File::G, Rank::R6);             // En passant square
     
     pos.side_to_move = Color::White;
     pos.rebuild_counts();

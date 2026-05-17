@@ -87,7 +87,7 @@ TEST_F(FENTest, ParsePositionWithEnPassant) {
     
     EXPECT_EQ(pos.side_to_move, Color::Black);
     EXPECT_EQ(pos.castling_rights, CASTLE_ALL);
-    EXPECT_EQ(pos.ep_square, sq(File::E, Rank::R3));
+    EXPECT_EQ(pos.ep_square, sq64(File::E, Rank::R3));
     EXPECT_EQ(pos.halfmove_clock, 0);
     EXPECT_EQ(pos.fullmove_number, 1);
 }

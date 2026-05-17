@@ -83,7 +83,7 @@ struct S_UNDO {
 class Position {
 public:
     Color side_to_move{Color::White};
-    int ep_square{-1};               // mailbox-120 index or -1
+    int ep_square{-1};               // 64-square index (0..63) or -1
     uint8_t castling_rights{0};      // bitmask: CASTLE_WK|CASTLE_WQ|CASTLE_BK|CASTLE_BQ
     uint16_t halfmove_clock{0};
     uint16_t fullmove_number{1};

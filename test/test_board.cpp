@@ -78,7 +78,7 @@ TEST_F(BoardTest, ResetBoardClearsKingSquares) {
 TEST_F(BoardTest, ResetBoardClearsGameState) {
     // Set some game state values
     pos.side_to_move = Color::White;
-    pos.ep_square = sq(File::E, Rank::R3);
+    pos.ep_square = sq64(File::E, Rank::R3);
     pos.halfmove_clock = 25;
     pos.fullmove_number = 42;
     pos.castling_rights = CASTLE_ALL;

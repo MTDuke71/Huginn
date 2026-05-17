@@ -17,23 +17,6 @@ unsigned fathom_piece_from_huginn(Piece piece) {
     return (is_none(piece) || is_offboard(piece)) ? 0 : 1;
 }
 
-// Map Huginn square (120-square) to Fathom square (64-square)
-unsigned fathom_square_from_huginn(int huginn_square) {
-    // Convert from 120-square to 64-square format
-    if (!is_playable(huginn_square)) {
-        return 64; // Fathom uses 64 as invalid square (not TB_NOSQUARE constant)
-    }
-    
-    int rank = huginn_square / 10 - 2;
-    int file = huginn_square % 10 - 1;
-    
-    if (rank < 0 || rank > 7 || file < 0 || file > 7) {
-        return 64; // Invalid square
-    }
-    
-    return rank * 8 + file;
-}
-
 // Map Fathom square back to Huginn square
 int huginn_square_from_fathom(unsigned fathom_square) {
     if (fathom_square >= 64) return int(Square::Offboard);
@@ -175,7 +158,7 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     // Convert en passant square
     unsigned ep = 64; // Invalid square indicator for Fathom
     if (pos.ep_square != -1) {
-        ep = fathom_square_from_huginn(pos.ep_square);
+        ep = static_cast<unsigned>(pos.ep_square);  // ep_square is sq64 == Fathom square
     }
 
     // Convert castling rights

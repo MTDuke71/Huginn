@@ -316,24 +316,24 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
 
     // XOR en passant file (only if there's a pawn next to the pushed pawn)
     if (pos.ep_square != -1) {
-        int ep_file = pos.ep_square % 10 - 1;
+        int ep_file = pos.ep_square & 7;   // ep_square is sq64
         if (ep_file >= 0 && ep_file < 8) {
             // Check if there's actually a pawn that could capture en passant
             bool can_capture_ep = false;
-            int ep_rank = pos.ep_square / 10 - 2;
-            
+            int ep_rank = pos.ep_square >> 3;
+
             // Check left and right of the en passant square for opposing pawns
             if (ep_file > 0) {  // Check left
-                int left_sq = (ep_rank + 2) * 10 + (ep_file - 1 + 1);
-                Piece left_piece = pos.at(left_sq);
-                if (get_piece_type(left_piece) == PieceType::Pawn && 
+                int left_sq = ep_rank * 8 + (ep_file - 1);
+                Piece left_piece = pos.at_sq64(left_sq);
+                if (get_piece_type(left_piece) == PieceType::Pawn &&
                     get_piece_color(left_piece) == pos.side_to_move) {
                     can_capture_ep = true;
                 }
             }
             if (ep_file < 7) {  // Check right
-                int right_sq = (ep_rank + 2) * 10 + (ep_file + 1 + 1);
-                Piece right_piece = pos.at(right_sq);
+                int right_sq = ep_rank * 8 + (ep_file + 1);
+                Piece right_piece = pos.at_sq64(right_sq);
                 if (get_piece_type(right_piece) == PieceType::Pawn && 
                     get_piece_color(right_piece) == pos.side_to_move) {
                     can_capture_ep = true;
@@ -442,9 +442,9 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
 
     Piece moving_piece = pos.at_sq64(from_64);
 
-    // Check for en passant (ep_square field is still 120; convert for compare)
+    // Check for en passant (ep_square is now sq64, same space as to_64)
     if (get_piece_type(moving_piece) == PieceType::Pawn &&
-        pos.ep_square != -1 && to_64 == MAILBOX_MAPS.to64[pos.ep_square]) {
+        pos.ep_square != -1 && to_64 == pos.ep_square) {
         is_ep = true;
         captured_type = PieceType::Pawn; // Captured piece is pawn
     }

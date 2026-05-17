@@ -393,13 +393,7 @@ Position Engine::mirrorBoard(const Position& pos) {
     
     // Mirror en passant square
     if (pos.ep_square >= 0) {
-        int ep_sq64 = MAILBOX_MAPS.to64[pos.ep_square];
-        if (ep_sq64 >= 0) {
-            int mirrored_ep_sq64 = mirror64[ep_sq64];
-            mirrored_pos.ep_square = MAILBOX_MAPS.to120[mirrored_ep_sq64];
-        } else {
-            mirrored_pos.ep_square = -1;
-        }
+        mirrored_pos.ep_square = mirror64[pos.ep_square];  // ep_square is sq64
     } else {
         mirrored_pos.ep_square = -1;
     }

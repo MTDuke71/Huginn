@@ -47,7 +47,7 @@ namespace Zobrist {
         if (b.side_to_move == Color::Black) key ^= Side;
         key ^= Castle[b.castling_rights & 0xF];
         if (b.ep_square != -1) {
-            const int ff = static_cast<int>(file_of(b.ep_square)); // 0..7
+            const int ff = b.ep_square & 7; // sq64 file 0..7
             if (ff >= 0 && ff < 8)
                 key ^= EpFile[ff];
         }

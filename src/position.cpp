@@ -42,14 +42,14 @@ void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece capt
 
     // XOR out old en passant file (if any)
     if (old_ep_square != -1) {
-        int old_ep_file = static_cast<int>(file_of(old_ep_square));
+        int old_ep_file = old_ep_square & 7;  // ep_square is sq64
         if (old_ep_file >= 0 && old_ep_file < 8) {
             zobrist_key ^= Zobrist::EpFile[old_ep_file];
         }
     }
     // XOR in new en passant file (if any)  
     if (ep_square != -1) {
-        int new_ep_file = static_cast<int>(file_of(ep_square));
+        int new_ep_file = ep_square & 7;  // ep_square is sq64
         if (new_ep_file >= 0 && new_ep_file < 8) {
             zobrist_key ^= Zobrist::EpFile[new_ep_file];
         }
@@ -144,7 +144,7 @@ bool Position::set_from_fen(const std::string& fen) {
     } else if (tokens[3].size() == 2 && tokens[3][0] >= 'a' && tokens[3][0] <= 'h' && (tokens[3][1] == '3' || tokens[3][1] == '6')) {
         File file = File(tokens[3][0] - 'a');
         Rank rank = Rank(tokens[3][1] - '1');
-        ep_square = sq(file, rank);
+        ep_square = sq64(file, rank);
     } else {
         return false;
     }
@@ -199,8 +199,8 @@ std::string Position::to_fen() const {
     if (ep_square == -1) {
         fen += '-';
     } else {
-        File file = file_of(ep_square);
-        Rank rank = rank_of(ep_square);
+        File file = File(ep_square & 7);   // ep_square is sq64
+        Rank rank = Rank(ep_square >> 3);
         fen += char('a' + int(file));
         fen += char('1' + int(rank));
     }
@@ -341,8 +341,7 @@ int Position::MakeMove(const S_MOVE& move) {
 
         if (abs(to_rank - from_rank) == 2) {  // Pawn moved two squares
             int ep_rank = (from_rank + to_rank) / 2;
-            // ep_square field stays 120; build it from the 64 file of `to`
-            ep_square = sq(File(to & 7), Rank(ep_rank));
+            ep_square = sq64(File(to & 7), Rank(ep_rank));
         }
     }
 
@@ -541,7 +540,7 @@ void Position::MakeNullMove() {
     
     // Clear en passant if it was set
     if (ep_square != -1) {
-        zobrist_key ^= Zobrist::EpFile[ep_square % 10 - 1];  // File index
+        zobrist_key ^= Zobrist::EpFile[ep_square & 7];  // File index (sq64)
         ep_square = -1;
     }
     
