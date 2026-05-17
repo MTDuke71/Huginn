@@ -220,100 +220,11 @@ public:
         }
     }
 
-    // Atomic piece movement - follows VICE MovePiece pattern
-    // Moves a piece from one square to another, updating all necessary data structures
-    void move_piece(int from_square, int to_square) {
-        DEBUG_ASSERT(is_playable(from_square), "Invalid source square for piece move");
-        DEBUG_ASSERT(is_playable(to_square), "Invalid destination square for piece move");
-        
-        Piece piece = at(from_square);
-        DEBUG_ASSERT(!is_none(piece), "Cannot move piece from empty square");
-        DEBUG_ASSERT(is_none(at(to_square)), "Cannot move piece to occupied square");
-        
-        Color piece_color = color_of(piece);
-        PieceType piece_type = type_of(piece);
-        
-        // 1. Convert to 64-square indices (shared by zobrist + bitboard updates)
-        int from_sq64 = MAILBOX_MAPS.to64[from_square];
-        int to_sq64 = MAILBOX_MAPS.to64[to_square];
-        if (from_sq64 >= 0 && to_sq64 >= 0) {
-            // 2. Hash piece out of from square and into to square
-            int zpc = int(piece_type) + (piece_color == Color::Black ? 6 : 0);
-            zobrist_key ^= Zobrist::Piece[zpc][from_sq64];
-            zobrist_key ^= Zobrist::Piece[zpc][to_sq64];
-
-            // 3. Update bitboards
-            popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], from_sq64);
-            popBit(color_bitboards[size_t(piece_color)], from_sq64);
-            popBit(occupied_bitboard, from_sq64);
-
-            setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], to_sq64);
-            setBit(color_bitboards[size_t(piece_color)], to_sq64);
-            setBit(occupied_bitboard, to_sq64);
-        }
-    }
-    
-    // Atomic piece removal - consolidates all operations for better performance
-    // Follows the VICE ClearPiece pattern but maintains Huginn's C++ style
-    void clear_piece(int square) {
-        DEBUG_ASSERT(is_playable(square), "Cannot clear piece from invalid square");
-        
-        Piece piece = at(square);
-        if (is_none(piece)) return; // Nothing to clear
-        
-        DEBUG_ASSERT(!is_offboard(piece), "Cannot clear offboard piece");
-        
-        Color piece_color = color_of(piece);
-        PieceType piece_type = type_of(piece);
-        
-        // 1. Update material score (kings can never be captured in chess)
-        material_score[size_t(piece_color)] -= value_of(piece);
-
-        // 2. Convert to 64-square index (shared by zobrist + bitboard updates)
-        int sq64 = MAILBOX_MAPS.to64[square];
-        if (sq64 >= 0) {
-            // 3. Update zobrist hash (XOR out the piece)
-            zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
-
-            // 4. Update bitboards
-            popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
-            popBit(color_bitboards[size_t(piece_color)], sq64);
-            popBit(occupied_bitboard, sq64);
-        }
-    }
-
-    // Atomic piece addition - complements clear_piece for better performance
-    // Follows the VICE AddPiece pattern but maintains Huginn's C++ style
-    void add_piece(int square, Piece piece) {
-        DEBUG_ASSERT(is_playable(square), "Cannot add piece to invalid square");
-        DEBUG_ASSERT(!is_none(piece) && !is_offboard(piece), "Cannot add invalid piece");
-        DEBUG_ASSERT(is_none(at(square)), "Cannot add piece to occupied square");
-        
-        Color piece_color = color_of(piece);
-        PieceType piece_type = type_of(piece);
-        
-        // 1. Update material score
-        if (piece_type != PieceType::King) {
-            material_score[size_t(piece_color)] += value_of(piece);
-        }
-
-        // 2. Convert to 64-square index (shared by zobrist + bitboard updates)
-        int sq64 = MAILBOX_MAPS.to64[square];
-        if (sq64 >= 0) {
-            // 3. Update zobrist hash (XOR in the piece)
-            zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
-
-            // 4. Update bitboards
-            setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
-            setBit(color_bitboards[size_t(piece_color)], sq64);
-            setBit(occupied_bitboard, sq64);
-        }
-    }
-
-    // ---- 64-square-native variants (S_MOVE 120->64 migration) -------------
-    // Same semantics as move_piece/clear_piece/add_piece but the caller passes
-    // a 64-square index directly: no MAILBOX_MAPS.to64 round-trip, no 120
-    // is_playable/at() guard. Caller must guarantee the index is in [0,64).
+    // ---- 64-square-native atomic piece ops (sole make/unmake path) --------
+    // The 120-square move_piece/clear_piece/add_piece were removed once the
+    // S_MOVE 120->64 migration left them with no callers. Caller passes a
+    // 64-square index directly (no MAILBOX_MAPS.to64 round-trip, no 120
+    // is_playable/at() guard); the index must be in [0,64).
     void move_piece_sq64(int from_sq64, int to_sq64) {
         DEBUG_ASSERT(from_sq64 >= 0 && from_sq64 < 64, "Invalid source sq64 for piece move");
         DEBUG_ASSERT(to_sq64 >= 0 && to_sq64 < 64, "Invalid destination sq64 for piece move");
