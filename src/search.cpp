@@ -571,7 +571,7 @@ void Engine::clear_search_tables() {
     // Age search history array instead of clearing completely
     // Aging preserves recent learning while gradually fading old patterns
     for (int piece = 0; piece < 13; ++piece) {
-        for (int sq = 0; sq < 120; ++sq) {
+        for (int sq = 0; sq < 64; ++sq) {
             // Reduce history scores by 75% (age by factor of 4)
             // This preserves 25% of existing knowledge while making room for new learning
             search_history[piece][sq] = search_history[piece][sq] / 4;
@@ -585,8 +585,8 @@ void Engine::clear_search_tables() {
     }
     
     // Clear counter-moves table
-    for (int from_sq = 0; from_sq < 120; ++from_sq) {
-        for (int to_sq = 0; to_sq < 120; ++to_sq) {
+    for (int from_sq = 0; from_sq < 64; ++from_sq) {
+        for (int to_sq = 0; to_sq < 64; ++to_sq) {
             counter_moves[from_sq][to_sq] = S_MOVE();
         }
     }
@@ -643,7 +643,7 @@ void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, in
 // Apply periodic aging to prevent history scores from becoming too large
 void Engine::age_search_history() {
     for (int piece = 0; piece < 13; ++piece) {
-        for (int sq = 0; sq < 120; ++sq) {
+        for (int sq = 0; sq < 64; ++sq) {
             // Reduce all history scores by 12.5% to maintain discrimination
             search_history[piece][sq] = (search_history[piece][sq] * 7) / 8;
         }

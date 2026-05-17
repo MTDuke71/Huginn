@@ -105,8 +105,8 @@ public:  // Make members public for easier access
     SyzygyTablebase* tablebase;  // Syzygy tablebase for endgame perfect play
     
     // Search History array (3:55) - stores scores for moves that improved alpha
-    // [piece][to_square] - 13 piece types, 120 squares (mailbox)
-    int search_history[13][120];
+    // [piece][to_square] - 13 piece types, 64 squares
+    int search_history[13][64];
     
     // Search Killers array (4:37) - stores non-capture moves causing beta cutoff  
     // [depth][killer_slot] - 64 levels, 2 killer moves per depth
@@ -115,8 +115,8 @@ public:  // Make members public for easier access
     // Counter-Move Heuristic (5-15% search speedup)
     // [from_square][to_square] - maps opponent's last move to best counter-move
     // When move X causes beta-cutoff, store move Y as good counter to previous opponent move
-    // 120x120 table (~115KB memory) for temporary per-search learning
-    S_MOVE counter_moves[120][120];
+    // 64x64 table (~32KB memory) for temporary per-search learning
+    S_MOVE counter_moves[64][64];
     
     // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) table
     // [victim][attacker] - prioritizes captures where weak pieces take strong pieces
