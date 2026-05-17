@@ -36,7 +36,7 @@ struct S_MOVELIST {
         moves[count] = move;
         // MVV-LVA scoring: Most Valuable Victim - Least Valuable Attacker
         Piece victim_piece = make_piece(!pos.side_to_move, move.get_captured());
-        Piece attacker_piece = pos.at(move.get_from());
+        Piece attacker_piece = pos.at_sq64(move.get_from());
         moves[count].score = 1000000 + (10 * value_of(victim_piece)) - value_of(attacker_piece);
         count++;
     }
@@ -115,7 +115,7 @@ inline bool in_check(const Position& pos) {
     
     // Check if the king is attacked by the opponent
     Color opponent_color = (current_color == Color::White) ? Color::Black : Color::White;
-    return Huginn::SqAttacked(king_sq, pos, opponent_color);
+    return Huginn::SqAttackedBB(king_sq, pos, opponent_color);
 }
 
 // Check if a move is legal (doesn't leave own king in check)
@@ -128,14 +128,16 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
         Color opponent_side = (current_side == Color::White) ? Color::Black : Color::White;
         
         // King cannot be in check before castling
-        if (Huginn::SqAttacked(from, pos, opponent_side)) {
+        if (Huginn::SqAttackedBB(from, pos, opponent_side)) {
             return false;
         }
-        
-        // Check that king doesn't pass through attacked squares during castling
+
+        // Check that king doesn't pass through attacked squares during castling.
+        // from/to are sq64; castling is same-rank so ±1 stepping stays contiguous
+        // (rank-1 = sq64 0..7, rank-8 = 56..63), matching the old 120 behaviour.
         int step = (to > from) ? 1 : -1;
         for (int sq = from + step; sq != to + step; sq += step) {
-            if (Huginn::SqAttacked(sq, pos, opponent_side)) {
+            if (Huginn::SqAttackedBB(sq, pos, opponent_side)) {
                 return false;
             }
         }
@@ -155,7 +157,7 @@ inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     
     // Check if our king would be in check after the move
     // Note: after the move, it's the opponent's turn, so we check if opponent attacks our king
-    bool legal = !Huginn::SqAttacked(king_sq, pos, !current_side);
+    bool legal = !Huginn::SqAttackedBB(king_sq, pos, !current_side);
     
     // Undo the move to restore the original position
     pos.TakeMove();

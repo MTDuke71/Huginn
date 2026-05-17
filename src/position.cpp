@@ -239,7 +239,7 @@ void Position::rebuild_counts() {
         uint64_t kings = piece_bitboards[color][int(PieceType::King)];
         if (kings != 0) {
             int king_sq64 = get_lsb(kings);
-            king_sq[color] = MAILBOX_MAPS.to120[king_sq64];
+            king_sq[color] = king_sq64;  // king_sq is now sq64
         }
         for (int type = int(PieceType::Pawn); type < int(PieceType::King); ++type) {
             int count = popcount(piece_bitboards[color][type]);
@@ -258,10 +258,10 @@ void Position::set_startpos() {
 // VICE Tutorial Video #41: MakeMove function
 // Returns 1 if move is legal, 0 if illegal (leaves king in check)
 int Position::MakeMove(const S_MOVE& move) {
-    // Debug assertions for move validity  
-    DEBUG_ASSERT(is_playable(move.get_from()), "Move source square must be playable");
-    DEBUG_ASSERT(is_playable(move.get_to()), "Move destination square must be playable");
-    
+    // Debug assertions for move validity (from/to are 64-square indices)
+    DEBUG_ASSERT(move.get_from() >= 0 && move.get_from() < 64, "Move source square must be a valid sq64");
+    DEBUG_ASSERT(move.get_to() >= 0 && move.get_to() < 64, "Move destination square must be a valid sq64");
+
     // Store history information for potential undo
     int from = move.get_from();
     int to = move.get_to();
@@ -278,21 +278,21 @@ int Position::MakeMove(const S_MOVE& move) {
     undo.halfmove_clock = halfmove_clock;
     undo.zobrist_key = zobrist_key;  // Save ORIGINAL zobrist key (BEFORE modifications)
     
-    // Update castling rights based on move (from/to squares)
-    uint8_t new_castling_rights = CastlingLookup::update_castling_rights(undo.castling_rights, from, to);
+    // Update castling rights based on move (from/to squares, sq64)
+    uint8_t new_castling_rights = CastlingLookup::update_castling_rights_sq64(undo.castling_rights, from, to);
     castling_rights = new_castling_rights;
-    
+
     // Set captured piece - handle en passant special case
     if (move.is_en_passant()) {
-        Color moving_color = color_of(at(from));
+        Color moving_color = color_of(at_sq64(from));
         int captured_pawn_sq;
         if (moving_color == Color::White) {
-            captured_pawn_sq = to + SOUTH;  // Black pawn south of target
+            captured_pawn_sq = to - 8;  // Black pawn one rank south of target (sq64)
         } else {
-            captured_pawn_sq = to + NORTH;  // White pawn north of target  
+            captured_pawn_sq = to + 8;  // White pawn one rank north of target (sq64)
         }
-        
-        Piece piece_at_captured_sq = at(captured_pawn_sq);
+
+        Piece piece_at_captured_sq = at_sq64(captured_pawn_sq);
         if (is_none(piece_at_captured_sq)) {
             // This is an invalid en passant move - there's no pawn to capture!
             return 0;  // Return illegal move
@@ -300,7 +300,7 @@ int Position::MakeMove(const S_MOVE& move) {
         
         undo.captured = piece_at_captured_sq;  // Capture the pawn that's actually being removed
     } else {
-        undo.captured = at(to);  // Normal capture
+        undo.captured = at_sq64(to);  // Normal capture (to is sq64)
     }
     
     // Save additional state needed for undo
@@ -308,21 +308,21 @@ int Position::MakeMove(const S_MOVE& move) {
     
     // Handle en passant captures BEFORE updating ep_square
     if (move.is_en_passant()) {
-        Color moving_color = color_of(at(from));
+        Color moving_color = color_of(at_sq64(from));
         int captured_pawn_sq;
         if (moving_color == Color::White) {
-            captured_pawn_sq = to + SOUTH;  // Black pawn south of target
+            captured_pawn_sq = to - 8;  // Black pawn one rank south of target (sq64)
         } else {
-            captured_pawn_sq = to + NORTH;  // White pawn north of target  
+            captured_pawn_sq = to + 8;  // White pawn one rank north of target (sq64)
         }
-        
+
         // Clear the captured pawn using atomic operation
-        clear_piece(captured_pawn_sq);
+        clear_piece_sq64(captured_pawn_sq);
     }
 
     // Handle 50-move rule: reset on pawn move or capture
-    Piece moving_piece = at(from);
-    if (type_of(moving_piece) == PieceType::Pawn || !is_none(at(to))) {
+    Piece moving_piece = at_sq64(from);
+    if (type_of(moving_piece) == PieceType::Pawn || !is_none(at_sq64(to))) {
         halfmove_clock = 0;
     } else {
         ++halfmove_clock;
@@ -336,29 +336,30 @@ int Position::MakeMove(const S_MOVE& move) {
     
     // Set en passant square for pawn double moves
     if (type_of(moving_piece) == PieceType::Pawn && !move.is_capture()) {
-        int from_rank = int(rank_of(from));
-        int to_rank = int(rank_of(to));
-        
+        int from_rank = from >> 3;  // sq64 rank 0..7
+        int to_rank = to >> 3;
+
         if (abs(to_rank - from_rank) == 2) {  // Pawn moved two squares
             int ep_rank = (from_rank + to_rank) / 2;
-            ep_square = sq(file_of(to), Rank(ep_rank));
+            // ep_square field stays 120; build it from the 64 file of `to`
+            ep_square = sq(File(to & 7), Rank(ep_rank));
         }
     }
-    
+
     // Make the actual move using atomic operations
     if (move.is_promotion()) {
         // Handle capture before promotion
-        if (!is_none(at(to))) {
-            clear_piece(to);  // Remove captured piece
+        if (!is_none(at_sq64(to))) {
+            clear_piece_sq64(to);  // Remove captured piece
         }
-        clear_piece(from);  // Remove pawn
-        add_piece(to, make_piece(color_of(moving_piece), move.get_promoted()));  // Add promoted piece
+        clear_piece_sq64(from);  // Remove pawn
+        add_piece_sq64(to, make_piece(color_of(moving_piece), move.get_promoted()));  // Add promoted piece
     } else {
         // Handle normal capture
-        if (!is_none(at(to))) {
-            clear_piece(to);  // Remove captured piece first
+        if (!is_none(at_sq64(to))) {
+            clear_piece_sq64(to);  // Remove captured piece first
         }
-        move_piece(from, to);  // Then move the piece
+        move_piece_sq64(from, to);  // Then move the piece
     }
     
     // Handle castling - move the rook
@@ -367,25 +368,25 @@ int Position::MakeMove(const S_MOVE& move) {
         int rook_from, rook_to;
         
         if (king_color == Color::White) {
-            if (to == sq(File::G, Rank::R1)) {  // White kingside
-                rook_from = sq(File::H, Rank::R1);
-                rook_to = sq(File::F, Rank::R1);
+            if (to == sq64(File::G, Rank::R1)) {  // White kingside
+                rook_from = sq64(File::H, Rank::R1);
+                rook_to = sq64(File::F, Rank::R1);
             } else {  // White queenside
-                rook_from = sq(File::A, Rank::R1);
-                rook_to = sq(File::D, Rank::R1);
+                rook_from = sq64(File::A, Rank::R1);
+                rook_to = sq64(File::D, Rank::R1);
             }
         } else {
-            if (to == sq(File::G, Rank::R8)) {  // Black kingside
-                rook_from = sq(File::H, Rank::R8);
-                rook_to = sq(File::F, Rank::R8);
+            if (to == sq64(File::G, Rank::R8)) {  // Black kingside
+                rook_from = sq64(File::H, Rank::R8);
+                rook_to = sq64(File::F, Rank::R8);
             } else {  // Black queenside
-                rook_from = sq(File::A, Rank::R8);
-                rook_to = sq(File::D, Rank::R8);
+                rook_from = sq64(File::A, Rank::R8);
+                rook_to = sq64(File::D, Rank::R8);
             }
         }
-        
+
         // Move the rook using atomic operation
-        move_piece(rook_from, rook_to);
+        move_piece_sq64(rook_from, rook_to);
     }
     
     // Update king square if king moved
@@ -409,7 +410,7 @@ int Position::MakeMove(const S_MOVE& move) {
 
     // king_square == -1 only happens in partial test positions with no king of that color;
     // there is nothing to be in check, so treat the move as legal.
-    if (king_square >= 0 && Huginn::SqAttacked(king_square, *this, side_to_move)) {
+    if (king_square >= 0 && Huginn::SqAttackedBB(king_square, *this, side_to_move)) {
         // Move is illegal - undo it
         TakeMove();
         return 0;  // Illegal move
@@ -445,68 +446,68 @@ void Position::TakeMove() {
     
     // Handle en passant undo - restore captured pawn
     if (move.is_en_passant()) {
-        Color moving_color = color_of(at(to));
+        Color moving_color = color_of(at_sq64(to));
         int captured_pawn_sq;
         if (moving_color == Color::White) {
-            captured_pawn_sq = to + SOUTH;  // Black pawn was south of target
+            captured_pawn_sq = to - 8;  // Black pawn was one rank south of target (sq64)
         } else {
-            captured_pawn_sq = to + NORTH;  // White pawn was north of target
+            captured_pawn_sq = to + 8;  // White pawn was one rank north of target (sq64)
         }
-        
+
         // Restore the captured pawn (stored in undo.captured)
-        add_piece(captured_pawn_sq, undo.captured);
+        add_piece_sq64(captured_pawn_sq, undo.captured);
     }
     
     // Handle castling undo - move rook back to original position
     if (move.is_castle()) {
-        Color king_color = color_of(at(to));
+        Color king_color = color_of(at_sq64(to));
         int rook_from, rook_to;
-        
+
         if (king_color == Color::White) {
-            if (to == sq(File::G, Rank::R1)) {  // White kingside
-                rook_from = sq(File::H, Rank::R1);  // Original rook position
-                rook_to = sq(File::F, Rank::R1);    // Current rook position
+            if (to == sq64(File::G, Rank::R1)) {  // White kingside
+                rook_from = sq64(File::H, Rank::R1);  // Original rook position
+                rook_to = sq64(File::F, Rank::R1);    // Current rook position
             } else {  // White queenside
-                rook_from = sq(File::A, Rank::R1);  // Original rook position
-                rook_to = sq(File::D, Rank::R1);    // Current rook position
+                rook_from = sq64(File::A, Rank::R1);  // Original rook position
+                rook_to = sq64(File::D, Rank::R1);    // Current rook position
             }
         } else {
-            if (to == sq(File::G, Rank::R8)) {  // Black kingside
-                rook_from = sq(File::H, Rank::R8);  // Original rook position
-                rook_to = sq(File::F, Rank::R8);    // Current rook position
+            if (to == sq64(File::G, Rank::R8)) {  // Black kingside
+                rook_from = sq64(File::H, Rank::R8);  // Original rook position
+                rook_to = sq64(File::F, Rank::R8);    // Current rook position
             } else {  // Black queenside
-                rook_from = sq(File::A, Rank::R8);  // Original rook position
-                rook_to = sq(File::D, Rank::R8);    // Current rook position
+                rook_from = sq64(File::A, Rank::R8);  // Original rook position
+                rook_to = sq64(File::D, Rank::R8);    // Current rook position
             }
         }
-        
+
         // Move rook back to original position
-        move_piece(rook_to, rook_from);
+        move_piece_sq64(rook_to, rook_from);
     }
     
     // Move piece back to original square BEFORE adding captured piece
     if (move.is_promotion()) {
         // For promotion, remove promoted piece and restore original pawn
-        clear_piece(to);  // Remove promoted piece
-        Color moving_color = color_of(undo.captured) == Color::None ? 
-            (side_to_move == Color::White ? Color::Black : Color::White) : 
+        clear_piece_sq64(to);  // Remove promoted piece
+        Color moving_color = color_of(undo.captured) == Color::None ?
+            (side_to_move == Color::White ? Color::Black : Color::White) :
             (color_of(undo.captured) == Color::White ? Color::Black : Color::White);
-        add_piece(from, make_piece(moving_color, PieceType::Pawn));  // Restore pawn
+        add_piece_sq64(from, make_piece(moving_color, PieceType::Pawn));  // Restore pawn
     } else {
         // Regular move - move piece back
-        DEBUG_ASSERT(is_playable(to), "Invalid 'to' square in TakeMove");
-        DEBUG_ASSERT(is_playable(from), "Invalid 'from' square in TakeMove");
-        DEBUG_ASSERT(!is_none(at(to)), "No piece to move back from 'to' square");
-        move_piece(to, from);
+        DEBUG_ASSERT(to >= 0 && to < 64, "Invalid 'to' sq64 in TakeMove");
+        DEBUG_ASSERT(from >= 0 && from < 64, "Invalid 'from' sq64 in TakeMove");
+        DEBUG_ASSERT(!is_none(at_sq64(to)), "No piece to move back from 'to' square");
+        move_piece_sq64(to, from);
     }
-    
+
     // Add captured piece back to destination square (if any)
     if (!is_none(undo.captured) && !move.is_en_passant()) {
-        add_piece(to, undo.captured);
+        add_piece_sq64(to, undo.captured);
     }
-    
+
     // Update king square if king moved
-    Piece moved_piece = at(from);
+    Piece moved_piece = at_sq64(from);
     if (type_of(moved_piece) == PieceType::King) {
         king_sq[int(color_of(moved_piece))] = from;
     }

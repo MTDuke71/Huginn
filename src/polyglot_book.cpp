@@ -418,33 +418,33 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
     // BUT: Testing shows the bit order might be reversed from documentation
     
     int to_sq = poly_move & 0x3F;           // Bottom 6 bits = to square
-    int from_sq = (poly_move >> 6) & 0x3F;  // Next 6 bits = from square  
+    int from_sq = (poly_move >> 6) & 0x3F;  // Next 6 bits = from square
     int promotion = (poly_move >> 12) & 0xF; // Top 4 bits = promotion
-    
-    // Convert from 64-square to 120-square format
-    // 64-square: file=0..7, rank=0..7, square = rank*8 + file
-    // 120-square: file=1..8, rank=2..9, square = rank*10 + file
+
+    // Polyglot squares are already 64-square (square = rank*8 + file),
+    // matching S_MOVE's encoding directly — no 120 conversion needed.
     int from_file = from_sq % 8;
     int from_rank = from_sq / 8;
-    int from_120 = (from_rank + 2) * 10 + (from_file + 1);
-    
+    int from_64 = from_sq;
+
     int to_file = to_sq % 8;
     int to_rank = to_sq / 8;
-    int to_120 = (to_rank + 2) * 10 + (to_file + 1);
-    
+    int to_64 = to_sq;
+
     // Determine captured piece
-    Piece captured = pos.at(to_120);
+    Piece captured = pos.at_sq64(to_64);
     PieceType captured_type = (captured != Piece::None) ? get_piece_type(captured) : PieceType::None;
-    
+
     // Check for special moves
     bool is_ep = false;
     bool is_castle = false;
     bool is_pawn_start = false;
-    
-    Piece moving_piece = pos.at(from_120);
-    
-    // Check for en passant
-    if (get_piece_type(moving_piece) == PieceType::Pawn && to_120 == pos.ep_square) {
+
+    Piece moving_piece = pos.at_sq64(from_64);
+
+    // Check for en passant (ep_square field is still 120; convert for compare)
+    if (get_piece_type(moving_piece) == PieceType::Pawn &&
+        pos.ep_square != -1 && to_64 == MAILBOX_MAPS.to64[pos.ep_square]) {
         is_ep = true;
         captured_type = PieceType::Pawn; // Captured piece is pawn
     }
@@ -463,15 +463,10 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
                 is_castle = true;
                 // For castling moves, there's no captured piece on the target square
                 captured_type = PieceType::None;
-                
+
                 // Convert Polyglot king-to-rook move to standard king-to-destination move
-                if (to_file == 7) {
-                    // Short castling: king goes to g1 (file 6)
-                    to_120 = (0 + 2) * 10 + (6 + 1); // g1 in 120-square format
-                } else {
-                    // Long castling: king goes to c1 (file 2)  
-                    to_120 = (0 + 2) * 10 + (2 + 1); // c1 in 120-square format
-                }
+                to_64 = (to_file == 7) ? sq64(File::G, Rank::R1)   // short: king to g1
+                                       : sq64(File::C, Rank::R1);  // long:  king to c1
             }
         } else if (is_black_king_on_e8) {
             // Black castling: e8h8 (short) or e8a8 (long)
@@ -479,15 +474,10 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
                 is_castle = true;
                 // For castling moves, there's no captured piece on the target square
                 captured_type = PieceType::None;
-                
+
                 // Convert Polyglot king-to-rook move to standard king-to-destination move
-                if (to_file == 7) {
-                    // Short castling: king goes to g8 (file 6)
-                    to_120 = (7 + 2) * 10 + (6 + 1); // g8 in 120-square format
-                } else {
-                    // Long castling: king goes to c8 (file 2)
-                    to_120 = (7 + 2) * 10 + (2 + 1); // c8 in 120-square format
-                }
+                to_64 = (to_file == 7) ? sq64(File::G, Rank::R8)   // short: king to g8
+                                       : sq64(File::C, Rank::R8);  // long:  king to c8
             }
         }
     }
@@ -509,7 +499,7 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
         }
     }
     
-    return S_MOVE(from_120, to_120, captured_type, is_ep, is_pawn_start, promoted_type, is_castle);
+    return S_MOVE(from_64, to_64, captured_type, is_ep, is_pawn_start, promoted_type, is_castle);
 }
 
 std::vector<std::pair<S_MOVE, uint16_t>> PolyglotBook::get_all_book_moves(const Position& pos) const {

@@ -94,8 +94,8 @@ inline uint64_t least_valuable_attacker(const Position& pos,
 } // namespace
 
 int see(const Position& pos, const S_MOVE& move) {
-    int from64 = MAILBOX_MAPS.to64[move.get_from()];
-    int to64   = MAILBOX_MAPS.to64[move.get_to()];
+    int from64 = move.get_from();  // S_MOVE now stores 64-square indices
+    int to64   = move.get_to();
 
     int gain[32];
     int d = 0;

@@ -19,11 +19,11 @@ S_MOVE parse_uci_move(const std::string& uci_move, const Position& position) {
 	int from_file = uci_move[0] - 'a';
 	int from_rank = uci_move[1] - '1';
 	if (from_file < 0 || from_file > 7 || from_rank < 0 || from_rank > 7) return S_MOVE();
-	int from = sq(File(from_file), Rank(from_rank));
+	int from = sq64(File(from_file), Rank(from_rank));
 	int to_file = uci_move[2] - 'a';
 	int to_rank = uci_move[3] - '1';
 	if (to_file < 0 || to_file > 7 || to_rank < 0 || to_rank > 7) return S_MOVE();
-	int to = sq(File(to_file), Rank(to_rank));
+	int to = sq64(File(to_file), Rank(to_rank));
 	PieceType promoted = PieceType::None;
 	if (uci_move.length() == 5) {
 		char promo_char = uci_move[4];

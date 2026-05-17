@@ -510,17 +510,14 @@ std::string Engine::move_to_uci(const S_MOVE& move) {
     int from = move.get_from();
     int to = move.get_to();
     
-    // Use existing FILE_RANK_LOOKUPS instead of custom conversion
-    File from_file = file_of(from);
-    Rank from_rank = rank_of(from);
-    File to_file = file_of(to);
-    Rank to_rank = rank_of(to);
-    
-    // Check for invalid squares
-    if (from_file == File::None || to_file == File::None || 
-        from_rank == Rank::None || to_rank == Rank::None) {
+    // from/to are sq64 indices: file = sq & 7, rank = sq >> 3
+    if (from < 0 || from >= 64 || to < 0 || to >= 64) {
         return "0000";
     }
+    File from_file = File(from & 7);
+    Rank from_rank = Rank(from >> 3);
+    File to_file = File(to & 7);
+    Rank to_rank = Rank(to >> 3);
     
     result += char('a' + int(from_file));
     result += char('1' + int(from_rank));
@@ -617,9 +614,9 @@ void Engine::update_search_history(const Position& pos, const S_MOVE& move, int 
     int from = move.get_from();
     int to = move.get_to();
     
-    if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
+    if (from < 0 || from >= 64 || to < 0 || to >= 64) return;
     
-    Piece piece = pos.at(from);
+    Piece piece = pos.at_sq64(from);
     int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
     
     // Increase history score for this piece-to-square combination
@@ -634,9 +631,9 @@ void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, in
     int from = move.get_from();
     int to = move.get_to();
     
-    if (from < 0 || from >= 120 || to < 0 || to >= 120) return;
+    if (from < 0 || from >= 64 || to < 0 || to >= 64) return;
     
-    Piece piece = pos.at(from);
+    Piece piece = pos.at_sq64(from);
     int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
     
     // Decrease history score for this piece-to-square combination
@@ -677,7 +674,7 @@ void Engine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& coun
     int to_sq = previous_move.get_to();
     
     // Validate square indices (must be 0-119 for 120-square representation)
-    if (from_sq < 0 || from_sq >= 120 || to_sq < 0 || to_sq >= 120) return;
+    if (from_sq < 0 || from_sq >= 64 || to_sq < 0 || to_sq >= 64) return;
     
     // Store the counter-move for this [from][to] combination
     counter_moves[from_sq][to_sq] = counter_move;
@@ -692,7 +689,7 @@ S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
     int to_sq = previous_move.get_to();
     
     // Validate square indices
-    if (from_sq < 0 || from_sq >= 120 || to_sq < 0 || to_sq >= 120) {
+    if (from_sq < 0 || from_sq >= 64 || to_sq < 0 || to_sq >= 64) {
         return S_MOVE();
     }
     
@@ -758,7 +755,7 @@ void Engine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const 
             
             // Get the attacking piece type from the position
             int from_sq = move.get_from();
-            Piece attacking_piece = pos.at(from_sq);
+            Piece attacking_piece = pos.at_sq64(from_sq);
             PieceType attacker = type_of(attacking_piece);
             
             score = get_mvv_lva_score(victim, attacker);
@@ -807,7 +804,7 @@ void Engine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
             
             // Get the attacking piece type from the position
             int from_sq = move.get_from();
-            Piece attacking_piece = pos.at(from_sq);
+            Piece attacking_piece = pos.at_sq64(from_sq);
             PieceType attacker = type_of(attacking_piece);
             
             score = get_mvv_lva_score(victim, attacker);
@@ -866,9 +863,9 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
             int to = tt_move.get_to();
             
             // Validate square bounds and that there's a piece to move
-            if (from >= 0 && from < 120 && to >= 0 && to < 120 && 
-                pos.at(from) != Piece::None && 
-                color_of(pos.at(from)) == pos.side_to_move) {
+            if (from >= 0 && from < 64 && to >= 0 && to < 64 &&
+                pos.at_sq64(from) != Piece::None &&
+                color_of(pos.at_sq64(from)) == pos.side_to_move) {
                 tt_move_valid = true;
             }
         }
@@ -900,7 +897,7 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                 
                 // Get the attacking piece type from the position
                 int from_sq = move.get_from();
-                Piece attacking_piece = pos.at(from_sq);
+                Piece attacking_piece = pos.at_sq64(from_sq);
                 PieceType attacker = type_of(attacking_piece);
                 
                 score = 1000000 + get_mvv_lva_score(victim, attacker);
@@ -959,8 +956,8 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                         int from = move.get_from();
                         int to = move.get_to();
                         
-                        if (from >= 0 && from < 120 && to >= 0 && to < 120) {
-                            Piece piece = pos.at(from);
+                        if (from >= 0 && from < 64 && to >= 0 && to < 64) {
+                            Piece piece = pos.at_sq64(from);
                             int piece_index = static_cast<int>(piece) % 13;
                             score = search_history[piece_index][to];  // History score
                         } else {
@@ -1249,7 +1246,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     bool in_check = false;
     int king_sq = pos.king_sq[int(pos.side_to_move)];
     if (king_sq >= 0) {
-        in_check = SqAttacked(king_sq, pos, !pos.side_to_move);
+        in_check = SqAttackedBB(king_sq, pos, !pos.side_to_move);
         if (in_check) {
             depth++; // Extend search depth when in check
         }
@@ -1457,7 +1454,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // paid only on the small subset that would otherwise be reduced.
         auto gives_check = [&]() {
             int opp_king = pos.king_sq[int(pos.side_to_move)];
-            return opp_king >= 0 && SqAttacked(opp_king, pos, !pos.side_to_move);
+            return opp_king >= 0 && SqAttackedBB(opp_king, pos, !pos.side_to_move);
         };
 
         if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES &&
@@ -1575,7 +1572,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // illegal (king-into-check, pinned piece, EP self-check).
     if (legal_count == 0 && !info.stopped && !info.quit) {
         int king_sq = pos.king_sq[int(pos.side_to_move)];
-        if (king_sq >= 0 && SqAttacked(king_sq, pos, !pos.side_to_move)) {
+        if (king_sq >= 0 && SqAttackedBB(king_sq, pos, !pos.side_to_move)) {
 #if ENABLE_PLY_TRACKED_TT_MATE
             // Use info.ply so the leaf encoding matches the TT store/probe
             // adjustment that uses info.ply. The two diverge under check

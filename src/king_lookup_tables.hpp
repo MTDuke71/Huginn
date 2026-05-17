@@ -133,26 +133,23 @@ namespace KingLookupTables {
      */
     inline void generate_king_moves_lookup(const Position& pos, S_MOVELIST& list, Color us) {
         // Get king position
-        int king_square = pos.king_sq[int(us)];
+        int king_square = pos.king_sq[int(us)];  // sq64
         if (king_square == -1) return; // No king (should not happen)
-        
-        // Convert from 120-square to 64-square index
-        int from_64 = MAILBOX_MAPS.to64[king_square];
-        if (from_64 == -1) return; // Invalid square
-        
+
+        int from_64 = king_square;
+
         // Use lookup table - no boundary checking needed
         int move_count = KING_MOVE_COUNT[from_64];
         const int* moves = KING_MOVES[from_64];
-        
+
         for (int i = 0; i < move_count; ++i) {
             int to_64 = moves[i];
-            int to = MAILBOX_MAPS.to120[to_64]; // Convert back to 120-square system
-            
-            Piece target = pos.at(to);
+
+            Piece target = pos.at_sq64(to_64);
             if (target == Piece::None) {
-                list.add_quiet_move(make_move(king_square, to));
+                list.add_quiet_move(make_move(from_64, to_64));
             } else if (color_of(target) == !us) {
-                list.add_capture_move(make_capture(king_square, to, type_of(target)), pos);
+                list.add_capture_move(make_capture(from_64, to_64, type_of(target)), pos);
             }
             // Skip squares occupied by own pieces
         }
@@ -196,27 +193,24 @@ namespace KingLookupTables {
      */
     inline void generate_king_moves_bitboard(const Position& pos, S_MOVELIST& list, Color us) {
         // Get king position
-        int king_square = pos.king_sq[int(us)];
+        int king_square = pos.king_sq[int(us)];  // sq64
         if (king_square == -1) return; // No king (should not happen)
-        
-        int from_64 = MAILBOX_MAPS.to64[king_square];
-        if (from_64 == -1) return;
-        
+
+        int from_64 = king_square;
+
         // Get pre-computed attack bitboard
         uint64_t attacks = KING_ATTACKS[from_64];
-        
+
         // Iterate through attacked squares using bit manipulation
         while (attacks) {
             int to_64 = builtin_ctzll(attacks); // Count trailing zeros (LSB)
             attacks &= attacks - 1; // Clear LSB (Brian Kernighan's bit trick)
-            
-            int to = MAILBOX_MAPS.to120[to_64];
-            
-            Piece target = pos.at(to);
+
+            Piece target = pos.at_sq64(to_64);
             if (target == Piece::None) {
-                list.add_quiet_move(make_move(king_square, to));
+                list.add_quiet_move(make_move(from_64, to_64));
             } else if (color_of(target) == !us) {
-                list.add_capture_move(make_capture(king_square, to, type_of(target)), pos);
+                list.add_capture_move(make_capture(from_64, to_64, type_of(target)), pos);
             }
             // Skip squares occupied by own pieces
         }
