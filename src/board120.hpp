@@ -135,10 +135,6 @@ constexpr inline bool is_playable(int sq120) {
 
 constexpr inline bool is_offboard(int sq120) { return !is_playable(sq120); }
 
-// Algebraic <-> square (e.g., "e4") - declarations moved to .cpp for non-critical functions
-int from_algebraic(std::string_view s);
-const char* to_algebraic(int sq120, char out[3]);
-
 // Pawn push/attack directions in mailbox-120
 // White moves "north" (+10), Black moves "south" (-10)
 constexpr inline int pawn_push_dir_white() { return NORTH; }
