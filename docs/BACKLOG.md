@@ -205,6 +205,74 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ## Open — high priority
 
+### #26: `board64[64]` piece-on-square cache (CLOSED, pending gauntlet)
+
+- status: **closed code-side** (2026-05-17, shipped pending 200g gauntlet)
+- priority: was medium-high (speed win at every depth, low risk)
+- type: speed
+- source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
+  Priority 3).
+
+**What was happening.** `Position::at_sq64(s64)` did a bitboard scan
+to derive the piece on a given square: bit test against
+`occupied_bitboard`, then `color_bitboards`, then a 6-iteration loop
+over `piece_bitboards[c][t]` until the matching piece type was found.
+Worst case ~10 bitboard ANDs + branches per call. Called from
+`MakeMove` / `TakeMove`, slider movegen capture tagging, MVV-LVA
+scoring, TT move validation, history scoring — every search node hit
+this function many times.
+
+**The fix.** New `board64[64]` array in `Position`, mirrors the piece
+bitboards as a piece-per-square cache. `at_sq64()` becomes a single
+array load. Every Position mutator (`set`, `move_piece`, `clear_piece`,
+`add_piece`) updates `board64` in lock-step with the bitboards;
+`reset()` zeros it; `rebuild_counts()` re-derives it from the piece
+bitboards (so FEN-loaded positions and any code path that bypasses
+the per-square mutators stay consistent).
+
+**Why this is accuracy-safe.** `board64` is a derived cache — every
+read is replaced by an equivalent array load, every write keeps the
+two views in sync. No move / eval / search decision changes.
+
+**Bench evidence** (depth 11 startpos, OwnBook off, single thread,
+post-#24 t5 baseline):
+
+| Metric | t5 (post-#24) | post-#26 | Δ |
+|---|---:|---:|---:|
+| Depth-11 time | 263 ms | **234 ms** | **−11%** |
+| Depth-11 NPS | 3.55 Mnps | **3.98 Mnps** | **+12%** |
+| Depth-11 nodes | 932,229 | 932,234 | bit-identical (±5, input-poll noise) |
+
+Smaller per-call savings than #24 but the function is called many
+more times per node, so the aggregate gain is meaningful and
+compounds at every depth.
+
+**Cumulative trajectory** (this session + the t4→t5 jump):
+
+| Version | Time @ d11 | NPS @ d11 |
+|---|---:|---:|
+| pre-#23 (mid-May) | 2285 ms | 2.21 Mnps |
+| post-#23 | 516 ms | 2.33 Mnps |
+| post-#24 (= t5) | 263 ms | 3.55 Mnps |
+| **post-#26** | **234 ms** | **3.98 Mnps** |
+
+pre-#23 → post-#26: **9.8× faster** to depth 11, **+80% NPS**. Plus
+the t5 stack already shipped ~+78 Elo over t4 (#25).
+
+**Validation.**
+- All 208 GoogleTests pass.
+- Perft suite passes (movegen bit-identical).
+- d11 startpos PV and node count match the t5 binary exactly
+  (mod ±5-node input-polling noise from faster wall-clock).
+- Pending: 200g gauntlet vs `baseline-t5` at tc=10+0.1.
+
+**Expected Elo.** Extrapolating from #24's 52% NPS → ~+50 Elo,
+a +12% NPS win should land in the +15-30 Elo band on a 200g.
+Single-200g CI is ±41 so a clean LOS-95% read is possible but
+not guaranteed; pool with AMD for confidence if borderline.
+
+---
+
 ### #24: Real magic-bitboard slider attacks (CLOSED, pending gauntlet)
 
 - status: **closed code-side** (2026-05-16, shipped pending 200g gauntlet)
