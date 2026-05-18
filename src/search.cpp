@@ -368,17 +368,12 @@ Position Engine::mirrorBoard(const Position& pos) {
     Position mirrored_pos;
     mirrored_pos.reset();
 
-    // Mirror all pieces on the board (write through the bitboard-aware set())
-    for (int sq120 = 21; sq120 <= 98; ++sq120) {
-        Piece original_piece = pos.at(sq120);
-        if (original_piece == Piece::Offboard || is_none(original_piece)) continue;
+    // Mirror all pieces on the board (write through the bitboard-aware set_sq64())
+    for (int sq64 = 0; sq64 < 64; ++sq64) {
+        Piece original_piece = pos.at_sq64(sq64);
+        if (is_none(original_piece)) continue;
 
-        int sq64 = MAILBOX_MAPS.to64[sq120];
-        if (sq64 < 0) continue;
-
-        int mirrored_sq64 = mirror64[sq64];
-        int mirrored_sq120 = MAILBOX_MAPS.to120[mirrored_sq64];
-        mirrored_pos.set(mirrored_sq120, swapPieceColor(original_piece));
+        mirrored_pos.set_sq64(mirror64[sq64], swapPieceColor(original_piece));
     }
     
     // Flip the side to move
