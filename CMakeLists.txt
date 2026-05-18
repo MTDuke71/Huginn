@@ -526,12 +526,6 @@ endif()
 # target_include_directories(eval_benchmark_old PRIVATE src)
 # target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
-# Attack detection benchmark for Phase 1 bitboard migration
-add_executable(attack_benchmark benchmark/attack_benchmark.cpp ${COMMON_SOURCES})
-target_compile_features(attack_benchmark PRIVATE cxx_std_17)
-target_include_directories(attack_benchmark PRIVATE src)
-target_compile_definitions(attack_benchmark PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
-
 # End of CMakeLists.txt
 
 
