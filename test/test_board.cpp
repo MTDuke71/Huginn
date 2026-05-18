@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "chess_types.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 
 class BoardTest : public ::testing::Test {
 protected:
@@ -16,9 +16,9 @@ protected:
 
 TEST_F(BoardTest, ResetBoardClearsAllSquares) {
     // Verify position starts with pieces
-    EXPECT_NE(pos.at(sq(File::E, Rank::R1)), Piece::None);  // White king
-    EXPECT_NE(pos.at(sq(File::A, Rank::R1)), Piece::None);  // White rook
-    EXPECT_NE(pos.at(sq(File::E, Rank::R2)), Piece::None);  // White pawn
+    EXPECT_NE(pos.at_sq64(sq64(File::E, Rank::R1)), Piece::None);  // White king
+    EXPECT_NE(pos.at_sq64(sq64(File::A, Rank::R1)), Piece::None);  // White rook
+    EXPECT_NE(pos.at_sq64(sq64(File::E, Rank::R2)), Piece::None);  // White pawn
     
     // Reset the board
     pos.reset();
@@ -26,18 +26,13 @@ TEST_F(BoardTest, ResetBoardClearsAllSquares) {
     // Verify all playable squares are empty
     for (int rank = 0; rank < 8; ++rank) {
         for (int file = 0; file < 8; ++file) {
-            int square = sq(static_cast<File>(file), static_cast<Rank>(rank));
-            EXPECT_EQ(pos.at(square), Piece::None) 
+            int square = sq64(static_cast<File>(file), static_cast<Rank>(rank));
+            EXPECT_EQ(pos.at_sq64(square), Piece::None) 
                 << "Square " << char('a' + file) << char('1' + rank) << " should be empty";
         }
     }
     
-    // Verify offboard squares are set to Piece::Offboard
-    // Test a few offboard squares from the frame
-    EXPECT_EQ(pos.at(0), Piece::Offboard);    // Bottom-left corner
-    EXPECT_EQ(pos.at(10), Piece::Offboard);   // Left edge of second row
-    EXPECT_EQ(pos.at(20), Piece::Offboard);   // Square just before a1
-    EXPECT_EQ(pos.at(29), Piece::Offboard);   // Square just after h1
+    // There is no offboard frame in sq64 space; all 0..63 squares are real.
 }
 
 TEST_F(BoardTest, ResetBoardClearsPieceCountsAndBitboards) {
@@ -115,3 +110,4 @@ TEST_F(BoardTest, ResetClearsMoveHistory) {
     EXPECT_TRUE(pos.move_history.empty());
     EXPECT_EQ(pos.ply, 0);
 }
+

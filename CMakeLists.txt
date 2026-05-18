@@ -444,7 +444,6 @@ endif()
 # ---- Tests ----
 if(GTEST_FOUND)
     set(TEST_SOURCES
-        test/test_board120.cpp
         test/test_chess_types.cpp
         test/test_perft.cpp
         test/test_main.cpp
@@ -452,7 +451,6 @@ if(GTEST_FOUND)
         test/test_bitboard.cpp
         test/test_init.cpp
         test/test_board.cpp
-        test/test_offboard_detection.cpp
         test/test_fen.cpp
         test/test_incremental_updates.cpp
         test/test_zobrist_incremental.cpp
@@ -527,8 +525,6 @@ endif()
 # target_compile_definitions(eval_benchmark_old PRIVATE USE_KNIGHT_LOOKUP_TABLES USE_KING_LOOKUP_TABLES USE_PAWN_LOOKUP_TABLES)
 
 # End of CMakeLists.txt
-
-
 
 
 

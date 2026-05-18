@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "init.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "chess_types.hpp"
 
 class MaterialTrackingTest : public ::testing::Test {
@@ -31,10 +31,10 @@ TEST_F(MaterialTrackingTest, StartingPositionMaterialScores) {
 
 TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     // Remove the white pawn from d2 temporarily to avoid interference
-    pos.set(sq(File::D, Rank::R2), Piece::None);
+    pos.set_sq64(sq64(File::D, Rank::R2), Piece::None);
     
     // Place a black pawn on e4 that can be captured
-    pos.set(sq(File::E, Rank::R4), make_piece(Color::Black, PieceType::Pawn));
+    pos.set_sq64(sq64(File::E, Rank::R4), make_piece(Color::Black, PieceType::Pawn));
     pos.rebuild_counts(); // Recalculate after manual piece placement
     
     // Save material scores after setup
@@ -42,7 +42,7 @@ TEST_F(MaterialTrackingTest, CaptureUpdatesIncrementalMaterial) {
     int black_material_after_setup = pos.get_material_score(Color::Black);
     
     // Place a white pawn on d2 to make the capture
-    pos.set(sq(File::D, Rank::R2), make_piece(Color::White, PieceType::Pawn));
+    pos.set_sq64(sq64(File::D, Rank::R2), make_piece(Color::White, PieceType::Pawn));
     pos.rebuild_counts();
     
     // Save material scores before capture
@@ -78,12 +78,12 @@ TEST_F(MaterialTrackingTest, PromotionUpdatesIncrementalMaterial) {
     // Clear some pieces to set up a promotion scenario
     // Remove pieces to make a clear path for pawn promotion
     for (int file = 0; file < 8; ++file) {
-        pos.set(sq(static_cast<File>(file), Rank::R7), Piece::None); // Remove black pawns
-        pos.set(sq(static_cast<File>(file), Rank::R8), Piece::None); // Remove black pieces
+        pos.set_sq64(sq64(static_cast<File>(file), Rank::R7), Piece::None); // Remove black pawns
+        pos.set_sq64(sq64(static_cast<File>(file), Rank::R8), Piece::None); // Remove black pieces
     }
     
     // Place a white pawn on the 7th rank ready for promotion
-    pos.set(sq(File::E, Rank::R7), make_piece(Color::White, PieceType::Pawn));
+    pos.set_sq64(sq64(File::E, Rank::R7), make_piece(Color::White, PieceType::Pawn));
     pos.rebuild_counts(); // Recalculate after manual setup
     
     int initial_white_material = pos.get_material_score(Color::White);
@@ -145,3 +145,4 @@ TEST_F(MaterialTrackingTest, MaterialConsistencyWithRebuildCounts) {
             << "Black incremental material should match rebuild_counts";
     }
 }
+

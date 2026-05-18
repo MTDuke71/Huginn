@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <string>
 #include <sstream>
-#include "board120.hpp"
+#include "square.hpp"
 #include "chess_types.hpp"
 
 // Utility functions for square and piece string conversion

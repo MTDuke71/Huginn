@@ -6,7 +6,7 @@
 #include "see.hpp"
 #include "position.hpp"
 #include "bitboard.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "attack_tables.hpp"
 
 #include <algorithm>

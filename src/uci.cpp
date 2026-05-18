@@ -21,7 +21,7 @@
  */
 #include "uci.hpp"
 #include "init.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "uci_utils.hpp"
 #include "movegen.hpp"
 #include <fstream>
@@ -147,8 +147,8 @@ void UCIInterface::run() {
             for (int rank = 7; rank >= 0; rank--) {
                 std::string board_line = "info string ";
                 for (int file = 0; file < 8; file++) {
-                    int square = sq(File(file), Rank(rank));
-                    Piece p = position.at(square);
+                    int square = sq64(File(file), Rank(rank));
+                    Piece p = position.at_sq64(square);
                     char piece_char = '.';
                     if (p != Piece::None) {
                         switch (type_of(p)) {
@@ -707,4 +707,3 @@ void UCIInterface::signal_stop() {
         info_ptr->stopped = true;
     }
 }
-

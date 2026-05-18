@@ -3,10 +3,7 @@
  * @brief Implementation of the pawn attack bitboard table
  *
  * Builds PAWN_ATTACKS[color][sq64] in pure 64-square file/rank
- * arithmetic. The five legacy `[2][120]` mailbox move tables were
- * deleted in the mailbox-120 elimination pass (they had no callers
- * after the S_MOVE 120->64 migration); this file no longer depends on
- * board120.hpp.
+ * arithmetic.
  *
  * ## Memory Usage
  * - 2 colors * 64 squares * 8 bytes = 1 KB total

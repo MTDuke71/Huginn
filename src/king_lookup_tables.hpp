@@ -30,7 +30,7 @@
 #include "position.hpp"
 #include "move.hpp"
 #include "movegen.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "chess_types.hpp"
 #include "msvc_intrinsics.hpp"
 #include "attack_detection.hpp"

@@ -24,7 +24,7 @@
  *     Computes the Zobrist hash for the given chess position.
  *
  * @note The SplitMix64 PRNG is used for fast and high-quality random number generation.
- * @note The Piece table uses 64 squares; callers convert 120->64 via MAILBOX_MAPS.to64.
+ * @note The Piece table uses 64 squares directly.
  * @note Forward declaration of Position is used to avoid circular dependencies.
  */
 #pragma once

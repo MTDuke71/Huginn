@@ -4,7 +4,7 @@
 #include "attack_detection.hpp"
 #include "attack_tables.hpp"
 #include "bitboard.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "input_checking.hpp"
 #include "msvc_optimizations.hpp"
 #include "see.hpp"

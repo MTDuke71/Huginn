@@ -14,11 +14,7 @@
 namespace Huginn {
 
 bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
-    assert(sq >= 0 && sq < 120);
-    __assume(sq >= 0 && sq < 120);
-    int sq64 = MAILBOX_MAPS.to64[sq];
-    if (sq64 < 0) return false;  // off-board sentinel square
-    return SqAttackedBB(sq64, pos, attacking_color);
+    return SqAttackedBB(sq, pos, attacking_color);
 }
 
 bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {

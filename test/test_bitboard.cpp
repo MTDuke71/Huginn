@@ -79,39 +79,19 @@ TEST_F(BitboardTest, SquareIndexing) {
     EXPECT_EQ(rank_of_square(28), 3);  // e4 -> rank 4 (3)
 }
 
-// Test square conversion between 64 and 120 indexing. The wrapper
-// functions sq64_to_sq120 / sq120_to_sq64 were removed in the #26
-// follow-up cleanup — production code has always used the SQ64 / SQ120
-// macros directly (raw MAILBOX_MAPS access). The macros do not bounds
-// check; the off-board cases here exercise that the underlying tables
-// hold -1 for sentinel rows/columns.
-TEST_F(BitboardTest, SquareConversion) {
-    // Known sq64 → sq120 conversions
-    EXPECT_EQ(SQ120(0),  21);  // a1
-    EXPECT_EQ(SQ120(7),  28);  // h1
-    EXPECT_EQ(SQ120(56), 91);  // a8
-    EXPECT_EQ(SQ120(63), 98);  // h8
-    EXPECT_EQ(SQ120(28), 55);  // e4
+TEST_F(BitboardTest, SquareHelpers) {
+    EXPECT_EQ(sq64(File::A, Rank::R1), 0);
+    EXPECT_EQ(sq64(File::H, Rank::R1), 7);
+    EXPECT_EQ(sq64(File::A, Rank::R8), 56);
+    EXPECT_EQ(sq64(File::H, Rank::R8), 63);
+    EXPECT_EQ(sq64(File::E, Rank::R4), 28);
 
-    // Reverse: sq120 → sq64
-    EXPECT_EQ(SQ64(21), 0);    // a1
-    EXPECT_EQ(SQ64(28), 7);    // h1
-    EXPECT_EQ(SQ64(91), 56);   // a8
-    EXPECT_EQ(SQ64(98), 63);   // h8
-    EXPECT_EQ(SQ64(55), 28);   // e4
-
-    // Sentinel-row squares in MAILBOX_MAPS.to64 hold -1.
-    EXPECT_EQ(SQ64(20), -1);   // Off-board (sentinel column)
-    EXPECT_EQ(SQ64(29), -1);   // Off-board
-}
-
-// Test round-trip conversion across all 64 playable squares.
-TEST_F(BitboardTest, RoundTripConversion) {
-    for (int sq64 = 0; sq64 < 64; ++sq64) {
-        const int sq120 = SQ120(sq64);
-        const int back_to_64 = SQ64(sq120);
-        EXPECT_EQ(back_to_64, sq64) << "Failed round-trip for square " << sq64;
-    }
+    EXPECT_EQ(file_of_sq64(0), File::A);
+    EXPECT_EQ(rank_of_sq64(0), Rank::R1);
+    EXPECT_EQ(file_of_sq64(63), File::H);
+    EXPECT_EQ(rank_of_sq64(63), Rank::R8);
+    EXPECT_EQ(file_of_sq64(-1), File::None);
+    EXPECT_EQ(rank_of_sq64(64), Rank::None);
 }
 
 // Test utility functions

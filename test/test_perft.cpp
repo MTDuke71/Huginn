@@ -26,8 +26,8 @@ TEST(Perft, StartposSmoke_KingsAndPawns) {
     int whitePawns=0, blackPawns=0, whiteKings=0, blackKings=0;
     for (int r=0; r<8; ++r) {
         for (int f=0; f<8; ++f) {
-            int s = sq(static_cast<File>(f), static_cast<Rank>(r));
-            Piece p = pos.at(s);
+            int s = sq64(static_cast<File>(f), static_cast<Rank>(r));
+            Piece p = pos.at_sq64(s);
             if (is_none(p)) continue;
             if (p == Piece::WhitePawn) ++whitePawns;
             if (p == Piece::BlackPawn) ++blackPawns;
@@ -109,9 +109,8 @@ TEST(Perft, Debug_Kiwipete_Check) {
     std::cout << "Checking what's attacking the white king on g1..." << std::endl;
     
     // Check if any black pieces can attack g1
-    for (int sq = 0; sq < 120; ++sq) {
-        if (!is_playable(sq)) continue;
-        Piece p = pos.at(sq);
+    for (int sq = 0; sq < 64; ++sq) {
+        Piece p = pos.at_sq64(sq);
         if (is_none(p) || color_of(p) != Color::Black) continue;
         
         // Test if this black piece attacks the white king
@@ -206,3 +205,4 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
     EXPECT_EQ(perft1, 48u);   // Depth 1: 48 moves
     EXPECT_EQ(perft2, 2039u); // Depth 2: 2039 nodes
 }
+

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "movegen.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "init.hpp"
 
 class LegalMoveTest : public ::testing::Test {
@@ -211,3 +211,4 @@ TEST_F(LegalMoveTest, EnPassantPinIssue) {
     // This is a complex case - for now just verify we generate some legal moves
     EXPECT_GT(legal_moves.size(), 0);
 }
+

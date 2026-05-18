@@ -17,7 +17,7 @@
  * - **Color**: White/Black/None enumeration
  * - **PieceType**: None, Pawn, Knight, Bishop, Rook, Queen, King, Offboard
  * - **Piece**: Combined color and piece type with fast access macros
- * - **Square**: 120-square mailbox representation with coordinate conversion
+ * - **Square**: 64-square board coordinates
  * - **Castling**: Bit flags for efficient castling rights management
  * 
  * ## Performance Features
@@ -28,7 +28,7 @@
  * 
  * @author MTDuke71
  * @version 1.2
- * @see board120.hpp for coordinate system details
+ * @see square.hpp for coordinate system details
  */
 #pragma once
 #include <cstdint>

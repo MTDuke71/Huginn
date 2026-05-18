@@ -19,7 +19,6 @@
  */
 #include "bitboard.hpp"
 #include "bit_utils.hpp"   // Cross-platform bit manipulation utilities
-#include "board120.hpp"    // For MAILBOX_MAPS conversion arrays
 #include "magic_bitboards.hpp"  // BACKLOG #24: real magic sliders
 #include <iostream>
 #include <iomanip>

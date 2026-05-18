@@ -23,7 +23,7 @@ TEST(PawnMovegen, PawnForwardMoves) {
     pos.reset();
     
     // Place white pawn on e2 (starting position)
-    pos.set(sq(File::E, Rank::R2), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::E, Rank::R2), Piece::WhitePawn);
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
@@ -56,10 +56,10 @@ TEST(PawnMovegen, PawnCaptures) {
     pos.reset();
     
     // Place white pawn on e4
-    pos.set(sq(File::E, Rank::R4), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::E, Rank::R4), Piece::WhitePawn);
     // Place black pieces to capture
-    pos.set(sq(File::D, Rank::R5), Piece::BlackRook);
-    pos.set(sq(File::F, Rank::R5), Piece::BlackBishop);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::BlackRook);
+    pos.set_sq64(sq64(File::F, Rank::R5), Piece::BlackBishop);
     
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
@@ -94,7 +94,7 @@ TEST(PawnMovegen, PawnPromotions) {
     pos.reset();
     
     // Place white pawn on e7 (promotion rank)
-    pos.set(sq(File::E, Rank::R7), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::E, Rank::R7), Piece::WhitePawn);
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
@@ -117,9 +117,9 @@ TEST(PawnMovegen, PawnCapturePromotions) {
     pos.reset();
     
     // Place white pawn on e7 and black pieces to capture
-    pos.set(sq(File::E, Rank::R7), Piece::WhitePawn);
-    pos.set(sq(File::D, Rank::R8), Piece::BlackRook);
-    pos.set(sq(File::F, Rank::R8), Piece::BlackBishop);
+    pos.set_sq64(sq64(File::E, Rank::R7), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::D, Rank::R8), Piece::BlackRook);
+    pos.set_sq64(sq64(File::F, Rank::R8), Piece::BlackBishop);
     
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
@@ -144,8 +144,8 @@ TEST(PawnMovegen, EnPassantCaptures) {
     pos.reset();
     
     // Set up en passant scenario
-    pos.set(sq(File::E, Rank::R5), Piece::WhitePawn);
-    pos.set(sq(File::D, Rank::R5), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::E, Rank::R5), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::BlackPawn);
     pos.ep_square = sq64(File::D, Rank::R6); // Black pawn just moved d7-d5
     
     pos.rebuild_counts();
@@ -173,7 +173,7 @@ TEST(PawnMovegen, BlackPawnMoves) {
     pos.reset();
     
     // Place black pawn on e7
-    pos.set(sq(File::E, Rank::R7), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::E, Rank::R7), Piece::BlackPawn);
     pos.rebuild_counts();
     pos.side_to_move = Color::Black;
     
@@ -206,7 +206,7 @@ TEST(PawnMovegen, BlackPawnPromotions) {
     pos.reset();
     
     // Place black pawn on e2 (promotion rank for black)
-    pos.set(sq(File::E, Rank::R2), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::E, Rank::R2), Piece::BlackPawn);
     pos.rebuild_counts();
     pos.side_to_move = Color::Black;
     
@@ -229,8 +229,8 @@ TEST(PawnMovegen, PawnBlockedByOwnPiece) {
     pos.reset();
     
     // Place white pawn on e2 and white piece on e3
-    pos.set(sq(File::E, Rank::R2), Piece::WhitePawn);
-    pos.set(sq(File::E, Rank::R3), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::E, Rank::R2), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::E, Rank::R3), Piece::WhiteRook);
     
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
@@ -254,9 +254,9 @@ TEST(PawnMovegen, PawnCantCaptureOwnPieces) {
     pos.reset();
     
     // Place white pawn on e4 and white pieces diagonally
-    pos.set(sq(File::E, Rank::R4), Piece::WhitePawn);
-    pos.set(sq(File::D, Rank::R5), Piece::WhiteRook);
-    pos.set(sq(File::F, Rank::R5), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::E, Rank::R4), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::F, Rank::R5), Piece::WhiteBishop);
     
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
@@ -290,11 +290,11 @@ TEST(PawnBitboardTest, StartingPositionPawnBitboards) {
     
     // Check that pawn bitboards match the starting position
     for (int file = 0; file < 8; file++) {
-        int white_pawn_sq = sq(static_cast<File>(file), Rank::R2);
-        int black_pawn_sq = sq(static_cast<File>(file), Rank::R7);
+        int white_pawn_sq = sq64(static_cast<File>(file), Rank::R2);
+        int black_pawn_sq = sq64(static_cast<File>(file), Rank::R7);
         
-        int white_sq64 = MAILBOX_MAPS.to64[white_pawn_sq];
-        int black_sq64 = MAILBOX_MAPS.to64[black_pawn_sq];
+        int white_sq64 = white_pawn_sq;
+        int black_sq64 = black_pawn_sq;
         
         EXPECT_TRUE(getBit(pos.get_white_pawns(), white_sq64))
             << "White pawn should be on " << white_pawn_sq;
@@ -313,7 +313,7 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     ASSERT_EQ(pos.MakeMove(e2e4), 1) << "MakeMove should succeed for e2-e4";
     
     // Place black pawn on d5 for capture
-    pos.set(sq(File::D, Rank::R5), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::BlackPawn);
     pos.rebuild_counts();
     
     // Make capture move
@@ -321,8 +321,8 @@ TEST(PawnBitboardTest, PawnCaptureUpdatesAllBitboards) {
     ASSERT_EQ(pos.MakeMove(exd5), 1) << "MakeMove should succeed for exd5 capture";
     
     // Check bitboards are updated correctly
-    int e4_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R4)];
-    int d5_sq64 = MAILBOX_MAPS.to64[sq(File::D, Rank::R5)];
+    int e4_sq64 = sq64(File::E, Rank::R4);
+    int d5_sq64 = sq64(File::D, Rank::R5);
     
     EXPECT_FALSE(getBit(pos.get_white_pawns(), e4_sq64))
         << "White pawn should no longer be on e4";
@@ -337,12 +337,12 @@ TEST(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
     pos.reset();
     
     // Place white pawn on e7 ready for promotion
-    pos.set(sq(File::E, Rank::R7), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::E, Rank::R7), Piece::WhitePawn);
     pos.rebuild_counts();
     pos.side_to_move = Color::White;
     
     // Verify initial state
-    int e7_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R7)];
+    int e7_sq64 = sq64(File::E, Rank::R7);
     EXPECT_TRUE(getBit(pos.get_white_pawns(), e7_sq64))
         << "White pawn should initially be on e7";
     
@@ -351,9 +351,9 @@ TEST(PawnBitboardTest, PawnPromotionUpdatesAllBitboards) {
     ASSERT_EQ(pos.MakeMove(promote), 1) << "MakeMove should succeed for pawn promotion";
     
     // Check that promotion worked
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R8)), Piece::WhiteQueen)
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R8)), Piece::WhiteQueen)
         << "e8 should have a white queen after promotion";
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R7)), Piece::None)
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R7)), Piece::None)
         << "e7 should be empty after pawn moved";
 }
 
@@ -394,8 +394,8 @@ TEST(PawnBitboardTest, AllPawnBitboardConsistency) {
     
     // Count pawns manually
     int manual_pawn_count = 0;
-    for (int sq120 = 0; sq120 < 120; sq120++) {
-        if (pos.at(sq120) == Piece::WhitePawn || pos.at(sq120) == Piece::BlackPawn) {
+    for (int sq = 0; sq < 64; sq++) {
+        if (pos.at_sq64(sq) == Piece::WhitePawn || pos.at_sq64(sq) == Piece::BlackPawn) {
             manual_pawn_count++;
         }
     }
@@ -414,13 +414,13 @@ TEST(ComprehensivePawnTest, AllPawnMoveTypesDemo) {
     pos.reset();
     
     // Set up a simpler position with all pawn move types
-    pos.set(sq(File::E, Rank::R2), Piece::WhitePawn);  // Double move available
-    pos.set(sq(File::F, Rank::R4), Piece::WhitePawn);  // Normal move + capture
-    pos.set(sq(File::G, Rank::R7), Piece::WhitePawn);  // Promotion
-    pos.set(sq(File::H, Rank::R5), Piece::WhitePawn);  // En passant setup
+    pos.set_sq64(sq64(File::E, Rank::R2), Piece::WhitePawn);  // Double move available
+    pos.set_sq64(sq64(File::F, Rank::R4), Piece::WhitePawn);  // Normal move + capture
+    pos.set_sq64(sq64(File::G, Rank::R7), Piece::WhitePawn);  // Promotion
+    pos.set_sq64(sq64(File::H, Rank::R5), Piece::WhitePawn);  // En passant setup
     
-    pos.set(sq(File::G, Rank::R5), Piece::BlackPawn);  // For capture by f4 pawn
-    pos.set(sq(File::G, Rank::R8), Piece::BlackRook);  // For promotion capture
+    pos.set_sq64(sq64(File::G, Rank::R5), Piece::BlackPawn);  // For capture by f4 pawn
+    pos.set_sq64(sq64(File::G, Rank::R8), Piece::BlackRook);  // For promotion capture
     pos.ep_square = sq64(File::G, Rank::R6);             // En passant square
     
     pos.side_to_move = Color::White;
@@ -483,3 +483,4 @@ TEST(ComprehensivePawnTest, AllPieceTypesWithPawns) {
     EXPECT_EQ(knight_moves, 4); // 2 knights × 2 moves each
     EXPECT_EQ(moves.size(), 20); // Total legal moves in starting position
 }
+

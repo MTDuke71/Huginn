@@ -28,8 +28,8 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
     EXPECT_EQ(move_result, 1) << "Move should be legal";
 
     // White pawn should have moved from e2 to e4
-    int e2_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R2)];
-    int e4_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R4)];
+    int e2_sq64 = sq64(File::E, Rank::R2);
+    int e4_sq64 = sq64(File::E, Rank::R4);
 
     uint64_t white_pawns = pos.get_white_pawns();
     EXPECT_FALSE(getBit(white_pawns, e2_sq64)) << "White pawn should no longer be on e2";
@@ -49,7 +49,7 @@ TEST_F(IncrementalUpdateTest, MakeUnmakeMaintainsState) {
 
 TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     // Place a black pawn on e4 that can be captured
-    pos.set(sq(File::E, Rank::R4), make_piece(Color::Black, PieceType::Pawn));
+    pos.set_sq64(sq64(File::E, Rank::R4), make_piece(Color::Black, PieceType::Pawn));
     pos.rebuild_counts();
 
     int initial_pawn_count = total_count(pos, PieceType::Pawn);
@@ -63,19 +63,19 @@ TEST_F(IncrementalUpdateTest, CaptureMoveMaintainsCorrectCounts) {
     EXPECT_EQ(total_count(pos, PieceType::Pawn), initial_pawn_count - 1)
         << "Pawn count should decrease by 1 due to capture";
 
-    int e4_sq64 = MAILBOX_MAPS.to64[sq(File::E, Rank::R4)];
+    int e4_sq64 = sq64(File::E, Rank::R4);
     EXPECT_TRUE(getBit(pos.get_white_pawns(), e4_sq64)) << "White pawn should be on e4";
 
     pos.TakeMove();
 
     EXPECT_EQ(total_count(pos, PieceType::Pawn), initial_pawn_count) << "Pawn count restored";
     EXPECT_EQ(pos.get_white_pawns(), initial_white_pawns) << "White pawn bitboard restored";
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R4)), make_piece(Color::Black, PieceType::Pawn));
-    EXPECT_EQ(pos.at(sq(File::D, Rank::R2)), make_piece(Color::White, PieceType::Pawn));
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R4)), make_piece(Color::Black, PieceType::Pawn));
+    EXPECT_EQ(pos.at_sq64(sq64(File::D, Rank::R2)), make_piece(Color::White, PieceType::Pawn));
 }
 
 TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
-    pos.set(sq(File::E, Rank::R2), Piece::None);
+    pos.set_sq64(sq64(File::E, Rank::R2), Piece::None);
     pos.rebuild_counts();
 
     auto initial_king_sq = pos.king_sq;
@@ -90,3 +90,4 @@ TEST_F(IncrementalUpdateTest, KingMoveMaintainsKingSquare) {
     pos.TakeMove();
     EXPECT_EQ(pos.king_sq, initial_king_sq) << "King squares should be restored";
 }
+

@@ -26,7 +26,7 @@
 
 #include "attack_tables.hpp"
 #include "bitboard.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 
 // ============================================================================
 // ATTACK TABLE STORAGE

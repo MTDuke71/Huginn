@@ -14,7 +14,7 @@
 #include "position.hpp"
 #include "move.hpp"
 #include "movegen.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "msvc_intrinsics.hpp"
 #include <iostream>
 #include <iomanip>

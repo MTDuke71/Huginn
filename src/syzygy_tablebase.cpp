@@ -1,7 +1,7 @@
 #include "syzygy_tablebase.hpp"
 #include "position.hpp"
 #include "chess_types.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "search.hpp"  // For MATE constant
 #include <iostream>
 #include <filesystem>
@@ -19,12 +19,8 @@ unsigned fathom_piece_from_huginn(Piece piece) {
 
 // Map Fathom square back to Huginn square
 int huginn_square_from_fathom(unsigned fathom_square) {
-    if (fathom_square >= 64) return int(Square::Offboard);
-    
-    int rank = fathom_square / 8;
-    int file = fathom_square % 8;
-    
-    return (rank + 2) * 10 + (file + 1);
+    if (fathom_square >= 64) return -1;
+    return static_cast<int>(fathom_square);
 }
 
 #endif // FATHOM_AVAILABLE
@@ -124,9 +120,9 @@ bool SyzygyTablebase::can_probe(const Position& pos) const {
     #if FATHOM_AVAILABLE
     // Position is bitboard-primary; popcount of the occupancy is the
     // total piece count in one instruction. The prior implementation
-    // iterated all 120 squares calling pos.at() at every depth-<=-1
-    // leaf node — measured -57 Elo / 200g vs t3 from this overhead
-    // alone (the probe-success path was tiny by comparison).
+    // iterated every square calling piece accessors at depth<=1 leaf
+    // nodes — measured -57 Elo / 200g vs t3 from this overhead alone
+    // (the probe-success path was tiny by comparison).
     return popcount(pos.occupied_bitboard) <= static_cast<int>(max_pieces);
     #else
     // Stub implementation - never probe for now
@@ -142,8 +138,8 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     #if FATHOM_AVAILABLE
     // Pull the bitboards directly from Position. Both Position and Fathom
     // use the same sq64 layout (a1=bit 0 ... h8=bit 63), so no per-square
-    // translation is needed. Replaces a 120-square iteration that called
-    // pos.at() / color_of / type_of / 1ULL<<sq for every set piece.
+    // translation is needed. Replaces a per-square iteration that called
+    // accessors / color_of / type_of / 1ULL<<sq for every set piece.
     constexpr int W = int(Color::White);
     constexpr int B = int(Color::Black);
     uint64_t white   = pos.color_bitboards[W];

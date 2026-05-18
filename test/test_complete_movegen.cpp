@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "movegen.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "init.hpp"
 
 class CompleteMoveGenTest : public ::testing::Test {
@@ -138,3 +138,4 @@ TEST_F(CompleteMoveGenTest, PerftStartingPosition) {
     std::cout << "✓ Legal move filtering: Basic implementation (needs refinement)" << std::endl;
     std::cout << "\nChess move generation system is now complete with all essential features!" << std::endl;
 }
+

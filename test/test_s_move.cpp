@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "move.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "chess_types.hpp"
 
 class S_MoveTest : public ::testing::Test {
@@ -156,3 +156,4 @@ TEST_F(S_MoveTest, StaticEncoding) {
     EXPECT_FALSE(move.is_en_passant());
     EXPECT_FALSE(move.is_castle());
 }
+

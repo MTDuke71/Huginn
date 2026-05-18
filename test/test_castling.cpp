@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "position.hpp"
 #include "movegen.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 
 class CastlingTest : public ::testing::Test {
 protected:
@@ -158,3 +158,4 @@ TEST_F(CastlingTest, StartingPosition) {
     // Should have no castling moves (pieces blocking)
     EXPECT_EQ(count_castling_moves(moves), 0);
 }
+

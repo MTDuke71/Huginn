@@ -21,13 +21,13 @@ public:
 TEST(RookMoveGen, SingleRookCenter) {
     Position pos; pos.reset();
     // Place a white rook on d4
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteRook);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
     // Assert white rook is on d4 (single rook on the bitboard, at the right square)
     ASSERT_EQ(popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)]), 1);
-    ASSERT_EQ(pos.at(sq(File::D, Rank::R4)), Piece::WhiteRook);
+    ASSERT_EQ(pos.at_sq64(sq64(File::D, Rank::R4)), Piece::WhiteRook);
     
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
@@ -42,9 +42,9 @@ TEST(RookMoveGen, SingleRookCenter) {
 
 TEST(RookMoveGen, RookBlockedByOwnPiece) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteRook);
-    pos.set(sq(File::D, Rank::R6), Piece::WhitePawn); // Block north
-    pos.set(sq(File::B, Rank::R4), Piece::WhiteKnight); // Block west
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::D, Rank::R6), Piece::WhitePawn); // Block north
+    pos.set_sq64(sq64(File::B, Rank::R4), Piece::WhiteKnight); // Block west
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -61,8 +61,8 @@ TEST(RookMoveGen, RookBlockedByOwnPiece) {
 
 TEST(RookMoveGen, RookCapturesOpponent) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteRook);
-    pos.set(sq(File::D, Rank::R7), Piece::BlackPawn); // Enemy piece to capture
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::D, Rank::R7), Piece::BlackPawn); // Enemy piece to capture
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -89,13 +89,13 @@ TEST(RookMoveGen, RookCapturesOpponent) {
 TEST(BishopMoveGen, SingleBishopCenter) {
     Position pos; pos.reset();
     // Place a white bishop on d4
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteBishop);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
     // Assert white bishop is on d4
     ASSERT_EQ(popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)]), 1);
-    ASSERT_EQ(pos.at(sq(File::D, Rank::R4)), Piece::WhiteBishop);
+    ASSERT_EQ(pos.at_sq64(sq64(File::D, Rank::R4)), Piece::WhiteBishop);
     
     S_MOVELIST moves; 
     generate_all_moves(pos, moves);
@@ -110,8 +110,8 @@ TEST(BishopMoveGen, SingleBishopCenter) {
 
 TEST(BishopMoveGen, BishopBlockedByOwnPiece) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteBishop);
-    pos.set(sq(File::F, Rank::R6), Piece::WhitePawn); // Block NE diagonal
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::F, Rank::R6), Piece::WhitePawn); // Block NE diagonal
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -127,8 +127,8 @@ TEST(BishopMoveGen, BishopBlockedByOwnPiece) {
 
 TEST(BishopMoveGen, BishopCapturesOpponent) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteBishop);
-    pos.set(sq(File::F, Rank::R6), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::F, Rank::R6), Piece::BlackPawn);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -154,7 +154,7 @@ TEST(BishopMoveGen, BishopCapturesOpponent) {
 TEST(QueenMoveGen, SingleQueenCenter) {
     Position pos; pos.reset();
     // Place a white queen on d4
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteQueen);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteQueen);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -171,9 +171,9 @@ TEST(QueenMoveGen, SingleQueenCenter) {
 
 TEST(QueenMoveGen, QueenBlockedByOwnPiece) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteQueen);
-    pos.set(sq(File::D, Rank::R6), Piece::WhitePawn); // Block north
-    pos.set(sq(File::F, Rank::R6), Piece::WhiteKnight); // Block NE diagonal
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteQueen);
+    pos.set_sq64(sq64(File::D, Rank::R6), Piece::WhitePawn); // Block north
+    pos.set_sq64(sq64(File::F, Rank::R6), Piece::WhiteKnight); // Block NE diagonal
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -189,9 +189,9 @@ TEST(QueenMoveGen, QueenBlockedByOwnPiece) {
 
 TEST(QueenMoveGen, QueenCapturesOpponent) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteQueen);
-    pos.set(sq(File::D, Rank::R7), Piece::BlackRook);
-    pos.set(sq(File::G, Rank::R7), Piece::BlackBishop);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteQueen);
+    pos.set_sq64(sq64(File::D, Rank::R7), Piece::BlackRook);
+    pos.set_sq64(sq64(File::G, Rank::R7), Piece::BlackBishop);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
     
@@ -214,7 +214,7 @@ TEST(QueenMoveGen, QueenCapturesOpponent) {
 
 TEST(KingMoveGen, KingMovesFromCenter) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -235,7 +235,7 @@ TEST(KingMoveGen, KingMovesFromCenter) {
 
 TEST(KingMoveGen, KingMovesFromCorner) {
     Position pos; pos.reset();
-    pos.set(sq(File::A, Rank::R1), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::A, Rank::R1), Piece::WhiteKing);
     pos.king_sq[int(Color::White)] = sq64(File::A, Rank::R1);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -256,9 +256,9 @@ TEST(KingMoveGen, KingMovesFromCorner) {
 
 TEST(KingMoveGen, KingMovesBlockedByOwnPieces) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
-    pos.set(sq(File::C, Rank::R4), Piece::WhitePawn);
-    pos.set(sq(File::D, Rank::R5), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::C, Rank::R4), Piece::WhitePawn);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::WhiteRook);
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -279,9 +279,9 @@ TEST(KingMoveGen, KingMovesBlockedByOwnPieces) {
 
 TEST(KingMoveGen, KingCapturesEnemyPieces) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
-    pos.set(sq(File::C, Rank::R4), Piece::BlackPawn);
-    pos.set(sq(File::D, Rank::R5), Piece::BlackRook);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::C, Rank::R4), Piece::BlackPawn);
+    pos.set_sq64(sq64(File::D, Rank::R5), Piece::BlackRook);
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -302,7 +302,7 @@ TEST(KingMoveGen, KingCapturesEnemyPieces) {
 
 TEST(KingMoveGen, KingMovesFromEdge) {
     Position pos; pos.reset();
-    pos.set(sq(File::A, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::A, Rank::R4), Piece::WhiteKing);
     pos.king_sq[int(Color::White)] = sq64(File::A, Rank::R4);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -323,8 +323,8 @@ TEST(KingMoveGen, KingMovesFromEdge) {
 
 TEST(KingMoveGen, BothKingsOnBoard) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
-    pos.set(sq(File::E, Rank::R5), Piece::BlackKing); // Adjacent to white king
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::E, Rank::R5), Piece::BlackKing); // Adjacent to white king
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.king_sq[int(Color::Black)] = sq64(File::E, Rank::R5);
     pos.side_to_move = Color::White;
@@ -352,9 +352,9 @@ TEST(KingMoveGen, BothKingsOnBoard) {
 
 TEST(SlidingPieceMoveGen, AllSlidingPiecesTogether) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteQueen);
-    pos.set(sq(File::A, Rank::R1), Piece::WhiteRook);
-    pos.set(sq(File::H, Rank::R8), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteQueen);
+    pos.set_sq64(sq64(File::A, Rank::R1), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::H, Rank::R8), Piece::WhiteBishop);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
 
@@ -380,11 +380,11 @@ TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {
     Position pos; pos.reset();
     
     // Place one of each piece type
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
-    pos.set(sq(File::E, Rank::R4), Piece::WhiteQueen);
-    pos.set(sq(File::A, Rank::R1), Piece::WhiteRook);
-    pos.set(sq(File::C, Rank::R1), Piece::WhiteBishop);
-    pos.set(sq(File::B, Rank::R1), Piece::WhiteKnight);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::E, Rank::R4), Piece::WhiteQueen);
+    pos.set_sq64(sq64(File::A, Rank::R1), Piece::WhiteRook);
+    pos.set_sq64(sq64(File::C, Rank::R1), Piece::WhiteBishop);
+    pos.set_sq64(sq64(File::B, Rank::R1), Piece::WhiteKnight);
     
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.side_to_move = Color::White;
@@ -424,7 +424,7 @@ TEST(AllPieceMoveGen, AllImplementedPiecesGenerateMoves) {
 
 TEST(AllPieceMoveGen, KingMoveCountCorrect) {
     Position pos; pos.reset();
-    pos.set(sq(File::D, Rank::R4), Piece::WhiteKing);
+    pos.set_sq64(sq64(File::D, Rank::R4), Piece::WhiteKing);
     pos.king_sq[int(Color::White)] = sq64(File::D, Rank::R4);
     pos.side_to_move = Color::White;
     pos.rebuild_counts();
@@ -434,3 +434,4 @@ TEST(AllPieceMoveGen, KingMoveCountCorrect) {
     
     EXPECT_EQ(moves.size(), 8);
 }
+

@@ -5,15 +5,14 @@
  * This demonstrates the actual bitboard approach that should show
  * dramatic performance improvements over piece lists.
  *
- * Moves are encoded with 64-square indices (S_MOVE 120->64 migration);
- * generators work natively in sq64 with no MAILBOX_MAPS round-trip.
+ * Moves are encoded with 64-square indices; generators work natively in sq64.
  *
  * @author MTDuke71
  * @version 1.0
  */
 
 #include "movegen_bb.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include "king_lookup_tables.hpp"
 
 namespace BitboardMoveGen {

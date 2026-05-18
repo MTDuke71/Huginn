@@ -13,41 +13,41 @@ TEST_F(FENTest, ParseStartingPosition) {
     ASSERT_TRUE(pos.set_from_fen(start_fen));
     
     // Check piece placement
-    EXPECT_EQ(pos.at(sq(File::A, Rank::R1)), Piece::WhiteRook);
-    EXPECT_EQ(pos.at(sq(File::B, Rank::R1)), Piece::WhiteKnight);
-    EXPECT_EQ(pos.at(sq(File::C, Rank::R1)), Piece::WhiteBishop);
-    EXPECT_EQ(pos.at(sq(File::D, Rank::R1)), Piece::WhiteQueen);
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R1)), Piece::WhiteKing);
-    EXPECT_EQ(pos.at(sq(File::F, Rank::R1)), Piece::WhiteBishop);
-    EXPECT_EQ(pos.at(sq(File::G, Rank::R1)), Piece::WhiteKnight);
-    EXPECT_EQ(pos.at(sq(File::H, Rank::R1)), Piece::WhiteRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::A, Rank::R1)), Piece::WhiteRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::B, Rank::R1)), Piece::WhiteKnight);
+    EXPECT_EQ(pos.at_sq64(sq64(File::C, Rank::R1)), Piece::WhiteBishop);
+    EXPECT_EQ(pos.at_sq64(sq64(File::D, Rank::R1)), Piece::WhiteQueen);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R1)), Piece::WhiteKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::F, Rank::R1)), Piece::WhiteBishop);
+    EXPECT_EQ(pos.at_sq64(sq64(File::G, Rank::R1)), Piece::WhiteKnight);
+    EXPECT_EQ(pos.at_sq64(sq64(File::H, Rank::R1)), Piece::WhiteRook);
     
     // Check white pawns
     for (int f = 0; f < 8; ++f) {
-        EXPECT_EQ(pos.at(sq(static_cast<File>(f), Rank::R2)), Piece::WhitePawn);
+        EXPECT_EQ(pos.at_sq64(sq64(static_cast<File>(f), Rank::R2)), Piece::WhitePawn);
     }
     
     // Check empty squares
     for (int f = 0; f < 8; ++f) {
         for (int r = 2; r < 6; ++r) {
-            EXPECT_EQ(pos.at(sq(static_cast<File>(f), static_cast<Rank>(r))), Piece::None);
+            EXPECT_EQ(pos.at_sq64(sq64(static_cast<File>(f), static_cast<Rank>(r))), Piece::None);
         }
     }
     
     // Check black pawns
     for (int f = 0; f < 8; ++f) {
-        EXPECT_EQ(pos.at(sq(static_cast<File>(f), Rank::R7)), Piece::BlackPawn);
+        EXPECT_EQ(pos.at_sq64(sq64(static_cast<File>(f), Rank::R7)), Piece::BlackPawn);
     }
     
     // Check black pieces
-    EXPECT_EQ(pos.at(sq(File::A, Rank::R8)), Piece::BlackRook);
-    EXPECT_EQ(pos.at(sq(File::B, Rank::R8)), Piece::BlackKnight);
-    EXPECT_EQ(pos.at(sq(File::C, Rank::R8)), Piece::BlackBishop);
-    EXPECT_EQ(pos.at(sq(File::D, Rank::R8)), Piece::BlackQueen);
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R8)), Piece::BlackKing);
-    EXPECT_EQ(pos.at(sq(File::F, Rank::R8)), Piece::BlackBishop);
-    EXPECT_EQ(pos.at(sq(File::G, Rank::R8)), Piece::BlackKnight);
-    EXPECT_EQ(pos.at(sq(File::H, Rank::R8)), Piece::BlackRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::A, Rank::R8)), Piece::BlackRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::B, Rank::R8)), Piece::BlackKnight);
+    EXPECT_EQ(pos.at_sq64(sq64(File::C, Rank::R8)), Piece::BlackBishop);
+    EXPECT_EQ(pos.at_sq64(sq64(File::D, Rank::R8)), Piece::BlackQueen);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R8)), Piece::BlackKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::F, Rank::R8)), Piece::BlackBishop);
+    EXPECT_EQ(pos.at_sq64(sq64(File::G, Rank::R8)), Piece::BlackKnight);
+    EXPECT_EQ(pos.at_sq64(sq64(File::H, Rank::R8)), Piece::BlackRook);
     
     // Check game state
     EXPECT_EQ(pos.side_to_move, Color::White);
@@ -64,12 +64,12 @@ TEST_F(FENTest, ParseKiwiPetePosition) {
     ASSERT_TRUE(pos.set_from_fen(kiwipete_fen));
     
     // Check some key pieces
-    EXPECT_EQ(pos.at(sq(File::A, Rank::R8)), Piece::BlackRook);
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R8)), Piece::BlackKing);
-    EXPECT_EQ(pos.at(sq(File::H, Rank::R8)), Piece::BlackRook);
-    EXPECT_EQ(pos.at(sq(File::A, Rank::R1)), Piece::WhiteRook);
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R1)), Piece::WhiteKing);
-    EXPECT_EQ(pos.at(sq(File::H, Rank::R1)), Piece::WhiteRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::A, Rank::R8)), Piece::BlackRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R8)), Piece::BlackKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::H, Rank::R8)), Piece::BlackRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::A, Rank::R1)), Piece::WhiteRook);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R1)), Piece::WhiteKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::H, Rank::R1)), Piece::WhiteRook);
     
     // Check game state
     EXPECT_EQ(pos.side_to_move, Color::White);
@@ -124,8 +124,8 @@ TEST_F(FENTest, SetStartPositionUsesFEN) {
     pos.set_startpos();
     
     // Verify it matches the standard starting position
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R1)), Piece::WhiteKing);
-    EXPECT_EQ(pos.at(sq(File::E, Rank::R8)), Piece::BlackKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R1)), Piece::WhiteKing);
+    EXPECT_EQ(pos.at_sq64(sq64(File::E, Rank::R8)), Piece::BlackKing);
     EXPECT_EQ(pos.side_to_move, Color::White);
     EXPECT_EQ(pos.castling_rights, CASTLE_ALL);
     EXPECT_EQ(pos.ep_square, -1);
@@ -156,3 +156,4 @@ TEST_F(FENTest, InvalidFENFormats) {
     EXPECT_FALSE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - abc 1"));  // Invalid halfmove
     EXPECT_FALSE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 xyz"));  // Invalid fullmove
 }
+

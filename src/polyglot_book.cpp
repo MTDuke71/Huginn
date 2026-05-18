@@ -1,6 +1,6 @@
 #include "polyglot_book.hpp"
 #include "chess_types.hpp"
-#include "board120.hpp"
+#include "square.hpp"
 #include <algorithm>
 #include <random>
 #include <iostream>

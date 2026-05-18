@@ -10,8 +10,7 @@
  * ## Position Representation
  * - **Bitboards**: Per-piece bitboards are the single source of truth for
  *   placement, movegen, and evaluation
- * - **sq64 indexing**: squares are 0..63 (a1=0, h8=63); the mailbox-120
- *   scheme survives only as the MAILBOX_MAPS conversion helper
+ * - **sq64 indexing**: squares are 0..63 (a1=0, h8=63)
  * - **Zobrist Hashing**: Incremental hash updates for transposition table
  * 
  * ## State Management
@@ -47,7 +46,6 @@
 #include <sstream>
 #include <iostream>
 #include "bitboard.hpp"
-#include "board120.hpp"
 #include "chess_types.hpp"
 #include "move.hpp"
 #include "msvc_optimizations.hpp"
@@ -160,19 +158,7 @@ public:
     // Compute and set the Zobrist key from current position
     void update_zobrist_key();
 
-    // Access. at() derives the piece from bitboards so that this function does
-    // not depend on board[120] — preparatory step for deleting the mailbox
-    // half of Position. Returns Offboard for sentinel squares, None for
-    // empty playable squares, or the piece otherwise.
-    FORCE_INLINE Piece at(int s) const {
-        if (s < 0 || s >= 120) return Piece::Offboard;
-        int s64 = MAILBOX_MAPS.to64[s];
-        if (s64 < 0) return Piece::Offboard;  // 120-sq sentinel
-        return at_sq64(s64);
-    }
-    // Direct 64-square accessor for hot paths (movegen, eval) that already
-    // hold the 64-square index. Skips the 120→64 round-trip and bounds
-    // checking. Caller must guarantee s64 ∈ [0, 64).
+    // Direct 64-square accessor. Caller must guarantee s64 is in [0, 64).
     //
     // History: BACKLOG #26 (e61f6e5) added a board64[64] piece-on-square
     // cache to make this an array load; bench gained +12% NPS but pooled
@@ -218,19 +204,10 @@ public:
         }
     }
 
-    // 120-square convenience wrapper (debug / tests / non-hot callers).
-    inline void set(int s, Piece p) {
-        if (!is_playable(s)) return;
-        int s64 = MAILBOX_MAPS.to64[s];
-        if (s64 < 0) return;
-        set_sq64(s64, p);
-    }
-
     // ---- 64-square-native atomic piece ops (sole make/unmake path) --------
     // The 120-square move_piece/clear_piece/add_piece were removed once the
     // S_MOVE 120->64 migration left them with no callers. Caller passes a
-    // 64-square index directly (no MAILBOX_MAPS.to64 round-trip, no 120
-    // is_playable/at() guard); the index must be in [0,64).
+    // 64-square index directly; the index must be in [0,64).
     void move_piece_sq64(int from_sq64, int to_sq64) {
         DEBUG_ASSERT(from_sq64 >= 0 && from_sq64 < 64, "Invalid source sq64 for piece move");
         DEBUG_ASSERT(to_sq64 >= 0 && to_sq64 < 64, "Invalid destination sq64 for piece move");

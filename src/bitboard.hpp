@@ -31,7 +31,7 @@
  * 
  * **Coordinate System Integration:**
  * - Square 0 = A1, Square 63 = H8 (Little-Endian Rank-File mapping)
- * - Seamless conversion to/from mailbox-120 coordinates via SQ64/SQ120 macros
+ * - Native 64-square indexing (a1=0, h8=63)
  * - File/rank extraction through modulo and division operations
  * 
  * **Performance Impact:**
@@ -43,13 +43,13 @@
  * @author MTDuke71
  * @version 1.2
  * @see https://www.chessprogramming.org/Bitboards for algorithmic background
- * @see board120.hpp for coordinate system conversions
+ * @see square.hpp for coordinate helpers
  */
 #pragma once
 #include <cstdint>
 #include <iostream>
 #include "chess_types.hpp"
-#include "board120.hpp"  // For MAILBOX_MAPS access in SQ64/SQ120 macros
+#include "square.hpp"
 
 /// Type alias for 64-bit bitboard representing chess squares
 using Bitboard = uint64_t;
@@ -244,14 +244,6 @@ constexpr int file_of_square(int square) {
 constexpr int rank_of_square(int square) {
     return RANK_OF_SQUARE[square];
 }
-
-// Square-conversion macros for direct MAILBOX_MAPS access. The wrapper
-// functions (sq64_to_sq120 / sq120_to_sq64) that used to live alongside
-// these were removed in BACKLOG #26 follow-up — they only had test
-// callers; production code has always used the macros directly.
-// Caller is responsible for in-range arguments (no bounds check).
-#define SQ64(sq120)  (MAILBOX_MAPS.to64[sq120])    // Convert sq120 → sq64
-#define SQ120(sq64)  (MAILBOX_MAPS.to120[sq64])    // Convert sq64 → sq120
 
 // ============================================================================
 // SLIDING PIECE ATTACK FUNCTIONS
