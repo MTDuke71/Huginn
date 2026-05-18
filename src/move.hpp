@@ -63,6 +63,17 @@ constexpr int MOVE_PAWNSTART_SHIFT  = 19;  // Shift pawn start flag to bit 19
 constexpr int MOVE_PROMOTED_SHIFT   = 20;  // Shift promoted type to bits 20-23
 constexpr int MOVE_CASTLE_SHIFT     = 24;  // Shift castle flag to bit 24
 
+// Validate that a move's from/to are sq64 indices (0-63). The 7-bit
+// from/to fields can physically hold 0-127, so a stale mailbox-120
+// index (or a -1 sentinel) would be silently masked into a plausible
+// wrong square instead of an obvious out-of-range value. This catches
+// such a leak at construction time. Compiles to nothing in Release
+// (DEBUG_ASSERT -> ((void)0)); active under -DDEBUG.
+constexpr inline void debug_check_sq64_move(int from, int to) noexcept {
+    DEBUG_ASSERT(from >= 0 && from < 64, "S_MOVE 'from' is not a valid sq64 (0-63)");
+    DEBUG_ASSERT(to   >= 0 && to   < 64, "S_MOVE 'to' is not a valid sq64 (0-63)");
+}
+
 // Forward declaration for S_MOVE structure
 struct S_MOVE;
 
@@ -106,6 +117,7 @@ struct S_MOVE {
            bool en_passant = false, bool pawn_start = false, 
            PieceType promoted = PieceType::None, bool castle = false) 
            : score(0) {
+        debug_check_sq64_move(from, to);
         // Inline encoding for maximum performance in hot paths
         move = (from & 0x7F) |
                ((to & 0x7F) << MOVE_TO_SHIFT) |
@@ -350,6 +362,7 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_move(int from, int to) noexcept {
     S_MOVE move;
+    debug_check_sq64_move(from, to);
     move.move = (from & 0x7F) | ((to & 0x7F) << MOVE_TO_SHIFT);
     move.score = 0;
     return move;
@@ -366,7 +379,8 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_capture(int from, int to, PieceType captured) noexcept {
     S_MOVE move;
-    move.move = (from & 0x7F) | 
+    debug_check_sq64_move(from, to);
+    move.move = (from & 0x7F) |
                 ((to & 0x7F) << MOVE_TO_SHIFT) |
                 ((int(captured) & 0xF) << MOVE_CAPTURED_SHIFT);
     move.score = 0;
@@ -382,7 +396,8 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_en_passant(int from, int to) noexcept {
     S_MOVE move;
-    move.move = (from & 0x7F) | 
+    debug_check_sq64_move(from, to);
+    move.move = (from & 0x7F) |
                 ((to & 0x7F) << MOVE_TO_SHIFT) |
                 ((int(PieceType::Pawn) & 0xF) << MOVE_CAPTURED_SHIFT) |
                 MOVE_ENPASSANT;
@@ -399,7 +414,8 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_pawn_start(int from, int to) noexcept {
     S_MOVE move;
-    move.move = (from & 0x7F) | 
+    debug_check_sq64_move(from, to);
+    move.move = (from & 0x7F) |
                 ((to & 0x7F) << MOVE_TO_SHIFT) |
                 MOVE_PAWNSTART;
     move.score = 0;
@@ -417,7 +433,8 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_promotion(int from, int to, PieceType promoted, PieceType captured = PieceType::None) noexcept {
     S_MOVE move;
-    move.move = (from & 0x7F) | 
+    debug_check_sq64_move(from, to);
+    move.move = (from & 0x7F) |
                 ((to & 0x7F) << MOVE_TO_SHIFT) |
                 ((int(captured) & 0xF) << MOVE_CAPTURED_SHIFT) |
                 ((int(promoted) & 0xF) << MOVE_PROMOTED_SHIFT);
@@ -435,7 +452,8 @@ struct S_MOVE {
  */
 [[nodiscard]] constexpr inline S_MOVE make_castle(int from, int to) noexcept {
     S_MOVE move;
-    move.move = (from & 0x7F) | 
+    debug_check_sq64_move(from, to);
+    move.move = (from & 0x7F) |
                 ((to & 0x7F) << MOVE_TO_SHIFT) |
                 MOVE_CASTLE;
     move.score = 0;

@@ -72,6 +72,7 @@
 int S_MOVE::encode_move(int from, int to, PieceType captured,
                        bool en_passant, bool pawn_start,
                        PieceType promoted, bool castle) {
+    debug_check_sq64_move(from, to);
     return (from & 0x7F) |                                      // Bits 0-6:   source square (masked to 7 bits)
            ((to & 0x7F) << MOVE_TO_SHIFT) |                     // Bits 7-13:  destination (masked + shifted)
            ((int(captured) & 0xF) << MOVE_CAPTURED_SHIFT) |     // Bits 14-17: captured piece (enum→int, masked + shifted)  
