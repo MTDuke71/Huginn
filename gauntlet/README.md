@@ -50,7 +50,8 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
-| 2026-05-17 | AMD 7800X3D | 200 | **+27.85 ± 31.01 Elo vs t5**, LOS 96.19%, W48/L32/D120 | **`codex/reduce-winning-repetition-draws`** `5efaa78` (= main + "search: avoid winning root repetition draws", 1 commit). Clears 95% on a single 200g; ≈ +15 marginal over the cleanup line. Awaiting Intel pool. |
+| 2026-05-17 | Intel 13700K | 200 | **+15.65 ± 33.21 Elo vs t5**, LOS 82.31%, W45/L36/D119 | **`codex/reduce-winning-repetition-draws`** `5efaa78` (= main + root winning-repetition avoidance + PV repetition guard). Pools with AMD row below -> `baseline-t6`. |
+| 2026-05-17 | AMD 7800X3D | 200 | **+27.85 ± 31.01 Elo vs t5**, LOS 96.19%, W48/L32/D120 | Same `5efaa78` repetition-draw fix. Clears 95% on a single 200g; pools cleanly with Intel to ship as `baseline-t6`. |
 | 2026-05-17 | Intel 13700K | 200 | **≈ +1.74 Elo vs t5**, LOS ~52%, W45/L44/D111 | **`codex/remove-mailbox120-cleanup`** `fabf4ae` (24e51e4 + full 120-table removal / sq64-direct iteration, −1181 LOC). Dead heat. Pools with AMD row → codex Pooled section. |
 | 2026-05-17 | AMD 7800X3D | 200 | **+12.17 ± 32.16 Elo vs t5**, LOS 77.16%, W46/L39/D115 | Same codex `fabf4ae` cleanup. Lean positive, no regression, same sign as Intel. Pools with Intel row → codex Pooled section. |
 | 2026-05-17 | Intel 13700K | 200 | **−1.74 ± 29.95 Elo vs t5**, LOS 45.46%, W41/L42/D117 | **Mailbox 120→64 migration** (Zobrist `cbb615b` + S_MOVE/king_sq Stages 0–3, HEAD `24e51e4`). Statistical dead heat — footprint-neutral. Pools with the AMD row → see Pooled section. |
@@ -62,6 +63,23 @@ per experiment**.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — #27 winning-repetition root avoidance / baseline-t6 (400 games, two machines)
+
+`codex/reduce-winning-repetition-draws` `5efaa78` (= `main`
+`35a5f22` + root-side winning repetition avoidance + PV repetition
+guard) vs frozen **t5**:
+
+- Intel 13700K: W45 / L36 / D119  (+15.65, LOS 82.31%)
+- AMD 7800X3D:  W48 / L32 / D120  (+27.85, LOS 96.19%)
+- **Pooled: W93 / L68 / D239**, score **53.125%**, **~+21.8 Elo**.
+
+**Verdict: SHIP as `baseline-t6`.** Both machines are positive with
+no cross-machine disagreement. The score gain came mostly from fewer
+losses rather than fewer draws (draw count rose), but the pooled
+result is a clean strength improvement and the PV repetition guard
+eliminates current-side `PV continues after threefold repetition`
+warnings in the Intel log.
 
 ### Pooled — codex 120-removal cleanup (400 games, two machines)
 
