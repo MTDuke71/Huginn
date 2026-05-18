@@ -32,17 +32,14 @@
 namespace Zobrist {
     U64 compute(const Position& b) {
         U64 key = 0;
-        // Pieces on board (iterate playable squares)
-        for (int r = 0; r < 8; ++r) {
-            for (int f = 0; f < 8; ++f) {
-                const int s120 = sq(static_cast<File>(f), static_cast<Rank>(r));
-                const auto piece = b.at(s120);
-                if (is_none(piece)) continue;
-                PieceType pt = type_of(piece);
-                Color c = color_of(piece);
-                int pc = int(pt) + (c == Color::Black ? 6 : 0); // Map to legacy index if needed
-                key ^= Piece[pc][MAILBOX_MAPS.to64[s120]];  // s120 is always playable here
-            }
+        // Pieces on board (iterate sq64 directly)
+        for (int s64 = 0; s64 < 64; ++s64) {
+            const auto piece = b.at_sq64(s64);
+            if (is_none(piece)) continue;
+            PieceType pt = type_of(piece);
+            Color c = color_of(piece);
+            int pc = int(pt) + (c == Color::Black ? 6 : 0);
+            key ^= Piece[pc][s64];
         }
         if (b.side_to_move == Color::Black) key ^= Side;
         key ^= Castle[b.castling_rights & 0xF];
