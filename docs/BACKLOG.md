@@ -1919,10 +1919,76 @@ investigate. Until then, ignore.
 
 ---
 
-### #21: PV continues past threefold repetition (cosmetic, pollutes analysis)
+### #27: PGN-driven repetition conversion analysis
 
-- status: open (filed 2026-05-15)
-- priority: low
+- status: open (filed 2026-05-17 after `baseline-t6`)
+- priority: high
+- type: research / search bug
+- est: 1-2 sessions
+
+**State:** `baseline-t6` shipped the first repetition-related fix:
+root moves that immediately repeat while the root side is clearly
+ahead (`>= +300cp`) are demoted, and PV reconstruction now stops at
+repeated position keys. The gauntlet result was a success:
+
+- Intel 13700K vs t5: W45 / L36 / D119, **+15.65 +/- 33.21 Elo**,
+  LOS 82.31%.
+- AMD 7800X3D vs t5: W48 / L32 / D120, **+27.85 +/- 31.01 Elo**,
+  LOS 96.19%.
+- Pooled: W93 / L68 / D239, score 53.125%, **~+21.8 Elo**.
+- Tag: `baseline-t6` at `a31d7a8`.
+
+The improvement came mostly from fewer losses, not fewer draws. Draws
+increased versus the t5 cleanup baseline, so this did **not** solve
+the original observation: some games still show large reported evals
+ending in 3-fold repetition.
+
+**Evidence to mine:** after the first Intel t6 run, a quick PGN scan
+still found high-eval 3-fold endings in `gauntlet/huginn_vs_t5_intel.pgn`
+(examples included final comments like `+280.00`, `+21.85`, `-12.25`,
+`+11.40`, etc.). Some are likely opponent-side or mate-score artifacts,
+so do not assume every large value means Huginn threw away a win.
+
+**Next action:** build a small analysis tool around actual PGN data:
+
+1. Parse `gauntlet/huginn_vs_t5_intel.pgn` and
+   `gauntlet/huginn_vs_t5_amd.pgn`.
+2. Extract every game ending in `Draw by 3-fold repetition`.
+3. For each, record: round, side/engine to move on the final move,
+   final SAN/UCI if recoverable, final eval/depth/comment, result,
+   full move list, and whether Huginn_current or Huginn_t5 made the
+   repetition-clinching move.
+4. Reconstruct the position a few plies before the final repetition
+   and output FEN + legal alternatives. Prefer using engine movegen or
+   a chess library rather than ad-hoc SAN parsing.
+5. Re-search those positions with current Huginn at fixed depth/time
+   and compare:
+   - Does it choose the repetition?
+   - Is root static eval actually winning?
+   - Are non-repeating alternatives present and scored close enough?
+   - Is the big PGN eval a real score, a mate/tablebase artifact, or
+     just PV pollution from the opponent baseline?
+6. Turn confirmed "Huginn repeats while winning with alternatives"
+   cases into a targeted regression set before touching search again.
+
+**Candidate fixes after data exists:**
+
+- Penalize repeated-position candidates by root-side eval only when the
+  candidate move itself is the repetition-clincher and the engine has a
+  non-repeating alternative inside a sane score band.
+- Detect twofold/claimable repetition at root more explicitly instead
+  of relying on `isRepetition()` after MakeMove.
+- Tune thresholds (`+300cp`, `-200cp`) only against the extracted
+  positions plus a normal t6 gauntlet; avoid broad tree-wide repetition
+  scoring for now. A quick 20-game pilot of the tree-wide variant was
+  neutral and very draw-heavy (3W / 3L / 14D), so that path is suspect.
+
+---
+
+### #21: PV continues past threefold repetition — CLOSED
+
+- status: closed @ `5efaa78` / shipped in `baseline-t6` (2026-05-17)
+- priority: was low
 - type: bug
 
 **State:** During the 2026-05-15 AMD t4 baseline gauntlet
@@ -1932,26 +1998,22 @@ e.g. `info depth 20 score cp 25 ... pv h7g8 f4e3 f7e5 e3f4 e5f7 f4e3
 f7e5 …` — a 2-cycle move loop padded out to the full PV array, with a
 static score and depth still climbing 17→20.
 
-**Diagnosis (likely, unconfirmed):** `get_pv_line`
-([minimal_search.cpp:597](src/minimal_search.cpp#L597)) walks the
-PV/TT chain without a repetition guard, so in a drawn-by-repetition
-line it follows the cycle until the 64-slot PV array fills. The
-reported `score cp 25` equals the shipped contempt value (#16,
-`CONTEMPT = 25`), which indicates the search itself *is* correctly
-scoring the position as a (contempt-adjusted) draw — only the printed
-PV and the still-incrementing depth are garbage.
+**Diagnosis:** `PVTable::get_pv_line` walked the PV/TT chain without a
+repetition guard, so in a drawn-by-repetition line it followed cycles
+until the requested PV length filled. The reported `score cp 25`
+often matched the shipped contempt value (#16, `CONTEMPT = 25`),
+which indicated the search itself was frequently scoring the position
+as a contempt-adjusted draw while the printed PV was garbage.
 
-**Impact:** none on playing strength (the draw is scored correctly).
-Cosmetic in GUIs, but it **pollutes any PV/depth/score-based
-analysis** — e.g. the WAC depth-comparison tables in
-[SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md): any position that resolves
-to a repetition will show a meaningless looping PV and an inflated
-depth at a flat contempt score.
+**Fix:** `PVTable::get_pv_line` now seeds a `seen_keys` set from the
+actual game history plus the reconstructed PV walk, and stops
+appending once the next made move reaches a repeated position key.
 
-**Action:** in `get_pv_line`, stop appending once the reconstructed
-line hits a position key seen earlier in the same walk (or once the
-half-move/repetition state would be a draw). Low priority — fix when
-next touching PV extraction or analysis tooling.
+**Result:** In the Intel t6 gauntlet log, current Huginn produced zero
+`PV continues after threefold repetition` warnings; all remaining
+warnings came from frozen `Huginn_t5`. This is closed as a PV/log
+pollution bug. The separate playing-strength question of converting
+winning repetition draws remains open as #27.
 
 ---
 
