@@ -279,16 +279,14 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
     uint64_t key = 0;
     
     // XOR piece positions
-    for (int sq = 0; sq < 120; ++sq) {
-        if (!is_valid_square(sq)) continue;
-        
-        Piece piece = pos.at(sq);
+    for (int sq64 = 0; sq64 < 64; ++sq64) {
+        Piece piece = pos.at_sq64(sq64);
         if (piece == Piece::None) continue;
-        
-        // Convert to 64-square index (file=0..7, rank=0..7)
-        int file = sq % 10 - 1;  // a=0, b=1, ..., h=7
-        int rank = sq / 10 - 2;  // rank 1=0, rank 2=1, ..., rank 8=7
-        
+
+        // sq64 layout matches Polyglot's: file=0..7 (a..h), rank=0..7 (1..8)
+        int file = sq64 & 7;
+        int rank = sq64 >> 3;
+
         // Polyglot piece kind mapping:
         // black pawn=0, white pawn=1, black knight=2, white knight=3, ..., white king=11
         PieceType pt = get_piece_type(piece);
