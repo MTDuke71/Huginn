@@ -16,8 +16,8 @@
  * and pawn double-pushes.
  * 
  * Move encoding bit layout (25 bits total):
- * Bits 0-6:   Source square (7 bits, 0-127, supports 120-square notation)
- * Bits 7-13:  Destination square (7 bits, 0-127, supports 120-square notation)  
+ * Bits 0-6:   Source square (7-bit field; holds an sq64 index 0-63)
+ * Bits 7-13:  Destination square (7-bit field; holds an sq64 index 0-63)
  * Bits 14-17: Captured piece type (4 bits, 0-15, PieceType enum values)
  * Bit 18:     En passant capture flag (1 bit)
  * Bit 19:     Pawn start (double push) flag (1 bit)
@@ -29,8 +29,8 @@
  * - Piece types are cast to int and masked to 4 bits (supports enum values 0-15)
  * - Boolean flags are converted to their respective bit positions using ternary operators
  * 
- * @param from        Source square index (0-127, typically 0-119 for 120-square board)
- * @param to          Destination square index (0-127, typically 0-119 for 120-square board)
+ * @param from        Source square index (sq64, 0-63)
+ * @param to          Destination square index (sq64, 0-63)
  * @param captured    Type of piece captured (PieceType::None if no capture)
  * @param en_passant  True if the move is an en passant capture
  * @param pawn_start  True if the move is a pawn's initial double-step

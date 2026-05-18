@@ -662,7 +662,7 @@ void Engine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& coun
     int from_sq = previous_move.get_from();
     int to_sq = previous_move.get_to();
     
-    // Validate square indices (must be 0-119 for 120-square representation)
+    // Validate square indices (sq64: must be 0-63)
     if (from_sq < 0 || from_sq >= 64 || to_sq < 0 || to_sq >= 64) return;
     
     // Store the counter-move for this [from][to] combination

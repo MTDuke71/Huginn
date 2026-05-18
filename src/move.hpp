@@ -35,8 +35,8 @@ inline char piece_to_char(int color, int piece) {
  * 
  * Move encoding uses a 25-bit layout within a 32-bit integer:
  * 
- * Bits  0-6:   Source square (7 bits, supports 0-127 for 120-square board)
- * Bits  7-13:  Destination square (7 bits, supports 0-127 for 120-square board)  
+ * Bits  0-6:   Source square (7-bit field; holds an sq64 index 0-63)
+ * Bits  7-13:  Destination square (7-bit field; holds an sq64 index 0-63)
  * Bits 14-17:  Captured piece type (4 bits, PieceType enum values 0-15)
  * Bit  18:     En passant capture flag (1 bit)
  * Bit  19:     Pawn double-push flag (1 bit)
@@ -93,8 +93,8 @@ struct S_MOVE {
     
     /**
      * @brief Constructor with full move specification
-     * @param from        Source square index (0-127, typically 0-119 for 120-square board)
-     * @param to          Destination square index (0-127, typically 0-119 for 120-square board)
+     * @param from        Source square index (sq64, 0-63)
+     * @param to          Destination square index (sq64, 0-63)
      * @param captured    Type of piece captured (PieceType::None if no capture)
      * @param en_passant  True if this is an en passant capture
      * @param pawn_start  True if this is a pawn's initial double-step move
