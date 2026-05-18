@@ -53,6 +53,13 @@ namespace Huginn {
 // later if needed.
 constexpr int CONTEMPT = 25;  // cp — tunable; gauntlet to validate
 
+// If the root side is already clearly ahead, do not let an immediate
+// threefold repetition score as a pleasant contempt draw. Losing and equal
+// positions keep the normal repetition behavior so the engine can still
+// rescue bad games.
+constexpr int WINNING_REPETITION_AVOID_THRESHOLD = 300;
+constexpr int WINNING_REPETITION_DRAW_SCORE = -200;
+
 // LMR reduction table indexed by (depth, move-index). Reduction grows
 // with both depth and move number. Formula: R = log(d) * log(m) / 2,
 // truncated. Matches the MTLChess src/search.zig:63 table. Computed
@@ -1812,6 +1819,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
+    const int root_static_eval = evalPosition(pos);
     
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
@@ -1886,6 +1894,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
 
             if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
             ++legal_count;
+            const bool immediate_repetition = isRepetition(pos);
 
             // Track move in search stack for counter-move heuristic.
             // info.ply is 0 at root; this writes search_stack[0].
@@ -1896,6 +1905,11 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             ++info.ply;
             int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
             --info.ply;
+
+            if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
+                score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
+            }
+
             pos.TakeMove();
 
             if (info.stopped || info.quit) break;

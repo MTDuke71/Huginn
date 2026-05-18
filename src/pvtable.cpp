@@ -2,6 +2,7 @@
 #include "position.hpp"
 #include "movegen.hpp"
 #include <iostream>
+#include <unordered_set>
 
 namespace Huginn {
 
@@ -73,6 +74,14 @@ bool PVTable::move_exists(Position& pos, const S_MOVE& move) const {
 // GetPVLine function - retrieve PV line from table (Part 53 - 2:29-6:40)
 int PVTable::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]) {
     int count = 0;
+    std::unordered_set<uint64_t> seen_keys;
+    seen_keys.reserve(pos.move_history.size() + static_cast<size_t>(depth) + 1);
+    for (const auto& undo : pos.move_history) {
+        if (undo.zobrist_key != 0) {
+            seen_keys.insert(undo.zobrist_key);
+        }
+    }
+    seen_keys.insert(pos.zobrist_key);
     
     // Probe PV table for moves up to desired depth
     while (count < depth && count < MAX_DEPTH) {
@@ -95,6 +104,10 @@ int PVTable::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]) {
         // Make the move to get to next position
         if (pos.MakeMove(move) != 1) {
             break;  // Move failed to make
+        }
+
+        if (!seen_keys.insert(pos.zobrist_key).second) {
+            break;  // Stop PV reconstruction at repeated positions
         }
     }
     
