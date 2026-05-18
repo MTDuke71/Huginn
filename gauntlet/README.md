@@ -50,6 +50,8 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
+| 2026-05-17 | Intel 13700K | 200 | **≈ +1.74 Elo vs t5**, LOS ~52%, W45/L44/D111 | **`codex/remove-mailbox120-cleanup`** `fabf4ae` (24e51e4 + full 120-table removal / sq64-direct iteration, −1181 LOC). Dead heat. Pools with AMD row → codex Pooled section. |
+| 2026-05-17 | AMD 7800X3D | 200 | **+12.17 ± 32.16 Elo vs t5**, LOS 77.16%, W46/L39/D115 | Same codex `fabf4ae` cleanup. Lean positive, no regression, same sign as Intel. Pools with Intel row → codex Pooled section. |
 | 2026-05-17 | Intel 13700K | 200 | **−1.74 ± 29.95 Elo vs t5**, LOS 45.46%, W41/L42/D117 | **Mailbox 120→64 migration** (Zobrist `cbb615b` + S_MOVE/king_sq Stages 0–3, HEAD `24e51e4`). Statistical dead heat — footprint-neutral. Pools with the AMD row → see Pooled section. |
 | 2026-05-17 | AMD 7800X3D | 200 | **+19.13 ± 32.82 Elo vs t5**, LOS 87.45%, W53/L42/D105 | Same `24e51e4` mailbox-elimination stack. Lean positive, no regression. Pools with the Intel row → see Pooled section. |
 | 2026-05-17 | AMD 7800X3D | 200 | **−38.37 ± 31.90 Elo vs t5**, LOS 0.86%, W38/L60/D102 | **#26 board64 cache — cross-machine disagreement.** AMD −38 / LOS 0.86% vs **Intel +12.17 / LOS 77%** on identical binaries (~50 Elo, machine-dependent). NOT poolable; uninitialised `board64` suspected. Reopened (BACKLOG #26) |
@@ -59,6 +61,26 @@ per experiment**.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — codex 120-removal cleanup (400 games, two machines)
+
+`codex/remove-mailbox120-cleanup` `fabf4ae` (= the `24e51e4` mailbox
+stack **plus** deletion of the dead [120] tables and sq64-direct
+iteration in zobrist / polyglot / mirrorBoard, −1181 LOC) vs frozen
+**t5**:
+
+- Intel 13700K: W45 / L44 / D111  (≈ +1.74, LOS ~52%)
+- AMD 7800X3D:  W46 / L39 / D115  (+12.17, LOS 77.16%)
+- **Pooled: W91 / L83 / D226**, score **51.0%**, **≈ +7.0 Elo**,
+  LOS ≈ 78%.
+
+**Verdict: KEEP.** Same pattern as the mailbox-migration pool below —
+both halves same side (+1.7 / +12.2, no cross-machine disagreement,
+the anti-#26), pooling to a lean **+7 Elo**. A pure deletion/cleanup
+refactor landing neutral-to-slightly-positive is the expected and
+desired outcome: the win is architectural (no 120 representation
+left in the hot path) at zero Elo cost. Below the 95% ship bar for
+an Elo *claim* but well clear of any regression concern.
 
 ### Pooled — mailbox 120→64 migration (400 games, two machines)
 
