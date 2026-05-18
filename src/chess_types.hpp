@@ -236,40 +236,16 @@ struct PieceTypeIter {
 // Example: for (auto t : PieceTypeIter()) {...}
 
 // ---------- Castling Rights Optimization ----------
-// Lookup table for efficient castling rights updates during move making
-// Each square maps to a mask that preserves only the castling rights that should remain
-// when a piece moves from or to that square
+// Lookup table for efficient castling rights updates during move making.
+// Each sq64 maps to a mask that preserves only the castling rights that
+// should remain when a piece moves from or to that square.
+//
+// History: a parallel [120] table (CASTLING_MASK / update_castling_rights)
+// existed during the S_MOVE 120->64 migration; it lost its last caller
+// once MakeMove went 64-native and was deleted with the other dead
+// mailbox-120 structures. Only the sq64 table below remains.
 namespace CastlingLookup {
-    // Initialize castling permission lookup table
-    constexpr std::array<uint8_t, 120> create_castling_mask_table() {
-        std::array<uint8_t, 120> table{};
-        
-        // Default: all castling rights preserved (15 = 0b1111)
-        for (size_t i = 0; i < 120; ++i) {
-            table[i] = CASTLE_WK | CASTLE_WQ | CASTLE_BK | CASTLE_BQ;
-        }
-        
-        // Critical squares that affect castling rights:
-        table[21] = CASTLE_WK | CASTLE_BK | CASTLE_BQ;  // a1 - clear white queenside
-        table[25] = CASTLE_BK | CASTLE_BQ;              // e1 - clear both white rights  
-        table[28] = CASTLE_WQ | CASTLE_BK | CASTLE_BQ;  // h1 - clear white kingside
-        table[91] = CASTLE_WK | CASTLE_WQ | CASTLE_BK;  // a8 - clear black queenside
-        table[95] = CASTLE_WK | CASTLE_WQ;              // e8 - clear both black rights
-        table[98] = CASTLE_WK | CASTLE_WQ | CASTLE_BQ;  // h8 - clear black kingside
-        
-        return table;
-    }
-    
-    // Compile-time generated lookup table
-    constexpr auto CASTLING_MASK = create_castling_mask_table();
-
-    // Fast castling rights update: AND with masks for both from and to squares
-    constexpr inline uint8_t update_castling_rights(uint8_t current_rights, int from_sq, int to_sq) {
-        return current_rights & CASTLING_MASK[from_sq] & CASTLING_MASK[to_sq];
-    }
-
-    // 64-square variant (a1=0, e1=4, h1=7, a8=56, e8=60, h8=63) — mirrors the
-    // 120-square table above for the S_MOVE 120->64 migration.
+    // 64-square table (a1=0, e1=4, h1=7, a8=56, e8=60, h8=63).
     constexpr std::array<uint8_t, 64> create_castling_mask_table_sq64() {
         std::array<uint8_t, 64> table{};
         for (size_t i = 0; i < 64; ++i) {
