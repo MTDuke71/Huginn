@@ -31,7 +31,7 @@
 | 25 | Refresh `huginn_t5` baseline | **CLOSED** @ `3eab266` | maintenance | medium |
 | 26 | `board64[64]` piece-on-square cache | **DEFERRED** | feature/speed | medium |
 | 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
-| 28 | PGN-driven repetition conversion analysis | **IN-PROGRESS** (data gathered, fix pending) | research/bug | high |
+| 28 | PGN-driven repetition conversion analysis | **PART 1 CLOSED** @ `a21a037`; Part 2 open | research/bug | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1961,15 +1961,19 @@ investigate. Until then, ignore.
 
 ### #28: PGN-driven repetition conversion analysis
 
-- status: **bug-class-1 fix applied 2026-05-18 @ `a21a037`, Intel
-  gauntlet positive, AMD pool pending** — analysis pipeline built,
-  20 candidates classified, regression set extracted, fix landed
-  (2/7 REAL_BUG resolved incl. thrown KQ-vs-K mate). Validated on
-  regression set + 194 unit tests. **Intel t6 gauntlet: +19.13 ±
-  32.82 Elo, LOS 87.45%, W47/L36/D117, DrawRatio 43.0%** — positive
-  and *no draw-heavy regression* (the central risk). LOS below the
-  ~95% ship bar at 200g; AMD 200g pool pending to tighten. Bug
-  class 2 (5 cases) still open.
+- status: **PART 1 CLOSED @ `a21a037` (2026-05-18)** — bug-class-1
+  fix (halfmove-clock-bounded repetition lookback) shipped on
+  correctness grounds with zero Elo cost confirmed. **PART 2 OPEN** —
+  bug class 2 (5 cases) is the remaining follow-up.
+- pooled t6 gauntlet (400g, two machines @ 10+0.1 vs `huginn_t6`):
+  - Intel 200g: +19.13 ± 32.82 Elo, LOS 87.45%, W47/L36/D117, Draw 43.0%
+  - AMD 200g: +3.47 ± 34.84 Elo, LOS 57.78%, W49/L47/D104, Draw 52.0%
+  - **Pooled: W96/L83/D221 (51.6%), ~+11 Elo** — statistical dead
+    heat to mildly positive; **no regression, no draw-heavy
+    regression** (vs ~60% draws in the t6-vs-t5 baseline). A
+    correctness refinement that pays its own way: kept on
+    correctness grounds (fixes provably-thrown wins) rather than as
+    a measured Elo gain.
 - priority: high
 - type: research / search bug
 - est: bug-class-1 done; bug-class-2 ~1-2 sessions
@@ -2047,10 +2051,15 @@ detection (search.cpp:1373) — exactly the surface that could
 reintroduce the draw-heavy regression the tree-wide variant showed
 — but the run is positive with *fewer losses than wins* and a
 draw rate well below the ~60% of the t6-vs-t5 baseline, so the
-feared drawishness did **not** materialize. LOS 87% is under the
-project's ~95% ship bar at 200g; the AMD 200g pool (cross-machine
-git pull workflow, #19) is pending to tighten before this is
-declared shipped.
+feared drawishness did **not** materialize.
+
+The AMD 200g pool (`fdbc9b3`) returned +3.47 ± 34.84 Elo, LOS
+57.78%, W49/L47/D104 — a dead heat. Pooled 400g: W96/L83/D221
+(51.6%), ~+11 Elo. LOS doesn't reach the ~95% Elo-ship bar, but
+the change is a *correctness* fix (it stops the engine drawing
+provably-won games — confirmed on the regression fixture, e.g. a
+thrown KQ-vs-K mate) at **zero measured Elo cost and no draw
+regression**, so **Part 1 ships on correctness grounds**.
 
 **Remaining: bug class 2 (5 cases, still open).** For
 `intel-R19`/`intel-R91`/`amd-R32` (alt_exists) and
