@@ -1,0 +1,10 @@
+[INFO  ] [20:26:12.767734] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [20:26:12.767880] <   > fastchess --- Setting seed to: 8559329878730553836
+[INFO  ] [20:26:12.800586] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [20:26:12.805759] <   > fastchess --- Starting tournament...
+[INFO  ] [20:42:45.042428] <   > fastchess --- Finished match
+
+[INFO  ] [20:42:45.042755] <   > fastchess --- Total Time: 00:16:32 (hours:minutes:seconds)
+
+

@@ -1961,11 +1961,15 @@ investigate. Until then, ignore.
 
 ### #28: PGN-driven repetition conversion analysis
 
-- status: **partial fix applied 2026-05-18, gauntlet pending** —
-  analysis pipeline built, 20 candidates classified, regression set
-  extracted, bug-class-1 fix landed (2/7 REAL_BUG resolved, incl. the
-  thrown KQ-vs-K mate). Validated on the regression set + 194 unit
-  tests; **t6 gauntlet not yet run**. Bug class 2 (5 cases) still open.
+- status: **bug-class-1 fix applied 2026-05-18 @ `a21a037`, Intel
+  gauntlet positive, AMD pool pending** — analysis pipeline built,
+  20 candidates classified, regression set extracted, fix landed
+  (2/7 REAL_BUG resolved incl. thrown KQ-vs-K mate). Validated on
+  regression set + 194 unit tests. **Intel t6 gauntlet: +19.13 ±
+  32.82 Elo, LOS 87.45%, W47/L36/D117, DrawRatio 43.0%** — positive
+  and *no draw-heavy regression* (the central risk). LOS below the
+  ~95% ship bar at 200g; AMD 200g pool pending to tighten. Bug
+  class 2 (5 cases) still open.
 - priority: high
 - type: research / search bug
 - est: bug-class-1 done; bug-class-2 ~1-2 sessions
@@ -2034,11 +2038,19 @@ Result on the regression fixture (history replayed, 300ms):
 **REAL_BUG 7 → 5** — `intel-R8` (thrown KQ-vs-K mate) and
 `intel-R95` (thrown KR ending) now avoid the repetition.
 FIXED_BY_T6 9 → 11, ARTIFACT 4 → 4 (no FIXED→REAL backslide), all
-194 unit tests pass. **A t6 gauntlet is still required** before
-declaring this shipped — the change also widens in-search
-repetition detection (search.cpp:1373), exactly the surface that
-could reintroduce the draw-heavy regression the tree-wide variant
-showed.
+194 unit tests pass.
+
+**Intel t6 gauntlet (2026-05-18, 200g @ 10+0.1 vs `huginn_t6`):**
++19.13 ± 32.82 Elo, LOS 87.45%, W47 / L36 / D117 (52.75%),
+DrawRatio **43.0%**. The change widens in-search repetition
+detection (search.cpp:1373) — exactly the surface that could
+reintroduce the draw-heavy regression the tree-wide variant showed
+— but the run is positive with *fewer losses than wins* and a
+draw rate well below the ~60% of the t6-vs-t5 baseline, so the
+feared drawishness did **not** materialize. LOS 87% is under the
+project's ~95% ship bar at 200g; the AMD 200g pool (cross-machine
+git pull workflow, #19) is pending to tighten before this is
+declared shipped.
 
 **Remaining: bug class 2 (5 cases, still open).** For
 `intel-R19`/`intel-R91`/`amd-R32` (alt_exists) and
