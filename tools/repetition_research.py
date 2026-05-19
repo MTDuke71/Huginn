@@ -21,12 +21,13 @@ Classification per candidate:
                not a thrown win -> discard
 
 Usage:
-    python tools/repetition_research.py [--movetime MS] [--sf-depth D]
+    python tools/repetition_research.py [--movetime MS] [--sf-movetime MS]
 """
 import argparse
 import json
 import re
 import subprocess
+import threading
 import sys
 from pathlib import Path
 
@@ -56,11 +57,37 @@ def run_uci(exe: Path, setup: str, go: str, timeout: float):
         [str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL, text=True, bufsize=1,
     )
-    proc.stdin.write(setup)
-    proc.stdin.write(go)
-    proc.stdin.flush()
-
     best, last_score = None, None
+
+    def _send(s):
+        # The engine may have already exited (pipe closed); never let a
+        # broken stdin abort the whole sweep.
+        try:
+            proc.stdin.write(s)
+            proc.stdin.flush()
+        except (OSError, ValueError):
+            pass
+
+    # Hard watchdog: even a `go movetime` engine can wedge (or, with
+    # `go depth`, explode in a pawn endgame). A timer thread kills the
+    # process so the read loop's `for line in proc.stdout` can never
+    # block the whole sweep indefinitely.
+    timed_out = {"v": False}
+
+    def _watchdog():
+        timed_out["v"] = True
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+    wd = threading.Timer(timeout, _watchdog)
+    wd.daemon = True
+    wd.start()
+
+    _send(setup)
+    _send(go)
+
     try:
         for line in proc.stdout:
             sm = SCORE_RE.search(line)
@@ -70,14 +97,14 @@ def run_uci(exe: Path, setup: str, go: str, timeout: float):
             if bm:
                 best = bm.group(1)
                 break
-        proc.stdin.write("quit\n")
-        proc.stdin.flush()
-        proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        proc.kill()
+        _send("quit\n")
     finally:
+        wd.cancel()
         if proc.poll() is None:
-            proc.kill()
+            try:
+                proc.kill()
+            except Exception:
+                pass
     return best, last_score
 
 
@@ -107,8 +134,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--movetime", type=int, default=300,
                     help="Huginn movetime ms (approx in-game 10+0.1 think)")
-    ap.add_argument("--sf-depth", type=int, default=24,
-                    help="Stockfish fixed search depth (oracle)")
+    ap.add_argument("--sf-movetime", type=int, default=3000,
+                    help="Stockfish oracle movetime ms (bounded; a "
+                         "fixed depth can explode in pawn endgames)")
     ap.add_argument("--limit", type=int, default=0,
                     help="only first N candidates (0 = all)")
     args = ap.parse_args()
@@ -139,8 +167,8 @@ def main():
         s_best, s_score = run_uci(
             STOCKFISH,
             f"uci\nisready\nposition fen {pre_fen}\n",
-            f"go depth {args.sf_depth}\n",
-            timeout=60,
+            f"go movetime {args.sf_movetime}\n",
+            timeout=args.sf_movetime / 1000.0 + 10,
         )
         sf_cp = cp_from_pov(s_score, stm_is_clincher)
         sf_best_repeats = (s_best == clincher)

@@ -2075,6 +2075,33 @@ positions, plus explicit root claimable-repetition detection
 (candidate fixes 1-2). Validate against
 `tools/repetition_regression.json` *and* a fresh t6 gauntlet.
 
+**Post-fix harvest (2026-05-18) — Part 1 holds, Part 2 sharpened.**
+Re-ran the pipeline on the 400 *post-fix* `vs t6` gauntlet games
+(Huginn_current = `a21a037`, Part 1 already shipped): 220 3-fold
+draws, 104 Huginn-clinched, 15 winning-repeat candidates. Oracle
+re-classification (Stockfish, **bounded `go movetime 3000`** — a
+fixed depth wedged the harness for 31 min on a locked pawn
+endgame; added a watchdog + movetime bound):
+
+- **FIXED_BY_T6 10 / REAL_BUG 5 / ARTIFACT 0.** Part 1 is
+  empirically holding in real post-fix play (10/15 won-position
+  repetitions now avoided in re-search).
+- The 5 residual REAL_BUG (`amd-R25` alt_exists; `amd-R50`/`R62`/
+  `R86`/`R95` history_dependent) are genuine bug-class-2 cases that
+  survive Part 1 in real games. **4 of 5 are history_dependent**
+  (Stockfish's own best move *is* the clincher) — strong evidence
+  that the dominant residual failure is "objectively-best move that
+  happens to complete a 3-fold given game history", which a score
+  penalty fundamentally cannot fix. This pushes **explicit root
+  claimable-repetition detection** (candidate fix 2) ahead of the
+  positive-progress-signal idea as the Part 2 lead approach.
+
+Master Part 2 fixture is now `tools/repetition_regression.json`
+(10 cases, deduped by pre_fen, `source_set`-tagged): 5 `t5_vs_t5`
+(pre-fix) + 5 `t6_post_fix` (survived Part 1 — highest signal).
+Rebuilt by `tools/repetition_regression_merge.py`; raw per-source
+snapshots in `repetition_*_t5.json` / `repetition_*_t6.json`.
+
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
 ahead (`>= +300cp`) are demoted, and PV reconstruction now stops at
