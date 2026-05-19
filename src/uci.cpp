@@ -168,6 +168,16 @@ void UCIInterface::run() {
                 std::cout << board_line << std::endl;
             }
         }
+        else if (command == "eval") {
+            // Static evaluation from the side-to-move's perspective
+            // (matches the search's internal convention). Used by the
+            // BACKLOG #28 repetition tooling to check the t6 winning-
+            // repetition demotion threshold against real positions.
+            int cp = search_engine->evalPosition(position);
+            std::cout << "info string static eval " << cp
+                      << " cp (side-to-move POV)" << std::endl;
+            std::cout << "eval " << cp << std::endl;
+        }
         else if (command == "stop") {
             should_stop = true;
             search_engine->stop();

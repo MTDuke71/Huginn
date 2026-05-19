@@ -548,11 +548,21 @@ bool Engine::isRepetition(const Position& pos) {
     // Be very conservative - only detect clear 3-fold repetitions
     uint64_t current_key = pos.zobrist_key;
     int repetition_count = 1; // Count current position
-    
-    // Only check the last 12 moves to avoid false positives
-    int start_check = std::max(0, static_cast<int>(pos.move_history.size()) - 12);
-    
-    for (int index = start_check; index < static_cast<int>(pos.move_history.size()) - 1; ++index) {
+
+    // Bound the lookback by the halfmove (fifty-move) clock rather than a
+    // fixed window. Any irreversible move (capture / pawn move / castle)
+    // resets halfmove_clock and makes the current position structurally
+    // unreachable again, so a matching zobrist key within the last
+    // `halfmove_clock` plies is necessarily a *true* repetition — never a
+    // false positive. The old fixed 12-ply window silently missed slow
+    // long-period shuffles (e.g. a K+Q vs K cycle 16-22 plies wide, which
+    // let the engine draw a won game; see BACKLOG #28 case intel-R8).
+    const int history_len = static_cast<int>(pos.move_history.size());
+    const int scan_plies = std::min(history_len,
+                                    static_cast<int>(pos.halfmove_clock));
+    int start_check = std::max(0, history_len - scan_plies);
+
+    for (int index = start_check; index < history_len - 1; ++index) {
         if (current_key == pos.move_history[index].zobrist_key) {
             repetition_count++;
         }

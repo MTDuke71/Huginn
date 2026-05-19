@@ -1,5 +1,45 @@
 # BACKLOG
 
+## Quick Index
+
+| # | Title | Status | Type | Priority |
+|---|-------|--------|------|----------|
+| 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
+| 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
+| 3 | Continuation history | **DEFERRED** | feature | high |
+| 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
+| 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
+| 6 | Lazy SEE in main-search capture ordering | **DEFERRED** | feature | low |
+| 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
+| 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
+| 9 | Texel-style tuner | **OPEN** | research | low |
+| 10 | Wire up Syzygy tablebase probe | **CLOSED** @ `5347e6d` | feature | low |
+| 11 | CLAUDE.md NPS figure is stale | **CLOSED** @ `b9cc1be` | maintenance | low |
+| 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
+| 13 | Investigate dormant counter-move + TT-mate bugs | **CLOSED** @ `2e97066` | bug | high |
+| 14 | Move-gen — bypass legality pre-filter | **CLOSED** @ `b1154c8` | feature/perf | low |
+| 15 | Re-attempt counter-move heuristic | **OPEN** | feature | medium |
+| 16 | Contempt — penalize draw scores | **CLOSED** | feature | medium |
+| 17 | Aspiration-window widening on score swings | **OPEN** | feature | medium |
+| 18 | Refresh `huginn_t4` baseline | **CLOSED** @ `6e3a761` | maintenance | medium |
+| 19 | Two-machine gauntlet workflow + SPRT | **IN-PROGRESS** | tooling | medium |
+| 20 | Trapped-bishop eval pattern | **DEFERRED** | feature | low |
+| 21 | PV continues past threefold repetition | **CLOSED** @ `5efaa78` | bug | low |
+| 22 | Gauntlet results archive policy | **ESTABLISHED** | tooling | medium |
+| 23 | TT bound classification bug fix | **CLOSED** @ `7d11f23` | bug | high |
+| 24 | Real magic-bitboard slider attacks | **CLOSED** @ `3eab266` | feature/speed | high |
+| 25 | Refresh `huginn_t5` baseline | **CLOSED** @ `3eab266` | maintenance | medium |
+| 26 | `board64[64]` piece-on-square cache | **DEFERRED** | feature/speed | medium |
+| 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
+| 28 | PGN-driven repetition conversion analysis | **IN-PROGRESS** (data gathered, fix pending) | research/bug | high |
+
+**Status Legend:**
+- **CLOSED**: Completed and shipped (or documented closure reason)
+- **DEFERRED**: Valid idea, blocked or re-attempted but regressed; preserved for future
+- **OPEN**: Unstarted, unblocked, ready to pursue
+- **IN-PROGRESS**: Active work
+- **ESTABLISHED**: Policy/infrastructure set up and documented
+
 Single-file issue tracker. Each session opens here first.
 
 Format per entry:
@@ -1919,12 +1959,100 @@ investigate. Until then, ignore.
 
 ---
 
-### #27: PGN-driven repetition conversion analysis
+### #28: PGN-driven repetition conversion analysis
 
-- status: open (filed 2026-05-17 after `baseline-t6`)
+- status: **partial fix applied 2026-05-18, gauntlet pending** —
+  analysis pipeline built, 20 candidates classified, regression set
+  extracted, bug-class-1 fix landed (2/7 REAL_BUG resolved, incl. the
+  thrown KQ-vs-K mate). Validated on the regression set + 194 unit
+  tests; **t6 gauntlet not yet run**. Bug class 2 (5 cases) still open.
 - priority: high
 - type: research / search bug
-- est: 1-2 sessions
+- est: bug-class-1 done; bug-class-2 ~1-2 sessions
+
+**Findings (2026-05-18) — full writeup in
+[../tools/repetition_findings.md](../tools/repetition_findings.md):**
+
+Pipeline (tooling, all under `tools/`):
+- `repetition_analysis.py` — parses both t5 PGNs, extracts 3-fold
+  draws, reconstructs the pre-repetition position + start FEN + full
+  UCI move list, flags Huginn-clinched winning-repeat candidates.
+- `repetition_research.py` — replays each candidate's full history
+  into current Huginn (300ms, so the t6 root-demotion can fire) and
+  probes **Stockfish 18 @ depth 24** on the bare position as an
+  objective oracle (Stockfish copied to the fastchess dir).
+- `repetition_regression_build.py` — emits the history-aware
+  regression fixture `tools/repetition_regression.json`.
+
+Numbers: 238 three-fold draws / 400 games; 126 Huginn-clinched; 20
+were Huginn-clinched with reported eval ≥ +300cp **and** a legal
+non-repeating alternative. Re-search verdicts on those 20:
+
+| Verdict | N | Meaning |
+|---|---|---|
+| **ARTIFACT** | 4 | Stockfish says position is ~0/drawn — Huginn's big eval was inflated. Not a thrown win. Discard. |
+| **FIXED_BY_T6** | 9 | Stockfish confirms won, but current Huginn no longer repeats. The t6 fix already handles these — keep as regression guards. |
+| **REAL_BUG** | 7 | Huginn *still* clinches the repetition and Stockfish confirms the position is won. The genuine residual bug. |
+
+The 7 REAL_BUG split into two sub-classes:
+- **alt_exists (5)** — a clearly winning *non-repeating* move exists
+  (SF best ≠ clincher); Huginn picks the repetition anyway. Cleanest
+  fixable class. `intel-R8` (KQ vs K, +M), `intel-R95` (KR vs Kp,
+  +1196), `intel-R19` (+419), `intel-R91` (+562), `amd-R32` (+756).
+- **history_dependent (2)** — SF's own best move *is* the clincher
+  (objectively best from the bare position, but a 3-fold given game
+  history): `amd-R54` (+709), `amd-R87` (+565). These need explicit
+  root claimable-repetition detection, not a `bm` test.
+
+**Method note / correction:** an early harness bug (piping `quit`
+before reading `bestmove`, which aborts the engine's background `go`)
+made Huginn falsely appear to still repeat on *every* candidate. A
+streaming UCI driver fixed it; the honest residual is 7/20, not 20/20.
+The t6 conversion fix is more effective than the raw "draws went up"
+observation suggested — most large-eval 3-fold endings are now either
+artifacts or already-corrected.
+
+**Bug-class-1 fix applied (2026-05-18) — `src/search.cpp`
+`isRepetition`:** the original hypothesis (eval dips under +300cp)
+was *falsified* by a direct probe: all 7 REAL_BUG positions have
+Huginn static eval ≥ +300 (320–1370cp; added an `eval` UCI command
+for this). The real root cause for the worst cases is that
+`isRepetition` only scanned the **last 12 plies** (`start_check =
+size - 12`), a conservative perf hack. Slow long-period shuffles
+evade it: `intel-R8` (KQ vs K) had its prior occurrences 16 and 22
+plies back, so the t6 demotion *never fired* and the engine drew a
+forced mate.
+
+Fix: bound the lookback by `pos.halfmove_clock` instead of a fixed
+12. Any irreversible move (capture / pawn / castle) resets the
+halfmove clock and makes the current position structurally
+unreachable again, so a zobrist match within the last
+`halfmove_clock` plies is necessarily a *true* repetition — the
+wider scan can only find real threefolds earlier, never false ones.
+
+Result on the regression fixture (history replayed, 300ms):
+**REAL_BUG 7 → 5** — `intel-R8` (thrown KQ-vs-K mate) and
+`intel-R95` (thrown KR ending) now avoid the repetition.
+FIXED_BY_T6 9 → 11, ARTIFACT 4 → 4 (no FIXED→REAL backslide), all
+194 unit tests pass. **A t6 gauntlet is still required** before
+declaring this shipped — the change also widens in-search
+repetition detection (search.cpp:1373), exactly the surface that
+could reintroduce the draw-heavy regression the tree-wide variant
+showed.
+
+**Remaining: bug class 2 (5 cases, still open).** For
+`intel-R19`/`intel-R91`/`amd-R32` (alt_exists) and
+`amd-R54`/`amd-R87` (history_dependent) the demotion *does* fire
+(eval ≥ +300, repetition within window) yet the engine still
+clinches: every non-repeating alternative also scores ≤ the
+−200 clamp because the opponent forces the cycle within Huginn's
+300ms horizon while Stockfish needs depth 24 to see the win. A
+−200 *penalty* can't help when there is no >−200 alternative to
+switch to. Next action: replace/augment the flat penalty with a
+*positive* progress signal or a search extension in clearly-won
+positions, plus explicit root claimable-repetition detection
+(candidate fixes 1-2). Validate against
+`tools/repetition_regression.json` *and* a fresh t6 gauntlet.
 
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
