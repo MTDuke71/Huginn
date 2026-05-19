@@ -1964,7 +1964,10 @@ investigate. Until then, ignore.
 - status: **PART 1 CLOSED @ `a21a037` (2026-05-18)** — bug-class-1
   fix (halfmove-clock-bounded repetition lookback) shipped on
   correctness grounds with zero Elo cost confirmed. **PART 2 OPEN** —
-  bug class 2 (5 cases) is the remaining follow-up.
+  bug class 2 follow-up; attempt 1 (Zarkov-rule `isRepetition`)
+  fixed 7/10 of the fixture but regressed −40 Elo (likely TT
+  pollution from path-dependent draw scores) and was reverted; next
+  attempt must add TT-safe handling. See the Part 2 detail below.
 - pooled t6 gauntlet (400g, two machines @ 10+0.1 vs `huginn_t6`):
   - Intel 200g: +19.13 ± 32.82 Elo, LOS 87.45%, W47/L36/D117, Draw 43.0%
   - AMD 200g: +3.47 ± 34.84 Elo, LOS 57.78%, W49/L47/D104, Draw 52.0%
@@ -2101,6 +2104,50 @@ Master Part 2 fixture is now `tools/repetition_regression.json`
 (pre-fix) + 5 `t6_post_fix` (survived Part 1 — highest signal).
 Rebuilt by `tools/repetition_regression_merge.py`; raw per-source
 snapshots in `repetition_*_t5.json` / `repetition_*_t6.json`.
+
+**Attempt 1 — Zarkov-rule `isRepetition` (2026-05-18): REJECTED,
+−40 Elo.** Per the Chess Programming Wiki "Repetitions" page the
+mainstream design is the Zarkov rule: a true threefold is always a
+draw, and a *single* repetition is a draw once `ply_from_root > 2`
+(makes the search tree a DAG so the won side, via `-CONTEMPT`,
+routes around shuffles instead of only seeing the draw at the
+literal 3-fold — which is exactly Huginn's sub-standard
+`count >= 3` gate, the structural cause of bug class 2).
+
+Implemented it (single in-tree rep = draw past root+2; threefold
+always). Bench results:
+- 194/194 unit tests pass.
+- **Regression fixture: 7/10 fixed** (was 0/10), incl. 4/6
+  history_dependent — the class the `−200` root penalty cannot
+  touch. The 3 residuals (`t5-R87`, `t6-R62`, `t6-R95`, all
+  history_dependent) are beyond-horizon *conversion* failures: the
+  search now correctly scores the cycle a draw but cannot find the
+  win in 300 ms (separate endgame-technique problem, not a
+  repetition bug — CPW does not claim to solve this).
+- **Intel t6 gauntlet: −40.13 ± 33.51 Elo, LOS 0.88%,
+  W38/L61/D101, DrawRatio 40.0%.** Decisive regression.
+
+Diagnostic: the failure is *not* drawishness (draws actually fell
+to 40%) — **losses surged** (L61 vs ~36 at Part 1). Signature of
+search corruption, not passivity. Leading hypothesis: a
+repetition draw score is **path-dependent**, but Huginn writes
+search scores into the **path-independent** transposition table.
+Under `count >= 3` such stores were rare; scoring *single* in-tree
+reps as `-CONTEMPT` floods the TT with draw scores keyed by
+zobrist that then poison non-repeating paths transposing to the
+same key → broad eval corruption → more losses. Mainstream
+engines pair single-rep detection with **not storing those scores
+in the TT** (or flagging them unusable). Code reverted to the
+Part 1 shipped state; not committed to `main`.
+
+**Part 2 next attempt:** redo the Zarkov rule *with* TT-safe
+handling — do not write (or do not probe) TT entries whose score
+originates from a single-repetition draw node, or only treat the
+single-rep-as-draw inside the PV/while not eligible for TT cutoff.
+Re-validate on the fixture (expect ≥7/10) *and* a t6 gauntlet
+(must clear the −40 and not regress draws). The 3 conversion
+residuals are out of scope for repetition work — file under
+endgame technique if they persist.
 
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
