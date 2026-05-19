@@ -50,6 +50,7 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
+| 2026-05-17 | AMD 7800X3D | 200 | **+3.47 ± 34.84 Elo vs t6**, LOS 57.78%, W49/L47/D104 | **BACKLOG #28** `a21a037` halfmove-clock-bounded repetition lookback (= `baseline-t6` + 2 files, +25/−5). Dead heat — correctness refinement, **zero Elo cost confirmed**, no regression. Awaiting Intel pool. |
 | 2026-05-17 | Intel 13700K | 200 | **+15.65 ± 33.21 Elo vs t5**, LOS 82.31%, W45/L36/D119 | **`codex/reduce-winning-repetition-draws`** `5efaa78` (= main + root winning-repetition avoidance + PV repetition guard). Pools with AMD row below -> `baseline-t6`. |
 | 2026-05-17 | AMD 7800X3D | 200 | **+27.85 ± 31.01 Elo vs t5**, LOS 96.19%, W48/L32/D120 | Same `5efaa78` repetition-draw fix. Clears 95% on a single 200g; pools cleanly with Intel to ship as `baseline-t6`. |
 | 2026-05-17 | Intel 13700K | 200 | **≈ +1.74 Elo vs t5**, LOS ~52%, W45/L44/D111 | **`codex/remove-mailbox120-cleanup`** `fabf4ae` (24e51e4 + full 120-table removal / sq64-direct iteration, −1181 LOC). Dead heat. Pools with AMD row → codex Pooled section. |
