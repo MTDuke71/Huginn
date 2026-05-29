@@ -7,14 +7,16 @@ two gauntlet machines over git instead of manual file copy.
 
 | Machine | CPU | repo path | bat | outputs |
 |---|---|---|---|---|
-| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t4_amd.bat` | `*_amd.pgn` / `*_amd.log` |
-| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t4.bat` | `*_intel.pgn` / `*_intel.log` |
+| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t7_amd.bat` | `*_amd.pgn` / `*_amd.log` |
+| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t7.bat` | `*_intel.pgn` / `*_intel.log` |
 
-Both bats run **current Huginn vs the frozen `huginn_t4.exe`**
-(commit `6e3a761`, `git tag baseline-t4`), `tc=10+0.1`,
-concurrency 4, 100 rounds = 200 games each, identical engine names,
-appending to their own machine-tagged files. 200 + 200 = **400 games
-per experiment**.
+Both bats run **current Huginn vs the frozen `huginn_t7.exe`**
+(commit `304f2b7`, `git tag baseline-t7`), `tc=10+0.1`,
+concurrency 4, **SPRT `elo0=0 elo1=10`** with a 500-round cap = up to
+1000 games each, identical engine names, into their own machine-tagged
+files. 1000 + 1000 = **2000 games per experiment** (or fewer if the
+SPRT stops early). The per-tier bats (`test_huginn_vs_t4..t6`) are kept
+for historical regression checks; **use the t7 pair going forward**.
 
 ## Workflow
 
@@ -24,13 +26,18 @@ per experiment**.
    on the other to collect both halves.
 3. Combined estimate: `fastchess.exe -pgnin` does **not** exist in
    this build, so pool manually. Read each machine's
-   `Results of Huginn_current vs Huginn_t4` block (or the tail of its
+   `Results of Huginn_current vs Huginn_t7` block (or the tail of its
    `.log`), sum the W / L / D across both runs, then:
 
    ```
    score = (W + D/2) / N
    Elo   = -400 * log10(1/score - 1)
    ```
+
+   For the pooled **pentanomial**, sum the `Ptnml(0-2)` buckets across
+   machines. If recomputing from a PGN, pair the two games of each pair
+   by their `[Round]` tag — **not** file order, which is completion
+   order under concurrency and scrambles the wings.
 
 ## Notes
 
@@ -42,9 +49,12 @@ per experiment**.
   with an Intel push (different paths) — clean git merges.
 - Logs are committed too (per request). They are large and noisy;
   prune old ones if the repo gets heavy.
-- t4 baseline is `6e3a761` (BACKLOG #18). Keep `huginn_t4.exe`
-  byte-identical across both machines (build once, copy the binary —
-  do not rebuild per-machine).
+- **Current baseline is `baseline-t7 = 304f2b7`** (BACKLOG #28
+  repetition fixes; +7.6 Elo pooled vs t6). Keep `huginn_t7.exe`
+  byte-identical across both machines — build once (or copy from the
+  Intel freeze, SHA256 `AC589A61…4C2E6D`) and copy the binary; **do
+  not rebuild per-machine**. Prior frozen baselines: t6 `5efaa78`/tag
+  `baseline-t6`, t4 `6e3a761` (BACKLOG #18).
 
 ## History
 
