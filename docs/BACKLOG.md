@@ -32,6 +32,7 @@
 | 26 | `board64[64]` piece-on-square cache | **DEFERRED** | feature/speed | medium |
 | 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
 | 28 | PGN-driven repetition conversion analysis | **CLOSED** — P1 @ `a21a037`, P2 @ `304f2b7` (`baseline-t7`, +7.6 Elo pooled) | research/bug | high |
+| 29 | Fifty-move-rule search blindness | **P1 IMPLEMENTED** — TT-safe 50-move draw in AlphaBeta; queued for t7 gauntlet. P2 (clock-scaled eval) open | bug | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -47,12 +48,11 @@ Single-file issue tracker. Each session opens here first.
 1. **#19 Part A (SPRT)** — add `-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05`
   to the t5/t6 gauntlet bats so borderline results converge faster and
   clear wins/losses stop early.
-2. **50-move-rule search blindness (new, from #28 close-out)** — the
-  t6/t7 Intel logs are full of `PV continues after fifty-move rule` with
-  Huginn reporting +744–767cp in positions dead drawn by the 50-move
-  rule. Draw blindness on the 50-move path (separate from the now-fixed
-  3-fold path); likely the next real Elo leak. Mirror the #28 method:
-  PGN-mine the thrown 50-move draws, build a fixture, fix, t6 gauntlet.
+2. **#29 fifty-move-rule blindness — Part 1 IMPLEMENTED, gauntlet
+  pending.** TT-safe 50-move draw added to `AlphaBeta` (was entirely
+  absent); KQ-vs-K at halfmove 100 now scores draw, 194/194 tests pass.
+  **Next action: t7 gauntlet (Intel+AMD) to measure.** Then #29 Part 2
+  (clock-scaled eval to anticipate the draw past the search horizon).
 3. **#17 score-swing verification re-search** — add full-window
   verification when iteration-to-iteration score swing exceeds threshold
   to stabilize aspiration behavior in sharp endgame transitions.
@@ -2334,6 +2334,53 @@ so do not assume every large value means Huginn threw away a win.
   positions plus a normal t6 gauntlet; avoid broad tree-wide repetition
   scoring for now. A quick 20-game pilot of the tree-wide variant was
   neutral and very draw-heavy (3W / 3L / 14D), so that path is suspect.
+
+---
+
+### #29: Fifty-move-rule search blindness
+
+- status: **PART 1 IMPLEMENTED (2026-05-29)** — candidate for the next
+  t7 gauntlet. **PART 2 OPEN** (clock-scaled eval).
+- priority: high
+- type: search bug
+- est: P1 done; P2 ~1 session
+
+**The bug.** `halfmove_clock` appeared in `src/search.cpp` only in the
+#28 repetition lookback and the mirror/TB helpers — **`AlphaBeta` and
+`quiescence` had no fifty-move-rule draw check at all.** The engine
+could not see a 50-move draw: it scored dead-drawn positions at their
+material eval (e.g. +744–767cp in KR/KQ endings the t6/t7 Intel logs
+flagged with `PV continues after fifty-move rule`, 22 such warnings in
+one 1000g run). Blind to the draw, it had no incentive to make progress
+and shuffled won games into the rule.
+
+**Part 1 fix (`src/search.cpp` AlphaBeta).** Added a TT-safe early
+return in the same block as the repetition handling: if
+`halfmove_clock >= 100` and the side to move is **not** in check, return
+`-CONTEMPT`. Placed before the TT probe/store because a 50-move draw
+score is path-dependent (`halfmove_clock` is not in the zobrist key, per
+the TB note) and must never be cached. The not-in-check guard preserves
+checkmate-takes-precedence: an in-check node falls through so movegen
+distinguishes mate from a legal escape. Quiescence needs no check — it
+is entered at `depth==0` *after* this block, and only explores captures
+(which reset the clock).
+
+Validation: KQ-vs-K at `halfmove=100` now scores **+25cp (draw)** vs
+**+1008cp** for the same position at `halfmove=0` (control) — previously
+both read ~+1000. 194/194 unit tests pass.
+
+**Part 2 (open) — anticipate the draw via clock-scaled eval.** Part 1
+makes the engine *see* the draw once it is within the search horizon,
+after which minimax picks the best clock-resetting progress move on its
+own (no special "play a pawn move" rule — and never a *sub-optimal* one;
+an irreversible pawn push to buy time can wreck the win). The residual
+gap is the horizon: at `halfmove≈60` searching ~12 ply the draw at 100
+is unseen, so the engine resets late. Principled fix (mirrors
+Stockfish): scale the static eval toward 0 as `halfmove_clock` rises
+(e.g. `eval * (100 - rule50) / 100` above some threshold), creating
+continuous pressure to make progress as the clock climbs — without ever
+forcing a bad move. Validate on a 50-move-thrown-win fixture (mine it
+from the t6/t7 PGNs, #28 method) + a t7 gauntlet.
 
 ---
 

@@ -1237,7 +1237,26 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             return -CONTEMPT; // Repetition draw — contempt-biased (BACKLOG #16)
         }
     }
-    
+
+    // BACKLOG #29: Fifty-move-rule draw — TT-safe, same rationale as
+    // repetition. halfmove_clock is NOT part of the zobrist key (see the TB
+    // note below), so a 50-move draw score is path-dependent and must be
+    // returned before any TT probe/store, never cached. At 100 plies without
+    // a pawn move or capture the position is a draw — UNLESS the side to move
+    // is checkmated, which takes precedence over the rule. We therefore score
+    // the draw only when the side to move is not in check; if it is in check
+    // we fall through so normal movegen distinguishes checkmate from a legal
+    // escape (in which case it is still really a draw, but that in-check-at-
+    // ply-100 corner is rare enough to leave to the search).
+    if (!isRoot && pos.halfmove_clock >= 100) {
+        const int stm_king = pos.king_sq[int(pos.side_to_move)];
+        const bool stm_in_check = (stm_king >= 0) &&
+            SqAttackedBB(stm_king, pos, !pos.side_to_move);
+        if (!stm_in_check) {
+            return -CONTEMPT; // Fifty-move-rule draw — contempt-biased (BACKLOG #16)
+        }
+    }
+
     // VICE Part 84: Transposition Table Probe
     // Check if we've already searched this position to sufficient depth
     int tt_score;
