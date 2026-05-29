@@ -1216,13 +1216,24 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     if (!isRoot) {
         const int repetition_count = repetition_count_in_history(pos);
 
-        // Zarkov-style single repetition: one prior key match is enough to
-        // treat this node as a draw once we are beyond the root neighborhood.
-        // Keep the ply guard to avoid over-triggering right below root.
-        const bool single_repetition_draw = (repetition_count >= 2 && info.ply > 2);
+        // A true threefold is always a draw by rule — score it unconditionally.
         const bool threefold_repetition_draw = (repetition_count >= 3);
 
-        if (single_repetition_draw || threefold_repetition_draw) {
+        // Zarkov-style single repetition: one prior key match past the root
+        // neighborhood (ply > 2) is treated as a draw, but ONLY when the side
+        // to move is clearly winning. The rule exists so the WON side routes
+        // around shuffles toward the real win (BACKLOG #28 Part 2); confining
+        // it to winning evals keeps that bug-fix (provably-thrown won games)
+        // without meddling in equal/unclear positions, where scoring a lone
+        // repetition as a draw could discard a legitimate resource. Eval is
+        // probed only when a single-rep candidate actually exists, so the cost
+        // is paid only on real history matches, not every node.
+        bool winning_single_rep = false;
+        if (!threefold_repetition_draw && repetition_count >= 2 && info.ply > 2) {
+            winning_single_rep = (evalPosition(pos) >= WINNING_REPETITION_AVOID_THRESHOLD);
+        }
+
+        if (threefold_repetition_draw || winning_single_rep) {
             return -CONTEMPT; // Repetition draw — contempt-biased (BACKLOG #16)
         }
     }
