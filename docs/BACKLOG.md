@@ -918,7 +918,7 @@ scoring formula).
 
 ### #19: Two-machine gauntlet workflow + SPRT
 
-- status: in progress (2026-05-15) — Part B largely done on the AMD box; Part A (SPRT) still open
+- status: in progress (2026-05-28) — Part A landed on t6 scripts; two-machine pooling active
 - priority: medium
 - type: tooling / infrastructure
 - est: ~1 hour (Part A) + ~30-45 min one-time (Part B)
@@ -927,6 +927,19 @@ scoring formula).
 active regression baseline. Active gauntlets should use
 `test_huginn_vs_t6*.bat` only. `test_huginn_vs_t5*.bat` is legacy and
 kept for historical/regression archaeology, not routine tuning.
+
+**Progress update (2026-05-28) — first t6 SPRT pooled result (1000+1000):**
+- Part A completed on active scripts: `test_huginn_vs_t6.bat` and
+  `test_huginn_vs_t6_amd.bat` now run with
+  `-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05 -rounds 500 -repeat`.
+- Intel leg (1000g): W239 / L244 / D517, score 49.75%,
+  Elo -1.74 ± 14.53, LOS 40.73%.
+- AMD leg (1000g): W247 / L240 / D513, score 50.35%.
+- Pooled (2000g): W486 / L484 / D1030, score 50.05%.
+
+Interpretation: dead-even against t6 (as expected for current vs
+baseline sanity runs). The new workflow is validated and ready for
+feature tests (notably #28 Part 2).
 
 **Progress update (2026-05-15) — AMD 7800X3D worker stood up:**
 - `test_huginn_vs_t4_amd.bat` created in the repo root: AMD-machine
