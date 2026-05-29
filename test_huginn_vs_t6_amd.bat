@@ -25,11 +25,12 @@ REM
 REM Configures current Huginn with -DENABLE_FATHOM=ON so in-search Syzygy
 REM probe behaviour matches the TB-enabled t6 baseline binary.
 REM
-REM Usage: test_huginn_vs_t6_amd.bat [rounds]   (default: 100 rounds = 200 games)
+REM Usage: test_huginn_vs_t6_amd.bat [rounds_cap]
+REM   default rounds_cap=500 (SPRT early-stop; cap is a safety limit)
 REM ===========================================================================
 
 set ROUNDS=%1
-if "%ROUNDS%"=="" set ROUNDS=100
+if "%ROUNDS%"=="" set ROUNDS=500
 
 set FC=C:\Users\m_lad\Documents\fastchess-windows-x86-64
 set FASTCHESS=%FC%\fastchess.exe
@@ -75,13 +76,15 @@ if exist "%RESULTS%\huginn_vs_t6_amd.pgn" del /q "%RESULTS%\huginn_vs_t6_amd.pgn
 if exist "%RESULTS%\fastchess_t6_amd.log" del /q "%RESULTS%\fastchess_t6_amd.log"
 
 echo.
-echo [AMD 7800X3D] Running %ROUNDS% rounds (= %ROUNDS%*2 games): Huginn current vs huginn_t6 tc=10+0.1
+echo [AMD 7800X3D] Running SPRT (elo0=0, elo1=10, alpha=0.05, beta=0.05)
+echo rounds cap: %ROUNDS% (= up to %ROUNDS%*2 games): Huginn current vs huginn_t6 tc=10+0.1
 echo.
 
 "%FASTCHESS%" ^
   -engine cmd="%FC%\huginn.exe" name=Huginn_current option.OwnBook=false ^
   -engine cmd="%FC%\huginn_t6.exe" name=Huginn_t6 option.OwnBook=false ^
   -each tc=10+0.1 ^
+    -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05 ^
   -rounds %ROUNDS% ^
   -repeat ^
   -concurrency 4 ^

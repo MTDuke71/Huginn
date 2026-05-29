@@ -42,6 +42,19 @@
 
 Single-file issue tracker. Each session opens here first.
 
+## Next 3 Actions
+
+1. **#19 Part A (SPRT)** — add `-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05`
+  to the t5/t6 gauntlet bats so borderline results converge faster and
+  clear wins/losses stop early.
+2. **#28 Part 2 (TT-safe repetition handling)** — re-attempt the
+  Zarkov-style repetition handling with TT-safe storage/probing rules,
+  then validate on `tools/repetition_regression.json` + fresh t6
+  gauntlet.
+3. **#17 score-swing verification re-search** — add full-window
+  verification when iteration-to-iteration score swing exceeds threshold
+  to stabilize aspiration behavior in sharp endgame transitions.
+
 Format per entry:
 - **status**: open / in-progress / blocked / closed
 - **priority**: high / medium / low
@@ -59,7 +72,7 @@ exist, what conditions to watch.
 
 ---
 
-## Open — recently deferred (unblocking per-feature via specific fixes, not via one universal lever)
+## Deferred — recently deferred (unblocking per-feature via specific fixes, not via one universal lever)
 
 **Four** features in this section share a fingerprint: tactically-
 correct implementation, real WAC tactical-solving improvement,
@@ -243,7 +256,7 @@ ships. Worktree binary `huginn_ks.exe` is in the fastchess folder.
 
 ---
 
-## Open — high priority
+## Backlog — high priority (open + deferred)
 
 ### #26: `board64[64]` piece-on-square cache — DEFERRED (negative gauntlet, no bug)
 
@@ -403,9 +416,9 @@ expected Elo gain as 0 ± noise rather than projecting linearly.
 
 ---
 
-### #24: Real magic-bitboard slider attacks (CLOSED, pending gauntlet)
+### #24: Real magic-bitboard slider attacks (CLOSED)
 
-- status: **closed code-side** (2026-05-16, shipped pending 200g gauntlet)
+- status: **closed @ `3eab266`** (2026-05-16; shipped after cross-machine pool)
 - priority: was high (latent — docs lied; code was ray-walking)
 - type: speed / correctness
 - source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
@@ -484,9 +497,9 @@ diagram I added in `cd3d56f`), `MOVEGEN_COMPARISON.md`, and
 `CLAUDE.md` are finally truthful. No doc edits needed — the code now
 matches what the prose has been claiming for months.
 
-### #23: TT bound classification bug — fix (CLOSED, pending gauntlet)
+### #23: TT bound classification bug — fix (CLOSED)
 
-- status: **closed code-side** (2026-05-15, shipped pending 200g gauntlet)
+- status: **closed @ `7d11f23`** (2026-05-15; shipped after pooled validation)
 - priority: was latent-high (never knew it was broken)
 - type: bug
 - source: GPT performance review (`PERFORMANCE_ARCHITECTURE_REVIEW.md`,
@@ -901,14 +914,19 @@ scoring formula).
 
 ---
 
-## Open — medium priority
+## Backlog — medium priority (open + deferred)
 
-### #19: Two-machine gauntlet workflow + SPRT — planned for weekend revisit
+### #19: Two-machine gauntlet workflow + SPRT
 
 - status: in progress (2026-05-15) — Part B largely done on the AMD box; Part A (SPRT) still open
 - priority: medium
 - type: tooling / infrastructure
 - est: ~1 hour (Part A) + ~30-45 min one-time (Part B)
+
+**Baseline policy update (2026-05-28):** `baseline-t6` is now the
+active regression baseline. Active gauntlets should use
+`test_huginn_vs_t6*.bat` only. `test_huginn_vs_t5*.bat` is legacy and
+kept for historical/regression archaeology, not routine tuning.
 
 **Progress update (2026-05-15) — AMD 7800X3D worker stood up:**
 - `test_huginn_vs_t4_amd.bat` created in the repo root: AMD-machine
@@ -1457,7 +1475,7 @@ that hit Kg5).
 
 ---
 
-## Open — low priority
+## Backlog — low priority (open + deferred)
 
 ### #27: Unorthodox early-queen PV (d1d3 / d8d6) — deferred
 
@@ -2236,7 +2254,7 @@ appending once the next made move reaches a repeated position key.
 `PV continues after threefold repetition` warnings; all remaining
 warnings came from frozen `Huginn_t5`. This is closed as a PV/log
 pollution bug. The separate playing-strength question of converting
-winning repetition draws remains open as #27.
+winning repetition draws remains open as #28.
 
 ---
 
