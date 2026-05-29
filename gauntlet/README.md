@@ -50,6 +50,7 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
+| 2026-05-28 | AMD 7800X3D | **1000 (SPRT)** | **−0.00 ± 14.61 Elo vs t6**, LOS 50.00%, W240/L240/D520 | **TT-safe repetition handling** (HEAD `34c336e`, = baseline-t6 + #28 + TT-safe repetition, +58/−17 src). SPRT `elo0=0 elo1=10`, LLR −0.41 in bounds (inconclusive → cap). Literal zero at 1000g (coin flip down to the last game); CI [−15, +15]. Pure correctness, **zero Elo cost**. |
 | 2026-05-28 | AMD 7800X3D | **1000 (SPRT)** | **+2.43 ± 15.52 Elo vs t6**, LOS 62.07%, W247/L240/D513 | **BACKLOG #28** halfmove-clock-bounded repetition lookback (HEAD `d04ee3e`, same +25/−5 src as `a21a037`). SPRT `elo0=0 elo1=10`, LLR −0.13 in bounds (inconclusive → hit 500-round cap). 1000g settles the question: **Elo-neutral with high power** (CI [−13, +18]); supersedes the 200g +3.47 ± 35 prelim. Keep on correctness grounds. |
 | 2026-05-17 | Intel 13700K | 200 | **+15.65 ± 33.21 Elo vs t5**, LOS 82.31%, W45/L36/D119 | **`codex/reduce-winning-repetition-draws`** `5efaa78` (= main + root winning-repetition avoidance + PV repetition guard). Pools with AMD row below -> `baseline-t6`. |
 | 2026-05-17 | AMD 7800X3D | 200 | **+27.85 ± 31.01 Elo vs t5**, LOS 96.19%, W48/L32/D120 | Same `5efaa78` repetition-draw fix. Clears 95% on a single 200g; pools cleanly with Intel to ship as `baseline-t6`. |
