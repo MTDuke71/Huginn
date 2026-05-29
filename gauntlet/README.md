@@ -50,7 +50,8 @@ per experiment**.
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
-| 2026-05-29 | AMD 7800X3D | **1000 (SPRT)** | **+5.91 ± 15.03 Elo vs t6**, LOS 77.96%, W250/L233/D517 | **#28 Part 2 attempt 2b — narrow-gate Zarkov draw** (HEAD `24f9fdb`/`304f2b7`, +69/−17 src). SPRT `elo0=0 elo1=10`, LLR +0.29 drifting toward H1 → inconclusive at cap. Lean positive (~+3 to +6 marginal vs TT-safe baseline), **not the −40 wide-gate disaster** of attempt 1; doesn't ship solo (CI straddles 0) — queued for Intel pool. |
+| 2026-05-29 | Intel 13700K | **1000 (SPRT)** | **+9.38 ± 14.65 Elo vs t6**, LOS 89.56%, W259/L232/D509 | **#28 Part 2 attempt 2b — narrow-gate Zarkov draw** (candidate `304f2b7`). SPRT `elo0=0 elo1=10`, LLR +0.73. Ptnml [27,109,202,134,28]. Pools with the AMD row below → **SHIP as `baseline-t7`**. |
+| 2026-05-29 | AMD 7800X3D | **1000 (SPRT)** | **+5.91 ± 15.03 Elo vs t6**, LOS 77.96%, W250/L233/D517 | **#28 Part 2 attempt 2b — narrow-gate Zarkov draw** (HEAD `24f9fdb`/`304f2b7`, +69/−17 src). SPRT `elo0=0 elo1=10`, LLR +0.29 drifting toward H1 → inconclusive at cap. Lean positive (~+3 to +6 marginal vs TT-safe baseline), **not the −40 wide-gate disaster** of attempt 1; doesn't ship solo (CI straddles 0) — pools with Intel row above. |
 | 2026-05-28 | AMD 7800X3D | **1000 (SPRT)** | **−0.00 ± 14.61 Elo vs t6**, LOS 50.00%, W240/L240/D520 | **TT-safe repetition handling** (HEAD `34c336e`, = baseline-t6 + #28 + TT-safe repetition, +58/−17 src). SPRT `elo0=0 elo1=10`, LLR −0.41 in bounds (inconclusive → cap). Literal zero at 1000g (coin flip down to the last game); CI [−15, +15]. Pure correctness, **zero Elo cost**. |
 | 2026-05-28 | AMD 7800X3D | **1000 (SPRT)** | **+2.43 ± 15.52 Elo vs t6**, LOS 62.07%, W247/L240/D513 | **BACKLOG #28** halfmove-clock-bounded repetition lookback (HEAD `d04ee3e`, same +25/−5 src as `a21a037`). SPRT `elo0=0 elo1=10`, LLR −0.13 in bounds (inconclusive → hit 500-round cap). 1000g settles the question: **Elo-neutral with high power** (CI [−13, +18]); supersedes the 200g +3.47 ± 35 prelim. Keep on correctness grounds. |
 | 2026-05-17 | Intel 13700K | 200 | **+15.65 ± 33.21 Elo vs t5**, LOS 82.31%, W45/L36/D119 | **`codex/reduce-winning-repetition-draws`** `5efaa78` (= main + root winning-repetition avoidance + PV repetition guard). Pools with AMD row below -> `baseline-t6`. |
@@ -66,6 +67,27 @@ per experiment**.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — #28 Part 2 narrow-gate Zarkov / baseline-t7 (2000 games, two machines)
+
+Candidate `304f2b7` (= `baseline-t6` + #28 Part 1 + TT-safe repetition
+handling + **single-rep Zarkov draw gated on winning eval**) vs frozen
+**t6**, `tc=10+0.1`, 1t, `noob_3moves.epd`, round-paired pentanomials:
+
+- Intel 13700K: W259 / L232 / D509  (+9.38, LOS 89.56%)  [27,109,202,134,28]
+- AMD 7800X3D:  W250 / L233 / D517  (+5.91, LOS 77.96%)  [27,122,190,129,32]
+- **Pooled: W509 / L465 / D1026**, score **51.10%**, **+7.6 ± ~10.5 Elo**,
+  pooled Ptnml [54,231,392,263,60], pentanomial t ≈ +1.43.
+
+**Verdict: SHIP as `baseline-t7`.** Both machines independently
+positive, no cross-machine disagreement. A **~+9 Elo swing** over the
+broad attempt-2 gate (−1.6, neutral) at identical fixture coverage
+(6/10) — confining the single-rep draw to winning positions removed the
+diffuse drag the board-wide version carried. Pooled LOS ~92% is just
+under the 95% bar, but the change ships on combined grounds: a
+positive-leaning Elo gain *plus* a correctness fix (stops provably-won
+games being thrown to repetition), comfortably clearing the Part 1
+precedent (correctness shipped at neutral).
 
 ### Pooled — #27 winning-repetition root avoidance / baseline-t6 (400 games, two machines)
 

@@ -31,7 +31,7 @@
 | 25 | Refresh `huginn_t5` baseline | **CLOSED** @ `3eab266` | maintenance | medium |
 | 26 | `board64[64]` piece-on-square cache | **DEFERRED** | feature/speed | medium |
 | 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
-| 28 | PGN-driven repetition conversion analysis | **PART 1 CLOSED** @ `a21a037`; Part 2 open | research/bug | high |
+| 28 | PGN-driven repetition conversion analysis | **CLOSED** — P1 @ `a21a037`, P2 @ `304f2b7` (`baseline-t7`, +7.6 Elo pooled) | research/bug | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -47,10 +47,12 @@ Single-file issue tracker. Each session opens here first.
 1. **#19 Part A (SPRT)** — add `-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05`
   to the t5/t6 gauntlet bats so borderline results converge faster and
   clear wins/losses stop early.
-2. **#28 Part 2 (TT-safe repetition handling)** — re-attempt the
-  Zarkov-style repetition handling with TT-safe storage/probing rules,
-  then validate on `tools/repetition_regression.json` + fresh t6
-  gauntlet.
+2. **50-move-rule search blindness (new, from #28 close-out)** — the
+  t6/t7 Intel logs are full of `PV continues after fifty-move rule` with
+  Huginn reporting +744–767cp in positions dead drawn by the 50-move
+  rule. Draw blindness on the 50-move path (separate from the now-fixed
+  3-fold path); likely the next real Elo leak. Mirror the #28 method:
+  PGN-mine the thrown 50-move draws, build a fixture, fix, t6 gauntlet.
 3. **#17 score-swing verification re-search** — add full-window
   verification when iteration-to-iteration score swing exceeds threshold
   to stabilize aspiration behavior in sharp endgame transitions.
@@ -1992,10 +1994,13 @@ investigate. Until then, ignore.
 
 ### #28: PGN-driven repetition conversion analysis
 
-- status: **PART 1 CLOSED @ `a21a037` (2026-05-18)** — bug-class-1
-  fix (halfmove-clock-bounded repetition lookback) shipped on
-  correctness grounds with zero Elo cost confirmed. **PART 2 OPEN** —
-  bug class 2 follow-up; attempt 1 (Zarkov-rule `isRepetition`)
+- status: **CLOSED — P1 @ `a21a037` (2026-05-18), P2 @ `304f2b7`
+  (2026-05-29, shipped as `baseline-t7`).** Part 1 (halfmove-clock-
+  bounded repetition lookback) shipped on correctness grounds at zero
+  Elo cost. Part 2 (TT-safe Zarkov single-rep draw, gated on winning
+  eval) shipped at **+7.6 ± ~10.5 Elo pooled** (both machines positive)
+  — correctness fix that also tested positive. **Part 2 history**
+  (bug class 2): attempt 1 (Zarkov-rule `isRepetition`)
   fixed 7/10 of the fixture but regressed −40 Elo (likely TT
   pollution from path-dependent draw scores) and was reverted.
   **Attempt 2 (TT-safe Zarkov, `34c336e`+`996c3f8`): Elo-neutral**
