@@ -2003,9 +2003,11 @@ investigate. Until then, ignore.
   TT-safe early-return killed the −40 regression (TT-pollution
   hypothesis confirmed) but the rule adds no measurable Elo.
   **Attempt 2b (`304f2b7`)**: narrowed the single-rep draw to
-  clearly-winning positions only — fixture-neutral (6/10 = broad),
-  smaller footprint, **queued for pooled t6 gauntlet**. See the Part 2
-  detail below.
+  clearly-winning positions only — fixture-neutral (6/10 = broad).
+  **Pooled t6 +7.6 Elo** (Intel +9.4 / AMD +5.9, both machines
+  positive, LOS ~92%, 2000g) — a ~+9 Elo swing over the broad neutral.
+  Positive-lean + correctness, just under the 95% ship bar. See the
+  Part 2 detail below.
 - pooled t6 gauntlet (400g, two machines @ 10+0.1 vs `huginn_t6`):
   - Intel 200g: +19.13 ± 32.82 Elo, LOS 87.45%, W47/L36/D117, Draw 43.0%
   - AMD 200g: +3.47 ± 34.84 Elo, LOS 57.78%, W49/L47/D104, Draw 52.0%
@@ -2201,10 +2203,18 @@ bounds `[0.00, 10.00]`:
 - Intel 1000g: −3.13 ± 14.94 Elo, LOS 34.07%, W226/L235/D539
   (49.55%), Ptnml [26, 139, 181, 126, 28], LLR −0.79.
 - AMD 1000g (`996c3f8`): **literal 0 Elo**, W240/L240/D520 (50.00%),
-  Ptnml [24, 129, 200, 117, 30].
+  Ptnml [27, 123, 199, 125, 26].
 - **Pooled: W466/L475/D1059 (49.775%), −1.6 ± ~10.5 Elo**, pooled
-  Ptnml [50, 268, 381, 243, 58], pentanomial t ≈ −0.29. Statistically
+  Ptnml [53, 262, 380, 251, 54], pentanomial t ≈ −0.29. Statistically
   zero on both machines independently.
+
+(Pentanomial correction, 2026-05-29: the AMD/pooled Ptnml above were
+re-derived pairing games by `[Round]` tag. Earlier values
+[24,129,200,117,30] / [50,268,381,243,58] used file-order pairing,
+which is wrong under fastchess concurrency — games are written in
+completion order, not pair order. W/L/D, score and Elo are unaffected;
+only the pentanomial wings were off. See
+[[feedback-pentanomial-pair-by-round]].)
 
 Read: the TT-safe early-return **fixed the −40 disaster** exactly as
 the attempt-1 TT-pollution hypothesis predicted (−40 → −1.6) — that
@@ -2241,9 +2251,27 @@ broad TT-safe build on this 10-case master. The 1-case narrow/broad
 difference (R54 vs R62, both history_dependent) is search-time
 instability at fixed movetime, not signal; R32 (alt_exists) repeats in
 both builds (static eval +528 > gate; a conversion/horizon residual the
-rule cannot reach). 194/194 unit tests pass. **Next: pooled t6 SPRT
-(Intel+AMD); must not regress vs the −1.6 broad neutral, ideally tips
-positive by not meddling in equal positions.**
+rule cannot reach). 194/194 unit tests pass.
+
+**Attempt 2b result — pooled t6 SPRT (2000g @ 10+0.1, round-paired):
++7.6 Elo, both machines positive.**
+- Intel 1000g: +9.38 ± 14.65, LOS 89.56%, W259/L232/D509 (51.35%),
+  Ptnml [27, 109, 202, 134, 28], LLR 0.73.
+- AMD 1000g (`1d20303`): +5.91, W250/L233/D517 (50.85%),
+  Ptnml [27, 122, 190, 129, 32].
+- **Pooled: W509/L465/D1026 (51.10%), +7.6 ± ~10.5 Elo**, pooled
+  Ptnml [54, 231, 392, 263, 60], pentanomial t ≈ +1.43.
+
+The narrowing thesis is confirmed: vs the broad attempt-2 (−1.6,
+t ≈ −0.29) this is a **~+9 Elo swing at identical fixture coverage
+(6/10)** — confining the single-rep draw to winning positions removed
+a diffuse drag the board-wide version carried. Both machines agree on
+direction. **Pooled LOS ~92% is just under the ~95% ship bar and the
+SPRT LLR has not crossed 2.94**, but the change now clears the Part 1
+precedent (correctness fix shipped at neutral) with room to spare:
+positive-leaning Elo *and* the provable-bug fix. Decision: ship on
+correctness+positive-lean, or extend one more pooled round for a clean
+SPRT stamp.
 
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
