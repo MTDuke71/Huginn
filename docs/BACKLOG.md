@@ -1997,8 +1997,13 @@ investigate. Until then, ignore.
   correctness grounds with zero Elo cost confirmed. **PART 2 OPEN** —
   bug class 2 follow-up; attempt 1 (Zarkov-rule `isRepetition`)
   fixed 7/10 of the fixture but regressed −40 Elo (likely TT
-  pollution from path-dependent draw scores) and was reverted; next
-  attempt must add TT-safe handling. See the Part 2 detail below.
+  pollution from path-dependent draw scores) and was reverted.
+  **Attempt 2 (TT-safe Zarkov, `34c336e`+`996c3f8`): Elo-neutral**
+  — −1.6 ± ~10.5 over 2000g pooled (Intel −3.13, AMD literal 0); the
+  TT-safe early-return killed the −40 regression (TT-pollution
+  hypothesis confirmed) but the rule adds no measurable Elo. Decision
+  pending: keep TT-safety plumbing, drop the behavior. See the Part 2
+  detail below.
 - pooled t6 gauntlet (400g, two machines @ 10+0.1 vs `huginn_t6`):
   - Intel 200g: +19.13 ± 32.82 Elo, LOS 87.45%, W47/L36/D117, Draw 43.0%
   - AMD 200g: +3.47 ± 34.84 Elo, LOS 57.78%, W49/L47/D104, Draw 52.0%
@@ -2179,6 +2184,43 @@ Re-validate on the fixture (expect ≥7/10) *and* a t6 gauntlet
 (must clear the −40 and not regress draws). The 3 conversion
 residuals are out of scope for repetition work — file under
 endgame technique if they persist.
+
+**Attempt 2 — TT-safe Zarkov rule (2026-05-28): Elo-neutral,
+REJECT-clean.** Re-implemented the single-repetition-as-draw rule
+(`34c336e`) but moved the repetition test to a TT-safe early return:
+`repetition_count_in_history` is computed and any single-rep
+(`count >= 2 && ply > 2`) or threefold node returns `-CONTEMPT`
+*before* the TT probe/store, so path-dependent draw scores never
+enter the path-independent TT. Also bumped
+`WINNING_REPETITION_DRAW_SCORE` −200 → −800.
+
+Pooled t6 SPRT (2000g @ 10+0.1 vs `huginn_t6`, 1t, noob_3moves.epd),
+bounds `[0.00, 10.00]`:
+- Intel 1000g: −3.13 ± 14.94 Elo, LOS 34.07%, W226/L235/D539
+  (49.55%), Ptnml [26, 139, 181, 126, 28], LLR −0.79.
+- AMD 1000g (`996c3f8`): **literal 0 Elo**, W240/L240/D520 (50.00%),
+  Ptnml [24, 129, 200, 117, 30].
+- **Pooled: W466/L475/D1059 (49.775%), −1.6 ± ~10.5 Elo**, pooled
+  Ptnml [50, 268, 381, 243, 58], pentanomial t ≈ −0.29. Statistically
+  zero on both machines independently.
+
+Read: the TT-safe early-return **fixed the −40 disaster** exactly as
+the attempt-1 TT-pollution hypothesis predicted (−40 → −1.6) — that
+is the real finding. But the Zarkov single-rep rule itself buys **no
+Elo** in t6 conditions, so it does not ship as a gain. Decision
+pending: keep the TT-safety refactor (`repetition_count_in_history`
++ return-before-probe, sound and free) and drop the behavioral change
+(single-rep draw + the −800 score), vs. revert the whole commit.
+
+Next-target lead: the Intel log is full of `PV continues after
+fifty-move rule` with Huginn reporting +744–767cp in positions dead
+drawn by the 50-move rule. That is **draw blindness on the 50-move
+path**, untouched by this (3-fold-only) patch, and is the more
+promising Part 2/3 surface than further repetition tuning.
+
+Provenance note: AMD results arrive via push from the AMD box
+(`996c3f8`), so the on-disk `gauntlet/*_amd.*` files are only current
+after `git fetch && git pull` — always sync before parsing them.
 
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
