@@ -2001,8 +2001,10 @@ investigate. Until then, ignore.
   **Attempt 2 (TT-safe Zarkov, `34c336e`+`996c3f8`): Elo-neutral**
   — −1.6 ± ~10.5 over 2000g pooled (Intel −3.13, AMD literal 0); the
   TT-safe early-return killed the −40 regression (TT-pollution
-  hypothesis confirmed) but the rule adds no measurable Elo. Decision
-  pending: keep TT-safety plumbing, drop the behavior. See the Part 2
+  hypothesis confirmed) but the rule adds no measurable Elo.
+  **Attempt 2b (`304f2b7`)**: narrowed the single-rep draw to
+  clearly-winning positions only — fixture-neutral (6/10 = broad),
+  smaller footprint, **queued for pooled t6 gauntlet**. See the Part 2
   detail below.
 - pooled t6 gauntlet (400g, two machines @ 10+0.1 vs `huginn_t6`):
   - Intel 200g: +19.13 ± 32.82 Elo, LOS 87.45%, W47/L36/D117, Draw 43.0%
@@ -2221,6 +2223,27 @@ promising Part 2/3 surface than further repetition tuning.
 Provenance note: AMD results arrive via push from the AMD box
 (`996c3f8`), so the on-disk `gauntlet/*_amd.*` files are only current
 after `git fetch && git pull` — always sync before parsing them.
+
+**Attempt 2b — narrowed gate (option 1, `304f2b7`): queued for
+gauntlet.** Decision from the keep-vs-revert debate: don't reject a
+neutral change that fixes provable bugs, but shrink its footprint. The
+single-rep draw now fires only when the side to move is clearly winning
+(`evalPosition(pos) >= WINNING_REPETITION_AVOID_THRESHOLD`); threefold
+stays an unconditional draw. Coherent with the rule's purpose (the WON
+side routes around shuffles), and confines the speculative single-rep
+scoring to the eval band where the bug actually lives.
+
+Fixture (new `tools/repetition_fixture_check.py`, replays each case into
+the build and checks clincher-vs-avoid; no oracle needed since positions
+are pre-confirmed won): **narrow 6/10 == broad 6/10 — fixture-neutral.**
+The earlier "7/10" was from attempt 1's different fixture, never the
+broad TT-safe build on this 10-case master. The 1-case narrow/broad
+difference (R54 vs R62, both history_dependent) is search-time
+instability at fixed movetime, not signal; R32 (alt_exists) repeats in
+both builds (static eval +528 > gate; a conversion/horizon residual the
+rule cannot reach). 194/194 unit tests pass. **Next: pooled t6 SPRT
+(Intel+AMD); must not regress vs the −1.6 broad neutral, ideally tips
+positive by not meddling in equal positions.**
 
 **State:** `baseline-t6` shipped the first repetition-related fix:
 root moves that immediately repeat while the root side is clearly
