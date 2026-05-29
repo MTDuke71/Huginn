@@ -58,7 +58,7 @@ constexpr int CONTEMPT = 25;  // cp — tunable; gauntlet to validate
 // positions keep the normal repetition behavior so the engine can still
 // rescue bad games.
 constexpr int WINNING_REPETITION_AVOID_THRESHOLD = 300;
-constexpr int WINNING_REPETITION_DRAW_SCORE = -200;
+constexpr int WINNING_REPETITION_DRAW_SCORE = -800;
 
 // LMR reduction table indexed by (depth, move-index). Reduction grows
 // with both depth and move number. Formula: R = log(d) * log(m) / 2,
@@ -535,16 +535,18 @@ std::string Engine::move_to_uci(const S_MOVE& move) {
     return result;
 }
 
-// Simple repetition detection - VICE tutorial style (made static as per Part 55)
-bool Engine::isRepetition(const Position& pos) {
+// Count how many times the current position key appears in the reachable
+// halfmove-clock-bounded history window (including the current position).
+// 1 = no prior match, 2 = one prior match (single repetition), 3+ = threefold.
+static int repetition_count_in_history(const Position& pos) {
     // Conservative repetition detection to avoid false positives in mate searches
     // Only check for repetition in actual game positions, not during deep search
-    
+
     // Don't check for repetition if move history is too short
     if (pos.move_history.size() < 6) {
-        return false; // Need at least 6 plies for meaningful repetition check
+        return 1; // Need at least 6 plies for meaningful repetition check
     }
-    
+
     // Be very conservative - only detect clear 3-fold repetitions
     uint64_t current_key = pos.zobrist_key;
     int repetition_count = 1; // Count current position
@@ -567,6 +569,13 @@ bool Engine::isRepetition(const Position& pos) {
             repetition_count++;
         }
     }
+
+    return repetition_count;
+}
+
+// Simple repetition detection - VICE tutorial style (made static as per Part 55)
+bool Engine::isRepetition(const Position& pos) {
+    const int repetition_count = repetition_count_in_history(pos);
     
     // Only return true for definite 3-fold repetition to be safe
     return repetition_count >= 3;
@@ -1199,6 +1208,24 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     if (!isRoot) {
         info.nodes++;
     }
+
+    // BACKLOG #28 Part 2: TT-safe repetition handling.
+    // Repetition draw scores are path-dependent (history-sensitive), while TT
+    // keys are path-independent (position-only). So for repetition-draw nodes,
+    // return immediately before any TT probe/store interaction.
+    if (!isRoot) {
+        const int repetition_count = repetition_count_in_history(pos);
+
+        // Zarkov-style single repetition: one prior key match is enough to
+        // treat this node as a draw once we are beyond the root neighborhood.
+        // Keep the ply guard to avoid over-triggering right below root.
+        const bool single_repetition_draw = (repetition_count >= 2 && info.ply > 2);
+        const bool threefold_repetition_draw = (repetition_count >= 3);
+
+        if (single_repetition_draw || threefold_repetition_draw) {
+            return -CONTEMPT; // Repetition draw — contempt-biased (BACKLOG #16)
+        }
+    }
     
     // VICE Part 84: Transposition Table Probe
     // Check if we've already searched this position to sufficient depth
@@ -1378,12 +1405,6 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     S_MOVELIST move_list;
     generate_all_moves(pos, move_list);
 
-    // Check for repetition - but only after we ensure we have moves to try
-    // This prevents returning draw score at root before storing any PV move (VICE fix)
-    if (!isRoot && isRepetition(pos)) {
-        return -CONTEMPT; // Repetition draw — contempt-biased (BACKLOG #16)
-    }
-    
     // Internal Iterative Deepening for PV nodes without hash move
     S_MOVE iid_move;
     iid_move.move = 0;
