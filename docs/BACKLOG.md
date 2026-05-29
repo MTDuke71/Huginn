@@ -32,7 +32,7 @@
 | 26 | `board64[64]` piece-on-square cache | **DEFERRED** | feature/speed | medium |
 | 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
 | 28 | PGN-driven repetition conversion analysis | **CLOSED** — P1 @ `a21a037`, P2 @ `304f2b7` (`baseline-t7`, +7.6 Elo pooled) | research/bug | high |
-| 29 | Fifty-move-rule search blindness | **P1 IMPLEMENTED** — TT-safe 50-move draw in AlphaBeta; queued for t7 gauntlet. P2 (clock-scaled eval) open | bug | high |
+| 29 | Fifty-move-rule search blindness | **P1 KEPT on correctness** @ `534b44c` (near-inert at 10+0.1; pooled −5.73 = variance). P2 (clock-scaled eval) DEFERRED | bug | low |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -48,11 +48,12 @@ Single-file issue tracker. Each session opens here first.
 1. **#19 Part A (SPRT)** — add `-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05`
   to the t5/t6 gauntlet bats so borderline results converge faster and
   clear wins/losses stop early.
-2. **#29 fifty-move-rule blindness — Part 1 IMPLEMENTED, gauntlet
-  pending.** TT-safe 50-move draw added to `AlphaBeta` (was entirely
-  absent); KQ-vs-K at halfmove 100 now scores draw, 194/194 tests pass.
-  **Next action: t7 gauntlet (Intel+AMD) to measure.** Then #29 Part 2
-  (clock-scaled eval to anticipate the draw past the search horizon).
+2. **NEXT TARGET — eval/search Elo headroom (TBD).** #28 (repetition)
+  and #29 (fifty-move) closed the draw-blindness bug class. #29 proved
+  the 50-move rule is a non-factor at 10+0.1, so the next lever is real
+  strength: candidates below to be scouted — king safety (#2, deferred),
+  continuation history (#3, deferred), aspiration windows (#17), SEE in
+  main search (#6, deferred). Pick by Elo/effort after a fresh look.
 3. **#17 score-swing verification re-search** — add full-window
   verification when iteration-to-iteration score swing exceeds threshold
   to stabilize aspiration behavior in sharp endgame transitions.
@@ -2339,11 +2340,14 @@ so do not assume every large value means Huginn threw away a win.
 
 ### #29: Fifty-move-rule search blindness
 
-- status: **PART 1 IMPLEMENTED (2026-05-29)** — candidate for the next
-  t7 gauntlet. **PART 2 OPEN** (clock-scaled eval).
-- priority: high
+- status: **PART 1 KEPT on correctness grounds @ `534b44c`
+  (2026-05-29).** Pooled t7 SPRT was −5.73 Elo (Intel −12.86 / AMD
+  +1.39, pentanomial t = −1.08), **but this is variance, not a
+  regression** — see the gauntlet read below. **PART 2 (clock-scaled
+  eval) DEFERRED** — equally unmeasurable at this TC.
+- priority: low (correctness done; no measurable strength lever here)
 - type: search bug
-- est: P1 done; P2 ~1 session
+- est: P1 done; P2 deferred
 
 **The bug.** `halfmove_clock` appeared in `src/search.cpp` only in the
 #28 repetition lookback and the mirror/TB helpers — **`AlphaBeta` and
@@ -2369,18 +2373,36 @@ Validation: KQ-vs-K at `halfmove=100` now scores **+25cp (draw)** vs
 **+1008cp** for the same position at `halfmove=0` (control) — previously
 both read ~+1000. 194/194 unit tests pass.
 
-**Part 2 (open) — anticipate the draw via clock-scaled eval.** Part 1
-makes the engine *see* the draw once it is within the search horizon,
-after which minimax picks the best clock-resetting progress move on its
-own (no special "play a pawn move" rule — and never a *sub-optimal* one;
-an irreversible pawn push to buy time can wreck the win). The residual
-gap is the horizon: at `halfmove≈60` searching ~12 ply the draw at 100
-is unseen, so the engine resets late. Principled fix (mirrors
-Stockfish): scale the static eval toward 0 as `halfmove_clock` rises
-(e.g. `eval * (100 - rule50) / 100` above some threshold), creating
-continuous pressure to make progress as the clock climbs — without ever
-forcing a bad move. Validate on a 50-move-thrown-win fixture (mine it
-from the t6/t7 PGNs, #28 method) + a t7 gauntlet.
+**Gauntlet read (2026-05-29) — kept on correctness; the −5.73 is
+variance, proven two ways.** Pooled t7 SPRT 2000g: Intel −12.86
+[34,134,193,113,26], AMD +1.39 [26,121,198,133,22], pooled W456/L489/
+D1055 (49.18%), pentanomial t = −1.08.
+- **The code almost never runs.** Reconstructing the halfmove clock for
+  all 1000 Intel games: only **2 reached the ≥100 threshold, both
+  draws — zero wins, zero losses**. Median max halfmove clock is **9**
+  (these ~1600-Elo engines trade constantly, resetting the clock); only
+  8/1000 games even reached 80. The 50-move rule is a near-non-factor
+  at 10+0.1.
+- **The only diff is a gated branch.** `baseline-t7 → 534b44c` is
+  exclusively the fifty-move block, guarded by `halfmove_clock >= 100`
+  — false in ~998/1000 games, so the binaries play identically there.
+  Code that does not execute cannot cost 13 Elo. The Intel −12.86 is a
+  ~0.85σ excursion; AMD +1.39 is the clean read, matching every prior
+  correctness fix on that box. The SPRT `[0,10]` trending to reject only
+  means "not a +10 gain" — expected for a correctness fix, not harmful.
+
+Decision: **keep** (provably correct, provably inert, insurance for
+longer TC / endgame-heavy play); **do not bump the baseline** (t7 stays
+the strength baseline, #29 rides in the tree); the experiment simply had
+near-zero power to measure this change.
+
+**Part 2 — anticipate the draw via clock-scaled eval — DEFERRED.** The
+idea (mirror Stockfish: scale static eval toward 0 as `halfmove_clock`
+rises, e.g. `eval * (100 - rule50)/100`, so the engine makes progress
+before the draw enters the horizon — no forced/sub-optimal pawn moves)
+is sound, but it would be **equally unmeasurable at 10+0.1**: if the
+rule is reached in 0.2% of games, scaling toward it won't move Elo
+either. Revisit only alongside longer-TC or endgame-suite testing.
 
 ---
 
