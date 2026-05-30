@@ -33,6 +33,7 @@
 | 27 | Unorthodox early-queen PV (d1d3 / d8d6) | **DEFERRED** | evaluation | low |
 | 28 | PGN-driven repetition conversion analysis | **CLOSED** — P1 @ `a21a037`, P2 @ `304f2b7` (`baseline-t7`, +7.6 Elo pooled) | research/bug | high |
 | 29 | Fifty-move-rule search blindness | **P1 KEPT on correctness** @ `534b44c` (near-inert at 10+0.1; pooled −5.73 = variance). P2 (clock-scaled eval) DEFERRED | bug | low |
+| 30 | Nondeterministic search from uninitialized history | **FIXED** — `search_history` was uninitialized; zero-init. Search now deterministic at fixed depth | bug | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -2403,6 +2404,53 @@ before the draw enters the horizon — no forced/sub-optimal pawn moves)
 is sound, but it would be **equally unmeasurable at 10+0.1**: if the
 rule is reached in 0.2% of games, scaling toward it won't move Elo
 either. Revisit only alongside longer-TC or endgame-suite testing.
+
+---
+
+### #30: Nondeterministic search from uninitialized history — FIXED
+
+- status: **FIXED (2026-05-29).** Zero-initialized `search_history`.
+- priority: high (correctness; reproducibility)
+- type: bug (uninitialized memory)
+
+**Symptom.** At fixed depth (`go depth N`), the same position could
+return a different best move and score run-to-run. Demonstrated on KQK
+(`8/8/8/4k3/8/3QK3/8/8 w`): best move flipped d3e4/d3d4/d3d7 with scores
+1012–1051 across runs. The user asked the key question — "is the best
+move varying too?" — which it was.
+
+**Diagnosis (ruled out, then nailed).** Not the queued-`quit` test
+harness (persisted with `quit` delayed past the search), not time
+management (`go depth` runs in `infinite` mode, bypassing the 5s
+checkup cap), not TT garbage (`resize()` zero-inits, probe requires a
+full 64-bit key match), not all-TB-probes (KRvK/KPvK/7-pc endgames were
+deterministic). The tell: KQK is **all quiet queen moves with ~20
+near-equal winning options**, so its result is decided entirely by
+quiet-move ordering — i.e. `search_history`.
+
+**Root cause.** `int search_history[13][64];` (search.hpp) was a raw
+array member never initialized by the constructor, and
+`clear_search_tables()` *ages* it (`/4`) rather than zeroing — so the
+first search read per-process heap **garbage**, and that garbage drove
+quiet-move ordering. Garbage differs per process (allocator/ASLR) →
+nondeterministic ordering → nondeterministic results wherever quiet
+ordering is decisive (KQK), invisible where a clear best move dominates
+(Kiwipete, normal middlegames).
+
+**Fix.** `int search_history[13][64] = {};` (default member init).
+After: KQK returns d3d7/cp1050 every run; a non-TB middlegame is
+bit-identical (same move, score, and node count 5527609 every run).
+194/194 unit tests pass.
+
+**Impact.** The Engine is constructed once per process, so in real games
+the garbage only tainted the *first* search per game (history then
+accumulates) — modest game impact, but every fresh-process fixed-depth
+measurement was affected, which is why node-count benchmarking was
+unusable. Fixing it restores deterministic fixed-depth benchmarking and
+removes a (small) noise/Elo source. Plausibly related to the #26
+"uninitialised `board64`" cross-machine disagreement — same bug class.
+A residual ~0.01% node-count jitter on KQK only (move/score stable) is a
+benign leaf-level TB/checkup artifact, not search-affecting.
 
 ---
 

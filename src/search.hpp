@@ -106,7 +106,11 @@ public:  // Make members public for easier access
     
     // Search History array (3:55) - stores scores for moves that improved alpha
     // [piece][to_square] - 13 piece types, 64 squares
-    int search_history[13][64];
+    // Zero-initialized: clear_search_tables() *ages* (/4) rather than zeroing,
+    // so without this the first search reads per-process garbage, making quiet
+    // move ordering (and thus results in many-equal-move positions) depend on
+    // uninitialized memory — nondeterministic run-to-run (BACKLOG #30).
+    int search_history[13][64] = {};
     
     // Search Killers array (4:37) - stores non-capture moves causing beta cutoff  
     // [depth][killer_slot] - 64 levels, 2 killer moves per depth
