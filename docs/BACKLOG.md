@@ -9,7 +9,7 @@
 | 3 | Continuation history | **DEFERRED** | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
-| 6 | Lazy SEE in main-search capture ordering | **DEFERRED** | feature | low |
+| 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
 | 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
 | 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
 | 9 | Texel-style tuner | **OPEN** | research | low |
@@ -1609,12 +1609,15 @@ Clear regression — 96.87% confidence it's truly negative.
 
 ### #6: Lazy SEE in main-search capture ordering — deferred (2026-05-13)
 
-- status: deferred (2026-05-13)
+- status: **WIP (parked, low priority)** — attempt 2 on t7 was
+  Elo-neutral and reverted (2026-05-30); attempt 1 on t4 was −15.65.
 - priority: low
 - type: feature
 - est: half-session
 - links: [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) Tier 2 #10 partial
-- WIP branch: `experiment/lazy-see-main` (commit `59b0fad`)
+- WIP branches: `wip/see-capture-ordering` (attempt 2, commit `f75a830`,
+  revive via `git cherry-pick f75a830`); `experiment/lazy-see-main`
+  (attempt 1, commit `59b0fad`)
 
 **Status:** SEE is wired in qsearch (commit `1cce8de`) but main-search
 capture ordering still uses pure MVV-LVA. Splitting captures into
@@ -1659,6 +1662,25 @@ positions where they're the actual best move.
 
 **Deferred.** WIP preserved on `experiment/lazy-see-main` (commit
 `59b0fad`).
+
+**Attempt 2 (2026-05-30, on t7 = baseline-t6 + #28 repetition stack):
+Elo-neutral, reverted.** Re-implemented the same SEE bucket split in
+`pick_next_move` (commit `f75a830`), but picker-safe placement: losing
+captures (`SEE < 0`, promotions/EP exempt) drop the 1M base to bare
+MVV-LVA, sinking *below killers* rather than below quiets (the
+`pick_next_move` selection-sort floors at `best_score = -1`, so negative
+scores can't be ordered — the t4 attempt's "below quiets" goal isn't
+reachable without also fixing the picker).
+- A 200g Intel smoke test read **+33 Elo** — pure small-sample variance.
+- Pooled 2000g vs t7 (with #29+#30 in the stack): **+2.08 Elo, both
+  machines exactly +2.08 / 50.30%**, pentanomial t = +0.40, LOS ~65% —
+  statistically neutral. SEE ordering shows no measurable gain on the
+  stronger t7 base (vs −15.65 on t4: the better the surrounding ordering,
+  the closer to neutral) while adding a per-capture `see()` cost.
+- Reverted (`66bce5d`); parked as low-priority WIP on
+  `wip/see-capture-ordering`. Lesson: node-count-at-fixed-depth was
+  useless as a pre-screen here because the engine was nondeterministic
+  at the time (see #30, fixed after).
 
 **Remaining hypothesis paths if/when we revisit:**
 - **More conservative threshold**: only demote captures where
