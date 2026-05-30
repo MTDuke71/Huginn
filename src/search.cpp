@@ -1457,7 +1457,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // when a move improves it, but TT bound classification must compare
     // best_score against the ORIGINAL window. Using the mutated alpha caused
     // every alpha-improving and beta-cutoff node to be stored as UPPER_BOUND,
-    // crippling TT pruning. See PERFORMANCE_ARCHITECTURE_REVIEW.md (Priority 1).
+    // crippling TT pruning. See docs/PERFORMANCE_ARCHITECTURE_REVIEW.md (Priority 1).
     const int original_alpha = alpha;
 
 #ifdef USE_MULTI_CUT

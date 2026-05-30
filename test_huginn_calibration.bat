@@ -19,7 +19,9 @@ set FASTCHESS=%FC%\fastchess.exe
 set HUGINN_REPO=C:\Users\m_lad\Documents\Repos\Huginn
 set CMAKE="C:\Program Files\CMake\bin\cmake.exe"
 
-if /I "%WHICH%"=="mtl03" set OPPONENT=mtlchess003.exe
+REM Use mtlchessV3.exe (rebuilt 2026-05-06 without AVX-512). The pre-migration
+REM mtlchess003.exe trips SIGILL on Raptor Lake P-cores — see BACKLOG #5.
+if /I "%WHICH%"=="mtl03" set OPPONENT=mtlchessV3.exe
 if /I "%WHICH%"=="mtl03" set OPPONENT_NAME=MTLChess_v0.3
 if /I "%WHICH%"=="mora"  set OPPONENT=MORA110.exe
 if /I "%WHICH%"=="mora"  set OPPONENT_NAME=MORA
