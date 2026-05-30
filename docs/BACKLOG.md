@@ -2440,7 +2440,15 @@ ordering is decisive (KQK), invisible where a clear best move dominates
 **Fix.** `int search_history[13][64] = {};` (default member init).
 After: KQK returns d3d7/cp1050 every run; a non-TB middlegame is
 bit-identical (same move, score, and node count 5527609 every run).
-194/194 unit tests pass.
+194/194 unit tests pass. Verified across an 8-position sweep (startpos,
+Sicilian, Kiwipete, two KQK variants, rook endgame, sharp middlegame,
+rook+pawns) — **all fully deterministic** (move + score + node count).
+The only remaining run-to-run variation is intentional **opening-book**
+weighted-random move selection (`OwnBook`, disabled in gauntlets); with
+`OwnBook=false`, startpos is bit-identical too. No sibling uninit bugs:
+`killers`/`counter_moves` are zeroed (not aged) by `clear_search_tables`,
+`mvv_lva_scores`/`search_stack` are constructor-initialized — history was
+unique because it was aged, not zeroed.
 
 **Impact.** The Engine is constructed once per process, so in real games
 the garbage only tainted the *first* search per game (history then
