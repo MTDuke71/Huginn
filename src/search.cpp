@@ -909,37 +909,19 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
             } else if (move.is_capture()) {
                 // VICE Part 64: Captures get 1,000,000 + MVV-LVA score
                 PieceType victim = move.get_captured();
-
+                
                 // Get the attacking piece type from the position
                 int from_sq = move.get_from();
                 Piece attacking_piece = pos.at_sq64(from_sq);
                 PieceType attacker = type_of(attacking_piece);
-
-                const int mvv_lva = get_mvv_lva_score(victim, attacker);
-
-                // BACKLOG #6: SEE-based capture ordering. Split captures into
-                // two buckets: good/equal trades (SEE >= 0) keep the 1,000,000
-                // base and stay above killers; losing trades (SEE < 0) drop the
-                // base and sink below killers into the promotion/quiet band, so
-                // we stop searching material-losing captures ahead of good
-                // quiets. Promotions and en passant are exempt (a
-                // capture-promotion's SEE understates the promoted value; en
-                // passant is always an equal P-for-P trade), matching the
-                // qsearch SEE-prune carve-out.
-                const bool losing_capture = !move.is_promotion() &&
-                    !move.is_en_passant() && Huginn::see(pos, move) < 0;
-
-                if (losing_capture) {
-                    score = mvv_lva;  // demoted below killers
-                } else {
-                    score = 1000000 + mvv_lva;
-
-                    // Bonus for en passant captures (always pawn takes pawn)
-                    if (move.is_en_passant()) {
-                        score += 10000;  // High priority for en passant
-                    }
+                
+                score = 1000000 + get_mvv_lva_score(victim, attacker);
+                
+                // Bonus for en passant captures (always pawn takes pawn)
+                if (move.is_en_passant()) {
+                    score += 10000;  // High priority for en passant
                 }
-
+                
             } else {
                 // Check for killer moves (non-captures only)
                 bool is_killer = false;
