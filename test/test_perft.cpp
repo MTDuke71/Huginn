@@ -103,7 +103,7 @@ TEST(Perft, Debug_Kiwipete_Check) {
     ASSERT_TRUE(pos.set_from_fen(kiwipete_fen)) << "Failed to parse Kiwipete FEN";
     
     std::cout << "White king position: " << pos.king_sq[0] << std::endl;
-    std::cout << "Black queen attacks white king: " << Huginn::SqAttacked(pos.king_sq[0], pos, Color::Black) << std::endl;
+    std::cout << "Black queen attacks white king: " << Huginn::SqAttackedBB(pos.king_sq[0], pos, Color::Black) << std::endl;
     
     // Test individual pieces attacking the king
     std::cout << "Checking what's attacking the white king on g1..." << std::endl;
@@ -114,7 +114,7 @@ TEST(Perft, Debug_Kiwipete_Check) {
         if (is_none(p) || color_of(p) != Color::Black) continue;
         
         // Test if this black piece attacks the white king
-        if (Huginn::SqAttacked(pos.king_sq[0], pos, Color::Black)) {
+        if (Huginn::SqAttackedBB(pos.king_sq[0], pos, Color::Black)) {
             std::cout << "Found black piece at " << sq << " that could be attacking" << std::endl;
         }
     }
@@ -157,7 +157,7 @@ TEST(Perft, Kiwipete_d1_48_d2_2039) {
             // Check if the ORIGINAL side's king is in check after the move
             int original_king_sq = test_pos.king_sq[int(original_side)];
             Color opponent_color = (original_side == Color::White) ? Color::Black : Color::White;
-            bool king_in_check_after = Huginn::SqAttacked(original_king_sq, test_pos, opponent_color);
+            bool king_in_check_after = Huginn::SqAttackedBB(original_king_sq, test_pos, opponent_color);
             
             test_pos.TakeMove();
             

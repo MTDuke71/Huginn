@@ -13,10 +13,13 @@
 
 namespace Huginn {
 
-bool SqAttacked(int sq, const Position& pos, Color attacking_color) {
-    return SqAttackedBB(sq, pos, attacking_color);
-}
-
+/**
+ * @brief Check if a square is attacked by a given color using bitboards.
+ * @param sq The square to check (0-63).
+ * @param pos The current position.
+ * @param attacking_color The color of the potential attackers.
+ * @return True if the square is attacked, false otherwise.
+ */
 bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {
     assert(sq >= 0 && sq < 64);
     __assume(sq >= 0 && sq < 64);

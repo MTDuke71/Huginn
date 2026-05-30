@@ -47,7 +47,7 @@ protected:
             for (int r = 0; r < 8; ++r) {
                 for (int f = 0; f < 8; ++f) {
                     int test_sq = sq64(static_cast<File>(f), static_cast<Rank>(r));
-                    result = Huginn::SqAttacked(test_sq, pos, attacking_color);
+                    result = Huginn::SqAttackedBB(test_sq, pos, attacking_color);
                 }
             }
         }
@@ -107,16 +107,16 @@ TEST_F(SqAttackedPerformanceTest, CorrectnessTest) {
     Position pos = create_starting_position();
     
     // Test some known attack patterns
-    EXPECT_TRUE(Huginn::SqAttacked(sq64(File::C, Rank::R3), pos, Color::White));  // b1 knight attacks c3
-    EXPECT_TRUE(Huginn::SqAttacked(sq64(File::F, Rank::R3), pos, Color::White));  // g1 knight attacks f3
-    EXPECT_FALSE(Huginn::SqAttacked(sq64(File::E, Rank::R4), pos, Color::White)); // Center square not attacked initially
-    EXPECT_FALSE(Huginn::SqAttacked(sq64(File::E, Rank::R5), pos, Color::Black)); // Center square not attacked initially
+    EXPECT_TRUE(Huginn::SqAttackedBB(sq64(File::C, Rank::R3), pos, Color::White));  // b1 knight attacks c3
+    EXPECT_TRUE(Huginn::SqAttackedBB(sq64(File::F, Rank::R3), pos, Color::White));  // g1 knight attacks f3
+    EXPECT_FALSE(Huginn::SqAttackedBB(sq64(File::E, Rank::R4), pos, Color::White)); // Center square not attacked initially
+    EXPECT_FALSE(Huginn::SqAttackedBB(sq64(File::E, Rank::R5), pos, Color::Black)); // Center square not attacked initially
     
     // Test pawn attacks
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
-    EXPECT_TRUE(Huginn::SqAttacked(sq64(File::D, Rank::R5), pos, Color::White));  // e4 pawn attacks d5
-    EXPECT_TRUE(Huginn::SqAttacked(sq64(File::F, Rank::R5), pos, Color::White));  // e4 pawn attacks f5
-    EXPECT_FALSE(Huginn::SqAttacked(sq64(File::E, Rank::R5), pos, Color::White)); // Pawn doesn't attack forward
+    EXPECT_TRUE(Huginn::SqAttackedBB(sq64(File::D, Rank::R5), pos, Color::White));  // e4 pawn attacks d5
+    EXPECT_TRUE(Huginn::SqAttackedBB(sq64(File::F, Rank::R5), pos, Color::White));  // e4 pawn attacks f5
+    EXPECT_FALSE(Huginn::SqAttackedBB(sq64(File::E, Rank::R5), pos, Color::White)); // Pawn doesn't attack forward
 }
 
 // Stress test with random positions
@@ -136,8 +136,8 @@ TEST_F(SqAttackedPerformanceTest, RandomPositionStressTest) {
         for (int r = 0; r < 8; r += 2) { // Test every other rank
             for (int f = 0; f < 8; f += 2) { // Test every other file
                 int test_sq = sq64(static_cast<File>(f), static_cast<Rank>(r));
-                volatile bool result1 = Huginn::SqAttacked(test_sq, pos, Color::White);
-                volatile bool result2 = Huginn::SqAttacked(test_sq, pos, Color::Black);
+                volatile bool result1 = Huginn::SqAttackedBB(test_sq, pos, Color::White);
+                volatile bool result2 = Huginn::SqAttackedBB(test_sq, pos, Color::Black);
             }
         }
         
