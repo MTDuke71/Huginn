@@ -25,8 +25,6 @@ bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {
     __assume(sq >= 0 && sq < 64);
 
     int color_idx = static_cast<int>(attacking_color);
-    uint64_t enemy_pieces = pos.color_bitboards[color_idx];
-    if (enemy_pieces == 0) return false;
 
     // 1. Pawn attacks (look in the OPPOSITE color's pawn-attack table from the target square)
     uint64_t enemy_pawns = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Pawn)];
