@@ -39,6 +39,14 @@
 #ifndef ENABLE_PLY_TRACKED_TT_MATE
 #define ENABLE_PLY_TRACKED_TT_MATE 1
 #endif
+// ENABLE_PRUNING_STATS: emit per-depth "info string ... Futility/Razoring cuts"
+// diagnostics during search. Off by default — this is engine debug telemetry,
+// not information a UCI GUI consumes. Build with -DENABLE_PRUNING_STATS=1 to
+// re-enable. The counters themselves (info.futility_cuts / razoring_cuts) are
+// always maintained; only the printing is gated.
+#ifndef ENABLE_PRUNING_STATS
+#define ENABLE_PRUNING_STATS 0
+#endif
 
 namespace Huginn {
 
@@ -120,13 +128,20 @@ int Engine::evaluate(const Position& pos) {
     // Evaluate all pieces using bitboard iteration
     for (int color = 0; color <= 1; ++color) {
         Color piece_color = static_cast<Color>(color);
+        // PST tables are stored from White's perspective; Black pieces look up
+        // the vertically-mirrored square. mirror_square_64(sq) == sq ^ 56 (XOR
+        // flips the 3 rank bits, leaves the file bits), so the whole mirror is
+        // a single XOR with a per-color mask — no per-piece function call (that
+        // call was ~2.5% of total time before this). Mask is hoisted out of the
+        // inner loop since it depends only on color.
+        const int sq_flip = (piece_color == Color::Black) ? 56 : 0;
         for (int piece_type = int(PieceType::Pawn); piece_type <= int(PieceType::King); ++piece_type) {
             PieceType pt = static_cast<PieceType>(piece_type);
             uint64_t bb = pos.piece_bitboards[color][piece_type];
             int material_value = PIECE_VALUES_MG[piece_type];
             while (bb) {
                 int sq64 = pop_lsb(bb);
-                int table_index = (piece_color == Color::Black) ? mirror_square_64(sq64) : sq64;
+                int table_index = sq64 ^ sq_flip;
                 int pst_value = 0;
                 if (pt == PieceType::King) {
                     pst_value = is_endgame ? EvalParams::KING_TABLE_ENDGAME[table_index]
@@ -341,11 +356,8 @@ bool Engine::MaterialDraw(const Position& pos) {
 }
 
 // Helper functions for evaluation (Part 56)
-// Mirror square for black pieces (flip vertically)
-int Engine::mirror_square_64(int sq64) {
-    if (sq64 < 0 || sq64 > 63) return sq64;
-    return ((7 - (sq64 / 8)) * 8) + (sq64 % 8);
-}
+// (mirror_square_64 retired — the PST lookup now mirrors Black squares inline
+// via `sq ^ 56`; see evaluate(). No other callers existed.)
 
 // VICE Tutorial: Mirror Board function for evaluation testing
 // Creates a mirrored copy of the position for symmetry testing
@@ -1104,12 +1116,19 @@ int Engine::evalPosition(const Position& pos) {
 void Engine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
-    
-    // VICE Part 70: Check for GUI input during search (3:23)
-    if (input_is_waiting()) {
+
+    // VICE Part 70: Check for GUI input during search (3:23).
+    // The Windows console poll (GetNumberOfConsoleInputEvents / PeekConsoleInput)
+    // is ~5us — profiling a `go depth` run showed ~6% of total time spent here
+    // because checkup() fires every 2048 nodes. Time management needs that
+    // cadence (steady_clock is cheap), but catching a "stop"/"quit" keystroke
+    // does not, so the input poll is gated 16x coarser. INPUT_CHECK_MASK must be
+    // a multiple of checkup()'s 2048-node interval so it still lands on a call.
+    constexpr uint64_t INPUT_CHECK_MASK = 32767;  // poll stdin every ~32768 nodes
+    if ((info.nodes & INPUT_CHECK_MASK) == 0 && input_is_waiting()) {
         read_input(info);
     }
-    
+
     // Skip time management if this is a depth-only search (UCI go depth command)
     if (info.depth_only) return;
     
@@ -1161,6 +1180,14 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // Increment node count for every position visited (except root calls)
     if (!isRoot) {
         info.nodes++;
+    }
+
+    // Triangular PV: this node starts with an empty line. Set this before any
+    // early return (TT cutoff, repetition/50-move draw, leaf) so a parent that
+    // reads pv_length[ply+1] after the child returns sees 0, not a stale value
+    // left by a previously searched sibling subtree.
+    if (info.ply < 64) {
+        info.pv_length[info.ply] = 0;
     }
 
     // BACKLOG #28 Part 2: TT-safe repetition handling.
@@ -1513,7 +1540,19 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             best_move = move_list.moves[i];  // Track best move for TT storage
             if (score > alpha) {
                 alpha = score;
-                
+
+                // Triangular PV: prepend this (new best) move to the best
+                // child's line, building the exact PV bottom-up as the search
+                // unwinds. info.ply+1 is where the child stored its line.
+                if (info.ply + 1 < 64) {
+                    info.pv_line[info.ply][0] = move_list.moves[i];
+                    int child_len = info.pv_length[info.ply + 1];
+                    for (int j = 0; j < child_len; ++j) {
+                        info.pv_line[info.ply][j + 1] = info.pv_line[info.ply + 1][j];
+                    }
+                    info.pv_length[info.ply] = child_len + 1;
+                }
+
                 // Store best move in PV table (VICE tutorial style)
                 store_pv_move(pos.zobrist_key, move_list.moves[i]);
                 
@@ -1855,6 +1894,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         S_MOVE depth_best_move;
         depth_best_move.move = 0;
         int legal_count = 0;
+        info.pv_length[0] = 0;  // reset root PV for this iteration
 
         // Order moves to try previous iteration's best move first for better alpha-beta cutoffs
         if (prev_best.move != 0) {
@@ -1907,6 +1947,16 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             if (score > best_score) {
                 best_score = score;
                 depth_best_move = move_list.moves[i];
+
+                // Triangular PV at the root (ply 0): this move + the child's
+                // line, which the recursion stored at ply 1.
+                info.pv_line[0][0] = move_list.moves[i];
+                int child_len = info.pv_length[1];
+                for (int j = 0; j < child_len; ++j) {
+                    info.pv_line[0][j + 1] = info.pv_line[1][j];
+                }
+                info.pv_length[0] = child_len + 1;
+
                 if (best_score > local_alpha) local_alpha = best_score;
                 if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
             }
@@ -1932,9 +1982,11 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
         
-        // Get Principal Variation line from this depth (5:32)
-        S_MOVE pv_array[64];
-        int pv_moves = get_pv_line(pos, current_depth, pv_array);
+        // Principal Variation collected in the triangular table during this
+        // iteration's root loop — exact and full-length, no side-table
+        // reconstruction (which truncated deep PVs to a single move).
+        const S_MOVE* pv_array = info.pv_line[0];
+        int pv_moves = info.pv_length[0];
         
         // Print results after each completed depth (3:03, 5:32)
         std::cout << "info depth " << current_depth 
@@ -1954,19 +2006,21 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         }
         std::cout << std::endl;
         
+#if ENABLE_PRUNING_STATS
         // Print futility pruning statistics for this depth
         if (info.futility_cuts > 0) {
-            std::cout << "info string Depth " << current_depth << " - Futility cuts: " 
-                      << info.futility_cuts << " (" << std::fixed << std::setprecision(1) 
+            std::cout << "info string Depth " << current_depth << " - Futility cuts: "
+                      << info.futility_cuts << " (" << std::fixed << std::setprecision(1)
                       << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
-        
+
         // Print razoring statistics for this depth
         if (info.razoring_cuts > 0) {
             std::cout << "info string Depth " << current_depth << " - Razoring cuts: "
                       << info.razoring_cuts << " (" << std::fixed << std::setprecision(1)
                       << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
+#endif
 
         // Iteration-start time gating happens at the top of the loop; no
         // post-iteration time check needed here.

@@ -1,0 +1,104 @@
+Name,Exclusive secs,Inclusive secs,% Exclusive,% Inclusive,Module,Source File,Source Line
+"ILT+35(?probe_tablebase_wdlEngineHuginnQEBA_NAEBVPositionAEAHZ)",0.0100211,0.0100211,0.0500494,0.0500494,"huginn","[unknown]",0
+"ILT+40(?generate_queen_moves_bitboardBitboardMoveGenYAXAEBVPositionAEAUS_MOVELISTW4ColorZ)",0.0020547,0.0020547,0.010262,0.010262,"huginn","[unknown]",0
+"ILT+65(?generate_rook_moves_bitboardBitboardMoveGenYAXAEBVPositionAEAUS_MOVELISTW4ColorZ)",0.0019997,0.0019997,0.00998731,0.00998731,"huginn","[unknown]",0
+"ILT+70(?generate_all_movesYAXAEBVPositionAEAUS_MOVELISTZ)",0.0060667,0.0060667,0.0302995,0.0302995,"huginn","[unknown]",0
+"ILT+240(?clear_piece_sq64PositionQEAAXHZ)",0.0018394,0.0018394,0.00918671,0.00918671,"huginn","[unknown]",0
+"ILT+310(?mirror_square_64EngineHuginnSAHHZ)",0.117265,0.117265,0.585667,0.585667,"huginn","[unknown]",0
+"ILT+560(?probe_movePVTableHuginnQEBA_N_KAEAUS_MOVEZ)",0.0019987,0.0019987,0.00998231,0.00998231,"huginn","[unknown]",0
+"ILT+620(?bishop_attacksYA_KH_KZ)",0.0774643,0.0774643,0.386888,0.386888,"huginn","[unknown]",0
+"ILT+625(?get_indexPVTableHuginnQEBA_K_KZ)",0.0060325,0.0060325,0.0301287,0.0301287,"huginn","[unknown]",0
+"ILT+715(?can_probeSyzygyTablebaseHuginnQEBA_NAEBVPositionZ)",0.0060393,0.0060393,0.0301627,0.0301627,"huginn","[unknown]",0
+"ILT+945(?update_zobrist_for_movePositionQEAAXAEBUS_MOVEW4Piece",0.0095707,0.0095707,0.0477999,0.0477999,"huginn","[unknown]",0
+"ILT+995(?MakeMovePositionQEAAHAEBUS_MOVEZ)",0.0061123,0.0061123,0.0305273,0.0305273,"huginn","[unknown]",0
+"ILT+1005(?generate_all_caps_pseudoYAXAEBVPositionAEAUS_MOVELISTZ)",0.002035,0.002035,0.0101636,0.0101636,"huginn","[unknown]",0
+"ILT+1190(?save_derived_statePositionQEAAXAEAUS_UNDOZ)",0.0040299,0.0040299,0.0201269,0.0201269,"huginn","[unknown]",0
+"ILT+1240(__security_check_cookie)",0.0198895,0.0198895,0.0993362,0.0993362,"huginn","[unknown]",0
+"ILT+1355(?penalize_search_historyEngineHuginnQEAAXAEBVPositionAEBUS_MOVEHZ)",0.0020264,0.0020264,0.0101207,0.0101207,"huginn","[unknown]",0
+"ILT+1640(?generate_bishop_moves_bitboardBitboardMoveGenYAXAEBVPositionAEAUS_MOVELISTW4ColorZ)",0.0059754,0.0059754,0.0298436,0.0298436,"huginn","[unknown]",0
+"ILT+1900(?get_mvv_lva_scoreEngineHuginnQEBAHW4PieceType",0.0094147,0.0094147,0.0470208,0.0470208,"huginn","[unknown]",0
+"ILT+1930(?popcountYAH_KZ)",0.619284,0.619284,3.09295,3.09295,"huginn","[unknown]",0
+"ILT+2055(?rook_attacksYA_KH_KZ)",0.0747273,0.0747273,0.373218,0.373218,"huginn","[unknown]",0
+"ILT+2130(?SqAttackedBBHuginnYA_NHAEBVPositionW4ColorZ)",0.011916,0.011916,0.0595133,0.0595133,"huginn","[unknown]",0
+"ILT+2150(?get_counter_moveEngineHuginnQEBA?AUS_MOVEAEBU3Z)",0.0357803,0.0357803,0.178701,0.178701,"huginn","[unknown]",0
+"ILT+2260(?move_piece_sq64PositionQEAAXHHZ)",0.0242898,0.0242898,0.121313,0.121313,"huginn","[unknown]",0
+"ILT+2305(?is_availableSyzygyTablebaseHuginnQEBA_NXZ)",0.0139879,0.0139879,0.0698612,0.0698612,"huginn","[unknown]",0
+"ILT+2335(?pick_next_moveEngineHuginnQEBAHAEAUS_MOVELISTHAEBVPositionAEBUSearchInfo",0.0079641,0.0079641,0.0397759,0.0397759,"huginn","[unknown]",0
+"ILT+2435(?add_piece_sq64PositionQEAAXHW4PieceZ)",0.0099023,0.0099023,0.0494561,0.0494561,"huginn","[unknown]",0
+"ILT+2590(?get_lsbYAH_KZ)",0.797262,0.797262,3.98185,3.98185,"huginn","[unknown]",0
+"ILT+2740(?TakeMovePositionQEAAXXZ)",0.0079991,0.0079991,0.0399507,0.0399507,"huginn","[unknown]",0
+"ILT+2870(?generate_king_moves_bitboardBitboardMoveGenYAXAEBVPositionAEAUS_MOVELISTW4ColorZ)",0.0036264,0.0036264,0.0181117,0.0181117,"huginn","[unknown]",0
+"ILT+2900(?evalPositionEngineHuginnQEAAHAEBVPositionZ)",0.0099244,0.0099244,0.0495665,0.0495665,"huginn","[unknown]",0
+"ILT+2930(?AlphaBetaEngineHuginnQEAAHAEAVPositionHHHAEAUSearchInfo",0.0040068,0.0040068,0.0200116,0.0200116,"huginn","[unknown]",0
+"main",0,20.0224,0,100,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\main.cpp",5
+"bishop_attacks",0.627379,0.627379,3.13338,3.13338,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\bitboard.cpp",91
+"get_lsb",0.3524,0.3524,1.76003,1.76003,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\bitboard.cpp",64
+"popcount",0.259729,0.259729,1.29719,1.29719,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\bitboard.cpp",56
+"rook_attacks",0.781921,0.781921,3.90523,3.90523,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\bitboard.cpp",95
+"BitboardMoveGen::generate_all_moves_bitboard",0.0376681,2.52833,0.18813,12.6275,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",25
+"BitboardMoveGen::generate_bishop_moves_bitboard",0.424636,0.497138,2.1208,2.48291,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",256
+"BitboardMoveGen::generate_castling_moves_optimized",0.103421,0.132554,0.516525,0.662026,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",334
+"BitboardMoveGen::generate_king_moves_bitboard",0.19432,0.208497,0.970513,1.04132,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",225
+"BitboardMoveGen::generate_knight_moves_bitboard",0.440441,0.491692,2.19974,2.45571,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",40
+"BitboardMoveGen::generate_pawn_moves_bitboard",0.568434,0.624198,2.83899,3.11749,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",72
+"BitboardMoveGen::generate_queen_moves_bitboard",0.371807,0.429639,1.85695,2.14579,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",308
+"BitboardMoveGen::generate_rook_moves_bitboard",0.193743,0.225845,0.967633,1.12796,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen_bb.cpp",278
+"Position::MakeMove",0.493644,1.09417,2.46546,5.4647,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.cpp",260
+"Position::TakeMove",0.18149,0.521741,0.906437,2.60579,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.cpp",423
+"Position::add_piece_sq64",0.0208501,0.0208501,0.104134,0.104134,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.hpp",262
+"Position::clear_piece_sq64",0.0533421,0.0533421,0.266412,0.266412,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.hpp",238
+"Position::move_piece_sq64",0.479641,0.479641,2.39552,2.39552,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.hpp",211
+"Position::save_derived_state",0.0064308,0.0064308,0.032118,0.032118,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.cpp",217
+"Position::update_zobrist_for_move",0.117118,0.117118,0.584937,0.584937,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\position.cpp",33
+"generate_all_caps_pseudo",0.815177,2.69382,4.07132,13.454,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\movegen.cpp",45
+"Huginn::SqAttackedBB",0.0646018,0.227432,0.322647,1.13589,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\attack_detection.cpp",23
+"Huginn::input_is_waiting",0,1.19836,0,5.98509,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\input_checking.cpp",65
+"std::_Insert_string<char,std::char_traits<char>,unsigned __int64>",0,0.0019683,0,0.00983048,"huginn","C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\__msvc_string_view.hpp",575
+"std::_Sort_unchecked<S_MOVE *,`Huginn::Engine::order_moves'::`2'::<lambda_1> >",0.0015548,0.0015548,0.0077653,0.0077653,"huginn","C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\algorithm",8373
+"Huginn::Engine::AlphaBeta",2.4462,20.0134,12.2173,99.955,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",1160
+"Huginn::Engine::checkup",0,1.19836,0,5.98509,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",1109
+"Huginn::Engine::evaluate",3.88719,7.45256,19.4142,37.2211,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",108
+"Huginn::Engine::get_counter_move",0.207873,0.207873,1.0382,1.0382,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",648
+"Huginn::Engine::internal_iterative_deepening",0.0019652,9.22895,0.009815,46.0931,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",1636
+"Huginn::Engine::mirror_square_64",0.497233,0.497233,2.48338,2.48338,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",345
+"Huginn::Engine::order_moves",0.0039556,0.0039556,0.0197559,0.0197559,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",775
+"Huginn::Engine::penalize_search_history",0.0876658,0.0876658,0.437838,0.437838,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",595
+"Huginn::Engine::pick_next_move",1.46969,2.41268,7.34024,12.0499,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",814
+"Huginn::Engine::probe_tablebase_wdl",0.0099775,0.0240221,0.0498317,0.119976,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",2035
+"Huginn::Engine::quiescence",0.620776,10.2115,3.10041,51.0003,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",1687
+"Huginn::repetition_count_in_history",0.084385,0.084385,0.421453,0.421453,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",490
+"Huginn::Engine::searchPosition",0,20.0224,0,100,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",1896
+"Huginn::Engine::update_counter_move",0.0019986,0.0019986,0.00998181,0.00998181,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",644
+"Huginn::Engine::update_killer_moves",0.0019997,0.0019997,0.00998731,0.00998731,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",625
+"Huginn::Engine::update_search_history",0.0039998,0.0039998,0.0199766,0.0199766,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\search.cpp",578
+"Huginn::PVTable::get_index",0.0338109,0.0338109,0.168865,0.168865,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\pvtable.cpp",33
+"Huginn::PVTable::probe_move",0.671857,0.687916,3.35553,3.43573,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\pvtable.cpp",46
+"Huginn::PVTable::store_move",0.0101134,0.0338984,0.0505104,0.169302,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\pvtable.cpp",37
+"Huginn::SyzygyTablebase::can_probe",0.0020007,0.0060018,0.0099923,0.0299754,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\syzygy_tablebase.cpp",126
+"Huginn::see",0.226395,0.423313,1.13071,2.11419,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\see.cpp",96
+"UCIInterface::handle_go",0,20.0224,0,100,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\uci.cpp",481
+"UCIInterface::run",0,20.0224,0,100,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\uci.cpp",134
+"UCIInterface::search_best_move",0,20.0224,0,100,"huginn","C:\Users\m_lad\Documents\Repos\Huginn\src\uci.cpp",627
+"__security_check_cookie",0.0456997,0.0456997,0.228243,0.228243,"huginn","D:\a\_work\1\s\src\vctools\crt\vcstartup\src\gs\amd64\amdsecgs.asm",45
+"__scrt_common_main_seh",0,20.0224,0,100,"huginn","D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl",288
+"std::codecvt<UNKNOWN,char,_Mbstatet>::out",0,0.007034,0,0.0351306,"MSVCP140","[unknown]",0
+"std::basic_streambuf<char,std::char_traits<char> >::xsgetn",0,0.0019683,0,0.00983048,"MSVCP140","[unknown]",0
+"std::basic_ios<wchar_t,std::char_traits<wchar_t> >::tie",0,0.0017022,0,0.00850147,"MSVCP140","[unknown]",0
+"std::num_put<char,std::ostreambuf_iterator<char,std::char_traits<char> > >::_Iput",0,0.0053318,0,0.0266292,"MSVCP140","[unknown]",0
+"std::num_put<char,std::ostreambuf_iterator<char,std::char_traits<char> > >::_Put",0,0.007034,0,0.0351306,"MSVCP140","[unknown]",0
+"std::num_put<char,std::ostreambuf_iterator<char,std::char_traits<char> > >::do_put",0,0.007034,0,0.0351306,"MSVCP140","[unknown]",0
+"std::basic_ostream<char,std::char_traits<char> >::operator<<",0,0.007034,0,0.0351306,"MSVCP140","[unknown]",0
+"fwrite",0.0019683,0.0019683,0.00983048,0.00983048,"ucrtbase","[unknown]",0
+"fflush_nolock",0,0,0,0,"ucrtbase","[unknown]",0
+"get_osfhandle",0,0,0,0,"ucrtbase","[unknown]",0
+"fputc",0.007034,0.007034,0.0351306,0.0351306,"ucrtbase","[unknown]",0
+"kbhit",0,1.19836,0,5.98509,"ucrtbase","[unknown]",0
+"_report_gsfailure",0.0019999,0.0019999,0.00998831,0.00998831,"ucrtbase","[unknown]",0
+"WriteFile",0,0,0,0,"KERNELBASE","[unknown]",0
+"PeekConsoleInputA",0.472617,0.472617,2.36044,2.36044,"KERNELBASE","[unknown]",0
+"GetNumberOfConsoleInputEvents",0.719751,0.719751,3.59473,3.59473,"KERNELBASE","[unknown]",0
+"BaseThreadInitThunk",0,20.0224,0,100,"KERNEL32","[unknown]",0
+"RtlEnterCriticalSection",0.0039923,0.0039923,0.0199392,0.0199392,"ntdll","[unknown]",0
+"RtlUserThreadStart",0,20.0224,0,100,"ntdll","[unknown]",0
+"NtDeviceIoControlFile",0,0,0,0,"ntdll","[unknown]",0
+"ZwWriteFile",0,0,0,0,"ntdll","[unknown]",0

@@ -64,13 +64,25 @@ struct SearchInfo {
 
     // Counter-move heuristic: track moves played to update counter-move table
     S_MOVE search_stack[64];  // Stack of moves made during search (max 64 plies)
-    
-    SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
+
+    // Triangular PV table — the exact principal variation collected during the
+    // search itself. pv_line[ply] holds the PV from that ply onward and
+    // pv_length[ply] its length; a node copies its best child's line up and
+    // prepends its own move. This replaces reconstructing the PV from the
+    // side pv_table afterward, which truncated badly under heavy node counts
+    // (the overwrite-always table evicted continuation entries before the line
+    // could be read back, collapsing deep PVs to a single move). Indexed by
+    // info.ply (0..63).
+    S_MOVE pv_line[64][64];
+    int pv_length[64];
+
+    SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
                    quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();
+            pv_length[i] = 0;
         }
     }
 };
@@ -131,9 +143,6 @@ public:  // Make members public for easier access
     
     // Simple material evaluation
     int evaluate(const Position& pos);
-    
-    // Helper functions for evaluation (Part 56)
-    static int mirror_square_64(int sq64);
     
     // VICE Part 82: Material draw detection (2:03)
     static bool MaterialDraw(const Position& pos);

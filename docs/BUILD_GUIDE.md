@@ -53,6 +53,11 @@ The exception:
   is the 2c ship from BACKLOG #13; counter-move (@ score 1500) is the
   #15 soft ship (`b9d63f8`, +7.1 Elo / LOS 91% pooled 2000g, both
   machines agree — see BACKLOG #15).
+- `ENABLE_PRUNING_STATS` — gate at the top of `src/search.cpp`,
+  default **off**. When on, the search prints per-depth
+  `info string Depth N - Futility cuts: …` / `Razoring cuts: …`
+  diagnostics. The counters are always maintained; only the printing is
+  gated. Build with `-DENABLE_PRUNING_STATS=1` to re-enable for tuning.
 
 ## Current Performance
 
