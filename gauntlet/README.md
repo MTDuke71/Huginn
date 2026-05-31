@@ -166,7 +166,7 @@ CI/LOS, not by the SPRT verdict.
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
 | 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+15.30 ± 14.32 Elo vs t8**, **LOS 98.20%**, W251/L207/D542 | **Perf trio + static-eval cache + dead undo-writes drop + PV repetition truncate** (HEAD `ca335c2` = `baseline-t8` + perf trio + Priority 6 + Priority 7 + #21 PV fix, 7 files +171/−61). SPRT `elo0=0 elo1=10`, LLR **+1.49 (50.5% to H1)** → halfway to H1 acceptance, hit cap. **First AMD 1000g this session to clear LOS 95% on a single run**; CI [+1, +30] — lower bound above zero. Pentanomial [20,110,206,134,30] — clear positive skew (30 best vs 20 worst, 134 W-pair vs 110 L-pair). **Static-eval cache (Priority 6) is the likely Elo mover**: skips redundant `evaluate()` during the RFP/razoring/futility/null-move prune cascade. Awaiting Intel pool — ship-grade single-machine signal. |
-|---|---|---:|---|---|
+| 2026-05-31 | Intel 13700K | **1000 (SPRT)** | **+12.51 ± 14.75 Elo vs t8**, **LOS 95.21%**, W256/L220/D524 | **Perf trio + static-eval cache + dead undo-writes drop + PV repetition truncate** (HEAD `ca335c2`, same binary as the AMD row above). SPRT `elo0=0 elo1=10`, LLR **+1.10 (37.4% to H1)** → trending to H1, hit cap. **Clears LOS 95% on a single run**; CI [−2.2, +27.3]; pentanomial [21,122,189,136,32] — positive skew (136 W-pair vs 122 L-pair, 32 best vs 21 worst). Pools with the AMD row → see Pooled section. |
 | 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+3.82 ± 13.64 Elo vs t8**, LOS 70.87%, W230/L219/D551 | **Search perf trio** (HEAD `d6f9463` = `baseline-t8` + triangular PV + input-poll throttle + mirror→XOR + LSB micro-cleanup; 5 files +115/−35). SPRT `elo0=0 elo1=10`, LLR +0.09 (2.9%) → essentially neutral, inconclusive at cap. CI [−10, +17]; pentanomial [24,101,237,116,22] with 47.4% draws — classic near-peer + speed-only shape (NPS up but extra search doesn't convert at this TC). Wings near-symmetric, 116 W-pair > 101 L-pair — slight lean, awaiting Intel pool. |
 | 2026-05-31 | Intel 13700KF | **1000 (SPRT)** | **+1.39 ± 14.93 Elo vs t8**, LOS 57.24%, W241/L237/D522 | **Search perf trio** (HEAD `d6f9463`, same binary as the AMD row above). SPRT `elo0=0 elo1=10`, LLR −0.25 (−8.4%) in bounds → neutral, inconclusive at cap. CI [−13.5, +16.3]; pentanomial [28,119,209,109,35], 52.2% draws — same speed-only shape as AMD, 109 W-pair vs 119 L-pair near-symmetric. Pools with the AMD row → see Pooled section. |
 | 2026-05-31 | Intel 13700KF | **1000 (SPRT)** | **+7.30 ± 14.67 Elo vs t7**, LOS 83.54%, W249/L228/D523 | **BACKLOG #15** counter-move @1500 (HEAD `b9d63f8`). SPRT LLR +0.47 in bounds (16% to H1) → inconclusive at cap. Pentanomial [26,119,187,144,24]. Pools with the AMD row below → **SHIP as `baseline-t8`** (see Pooled section). |
@@ -191,6 +191,32 @@ CI/LOS, not by the SPRT verdict.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — perf stack + Priority 6/7 / candidate baseline-t9 (2000 games, two machines)
+
+Candidate `ca335c2` (= `baseline-t8` + perf trio + PV repetition truncate
++ **Priority 6 static-eval cache** + **Priority 7 dead undo-state drop**)
+vs frozen **t8**, `tc=10+0.1`, 1t, 64 MB hash, `noob_3moves.epd`,
+round-paired pentanomials:
+
+- Intel 13700K: W256 / L220 / D524  (+12.51, LOS 95.2%)  [21,122,189,136,32]
+- AMD 7800X3D:  W251 / L207 / D542  (+15.30, LOS 98.2%)  [20,110,206,134,30]
+- **Pooled: W507 / L427 / D1066**, score **52.00%**, **+13.90 Elo
+  [+3.64, +24.19]**, LOS **99.60%**, pooled Ptnml [41,232,395,270,62],
+  pentanomial t ≈ +2.66.
+
+**Verdict: SHIP — recommend promoting to `baseline-t9`.** Both machines
+independently clear LOS 95 % (+12.5 / +15.3) with tight cross-machine
+agreement, and the **pooled 95 % CI [+3.64, +24.19] sits entirely above
+zero** (LOS 99.6 %) — a stronger ship signal than t8 itself (which
+shipped at pooled LOS 91 %). The search is byte-identical to t8 at equal
+depth, so this is pure speed (~+15 % cumulative NPS) buying extra depth
+at the fixed TC. The **static-eval cache (Priority 6)** is the likely
+mover: the perf trio alone pooled a sub-noise +2.61 (previous section),
+and adding P6/P7 jumped the cumulative to +13.90. SPRT [0,10] can't
+accept a +14 effect inside the bounds (LLR trends toward H1 but needs
+more games), so the fixed-games pooled LOS is the readout. Promoting t9
+stops the next experiment from re-counting this +14.
 
 ### Pooled — search perf trio / no baseline (2000 games, two machines)
 
