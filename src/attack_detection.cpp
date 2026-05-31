@@ -28,11 +28,7 @@ bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {
 
     // 1. Pawn attacks (look in the OPPOSITE color's pawn-attack table from the target square)
     uint64_t enemy_pawns = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Pawn)];
-    if (enemy_pawns != 0) {
-        Color opposite_color = (attacking_color == Color::White) ? Color::Black : Color::White;
-        uint64_t pawn_attackers = pawn_attacks[static_cast<int>(opposite_color)][sq];
-        if ((pawn_attackers & enemy_pawns) != 0) return true;
-    }
+    if (enemy_pawns != 0 && (pawn_attacks[color_idx ^ 1][sq] & enemy_pawns) != 0) return true;
 
     // 2. Knight attacks
     uint64_t enemy_knights = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Knight)];
@@ -40,7 +36,7 @@ bool SqAttackedBB(int sq, const Position& pos, Color attacking_color) {
 
     // 3. King attacks
     uint64_t enemy_kings = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::King)];
-    if (enemy_kings != 0 && (king_attacks[sq] & enemy_kings) != 0) return true;
+    if ((king_attacks[sq] & enemy_kings) != 0) return true;
 
     // 4. Rook + queen (rank/file sliders)
     uint64_t rook_attackers = pos.piece_bitboards[color_idx][static_cast<int>(PieceType::Rook)] |
