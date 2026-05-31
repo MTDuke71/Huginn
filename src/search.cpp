@@ -34,7 +34,7 @@
 //     and a cap clamp so store_score stays inside (-MATE, MATE) after the
 //     ply-add. The cap clamp is what rescued attempt 2's TT pollution case.
 #ifndef ENABLE_PLY_TRACKED_COUNTERMOVE
-#define ENABLE_PLY_TRACKED_COUNTERMOVE 0
+#define ENABLE_PLY_TRACKED_COUNTERMOVE 1  // BACKLOG #15 re-attempt vs t7 @ score 1500
 #endif
 #ifndef ENABLE_PLY_TRACKED_TT_MATE
 #define ENABLE_PLY_TRACKED_TT_MATE 1
@@ -894,10 +894,11 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                     if (previous_move.move != 0) {
                         S_MOVE counter_move = get_counter_move(previous_move);
                         if (counter_move.move == move.move) {
-                            // Slot above history (~1K) and below promotions (25K-90K).
-                            // Original 700K placed counter-moves above queen promotion
-                            // which is almost certainly wrong — see BACKLOG #13.
-                            score = 15000;
+                            // Slot just above the history range (~1K), below
+                            // promotions (25K-90K). BACKLOG #15: 1500 beat 15000
+                            // on t4 (+8.7 vs -10.4 Elo); re-testing 1500 on t7,
+                            // whose stronger ordering favors a gentler bonus.
+                            score = 1500;
                             is_counter_move = true;
                         }
                     }
