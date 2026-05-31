@@ -17,7 +17,7 @@ shipped item.
 | 3. `board64[64]` piece cache | ❌ DEFERRED — reverted | `e61f6e5` (#26) reverted | NPS +12% (real bench gain) | Intel +12.17/LOS 77%; AMD −38.37/LOS 0.86%; pool ≈ −13 Elo. Invariant test ruled out desync; cache footprint cost ≈ scan savings on this codebase. |
 | 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
 | 5. Staged move picker | ⏳ pending | — | — | — |
-| 6. Cache static eval per node | ⏳ pending | — | — | (cheapest remaining; ~+5-15 Elo expected) |
+| 6. Cache static eval per node | ✅ IMPLEMENTED (gauntlet pending) | `1d1b013` | NPS +~8% @ d14 startpos (3.51M→3.82M), node count byte-identical (6,239,039) | pending gauntlet (~+5-15 Elo expected) |
 | 7. Remove dead undo-state writes | ⏳ pending | — | — | (small; can bundle with #6) |
 | 8. Gate TT stats counters behind flag | ⏳ pending | — | — | — |
 | 9. TT cluster layout + generations | ⏳ pending | — | — | (after #4-7) |
