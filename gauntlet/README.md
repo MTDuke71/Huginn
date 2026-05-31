@@ -67,7 +67,7 @@ fewer if the SPRT stops early). The per-tier bats
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
 | 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+3.82 ± 13.64 Elo vs t8**, LOS 70.87%, W230/L219/D551 | **Search perf trio** (HEAD `d6f9463` = `baseline-t8` + triangular PV + input-poll throttle + mirror→XOR + LSB micro-cleanup; 5 files +115/−35). SPRT `elo0=0 elo1=10`, LLR +0.09 (2.9%) → essentially neutral, inconclusive at cap. CI [−10, +17]; pentanomial [24,101,237,116,22] with 47.4% draws — classic near-peer + speed-only shape (NPS up but extra search doesn't convert at this TC). Wings near-symmetric, 116 W-pair > 101 L-pair — slight lean, awaiting Intel pool. |
-|---|---|---:|---|---|
+| 2026-05-31 | Intel 13700KF | **1000 (SPRT)** | **+1.39 ± 14.93 Elo vs t8**, LOS 57.24%, W241/L237/D522 | **Search perf trio** (HEAD `d6f9463`, same binary as the AMD row above). SPRT `elo0=0 elo1=10`, LLR −0.25 (−8.4%) in bounds → neutral, inconclusive at cap. CI [−13.5, +16.3]; pentanomial [28,119,209,109,35], 52.2% draws — same speed-only shape as AMD, 109 W-pair vs 119 L-pair near-symmetric. Pools with the AMD row → see Pooled section. |
 | 2026-05-31 | Intel 13700KF | **1000 (SPRT)** | **+7.30 ± 14.67 Elo vs t7**, LOS 83.54%, W249/L228/D523 | **BACKLOG #15** counter-move @1500 (HEAD `b9d63f8`). SPRT LLR +0.47 in bounds (16% to H1) → inconclusive at cap. Pentanomial [26,119,187,144,24]. Pools with the AMD row below → **SHIP as `baseline-t8`** (see Pooled section). |
 | 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+6.95 ± 14.48 Elo vs t7**, LOS 82.68%, W230/L210/D560 | **BACKLOG #15** ply-tracked counter-move heuristic re-enabled at order-score 1500 (HEAD `b9d63f8` + lookup_tables/perft cleanup on top, all Elo-neutral). SPRT `elo0=0 elo1=10`, LLR +0.44 in bounds (15% of way to H1) → inconclusive at cap. CI [−7, +21]; pentanomial [21,123,201,125,30] — slight +current lean (30 best vs 21 worst, 125 W-pair vs 123 L-pair). Drift is the right sign; pooled with Intel below. |
 | 2026-05-30 | Intel 13700K | **1000 (SPRT)** | **+2.08 ± 13.86 Elo vs t7**, LOS 61.60%, W221/L215/D564 | **#6+#29+#30 stack** (HEAD `2e5c7f7` = `baseline-t7` + 50-move + SEE-ordering + determinism fix). Ptnml [18,127,209,123,23]. Pools with the AMD row below → **+2.08 Elo, both machines exactly 50.30%, neutral**. A 200g Intel smoke read +33 (variance). **Decision: revert #6 SEE-ordering (`66bce5d`, no measured gain + per-capture cost), keep #29/#30 (correctness).** #6 parked WIP on `wip/see-capture-ordering`. |
@@ -90,6 +90,35 @@ fewer if the SPRT stops early). The per-tier bats
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — search perf trio / no baseline (2000 games, two machines)
+
+Candidate `d6f9463` (= `baseline-t8` + triangular PV + input-poll
+throttle + eval mirror→XOR) vs frozen **t8**, `tc=10+0.1`, 1t, 64 MB
+hash, `noob_3moves.epd`, round-paired pentanomials:
+
+- Intel 13700KF: W241 / L237 / D522  (+1.39, LOS 57.2%)  [28,119,209,109,35]
+- AMD 7800X3D:   W230 / L219 / D551  (+3.82, LOS 70.9%)  [24,101,237,116,22]
+- **Pooled: W471 / L456 / D1073**, score **50.38%**, **+2.61 Elo
+  [−7.5, +12.7]**, LOS **69.34%**, pooled Ptnml [52,220,446,225,57],
+  pentanomial t ≈ +0.51.
+
+**Verdict: KEEP on main; baseline stays `t8` (do NOT promote).** Both
+machines land small-positive and same-sign (+1.39 / +3.82) — the tight
+cross-machine agreement (the reproducibility whose *absence* reverted
+#26) confirms a clean non-regression. Every change is move-for-move
+identical to t8 at equal depth; the only real delta is ~7% NPS
+(input-poll throttle ~5% + eval mirror XOR ~2.7%), which at 10+0.1
+surfaces as a sub-noise +2.6 Elo. This is **not a strength ship** — there
+is no Elo change to isolate — so cutting a `baseline-t9` would only force
+every future experiment to re-clear this +2.6 for nothing. Baseline
+therefore stays `t8`; these commits ride on main as a perf + PV-display
+correctness batch. SPRT [0,10] can't resolve a ~neutral effect (LLR
+wandered the bounds on both boxes), so the fixed-games pooled LOS 69% is
+the readout. The triangular PV also fixed deep-PV truncation and the
+"PV continues after repetition" GUI warnings (display-only; `7f723b6`
+adds the print-time repetition guard on top, not in this binary). See
+[docs/PROFILE_OBSERVATIONS.md](../docs/PROFILE_OBSERVATIONS.md).
 
 ### Pooled — #15 counter-move @1500 / baseline-t8 (2000 games, two machines)
 
