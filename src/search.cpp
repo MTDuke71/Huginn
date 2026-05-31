@@ -205,58 +205,36 @@ int Engine::evaluate(const Position& pos) {
     
     uint64_t all_pawns = white_pawns | black_pawns;
     
-    // White rooks: open / semi-open file bonuses
-    uint64_t rooks_bb = pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)];
-    while (rooks_bb) {
-        int sq64 = pop_lsb(rooks_bb);
-        int file_idx = sq64 & 7;
-        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        if ((all_pawns & file_mask) == 0) {
-            file_bonus_score += EvalParams::ROOK_OPEN_FILE_BONUS;
-        } else if ((white_pawns & file_mask) == 0) {
-            file_bonus_score += EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
+    // Sum the file bonus for one piece set as a positive magnitude; the
+    // caller applies the sign (+ for White, − for Black). Open = no pawns
+    // on the file at all; semi-open = no *own* pawns on the file.
+    auto file_bonus = [&](uint64_t pieces_bb, uint64_t own_pawns,
+                          int open_bonus, int semi_bonus) -> int {
+        int s = 0;
+        while (pieces_bb) {
+            int sq64 = pop_lsb(pieces_bb);
+            uint64_t file_mask = EvalParams::FILE_MASKS[sq64 & 7];
+            if ((all_pawns & file_mask) == 0) {
+                s += open_bonus;
+            } else if ((own_pawns & file_mask) == 0) {
+                s += semi_bonus;
+            }
         }
-    }
+        return s;
+    };
 
-    // Black rooks
-    rooks_bb = pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)];
-    while (rooks_bb) {
-        int sq64 = pop_lsb(rooks_bb);
-        int file_idx = sq64 & 7;
-        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        if ((all_pawns & file_mask) == 0) {
-            file_bonus_score -= EvalParams::ROOK_OPEN_FILE_BONUS;
-        } else if ((black_pawns & file_mask) == 0) {
-            file_bonus_score -= EvalParams::ROOK_SEMI_OPEN_FILE_BONUS;
-        }
-    }
+    const auto& wbb = pos.piece_bitboards[int(Color::White)];
+    const auto& bbb = pos.piece_bitboards[int(Color::Black)];
 
-    // White queens
-    uint64_t queens_bb = pos.piece_bitboards[int(Color::White)][int(PieceType::Queen)];
-    while (queens_bb) {
-        int sq64 = pop_lsb(queens_bb);
-        int file_idx = sq64 & 7;
-        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        if ((all_pawns & file_mask) == 0) {
-            file_bonus_score += EvalParams::QUEEN_OPEN_FILE_BONUS;
-        } else if ((white_pawns & file_mask) == 0) {
-            file_bonus_score += EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
-        }
-    }
+    file_bonus_score += file_bonus(wbb[int(PieceType::Rook)],  white_pawns,
+                                   EvalParams::ROOK_OPEN_FILE_BONUS,  EvalParams::ROOK_SEMI_OPEN_FILE_BONUS);
+    file_bonus_score -= file_bonus(bbb[int(PieceType::Rook)],  black_pawns,
+                                   EvalParams::ROOK_OPEN_FILE_BONUS,  EvalParams::ROOK_SEMI_OPEN_FILE_BONUS);
+    file_bonus_score += file_bonus(wbb[int(PieceType::Queen)], white_pawns,
+                                   EvalParams::QUEEN_OPEN_FILE_BONUS, EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS);
+    file_bonus_score -= file_bonus(bbb[int(PieceType::Queen)], black_pawns,
+                                   EvalParams::QUEEN_OPEN_FILE_BONUS, EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS);
 
-    // Black queens
-    queens_bb = pos.piece_bitboards[int(Color::Black)][int(PieceType::Queen)];
-    while (queens_bb) {
-        int sq64 = pop_lsb(queens_bb);
-        int file_idx = sq64 & 7;
-        uint64_t file_mask = EvalParams::FILE_MASKS[file_idx];
-        if ((all_pawns & file_mask) == 0) {
-            file_bonus_score -= EvalParams::QUEEN_OPEN_FILE_BONUS;
-        } else if ((black_pawns & file_mask) == 0) {
-            file_bonus_score -= EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS;
-        }
-    }
-    
     score += file_bonus_score;
     
     // VICE Part 83: Bishop pair bonus
