@@ -663,16 +663,20 @@ S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
 
 // Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
 void Engine::init_mvv_lva() {
-    // Use the same piece values as evaluation for consistency
-    // Note: King value set to 0 for MVV-LVA since king captures are illegal
+    // INDEPENDENT ordering values — not a view of eval's PIECE_VALUES_MG.
+    // MVV-LVA only needs the relative victim>attacker ordering, so absolute
+    // magnitudes barely matter and this table is NOT meant to track eval's
+    // Texel/SPSA tuning. It starts at the same numbers by coincidence but is
+    // free to diverge (and already does: King=0 here, since king captures
+    // are illegal, vs the 20000 sentinel eval/SEE use). Do not merge.
     int piece_values[7] = {
         0,    // None
         100,  // Pawn
-        320,  // Knight (matches PIECE_VALUES_MG)
-        330,  // Bishop (matches PIECE_VALUES_MG)
+        320,  // Knight
+        330,  // Bishop
         500,  // Rook
-        900,  // Queen (matches PIECE_VALUES_MG)
-        0     // King (should never be captured)
+        900,  // Queen
+        0     // King (never captured -> 0, unlike eval/SEE)
     };
     
     // Initialize MVV-LVA scores

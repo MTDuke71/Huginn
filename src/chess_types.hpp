@@ -207,6 +207,14 @@ char to_char(Piece p);
 Piece from_char(char ch);
 
 // ---------- Values / indexing helpers ----------
+// Evaluation material values — this is the tunable "truth" of piece worth
+// and is expected to DRIFT under Texel/SPSA tuning. Two other subsystems
+// have their own independent value tables that merely START at the same
+// numbers: SEE_PIECE_VALUE (see.hpp) and the MVV-LVA table (Engine::
+// init_mvv_lva). They are NOT meant to track this array — do not merge them
+// into one shared constant; coupling capture pruning/ordering to eval
+// tuning would inject noise and break MVV-LVA's king=0 special case. The
+// matching values are a coincidental starting point, not a constraint.
 constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
     0,   // None
     100, // Pawn

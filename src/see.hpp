@@ -22,10 +22,14 @@
 
 namespace Huginn {
 
-// Piece values for SEE. Match the standard MG values; King is huge so
-// the king is only ever the "least valuable attacker" when no enemy
-// recapture exists (i.e. capturing with king is never a swap initiator
-// when the destination is defended).
+// Piece values for SEE — an INDEPENDENT table, not a view of eval's
+// PIECE_VALUES_MG. SEE is a static exchange estimate for capture
+// pruning/ordering and wants stable, exchange-fair, single-phase values;
+// it should NOT follow eval's Texel/SPSA tuning. The values happen to
+// start equal to the MG set but are free to diverge and are maintained
+// here separately on purpose. King is huge so the king is only ever the
+// "least valuable attacker" when no enemy recapture exists (i.e. capturing
+// with king is never a swap initiator when the destination is defended).
 inline constexpr int SEE_PIECE_VALUE[7] = { 0, 100, 320, 330, 500, 900, 20000 };
 
 /**
