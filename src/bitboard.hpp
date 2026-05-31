@@ -296,7 +296,9 @@ inline uint64_t queen_attacks(int square, uint64_t occupancy) {
  * ```
  */
 inline int pop_lsb(uint64_t& bitboard) {
-    if (bitboard == 0) return -1;
+    // No empty check needed: get_lsb() already returns -1 for an empty
+    // board, and `&= board - 1` is a harmless no-op when board is 0
+    // (0 & ~0 == 0). Keeps the -1-on-empty contract without a duplicate.
     int square = get_lsb(bitboard);
     bitboard &= bitboard - 1;  // Remove the LSB
     return square;
@@ -308,8 +310,7 @@ inline int pop_lsb(uint64_t& bitboard) {
  * @return The square index (0-63) of the LSB, or -1 if bitboard is empty
  */
 inline int peek_lsb(uint64_t bitboard) {
-    if (bitboard == 0) return -1;
-    return get_lsb(bitboard);
+    return get_lsb(bitboard);  // get_lsb() already returns -1 for an empty board
 }
 
 /**
