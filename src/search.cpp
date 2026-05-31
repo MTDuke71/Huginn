@@ -14,6 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iomanip>  // For std::setw
+#include <unordered_set>  // For PV repetition truncation in searchPosition
 
 // Backlog #13 bisection result (2026-05-06): ply tracking + TT-mate is
 // shipped; counter-move is gated off pending a separate re-attempt.
@@ -1987,7 +1988,33 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // reconstruction (which truncated deep PVs to a single move).
         const S_MOVE* pv_array = info.pv_line[0];
         int pv_moves = info.pv_length[0];
-        
+
+        // Truncate the *displayed* PV at the first position that repeats (a
+        // prior game position or one earlier in the line). The triangular PV
+        // faithfully follows the search through 2-fold repetitions, but a
+        // repetition tail is noise to a GUI and trips PV validators, so the
+        // printout stops at the move that first revisits a position — matching
+        // the old get_pv_line() behavior. One make/unmake walk of the line,
+        // paid once per depth (not per node). pos is at the root here.
+        {
+            std::unordered_set<uint64_t> seen;
+            seen.reserve(pos.move_history.size() + static_cast<size_t>(pv_moves) + 1);
+            for (const auto& undo : pos.move_history) {
+                if (undo.zobrist_key != 0) seen.insert(undo.zobrist_key);
+            }
+            seen.insert(pos.zobrist_key);
+            int made = 0;
+            for (int i = 0; i < pv_moves; ++i) {
+                if (pos.MakeMove(pv_array[i]) != 1) { pv_moves = i; break; }
+                ++made;
+                if (!seen.insert(pos.zobrist_key).second) {
+                    pv_moves = i + 1;  // keep the repetition-creating move, drop the tail
+                    break;
+                }
+            }
+            for (int i = 0; i < made; ++i) pos.TakeMove();
+        }
+
         // Print results after each completed depth (3:03, 5:32)
         std::cout << "info depth " << current_depth 
                   << " score " << format_uci_score(best_score, pos.side_to_move)
