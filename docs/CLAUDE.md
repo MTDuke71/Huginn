@@ -12,11 +12,13 @@ representation for legality / square-walking helpers.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t7 = 304f2b7` (= t6 + BACKLOG #28
-  repetition fixes: halfmove-clock lookback + TT-safe Zarkov single-rep
-  draw gated on winning eval; +7.6 Elo pooled vs t6, both machines
-  positive). Prior: `baseline-t6` (#27 winning-rep avoidance),
-  `baseline-t5 = 3eab266` (P1a + TT-bound fix + magic bitboards).
+- ✅ **Baseline tag**: `baseline-t8 = b9d63f8` (= t7 + BACKLOG #15
+  ply-tracked counter-move heuristic @ order-score 1500; +7.1 Elo pooled
+  vs t7, LOS 91%, both machines agree — soft ship). Prior:
+  `baseline-t7 = 304f2b7` (#28 repetition fixes: halfmove-clock lookback
+  + TT-safe Zarkov single-rep draw; +7.6 Elo vs t6), `baseline-t6`
+  (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
+  fix + magic bitboards).
 - ✅ **Comprehensive test suite**: 197 GoogleTest cases
 - ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
   see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration

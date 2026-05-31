@@ -7,16 +7,19 @@ two gauntlet machines over git instead of manual file copy.
 
 | Machine | CPU | repo path | bat | outputs |
 |---|---|---|---|---|
-| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t7_amd.bat` | `*_amd.pgn` / `*_amd.log` |
-| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t7.bat` | `*_intel.pgn` / `*_intel.log` |
+| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t8.bat` | `*_amd.pgn` / `*_amd.log` |
+| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t8.bat` | `*_intel.pgn` / `*_intel.log` |
 
-Both bats run **current Huginn vs the frozen `huginn_t7.exe`**
-(commit `304f2b7`, `git tag baseline-t7`), `tc=10+0.1`,
-concurrency 4, **SPRT `elo0=0 elo1=10`** with a 500-round cap = up to
-1000 games each, identical engine names, into their own machine-tagged
-files. 1000 + 1000 = **2000 games per experiment** (or fewer if the
-SPRT stops early). The per-tier bats (`test_huginn_vs_t4..t6`) are kept
-for historical regression checks; **use the t7 pair going forward**.
+**One self-configuring bat now serves both machines** —
+`test_huginn_vs_t8.bat` auto-detects the box (repo path from `%~dp0`,
+CPU vendor → `_intel`/`_amd` suffix), so there is no longer a separate
+`_amd` variant. It runs **current Huginn vs the frozen `huginn_t8.exe`**
+(`git tag baseline-t8`), `tc=10+0.1`, concurrency 4, **SPRT
+`elo0=0 elo1=10`** with a 500-round cap = up to 1000 games each, into
+machine-tagged files. 1000 + 1000 = **2000 games per experiment** (or
+fewer if the SPRT stops early). The per-tier bats
+(`test_huginn_vs_t4..t7`) are kept for historical regression checks;
+**use `test_huginn_vs_t8.bat` going forward**.
 
 ## Workflow
 
@@ -49,18 +52,20 @@ for historical regression checks; **use the t7 pair going forward**.
   with an Intel push (different paths) — clean git merges.
 - Logs are committed too (per request). They are large and noisy;
   prune old ones if the repo gets heavy.
-- **Current baseline is `baseline-t7 = 304f2b7`** (BACKLOG #28
-  repetition fixes; +7.6 Elo pooled vs t6). Keep `huginn_t7.exe`
-  byte-identical across both machines — build once (or copy from the
-  Intel freeze, SHA256 `AC589A61…4C2E6D`) and copy the binary; **do
-  not rebuild per-machine**. Prior frozen baselines: t6 `5efaa78`/tag
-  `baseline-t6`, t4 `6e3a761` (BACKLOG #18).
+- **Current baseline is `baseline-t8`** (BACKLOG #15 counter-move @1500
+  enabled, commit `b9d63f8`; +7.1 Elo pooled vs t7). Built on the Intel
+  box with `-DENABLE_FATHOM=ON`, SHA256 `A12EA8F5…A3DD`. Keep
+  `huginn_t8.exe` byte-identical across both machines — copy the binary
+  from the Intel freeze; **do not rebuild per-machine**. Prior frozen
+  baselines: t7 `304f2b7` (SHA256 `AC589A61…4C2E6D`), t6 `5efaa78`,
+  t4 `6e3a761` (BACKLOG #18).
 
 ## History
 
 | Date | Machine | Games | Result | Notes |
 |---|---|---:|---|---|
-| 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+6.95 ± 14.48 Elo vs t7**, LOS 82.68%, W230/L210/D560 | **BACKLOG #15** ply-tracked counter-move heuristic re-enabled at order-score 1500 (HEAD `b9d63f8` + lookup_tables/perft cleanup on top, all Elo-neutral). SPRT `elo0=0 elo1=10`, LLR +0.44 in bounds (15% of way to H1) → inconclusive at cap. CI [−7, +21]; pentanomial [21,123,201,125,30] — slight +current lean (30 best vs 21 worst, 125 W-pair vs 123 L-pair). Drift is the right sign; awaiting Intel pool. |
+| 2026-05-31 | Intel 13700KF | **1000 (SPRT)** | **+7.30 ± 14.67 Elo vs t7**, LOS 83.54%, W249/L228/D523 | **BACKLOG #15** counter-move @1500 (HEAD `b9d63f8`). SPRT LLR +0.47 in bounds (16% to H1) → inconclusive at cap. Pentanomial [26,119,187,144,24]. Pools with the AMD row below → **SHIP as `baseline-t8`** (see Pooled section). |
+| 2026-05-31 | AMD 7800X3D | **1000 (SPRT)** | **+6.95 ± 14.48 Elo vs t7**, LOS 82.68%, W230/L210/D560 | **BACKLOG #15** ply-tracked counter-move heuristic re-enabled at order-score 1500 (HEAD `b9d63f8` + lookup_tables/perft cleanup on top, all Elo-neutral). SPRT `elo0=0 elo1=10`, LLR +0.44 in bounds (15% of way to H1) → inconclusive at cap. CI [−7, +21]; pentanomial [21,123,201,125,30] — slight +current lean (30 best vs 21 worst, 125 W-pair vs 123 L-pair). Drift is the right sign; pooled with Intel below. |
 | 2026-05-30 | Intel 13700K | **1000 (SPRT)** | **+2.08 ± 13.86 Elo vs t7**, LOS 61.60%, W221/L215/D564 | **#6+#29+#30 stack** (HEAD `2e5c7f7` = `baseline-t7` + 50-move + SEE-ordering + determinism fix). Ptnml [18,127,209,123,23]. Pools with the AMD row below → **+2.08 Elo, both machines exactly 50.30%, neutral**. A 200g Intel smoke read +33 (variance). **Decision: revert #6 SEE-ordering (`66bce5d`, no measured gain + per-capture cost), keep #29/#30 (correctness).** #6 parked WIP on `wip/see-capture-ordering`. |
 | 2026-05-29 | AMD 7800X3D | **1000 (SPRT)** | **+2.08 ± 15.05 Elo vs t7**, LOS 60.70%, W246/L240/D514 | **#6+#29+#30 stack** (HEAD `2e5c7f7`, +51/−10 src vs `baseline-t7`; note: binary included #6 SEE-ordering, not #30 alone). SPRT `elo0=0 elo1=10`, LLR −0.17 in bounds → inconclusive at cap. CI [−13, +17]; Pentanomial [27,129,186,127,31]. Pools with Intel row above (pooled t=+0.40). **Same bug *class* as #26 (uninitialised read), much smaller blast radius** — history affects ordering only (self-corrects via iterative deepening), no #26-style cross-machine swing. #29/#30 kept on correctness; #6 reverted. |
 | 2026-05-29 | AMD 7800X3D | **1000 (SPRT)** | **+1.39 ± 14.39 Elo vs t7**, LOS 57.51%, W236/L232/D532 | **BACKLOG #29** TT-safe fifty-move-rule draw in AlphaBeta (HEAD `534b44c`, +20/−1 src vs `baseline-t7`). SPRT `elo0=0 elo1=10`, LLR −0.24 in bounds → inconclusive at cap. CI [−13, +16]; same shape as the prior TT-safe correctness fixes (#28 +2.43, TT-safe rep −0.00). Pentanomial near-symmetric [26,121,198,133,22]. **Zero detectable strength cost; ship on correctness.** |
@@ -81,6 +86,26 @@ for historical regression checks; **use the t7 pair going forward**.
 | 2026-05-15 | AMD 7800X3D | 200 | **+1.74 ± 45.82 Elo**, LOS 52.98%, W84/L83/D33 | first AMD baseline; flat (CI swamps it — exactly the #19 motivation) |
 | 2026-05-15 | Intel 13700K | 200 | **-5.21 ± 43.42 Elo**, LOS 40.65%, W77/L80/D43 | parallel run on the Intel box |
 | 2026-05-11 | Intel 13700K | 200 | **+22.62 ± 44.20 Elo**, LOS 84.40%, W85/L72/D43 | original P1a ship measurement (BACKLOG #1) |
+
+### Pooled — #15 counter-move @1500 / baseline-t8 (2000 games, two machines)
+
+Counter-move heuristic enabled @ order-score 1500 (HEAD `b9d63f8`) vs
+frozen **t7**, `tc=10+0.1`, 1t, 64 MB hash, `noob_3moves.epd`,
+round-paired pentanomials:
+
+- Intel 13700KF: W249 / L228 / D523  (+7.30, LOS 83.5%)  [26,119,187,144,24]
+- AMD 7800X3D:   W230 / L210 / D560  (+6.95, LOS 82.7%)  [21,123,201,125,30]
+- **Pooled: W479 / L438 / D1083**, score **51.02%**, **+7.12 Elo
+  [−3.2, +17.4]**, LOS **91.24%**, pooled Ptnml [47,242,388,269,54].
+
+**Verdict: SHIP as `baseline-t8`.** Soft ship: pooled LOS 91% is just
+under the 95% bar, but the two machines agree tightly (+7.30 vs +6.95) —
+the cross-machine reproducibility whose *absence* reverted #26. The
+effect also reproduces the original t4 measurement (+8.7, 2026-05-09) on
+an entirely different baseline. SPRT [0,10] can't accept a ~+7 effect
+(between the hypotheses), so the fixed-games pooled LOS is the readout.
+Baseline refreshed to t8 so future experiments isolate the next change
+rather than re-counting this +7. See BACKLOG #15.
 
 ### Pooled — #28 Part 2 narrow-gate Zarkov / baseline-t7 (2000 games, two machines)
 
