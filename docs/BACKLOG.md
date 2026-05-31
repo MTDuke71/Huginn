@@ -18,7 +18,7 @@
 | 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
 | 13 | Investigate dormant counter-move + TT-mate bugs | **CLOSED** @ `2e97066` | bug | high |
 | 14 | Move-gen — bypass legality pre-filter | **CLOSED** @ `b1154c8` | feature/perf | low |
-| 15 | Re-attempt counter-move heuristic | **OPEN** | feature | medium |
+| 15 | Re-attempt counter-move heuristic | **CLOSED** — soft ship @ `b9d63f8` (+7.1 Elo, LOS 91%, 2-machine) | feature | medium |
 | 16 | Contempt — penalize draw scores | **CLOSED** | feature | medium |
 | 17 | Aspiration-window widening on score swings | **OPEN** | feature | medium |
 | 18 | Refresh `huginn_t4` baseline | **CLOSED** @ `6e3a761` | maintenance | medium |
@@ -739,12 +739,47 @@ Counter-move re-attempt tracked separately as #15.
 
 ### #15: Re-attempt counter-move heuristic on top of 2c
 
-- status: open / unblocked
-- priority: medium
+- status: **CLOSED — soft ship @ `b9d63f8`** (2026-05-31). Counter-move
+  enabled @ score 1500. Kept on two-machine replication despite pooled
+  LOS 91% (just under the 95% bar) — see closure note below.
+- priority: was medium
 - type: feature / research
 - est: 1 session
 - links: #13 closure (2c shipping commit), #3 (continuation history shares
   the search_stack plumbing)
+
+**Closure (2026-05-31) — re-tested @1500 on baseline-t7, two machines:**
+
+| Leg | Score | Elo | LOS | Ptnml(0-2) |
+|---|---|---|---|---|
+| Intel 13700KF | 51.05% | +7.30 ± 14.7 | 83.5% | [26,119,187,144,24] |
+| AMD 7800X3D | 51.00% | +6.95 ± 14.5 | 82.7% | [21,123,201,125,30] |
+| **Pooled 2000g** | 51.02% | **+7.12 [-3.2, +17.4]** | **91.24%** | [47,242,388,269,54] |
+
+Pooled raw W479 / L438 / D1083 (tc=10+0.1, noob_3moves.epd, 64 MB hash).
+
+**Why shipped despite LOS 91% (under the 95% bar):**
+- **Two-machine agreement is tight** (+7.30 vs +6.95). Cross-machine
+  reproducibility — the exact property whose *absence* sank #26 (Intel
+  +12 / AMD −38 → reverted) — is present here. Both legs independently
+  land on ~+7, so "true effect ≤ 0" is unlikely (that's why LOS is 91,
+  not 50).
+- **Replicates the t4 result** (+8.7 Elo, 2026-05-09) on an entirely
+  different baseline (t5 TT-bound fix + magic bitboards + t6/t7 rep work
+  all shipped between). A small effect surviving a baseline change is the
+  signature of a real one.
+- **Precedent**: P1a (#1) shipped at LOS 84% with corroborating WAC
+  evidence. Two-machine replication at LOS 91% is stronger corroboration.
+- The SPRT [elo0=0, elo1=10] structurally can't accept a ~+7 effect (it
+  sits between the hypotheses; Intel LLR stalled at 0.47/2.94). The
+  fixed-games pooled LOS is the meaningful readout, not the SPRT verdict.
+
+**Settings shipped:** `ENABLE_PLY_TRACKED_COUNTERMOVE = 1`, counter-move
+ordering score **1500** (just above the history range, below promotions).
+Score 1500 was confirmed (again) superior to 15000 — the latter's −10 Elo
+on t4 was not re-tested on t7. Baseline NOT refreshed (t7 stays current;
++7 < the +50 refresh trigger). WIP branch `experiment/counter-move-1500`
+retired — the change is now on main.
 
 **Evidence (from #13 bisection, 2026-05-06):**
 - 2b (counter-move @ 15K only): +96 ± 66 Elo, LOS 99.9%

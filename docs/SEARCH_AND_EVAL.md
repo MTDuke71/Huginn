@@ -382,12 +382,11 @@ is audited.
 | MVV-LVA captures | [search.cpp:693](src/search.cpp#L693) `init_mvv_lva`, scoring at [search.cpp:886](src/search.cpp#L886) | ✓ base 1M + (victim·100 + 600 - attacker), EP +10k |
 | Promotions | [search.cpp:936](src/search.cpp#L936) | ✓ Q=90k, R=50k, B=33k, N=32k |
 | Killer moves | [search.cpp:646](src/search.cpp#L646) `update_killer_moves`, scoring at [search.cpp:903](src/search.cpp#L903) | ✓ 2 slots/ply, non-captures only (900k / 800k) |
-| Counter-move heuristic | [search.cpp:917](src/search.cpp#L917) (read), [search.cpp:1528](src/search.cpp#L1528) (update) | ✗ gated by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0`. Re-attempted 2026-05-11 (BACKLOG #15) at scores 15K and 1500 on t4 — both noise-bound (LOS 32% and 66%), deferred. WIP on branch `experiment/counter-move-1500`. |
+| Counter-move heuristic | [search.cpp:917](src/search.cpp#L917) (read), [search.cpp:1528](src/search.cpp#L1528) (update) | ✓ **on @ score 1500** (`ENABLE_PLY_TRACKED_COUNTERMOVE = 1`), BACKLOG #15 soft ship `b9d63f8`. +7.1 Elo / LOS 91% pooled 2000g vs t7, both machines agree. Score 1500 beats 15000 (the latter −10 Elo on t4). |
 | History heuristic | [search.cpp:602](src/search.cpp#L602) update, [search.cpp:619](src/search.cpp#L619) penalty, [search.cpp:636](src/search.cpp#L636) age, [search.cpp:947](src/search.cpp#L947) scoring | ✓ [piece][to] table, depth² bonus/penalty, ×7/8 age every 3 depths |
 | Staged move picker | [search.cpp:838](src/search.cpp#L838) `pick_next_move` | ✓ selection-sort over scored list (no separate stages) |
 
 ### Disabled / broken
-- **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` near the top of `src/search.cpp`. Update path on beta cutoff and read path in ordering both compile out. Re-attempted 2026-05-11 (BACKLOG #15) at scores 15K and 1500 on top of t4 — both ~noise-bound (LOS 32% and 66%), deferred. WIP preserved on branch `experiment/counter-move-1500`.
 - **LMP**: implementation attempted, reverted after gauntlet showed regression. Buggy code preserved at git tag `tier1-stack-broken`; deferred section in BACKLOG #7 is now incrementally unblocking via shipped ordering work.
 - **Aspiration step (b)**: re-attempted 2026-05-11 (BACKLOG #8) at two tunings on t4 (delta=50/min-depth=4: -24 Elo / LOS 12%; delta=100/min-depth=6: -42 Elo / LOS 1%). Recovered +25 Elo from original -49 vs t2 — same lift magnitude as #1 P1a got, but starting point was deeper. Re-deferred. WIP on branch `experiment/aspiration-step-b`.
 

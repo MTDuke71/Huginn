@@ -120,7 +120,8 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
   for the full audited inventory. High-level: negamax + alpha-beta with PVS,
   iterative deepening, TT, quiescence with SEE pruning, null-move (R=4),
   RFP, futility, razoring, LMR (`log·log` table), check extension, IID,
-  killers + history + MVV-LVA + counter-move (gated off), polyglot book.
+  killers + history + MVV-LVA + counter-move (on @1500, BACKLOG #15),
+  polyglot book.
 - **Evaluation**: definitions in [src/evaluation.hpp](../src/evaluation.hpp)
   (constants + masks + PSTs); the actual `evaluate()` lives in
   [search.cpp:88](../src/search.cpp#L88). Hand-crafted,
@@ -222,7 +223,7 @@ shim removed). Sub-phases 4.3-4.10 remain on the plan.
 2. **Search**: negamax + alpha-beta + PVS, iterative deepening, TT,
    quiescence with SEE pruning, full pruning stack (null-move, RFP,
    futility, razoring, LMR with `log·log` table), check extension, IID,
-   killers + history + counter-move (gated off) + MVV-LVA
+   killers + history + counter-move (on @1500) + MVV-LVA
 3. **Evaluation**: hand-crafted, phase-aware (3-bucket switch), full set
    of standard pawn-structure / piece-activity / mobility terms
 4. **Books / TBs**: Polyglot wired and used; Syzygy probe code present

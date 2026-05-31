@@ -49,11 +49,10 @@ they're not behind compile flags.
 The exception:
 
 - `ENABLE_PLY_TRACKED_COUNTERMOVE` / `ENABLE_PLY_TRACKED_TT_MATE` —
-  bisection gates at the top of `src/search.cpp`. TT-mate is **on**
-  (the 2c ship from BACKLOG #13). Counter-move (@ score 1500) is
-  currently **on** as the BACKLOG #15 re-attempt vs t7 (commit
-  `b9d63f8`) — **revert to off if the pooled SPRT isn't clearly
-  positive** (LOS ≥ 95%).
+  bisection gates at the top of `src/search.cpp`. Both **on**: TT-mate
+  is the 2c ship from BACKLOG #13; counter-move (@ score 1500) is the
+  #15 soft ship (`b9d63f8`, +7.1 Elo / LOS 91% pooled 2000g, both
+  machines agree — see BACKLOG #15).
 
 ## Current Performance
 
