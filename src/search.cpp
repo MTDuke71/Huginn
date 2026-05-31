@@ -1191,6 +1191,23 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         info.pv_length[info.ply] = 0;
     }
 
+    // Priority 6 (PERFORMANCE_ARCHITECTURE_REVIEW): compute the static eval at
+    // most once per node, lazily, and share it across every block that needs
+    // it. The position doesn't change before the move loop, so reverse-futility,
+    // futility, and razoring were each calling evalPosition() on the *same*
+    // position — up to 3 full evals at the shallow nodes that dominate the tree
+    // (plus the rare winning-single-rep probe). Accuracy-safe: identical value,
+    // fewer calls.
+    int static_eval = 0;
+    bool has_static_eval = false;
+    auto get_static_eval = [&]() -> int {
+        if (!has_static_eval) {
+            static_eval = evalPosition(pos);
+            has_static_eval = true;
+        }
+        return static_eval;
+    };
+
     // BACKLOG #28 Part 2: TT-safe repetition handling.
     // Repetition draw scores are path-dependent (history-sensitive), while TT
     // keys are path-independent (position-only). So for repetition-draw nodes,
@@ -1212,7 +1229,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // is paid only on real history matches, not every node.
         bool winning_single_rep = false;
         if (!threefold_repetition_draw && repetition_count >= 2 && info.ply > 2) {
-            winning_single_rep = (evalPosition(pos) >= WINNING_REPETITION_AVOID_THRESHOLD);
+            winning_single_rep = (get_static_eval() >= WINNING_REPETITION_AVOID_THRESHOLD);
         }
 
         if (threefold_repetition_draw || winning_single_rep) {
@@ -1314,7 +1331,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     const int REVERSE_FUTILITY_MARGIN = 80;  // cp per ply
     if (!in_check && !isRoot && depth > 0 && depth <= REVERSE_FUTILITY_MAX_DEPTH
             && beta < MATE - 1000 && beta > -(MATE - 1000)) {
-        int eval = evalPosition(pos);
+        int eval = get_static_eval();
         int margin = REVERSE_FUTILITY_MARGIN * depth;
         if (eval - margin >= beta) {
             return eval - margin;
@@ -1379,9 +1396,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     int futility_margin = 0;
     
     if (depth <= MAX_FUTILITY_DEPTH && !in_check && !isRoot) {
-        // Calculate position evaluation if we haven't already
-        int eval = evalPosition(pos);
-        
+        // Reuse the node's cached static eval (computed once, see top of node)
+        int eval = get_static_eval();
+
         // Calculate safety margin based on remaining depth
         futility_margin = FUTILITY_MARGIN_BASE + (FUTILITY_MARGIN_PER_PLY * depth);
         
@@ -1404,7 +1421,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         const int RAZORING_MARGIN = 400;        // 4 pawns of slack
         const int MAX_RAZORING_DEPTH = 4;
         if (depth >= 2 && depth <= MAX_RAZORING_DEPTH && !in_check && !isRoot) {
-            int eval = evalPosition(pos);
+            int eval = get_static_eval();
             if (eval + RAZORING_MARGIN < alpha) {
                 depth--;
                 info.razoring_cuts++;
