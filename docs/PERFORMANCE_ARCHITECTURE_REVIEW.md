@@ -18,7 +18,7 @@ shipped item.
 | 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
 | 5. Staged move picker | ⏳ pending | — | — | — |
 | 6. Cache static eval per node | ✅ IMPLEMENTED (gauntlet pending) | `1d1b013` | NPS +~8% @ d14 startpos (3.51M→3.82M), node count byte-identical (6,239,039) | pending gauntlet (~+5-15 Elo expected) |
-| 7. Remove dead undo-state writes | ⏳ pending | — | — | (small; can bundle with #6) |
+| 7. Remove dead undo-state writes | ✅ IMPLEMENTED (gauntlet pending) | `4c6c475` | S_UNDO −16 B/entry; NPS within noise of #6, node count byte-identical | pending gauntlet (bundles with #6) |
 | 8. Gate TT stats counters behind flag | ⏳ pending | — | — | — |
 | 9. TT cluster layout + generations | ⏳ pending | — | — | (after #4-7) |
 | 10. Incremental PST/phase + pawn hash | ⏳ pending | — | — | (largest remaining speed work) |
