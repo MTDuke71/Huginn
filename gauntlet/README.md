@@ -42,6 +42,105 @@ fewer if the SPRT stops early). The per-tier bats
    by their `[Round]` tag — **not** file order, which is completion
    order under concurrency and scrambles the wings.
 
+## Reading the fastchess result block
+
+Each run ends with a summary like this (the candidate is engine A,
+"current"; the baseline is engine B, `t8`):
+
+```
+Results of Huginn_current vs Huginn_t8 (10+0.1, 1t, 64MB, noob_3moves.epd):
+Elo: 1.39 +/- 14.93, nElo: 2.01 +/- 21.53
+LOS: 57.24 %, DrawRatio: 41.80 %, PairsRatio: 0.98
+Games: 1000, Wins: 241, Losses: 237, Draws: 522, Points: 502.0 (50.20 %)
+Ptnml(0-2): [28, 119, 209, 109, 35], WL/DD Ratio: 0.42
+LLR: -0.25 (-8.4%) (-2.94, 2.94) [0.00, 10.00]
+```
+
+**Header `(10+0.1, 1t, 64MB, noob_3moves.epd)`** — the match conditions:
+`tc=10+0.1` = 10 s base clock + 0.1 s added per move; `1t` = 1 search
+thread; `64MB` = transposition-table hash per engine; `noob_3moves.epd`
+= the opening book (each game starts from a random 3-move opening so the
+sample isn't all the same line). Both engines always get identical
+conditions.
+
+**`Games / Wins / Losses / Draws / Points`** — the plain scoreboard, from
+the candidate's view. `Points = Wins + Draws/2` (241 + 522/2 = 502.0).
+`Points / Games` = the score rate, `50.20 %` here. Win/Loss/Draw are
+*per game*.
+
+**`Elo: 1.39 +/- 14.93`** — the strength difference converted from the
+score rate: `Elo = -400·log10(1/score - 1)`. `+1.39` means the candidate
+is ~1.4 Elo stronger; `± 14.93` is the **95 % confidence half-width**, so
+the true value is very likely in `[-13.5, +16.3]`. A CI that straddles 0
+means "not statistically distinguishable from no change."
+
+**`nElo: 2.01 +/- 21.53`** — *normalized* Elo: the same difference
+expressed in units of the result's spread (standard deviations of the
+pair scores) instead of logistic Elo. It's the scale SPRT power actually
+depends on, and it lets you compare experiments run at different draw
+rates. Bigger |nElo| = a more *resolvable* effect, not necessarily more
+Elo. You can mostly ignore it day-to-day; logistic Elo + CI is the
+headline.
+
+**`LOS: 57.24 %`** — **Likelihood Of Superiority**: the probability the
+candidate is *truly* stronger than the baseline given this data (= the
+fraction of the CI that lies above 0). 50 % = a coin flip; >95 % is the
+usual "real improvement" bar. `57.24 %` = barely leaning positive,
+basically inconclusive.
+
+**`DrawRatio: 41.80 %`** — fraction of *pairs* (not games) that came out
+**level**, i.e. scored exactly 1.0 over the two-game pair. That's the
+middle pentanomial bucket: `209 / 500 = 41.8 %`. Note this is a
+pair-level "tie" rate and is *not* the per-game draw rate (which is
+`522/1000 = 52.2 %`) — a common point of confusion.
+
+**`PairsRatio: 0.98`** — winning pairs over losing pairs:
+`(Ptnml[3]+Ptnml[4]) / (Ptnml[0]+Ptnml[1]) = (109+35)/(28+119) = 0.98`.
+Above 1.0 means more pairs went the candidate's way than the baseline's;
+`0.98` is a hair under even.
+
+**`Ptnml(0-2): [28, 119, 209, 109, 35]`** — the **pentanomial**, the
+heart of the stats. Games are run in **pairs**: the same opening played
+twice with colors reversed, which cancels color/opening luck and roughly
+halves the variance vs counting games independently. Each pair is
+bucketed by the candidate's combined score over its two games:
+
+| bucket | pair score | meaning | count |
+|---|---|---|---|
+| 0 | 0.0 | lost both (LL) | 28 |
+| 1 | 0.5 | one loss, one draw | 119 |
+| 2 | 1.0 | level: win+loss **or** draw+draw | 209 |
+| 3 | 1.5 | one win, one draw | 109 |
+| 4 | 2.0 | won both (WW) | 35 |
+
+Sum = 500 pairs = 1000 games. The **wings** (buckets 0/1 vs 3/4) are what
+move Elo; a symmetric spread = a dead heat. This is what we sum across
+machines to pool, and pairing must be by `[Round]` tag (see Workflow).
+
+**`WL/DD Ratio: 0.42`** — inside the level bucket (the 209), how many
+were *decisive-but-level* pairs (one Win + one Loss) vs *double draws*
+(Draw + Draw). `0.42` = far more double-draws than win/loss pairs → a
+quiet, drawish matchup (near-peer engines trading quick draws), not a
+sharp one trading blows.
+
+**`LLR: -0.25 (-8.4%) (-2.94, 2.94) [0.00, 10.00]`** — the **SPRT**
+(Sequential Probability Ratio Test) state:
+- `[0.00, 10.00]` = the two hypotheses being tested: **H0 = +0 Elo** (no
+  improvement) vs **H1 = +10 Elo**. Set by `-sprt elo0=0 elo1=10`.
+- `-0.25` = the current log-likelihood ratio — which hypothesis the data
+  favors so far. Negative leans toward H0 (no gain), positive toward H1.
+- `(-2.94, 2.94)` = the **decision bounds** (from `alpha=beta=0.05`,
+  = `±ln(19)`). Cross the **lower** bound → stop and **accept H0** ("not
+  a +10 gain"); cross the **upper** → **accept H1** ("≥ +10 confirmed").
+- `(-8.4%)` = progress toward a bound (`-0.25 / 2.94`). Stay between the
+  bounds until the round cap → **inconclusive**, and you fall back to the
+  fixed-games Elo/LOS readout.
+
+A neutral change (like our perf batch) can *never* hit H1 (+10) and only
+slowly drifts toward H0, so it almost always runs to the cap inconclusive
+— that's expected, and why "did we regress?" is answered by the pooled
+CI/LOS, not by the SPRT verdict.
+
 ## Notes
 
 - **Each run is its own experiment.** Both bats delete that machine's
