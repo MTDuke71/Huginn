@@ -411,35 +411,6 @@ Position Engine::mirrorBoard(const Position& pos) {
     return mirrored_pos;
 }
 
-// VICE Part 80: Mirror evaluation test for debugging symmetry issues
-// Tests if evaluation is symmetric when board is mirrored (0:15, 0:31)
-void Engine::MirrorAvailTest(const Position& pos) {
-    std::cout << "\n=== Mirror Evaluation Test ===" << std::endl;
-    
-    // Evaluate original position
-    int eval1 = evalPosition(pos);
-    std::cout << "Original position eval: " << eval1 << " cp" << std::endl;
-    
-    // Create mirrored position and evaluate
-    Position mirrored = mirrorBoard(pos);
-    int eval2 = evalPosition(mirrored);
-    std::cout << "Mirrored position eval: " << eval2 << " cp" << std::endl;
-    
-    // Since mirrorBoard flips the side to move, we need to negate eval2 
-    // to compare from the same perspective
-    int eval2_corrected = -eval2;
-    
-    // The evaluations should be equal for symmetric evaluation function
-    if (eval1 == eval2_corrected) {
-        std::cout << "✓ PASS: Evaluation is symmetric!" << std::endl;
-    } else {
-        std::cout << "✗ FAIL: Evaluation asymmetry detected!" << std::endl;
-        std::cout << "Difference: " << abs(eval1 - eval2_corrected) << " cp" << std::endl;
-        std::cout << "This indicates a bug in the evaluation function." << std::endl;
-    }
-    std::cout << "=========================" << std::endl;
-}
-
 bool Engine::time_up() const {
     if (should_stop) return true;
     if (current_limits.infinite) return false;
@@ -1460,30 +1431,10 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // crippling TT pruning. See docs/PERFORMANCE_ARCHITECTURE_REVIEW.md (Priority 1).
     const int original_alpha = alpha;
 
-#ifdef USE_MULTI_CUT
-    // Multi-Cut pruning: track beta cutoffs to enable early termination
-    // If multiple moves cause beta-cutoffs, remaining moves are likely also good
-    int beta_cutoff_count = 0;
-    const int MULTI_CUT_THRESHOLD = 3;  // Number of cutoffs before pruning
-    const int MIN_MULTI_CUT_DEPTH = 6;  // Minimum depth to apply multi-cut
-    const int MULTI_CUT_MOVES_TO_TRY = 6;  // Try this many moves before applying multi-cut
-#endif
-
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, depth, iid_move);
-
-#ifdef USE_MULTI_CUT
-        // Multi-Cut pruning: if we've had enough beta cutoffs, prune remaining moves
-        if (depth >= MIN_MULTI_CUT_DEPTH && i >= MULTI_CUT_MOVES_TO_TRY &&
-            beta_cutoff_count >= MULTI_CUT_THRESHOLD && !in_check) {
-
-            // Skip remaining moves - position is too strong, remaining moves likely also good
-            info.multi_cut_prunes += (move_list.count - i);
-            break;
-        }
-#endif
 
         if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
         ++legal_count;
@@ -1594,12 +1545,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                     if (i == 0) {
                         info.fhf++; // Fail high first (first move caused beta cutoff)
                     }
-                    
-#ifdef USE_MULTI_CUT
-                    // Track beta cutoffs for multi-cut pruning
-                    beta_cutoff_count++;
-#endif
-                    
+
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
                     
@@ -2038,15 +1984,6 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                       << info.razoring_cuts << " (" << std::fixed << std::setprecision(1)
                       << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
         }
-        
-#ifdef USE_MULTI_CUT
-        // Print multi-cut pruning statistics for this depth
-        if (info.multi_cut_prunes > 0) {
-            std::cout << "info string Depth " << current_depth << " - Multi-cut prunes: " 
-                      << info.multi_cut_prunes << " (" << std::fixed << std::setprecision(1) 
-                      << (double(info.multi_cut_prunes) / info.nodes * 100.0) << "%)" << std::endl;
-        }
-#endif
 
         // Iteration-start time gating happens at the top of the loop; no
         // post-iteration time check needed here.

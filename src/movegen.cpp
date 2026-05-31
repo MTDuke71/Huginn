@@ -39,28 +39,6 @@ void generate_legal_moves(Position& pos, S_MOVELIST& list) {
     }
 }
 
-// Quiescence: legal captures only.
-// MakeMove is balanced with TakeMove and self-undoes when returning 0
-// (illegal), so we can run the legality filter on `pos` directly and
-// skip the cost of copying the entire Position. This keeps qsearch's
-// "SEE before MakeMove" code path correct (callers see the pre-move
-// pos when SEE-pruning).
-void generate_all_caps(Position& pos, S_MOVELIST& list) {
-    S_MOVELIST all_moves;
-    generate_all_moves(pos, all_moves);
-
-    list.count = 0;
-    for (int i = 0; i < all_moves.size(); ++i) {
-        const S_MOVE& move = all_moves[i];
-        if (move.is_capture()) {
-            if (pos.MakeMove(move) == 1) {
-                list.add_capture_move(move, pos);
-                pos.TakeMove();
-            }
-        }
-    }
-}
-
 // Pseudo-legal captures only — no MakeMove/Unmake. Caller is responsible
 // for legality (qsearch already does `if (pos.MakeMove(m) != 1) continue`).
 // Preserves the pre-move MVV-LVA score set by the bitboard generator.

@@ -17,7 +17,7 @@ representation for legality / square-walking helpers.
   draw gated on winning eval; +7.6 Elo pooled vs t6, both machines
   positive). Prior: `baseline-t6` (#27 winning-rep avoidance),
   `baseline-t5 = 3eab266` (P1a + TT-bound fix + magic bitboards).
-- ✅ **Comprehensive test suite**: 208 GoogleTest cases
+- ✅ **Comprehensive test suite**: 197 GoogleTest cases
 - ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
   see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration
   ladder
@@ -138,7 +138,7 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 - **Incremental Updates**: O(1) make/unmake operations with complete state restoration
 - **Type Safety**: Extensive use of C++17 type-safe enums and constexpr functions
 - **Performance Focus**: Zero-copy operations, efficient bit manipulation, O(1) piece location via piece lists
-- **Comprehensive Testing**: 232 automated tests covering all major components with 100% pass rate
+- **Comprehensive Testing**: 197 automated tests covering all major components with 100% pass rate
 
 ### Move System Architecture
 
@@ -166,7 +166,7 @@ bitboards, mailbox, Zobrist key, material counts, and piece lists.
 
 ### Testing Requirements
 - All new functionality must have corresponding tests in `test/` directory
-- **Current size**: ~207 GoogleTest cases across 30 files (verify the
+- **Current size**: ~197 GoogleTest cases across 34 files (verify the
   pass count by running the suite — it changes as features land)
 - Perft tests for move generation validation
 - Position validation with FEN round-trip testing
@@ -196,7 +196,7 @@ bitboards, mailbox, Zobrist key, material counts, and piece lists.
 ## File Organization
 
 - `src/`: Core engine source files
-- `test/`: Comprehensive test suite (230+ tests)
+- `test/`: Comprehensive test suite (197 tests across 34 files)
 - `docs/`: Extensive documentation including API reference, architecture guides
 - `benchmark/`: Performance tracking and benchmark results
 - `mirror_test/`: Evaluation symmetry validation
@@ -227,7 +227,7 @@ shim removed). Sub-phases 4.3-4.10 remain on the plan.
    of standard pawn-structure / piece-activity / mobility terms
 4. **Books / TBs**: Polyglot wired and used; Syzygy probe code present
    but gated off (`if (false && …)` at search.cpp:1218)
-5. **Test suite**: ~207 GoogleTest cases + WAC300 / LCT2 EPD sweeps
+5. **Test suite**: ~197 GoogleTest cases + WAC300 / LCT2 EPD sweeps
 
 ### Where we are vs target strength
 - Calibration baseline: ~1500-1700 Elo at 10+0.1 (huginn current vs

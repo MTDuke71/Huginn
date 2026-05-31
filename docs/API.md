@@ -52,5 +52,5 @@ sees comes through stdin/stdout per the UCI spec.
   a non-obvious invariant, add a one-line comment in code rather than
   a separate doc page.
 - Performance numbers. They drift fast. Current ballpark
-  (~1.5M nps, 208/208 tests) lives in [CLAUDE.md](CLAUDE.md) and gets
+  (~3.5M nps, 197/197 tests) lives in [CLAUDE.md](CLAUDE.md) and gets
   refreshed when it materially changes.

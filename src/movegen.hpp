@@ -97,9 +97,6 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list);
 // Pseudo-legal moves filtered by Position::MakeMove legality check.
 void generate_legal_moves(Position& pos, S_MOVELIST& list);
 
-// Quiescence: legal captures only.
-void generate_all_caps(Position& pos, S_MOVELIST& list);
-
 // Quiescence (lazy filter): pseudo-legal captures only — no MakeMove/Unmake.
 // Caller must check legality via `pos.MakeMove(...) == 1` before recursing.
 // Captures keep their pre-move MVV-LVA scoring set by the bitboard generator

@@ -37,7 +37,7 @@ cd perft
 .\perf_test.ps1
 ```
 
-Current state: **208/208 tests passing**.
+Current state: **197/197 tests passing**.
 
 ## Search Optimizations
 
@@ -46,12 +46,8 @@ quiescence, IID, aspiration step a, TT, SEE in qsearch, ply-tracked
 TT-mate adjustment, etc.) are **always-on** in the Release build —
 they're not behind compile flags.
 
-The two exceptions:
+The exception:
 
-- `USE_MULTI_CUT` — multi-cut pruning, defined `#ifdef
-  USE_MULTI_CUT` in `src/search.cpp`. Not defined in
-  `CMakeLists.txt`, so it is **disabled** by default. Define it
-  per-target to experiment.
 - `ENABLE_PLY_TRACKED_COUNTERMOVE` / `ENABLE_PLY_TRACKED_TT_MATE` —
   bisection gates at the top of `src/search.cpp`. Default is
   TT-mate **on**, counter-move **off** (the 2c ship from BACKLOG #13;

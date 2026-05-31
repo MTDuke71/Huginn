@@ -370,7 +370,6 @@ is audited.
 | SEE pruning (qsearch) | [search.cpp:1725](src/search.cpp#L1725), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
 | Check extension | [search.cpp:1242](src/search.cpp#L1242) | ✓ `depth++` when in check |
 | Internal Iterative Deepening (IID) | [search.cpp:1598](src/search.cpp#L1598) | ✓ when no TT move; ordered as priority 1.5M |
-| Multi-cut pruning | [search.cpp:1398](src/search.cpp#L1398) | ✗ behind `#ifdef USE_MULTI_CUT`, **NOT enabled** |
 | Late Move Pruning (LMP) | — | ✗ attempted, reverted; needs SEE main-ordering + continuation history first (see Tier 1 progress) |
 | Aspiration windows at root | — | ✗ step (a) root-PVS shipped (+13.9 Elo / `28cb2cd`); step (b) re-deferred 2026-05-11 — recovered +25 Elo since original attempt but still net-negative (BACKLOG #8) |
 
@@ -389,7 +388,6 @@ is audited.
 
 ### Disabled / broken
 - **Counter-move heuristic** is implemented but gated off by `ENABLE_PLY_TRACKED_COUNTERMOVE = 0` near the top of `src/search.cpp`. Update path on beta cutoff and read path in ordering both compile out. Re-attempted 2026-05-11 (BACKLOG #15) at scores 15K and 1500 on top of t4 — both ~noise-bound (LOS 32% and 66%), deferred. WIP preserved on branch `experiment/counter-move-1500`.
-- **Multi-cut** is behind `#ifdef USE_MULTI_CUT` and not defined in any preset.
 - **LMP**: implementation attempted, reverted after gauntlet showed regression. Buggy code preserved at git tag `tier1-stack-broken`; deferred section in BACKLOG #7 is now incrementally unblocking via shipped ordering work.
 - **Aspiration step (b)**: re-attempted 2026-05-11 (BACKLOG #8) at two tunings on t4 (delta=50/min-depth=4: -24 Elo / LOS 12%; delta=100/min-depth=6: -42 Elo / LOS 1%). Recovered +25 Elo from original -49 vs t2 — same lift magnitude as #1 P1a got, but starting point was deeper. Re-deferred. WIP on branch `experiment/aspiration-step-b`.
 

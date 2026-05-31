@@ -61,14 +61,13 @@ struct SearchInfo {
     
     // Advanced search optimization statistics
     uint64_t razoring_cuts;  // Razoring depth reductions applied
-    uint64_t multi_cut_prunes;  // Multi-cut subtree prunings
-    
+
     // Counter-move heuristic: track moves played to update counter-move table
     S_MOVE search_stack[64];  // Stack of moves made during search (max 64 plies)
     
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false), 
                    quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0),
-                   futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0), multi_cut_prunes(0) {
+                   futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();
@@ -142,10 +141,7 @@ public:  // Make members public for easier access
     // VICE Tutorial: Mirror Board function for evaluation testing
     // Creates a mirrored copy of the position for symmetry testing
     Position mirrorBoard(const Position& pos);
-    
-    // VICE Part 80: Mirror evaluation test for debugging symmetry issues
-    void MirrorAvailTest(const Position& pos);
-    
+
     // Time checking
     bool time_up() const;
     void check_up(SearchInfo& info);
