@@ -100,17 +100,25 @@ private:
     
 public:
     explicit TranspositionTable(size_t size_mb = 64) {
+        resize_mb(size_mb);
+    }
+
+    // Resize the table to the requested size in MB (UCI "Hash" option).
+    // Rounds down to the nearest power of 2 of entries for fast masking, and
+    // discards all existing entries. Clamped to at least 1 entry.
+    void resize_mb(size_t size_mb) {
         // Calculate number of entries for given size in MB
         size_t num_entries = (size_mb * 1024 * 1024) / sizeof(TTEntry);
-        
-        // Round down to nearest power of 2 for fast indexing
+
+        // Round down to nearest power of 2 for fast indexing (minimum 1 entry)
         size_t power_of_2 = 1;
         while (power_of_2 * 2 <= num_entries) {
             power_of_2 *= 2;
         }
-        
-        table.resize(power_of_2);
+
+        table.assign(power_of_2, TTEntry());  // resize + zero-initialize
         size_mask = power_of_2 - 1;
+        hits = misses = writes = 0;
     }
     
     // Store position in transposition table with depth-preferred replacement

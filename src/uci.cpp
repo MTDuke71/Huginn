@@ -224,6 +224,7 @@ void UCIInterface::send_id() {
  * - BookFile: Path to the opening book file
  */
 void UCIInterface::send_options() {
+    std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
     std::cout << "option name OwnBook type check default true" << std::endl;
@@ -501,9 +502,24 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
         std::string option_value = tokens[4];
         
         if (option_name == "Hash") {
-            // Hash tables not implemented yet, acknowledge but don't set
-            if (debug_mode) {
-                std::cout << "info string Hash setting acknowledged (not implemented yet)" << std::endl;
+            // Resize the transposition table to the requested size in MB.
+            // Clamp to the advertised range (1..4096 MB).
+            try {
+                int hash_mb = std::stoi(option_value);
+                if (hash_mb < 1) hash_mb = 1;
+                if (hash_mb > 4096) hash_mb = 4096;
+                if (search_engine) {
+                    search_engine->tt_table.resize_mb(static_cast<size_t>(hash_mb));
+                }
+                if (debug_mode) {
+                    std::cout << "info string Hash set to " << hash_mb << " MB ("
+                              << (search_engine ? search_engine->tt_table.get_size() : 0)
+                              << " entries)" << std::endl;
+                }
+            } catch (const std::exception&) {
+                if (debug_mode) {
+                    std::cout << "info string Hash value invalid: " << option_value << std::endl;
+                }
             }
         }
         else if (option_name == "Threads") {

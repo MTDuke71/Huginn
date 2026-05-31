@@ -67,3 +67,5 @@
 2026-04-26, edc2085, pure-bitboard-engine perft (clean build), 21858
 2026-04-26, ad086cb, pure-bitboard-engine huginn2 bitboard perft (BITBOARD_ENGINE=1), 25251
 2026-05-30, 466761a, AMD Ryzen 7 7800X3D 8-Core, post lookup_tables consolidation + dead perft cleanup + rename, 11308
+2026-05-30, 4068761, 13th Gen Intel Core i7-13700KF, Performance test, 9571
+2026-05-30, 4068761, 13th Gen Intel Core i7-13700KF, Performance test, 9432
