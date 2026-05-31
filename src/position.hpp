@@ -70,11 +70,11 @@ struct S_UNDO {
     uint16_t halfmove_clock;  // previous fifty move counter (fiftyMove)
     uint64_t zobrist_key;     // previous position key (posKey)
     Piece captured;           // captured piece (if any)
-    
-    // Derived state for incremental updates (performance optimization)
-    std::array<int, 2> king_sq_backup;        // Previous king positions
-    std::array<int, 2> material_score_backup; // Previous material scores
-    
+
+    // (king_sq / material_score backups removed: TakeMove restores king_sq
+    // directly and material_score is maintained incrementally by the atomic
+    // piece ops, so the backups were write-only — see Priority 7.)
+
     // Constructor
     S_UNDO() : move(), castling_rights(0), ep_square(-1), halfmove_clock(0), zobrist_key(0), captured(Piece::None) {}
 };
@@ -110,7 +110,6 @@ public:
     void reset();
     bool set_from_fen(const std::string& fen);
     std::string to_fen() const;
-    void save_derived_state(S_UNDO& undo);
     void rebuild_counts();
     void set_startpos();
     
@@ -123,11 +122,6 @@ public:
     // VICE Part 83: Null move functions for null move pruning
     void MakeNullMove();
     void TakeNullMove();
-    
-    void restore_derived_state(const S_UNDO& undo) {
-        king_sq = undo.king_sq_backup;
-        material_score = undo.material_score_backup;
-    }
     
     // Update derived state incrementally for a move (much faster than rebuild_counts).
     // Maintains material_score and king_sq[]. Pawn bitboard updates removed in 4.8a

@@ -211,11 +211,6 @@ std::string Position::to_fen() const {
     return fen;
 }
 
-void Position::save_derived_state(S_UNDO& undo) {
-    undo.king_sq_backup = king_sq;
-    undo.material_score_backup = material_score;
-}
-
 void Position::rebuild_counts() {
     // Recompute color_bitboards / occupied_bitboard from piece_bitboards
     // (the per-piece-type bitboards are the source of truth — set() and
@@ -302,9 +297,6 @@ int Position::MakeMove(const S_MOVE& move) {
     } else {
         undo.captured = at_sq64(to);  // Normal capture (to is sq64)
     }
-    
-    // Save additional state needed for undo
-    save_derived_state(undo);
     
     // Handle en passant captures BEFORE updating ep_square
     if (move.is_en_passant()) {
