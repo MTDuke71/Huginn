@@ -34,6 +34,7 @@
 | 28 | PGN-driven repetition conversion analysis | **CLOSED** — P1 @ `a21a037`, P2 @ `304f2b7` (`baseline-t7`, +7.6 Elo pooled) | research/bug | high |
 | 29 | Fifty-move-rule search blindness | **P1 KEPT on correctness** @ `534b44c` (near-inert at 10+0.1; pooled −5.73 = variance). P2 (clock-scaled eval) DEFERRED | bug | low |
 | 30 | Nondeterministic search from uninitialized history | **FIXED** — `search_history` was uninitialized; zero-init. Search now deterministic at fixed depth | bug | high |
+| 31 | TT-size (`Hash`) SPRT sweep — 64 vs 128 vs 256 MB | **OPEN** | tuning | low |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -919,6 +920,58 @@ scoring formula).
 ---
 
 ## Backlog — medium priority (open + deferred)
+
+### #31: TT-size (`Hash`) SPRT sweep — 64 vs 128 vs 256 MB
+
+- status: **OPEN** (added 2026-05-30) — unblocked by `0326eae`
+- priority: low
+- type: tuning
+- est: 1 session (3 SPRT legs, two-machine pooled per #19)
+
+**Unblocked 2026-05-30 (`0326eae`).** The UCI `Hash` option was a no-op —
+acknowledged but never wired, so the TT was effectively hardcoded at
+64 MB regardless of what fastchess/GUIs sent. `0326eae` extracted
+`TranspositionTable::resize_mb()` (`src/transposition_table.hpp`),
+advertised `option name Hash type spin default 64 min 1 max 4096`, and
+wired the setoption handler to resize + clamp. The knob is now testable.
+
+**Why this was worth opening (perft surprise → cache discussion,
+2026-05-30).** The perft tracking run had the Intel i7-13700KF beating
+the AMD 7800X3D (~9.5 s vs ~11.3 s), which looked backwards vs the
+"X3D is great for chess" lore. Resolution: perft is a compute-bound,
+cache-resident movegen loop — it rewards raw clock/IPC (Intel's faster
+P-cores win), not L3 capacity. The X3D's 96 MB V-cache only pays off
+on the workload it was never tested on here: **engine search with a TT
+large enough to be latency-bound**. At the current 64 MB the entire TT
+fits inside the X3D's 96 MB L3 (best case for it) but spills to DRAM on
+the 13700KF (~30 MB L3).
+
+**Hypothesis to test:**
+- At short TC (10+0.1, our SPRT standard) the TT barely fills 64 MB
+  before the move is made, so 128/256 MB is likely **neutral-to-slightly-
+  negative** (added cache-miss latency, no hit-rate gain). Same pattern
+  as #26 — "bigger/cached isn't free when the data is already hot."
+- **X3D-specific watch:** keep size ≤ ~96 MB to stay L3-resident on the
+  AMD box. Pushing past 96 MB should hurt the AMD leg more than the
+  Intel leg (Intel already spills) — if the two machines disagree by
+  size, that's the cache boundary showing up, not noise.
+
+**Plan:**
+1. Build once; run three SPRT legs per machine via the #19 two-machine
+   pooled workflow: `Hash=64` (control) vs `128`, vs `256`, each
+   `elo0=0 elo1=10 alpha=0.05 beta=0.05`, current vs current with only
+   the `setoption Hash` line differing.
+2. Set `Hash` **before** `isready`/`position` — `resize_mb()` reallocs
+   and discards entries, so mid-game resize would wipe the table.
+3. If any size clears LOS ≥ 95% positive, bump the default in
+   `Engine`'s ctor (`src/search.hpp:90`, currently `tt_table(64)`).
+   Otherwise record neutral and keep 64 MB (and note the X3D-boundary
+   finding for the lore file).
+
+**Note:** lower priority than strength features — this is a tuning knob
+with a likely-neutral prior at our TC, but it's cheap now that the
+option works, and the cross-machine cache-boundary question is
+independently interesting.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 
