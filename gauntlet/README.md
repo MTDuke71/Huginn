@@ -52,13 +52,15 @@ fewer if the SPRT stops early). The per-tier bats
   with an Intel push (different paths) — clean git merges.
 - Logs are committed too (per request). They are large and noisy;
   prune old ones if the repo gets heavy.
-- **Current baseline is `baseline-t8`** (BACKLOG #15 counter-move @1500
-  enabled, commit `b9d63f8`; +7.1 Elo pooled vs t7). Built on the Intel
-  box with `-DENABLE_FATHOM=ON`, SHA256 `A12EA8F5…A3DD`. Keep
-  `huginn_t8.exe` byte-identical across both machines — copy the binary
-  from the Intel freeze; **do not rebuild per-machine**. Prior frozen
-  baselines: t7 `304f2b7` (SHA256 `AC589A61…4C2E6D`), t6 `5efaa78`,
-  t4 `6e3a761` (BACKLOG #18).
+- **Current baseline is `baseline-t8` = `b9d63f8`** (BACKLOG #15
+  counter-move @1500 enabled; +7.1 Elo pooled vs t7). **Each machine
+  builds its own `huginn_t8.exe` from the `baseline-t8` tag** with
+  `-DENABLE_FATHOM=ON` — the same per-machine build environment the bat
+  uses to rebuild the *candidate* from source, so both engines in the
+  match are compiled identically on that box. Do **not** copy one box's
+  binary to the other; the tag (= shared source) is what guarantees the
+  two legs play the same baseline. Prior baselines: t7 `304f2b7`,
+  t6 `5efaa78`, t4 `6e3a761` (BACKLOG #18).
 
 ## History
 
