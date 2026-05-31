@@ -35,6 +35,7 @@
 | 29 | Fifty-move-rule search blindness | **P1 KEPT on correctness** @ `534b44c` (near-inert at 10+0.1; pooled −5.73 = variance). P2 (clock-scaled eval) DEFERRED | bug | low |
 | 30 | Nondeterministic search from uninitialized history | **FIXED** — `search_history` was uninitialized; zero-init. Search now deterministic at fixed depth | bug | high |
 | 31 | TT-size (`Hash`) SPRT sweep — 64 vs 128 vs 256 MB | **OPEN** | tuning | low |
+| 32 | PEXT slider attacks (build-gated, fallback to magic) | **OPEN** | speed/research | low |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1007,6 +1008,55 @@ the 13700KF (~30 MB L3).
 with a likely-neutral prior at our TC, but it's cheap now that the
 option works, and the cross-machine cache-boundary question is
 independently interesting.
+
+### #32: PEXT slider attacks (build-gated, fallback to magic)
+
+- status: **OPEN** (future investigation, added 2026-05-31)
+- priority: low
+- type: speed / research
+- est: ~1 session (impl + init-verifier reuse) + 1 gauntlet
+
+**Idea.** Replace the magic-bitboard slider index (multiply + fixed
+shift) with a BMI2 **PEXT** index (`_pext_u64(occupancy, mask)`) for
+`rook_attacks` / `bishop_attacks`. PEXT extracts exactly the masked
+occupancy bits into a dense index, so attack tables are **exactly
+sized** — no over-allocation from fixed magic shifts. Smaller tables =
+better L1/L2 residency, which is the cache-locality lever from #31 (and
+the perft/X3D thread). Current code is pure magic
+([src/magic_bitboards.cpp](src/magic_bitboards.cpp)); `git grep` confirms
+no PEXT/PDEP anywhere in `src/`.
+
+**Why it's viable NOW (the AMD-vs-Intel angle).** PEXT was historically
+an Intel-only win: fast (~3c) on Intel, microcoded and brutally slow
+(~18c) on AMD **pre-Zen3** — which is exactly why magic (vendor-neutral
+multiply) was the right call when #24 landed. But **both current gauntlet
+boxes have fast PEXT**: 7800X3D (Zen 4, ~3c) and 13700KF (Raptor Lake,
+~3c). The historical reason to avoid it is gone on our hardware.
+
+**Constraints / design:**
+- **Build-gated.** Wrap the PEXT path in `#ifdef __BMI2__` (or a CMake
+  option) with the existing magic path as the fallback, so it never
+  regresses on an older/slow-PEXT AMD box. `/arch:AVX2` is already set
+  (CMakeLists.txt:130), so BMI2 is available in the current build.
+- Reuse the init-time **verifier** from #24 (walks every (square,
+  occupancy-subset) vs a ray-walk reference) — it's table-source-agnostic
+  and would validate the PEXT tables for free.
+- Keep `bishop_attacks` / `rook_attacks` signatures unchanged; only the
+  internal index computation swaps. Every caller stays untouched.
+
+**Expectation (set realistically).** On fast-PEXT hardware PEXT bitboards
+are typically **neutral-to-slightly-faster** than magic — the win is
+mostly cache (smaller tables), not raw lookup. Could easily land in the
+#26 bucket ("NPS up, Elo flat at our TC") since slider lookup is already
+cache-resident and cheap. Treat expected Elo as ~0 ± noise; the real
+question is the **bench/NPS + cache-miss profile** (VTune/uProf, per the
+new BUILD_GUIDE profiling section), not gauntlet Elo. Worth doing as a
+speed/architecture experiment + a confirmation that it doesn't regress,
+not as a strength lever.
+
+**Revisit trigger / sequencing.** Low priority vs strength work. Natural
+to pair with #31 (both are cache experiments) and to measure with the
+profiling tooling once that's set up.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 
