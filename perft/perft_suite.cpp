@@ -6,26 +6,20 @@
 #include <chrono>
 #include <iomanip>
 #include "position.hpp"
-#include "movegen_bb.hpp"
+#include "movegen.hpp"
 #include "init.hpp"
 
-// Huginn2 Perft function - counts all legal move paths using bitboard move generation
-static uint64_t perft_huginn2(Position& pos, int depth) {
+// VICE Perft function - counts all legal move paths to a given depth using VICE MakeMove/TakeMove
+static uint64_t perft_vice(Position& pos, int depth) {
     if (depth == 0) return 1;
-    
-    S_MOVELIST list;
-    list.count = 0;
-    
-    // Use bitboard move generation
-    BitboardMoveGen::generate_all_moves_bitboard(pos, list);
-    
+    S_MOVELIST list; 
+    generate_all_moves(pos, list);  // Use pseudo-legal moves + MakeMove validation (true VICE style)
     uint64_t nodes = 0;
     for (int i = 0; i < list.count; i++) {
         const auto& m = list.moves[i];
-        
-        // Use VICE MakeMove/TakeMove for validation
+        // Use VICE MakeMove/TakeMove - MakeMove validates legality
         if (pos.MakeMove(m) == 1) {
-            nodes += perft_huginn2(pos, depth - 1);
+            nodes += perft_vice(pos, depth - 1);
             pos.TakeMove();
         }
     }
@@ -128,8 +122,6 @@ bool test_position(const PerftTestCase& test_case, int max_depth, int& total_tes
         return false; // No tests to run for this position
     }
     
-    std::cout << "FEN: " << test_case.fen << std::endl;
-    
     // Test each depth
     for (const auto& expected : test_case.expected_results) {
         int depth = expected.first;
@@ -140,25 +132,30 @@ bool test_position(const PerftTestCase& test_case, int max_depth, int& total_tes
         total_tests++;
         
         auto start_time = std::chrono::high_resolution_clock::now();
-        uint64_t actual_nodes = perft_huginn2(pos, depth);
+        uint64_t actual_nodes = perft_vice(pos, depth);
         auto end_time = std::chrono::high_resolution_clock::now();
         
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
         
         if (actual_nodes == expected_nodes) {
-            std::cout << "  Depth " << depth << ": " << actual_nodes << " nodes (" << duration.count() << "ms) ✅ PASS" << std::endl;
+            // For passing tests, show a brief single line
+            if (depth == *depths_to_test.rbegin()) { // Only show for the last depth tested
+                std::cout << "PASS - depths 1-" << depth << " (" << duration.count() << "ms)" << std::endl;
+            }
         } else {
             // First failure detected - show detailed information and stop
-            std::cout << "  Depth " << depth << ": " << actual_nodes << " nodes (" << duration.count() << "ms) ❌ FAIL" << std::endl;
-            std::cout << "    Expected: " << expected_nodes << std::endl;
-            std::cout << "    Actual:   " << actual_nodes << std::endl;
+            std::cout << "\n=== FIRST FAILURE DETECTED ===" << std::endl;
+            std::cout << "FAIL: Depth " << depth << std::endl;
+            std::cout << "  FEN: " << test_case.fen << std::endl;
+            std::cout << "  Expected: " << expected_nodes << std::endl;
+            std::cout << "  Actual:   " << actual_nodes << std::endl;
+            std::cout << "  Time: " << duration.count() << "ms" << std::endl;
             std::cout << "\n=== STOPPING AT FIRST FAILURE FOR DEBUGGING ===" << std::endl;
             failed_tests++;
             return true; // Return true to indicate we should stop testing
         }
     }
     
-    std::cout << std::endl;
     return false; // Return false to continue testing
 }
 
@@ -166,36 +163,69 @@ int main(int argc, char* argv[]) {
     // Initialize the chess engine
     Huginn::init();
     
-    std::cout << "=== Huginn2 Bitboard Perft Suite (First 2 Positions) ===" << std::endl;
-    std::cout << "Testing bitboard move generation against comprehensive perft suite" << std::endl;
+    std::cout << "=== VICE Perft Suite Demo ===" << std::endl;
+    std::cout << "Testing chess engine with VICE MakeMove/TakeMove against comprehensive perft suite" << std::endl;
     std::cout << std::endl;
     
-    // Default parameters - focus on first 2 positions
+    // Default parameters
     int max_depth = 6;
     std::string epd_file = "test/perftsuite.epd";
-    int positions_to_test = 2;  // Fixed to first 2 positions
+    bool quick_test = false;
+    bool interactive_mode = true;
     
-    // Parse command line arguments for depth override
+    // Parse command line arguments
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--depth" && i + 1 < argc) {
             max_depth = std::stoi(argv[++i]);
+        } else if (arg == "--file" && i + 1 < argc) {
+            epd_file = argv[++i];
+        } else if (arg == "--quick") {
+            quick_test = true;
+            interactive_mode = false;
+        } else if (arg == "--full") {
+            quick_test = false;
+            interactive_mode = false;
         } else if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
             std::cout << "Options:" << std::endl;
             std::cout << "  --depth <n>     Maximum depth to test (default: 6)" << std::endl;
+            std::cout << "  --file <path>   Path to EPD file (default: test/perftsuite.epd)" << std::endl;
+            std::cout << "  --quick         Run quick test (first 2 positions only)" << std::endl;
+            std::cout << "  --full          Run full test suite (all positions)" << std::endl;
             std::cout << "  --help, -h      Show this help message" << std::endl;
-            std::cout << std::endl;
-            std::cout << "This program tests the first 2 positions from perftsuite.epd using Huginn2 bitboard implementation." << std::endl;
             return 0;
         }
+    }
+    
+    // Interactive mode: ask user what they want to run
+    if (interactive_mode) {
+        std::cout << "Choose test mode:" << std::endl;
+        std::cout << "1. Quick Test (first 2 positions - fast verification)" << std::endl;
+        std::cout << "2. Full Test Suite (all positions - comprehensive)" << std::endl;
+        std::cout << "Enter your choice (1 or 2): ";
+        
+        int choice;
+        std::cin >> choice;
+        
+        if (choice == 1) {
+            quick_test = true;
+            std::cout << "\n🚀 Running Quick Test (first 2 positions)..." << std::endl;
+        } else if (choice == 2) {
+            quick_test = false;
+            std::cout << "\n🔍 Running Full Test Suite (all positions)..." << std::endl;
+        } else {
+            std::cout << "\nInvalid choice. Defaulting to Quick Test." << std::endl;
+            quick_test = true;
+        }
+        std::cout << std::endl;
     }
     
     std::cout << "Configuration:" << std::endl;
     std::cout << "  EPD file: " << epd_file << std::endl;
     std::cout << "  Max depth: " << max_depth << std::endl;
-    std::cout << "  Positions: First " << positions_to_test << " positions only" << std::endl;
-    std::cout << "  Method: Huginn2 bitboard move generation" << std::endl;
+    std::cout << "  Test mode: " << (quick_test ? "Quick (first 2 positions)" : "Full (all positions)") << std::endl;
+    std::cout << "  VICE Methods: Using MakeMove/TakeMove for move execution" << std::endl;
     std::cout << std::endl;
     
     // Load test cases
@@ -206,16 +236,19 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    if (test_cases.size() < positions_to_test) {
-        positions_to_test = test_cases.size();
-        std::cout << "Note: Only " << positions_to_test << " positions available in EPD file" << std::endl;
-    }
+    std::cout << "Loaded " << test_cases.size() << " test positions" << std::endl;
     
-    std::cout << "Loaded " << test_cases.size() << " test positions (testing first " << positions_to_test << ")" << std::endl;
+    // Determine how many positions to test
+    size_t positions_to_test = quick_test ? std::min(size_t(2), test_cases.size()) : test_cases.size();
+    
+    if (quick_test && test_cases.size() > 2) {
+        std::cout << "Quick mode: Testing only the first " << positions_to_test << " positions" << std::endl;
+    }
+    std::cout << std::endl;
     
     // Count total expected tests for the positions we'll actually test
     int total_expected_tests = 0;
-    for (int i = 0; i < positions_to_test; i++) {
+    for (size_t i = 0; i < positions_to_test; i++) {
         const auto& test_case = test_cases[i];
         for (const auto& expected : test_case.expected_results) {
             if (expected.first <= max_depth) {
@@ -224,7 +257,7 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    std::cout << "Will run approximately " << total_expected_tests << " tests using Huginn2 bitboard generation" << std::endl;
+    std::cout << "Will run approximately " << total_expected_tests << " tests using VICE MakeMove/TakeMove" << std::endl;
     std::cout << "========================================" << std::endl;
     std::cout << std::endl;
     
@@ -233,9 +266,9 @@ int main(int argc, char* argv[]) {
     int total_tests = 0;
     int failed_tests = 0;
     
-    // Test each position (limited to first 2)
-    for (int i = 0; i < positions_to_test; i++) {
-        std::cout << "[Position " << (i + 1) << "/" << positions_to_test << "] ";
+    // Test each position (limited by quick_test mode)
+    for (size_t i = 0; i < positions_to_test; i++) {
+        std::cout << "[" << (i + 1) << "/" << positions_to_test << "] ";
         bool should_stop = test_position(test_cases[i], max_depth, total_tests, failed_tests);
         if (should_stop) {
             std::cout << "\nStopped testing at position " << (i + 1) << " due to failure." << std::endl;
@@ -249,8 +282,9 @@ int main(int argc, char* argv[]) {
     // Summary
     std::cout << "========================================" << std::endl;
     std::cout << "=== FINAL RESULTS ===" << std::endl;
-    std::cout << "Test method: Huginn2 bitboard move generation" << std::endl;
-    std::cout << "Positions tested: " << positions_to_test << std::endl;
+    std::cout << "Test method: VICE MakeMove/TakeMove" << std::endl;
+    std::cout << "Test mode: " << (quick_test ? "Quick (first 2 positions)" : "Full (all positions)") << std::endl;
+    std::cout << "Positions tested: " << positions_to_test << " of " << test_cases.size() << std::endl;
     std::cout << "Total tests run: " << total_tests << std::endl;
     std::cout << "Tests passed: " << (total_tests - failed_tests) << std::endl;
     std::cout << "Tests failed: " << failed_tests << std::endl;
@@ -259,7 +293,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Total time: " << total_duration.count() << "ms" << std::endl;
     
     if (failed_tests == 0) {
-        std::cout << std::endl << "🎉 ALL TESTS PASSED! Huginn2 bitboard implementation is CORRECT! 🎉" << std::endl;
+        std::cout << std::endl << "🎉 ALL TESTS PASSED! VICE MakeMove/TakeMove implementation is CORRECT! 🎉" << std::endl;
     } else {
         std::cout << std::endl << "❌ Some tests failed. Please check the output above for details." << std::endl;
     }

@@ -20,9 +20,7 @@
 #include "position.hpp"
 #include "move.hpp"
 #include "bitboard.hpp"
-#include "knight_lookup_tables.hpp"
-#include "king_lookup_tables.hpp"
-#include "pawn_lookup_tables.hpp"
+#include "attack_tables.hpp"
 
 namespace BitboardMoveGen {
 

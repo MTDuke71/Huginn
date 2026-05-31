@@ -81,7 +81,7 @@ cd "$HUGINN_REPO"
 # Create optimized build
 rm -rf build-wsl && mkdir build-wsl && cd build-wsl
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-O3 -march=native -DNDEBUG' -DENABLE_FATHOM=OFF ..
-make -j8 huginn perft_suite_vice
+make -j8 huginn perft_suite
 ```
 
 ### 2. Run Performance Tests
@@ -89,7 +89,7 @@ make -j8 huginn perft_suite_vice
 ```bash
 # Perft benchmark (from project root)
 cd "$HUGINN_REPO"
-echo '1' | ./build-wsl/bin/perft_suite_vice
+echo '1' | ./build-wsl/bin/perft_suite
 
 # Search benchmark
 cd benchmark
@@ -129,7 +129,7 @@ make clean
 make -j4
 
 # Or build specific target
-make -j4 perft_suite_vice
+make -j4 perft_suite
 ```
 
 ### 3. Test the Build
@@ -137,7 +137,7 @@ make -j4 perft_suite_vice
 ```bash
 # Run performance test
 cd "$HUGINN_REPO"
-echo '1' | ./build/wsl-gcc-release/bin/perft_suite_vice
+echo '1' | ./build/wsl-gcc-release/bin/perft_suite
 ```
 
 ## Cross-Compiling Windows Executable with MinGW-w64
@@ -179,21 +179,21 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../../mingw-toolchain.cmake \
 
 ```bash
 # Build the Windows .exe
-make -j4 perft_suite_vice
+make -j4 perft_suite
 
 # Verify it's a Windows executable
-file bin/perft_suite_vice.exe
+file bin/perft_suite.exe
 # Output: PE32+ executable (console) x86-64, for MS Windows
 
 # Check dependencies (should only show system DLLs)
-x86_64-w64-mingw32-objdump -p bin/perft_suite_vice.exe | grep 'DLL Name'
+x86_64-w64-mingw32-objdump -p bin/perft_suite.exe | grep 'DLL Name'
 ```
 
 ### 4. Test on Windows
 
 ```powershell
 # Copy to Windows and test
-Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite_vice.exe
+Write-Output "1" | .\build\mingw-w64-release\bin\perft_suite.exe
 ```
 
 ## Troubleshooting
@@ -237,13 +237,13 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 ### WSL Linux Build
 
 - Location: `build/wsl-gcc-release/bin/`
-- Executable: `perft_suite_vice` (Linux ELF)
+- Executable: `perft_suite` (Linux ELF)
 - Size: ~90KB (stripped)
 
 ### MinGW-w64 Windows Build
 
 - Location: `build/mingw-w64-release/bin/`
-- Executable: `perft_suite_vice.exe` (Windows PE32+)
+- Executable: `perft_suite.exe` (Windows PE32+)
 - Size: ~1.1MB (statically linked)
 - Dependencies: Only KERNEL32.dll and msvcrt.dll (system DLLs)
 

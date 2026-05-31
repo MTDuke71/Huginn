@@ -98,15 +98,6 @@ extern uint64_t pawn_attacks[2][64];
  */
 void init_attack_tables();
 
-/**
- * @brief Verify attack table correctness (debugging/testing)
- * @return true if all tables are correctly initialized, false otherwise
- * 
- * This function performs sanity checks on the attack tables to ensure
- * they were initialized correctly. Useful for debugging and unit tests.
- */
-bool verify_attack_tables();
-
 // ============================================================================
 // INLINE CONVENIENCE FUNCTIONS
 // ============================================================================

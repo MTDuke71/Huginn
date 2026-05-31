@@ -2,6 +2,9 @@
 #include <gtest/gtest.h>
 #include "init.hpp"
 #include "zobrist.hpp"
+#include "attack_tables.hpp"
+#include "bitboard.hpp"
+#include "chess_types.hpp"
 
 class InitTest : public ::testing::Test {
 protected:
@@ -63,4 +66,22 @@ TEST_F(InitTest, MultipleInitCallsSafe) {
     // Values should be unchanged (not re-randomized)
     EXPECT_EQ(Zobrist::Side, original_side);
     EXPECT_EQ(Zobrist::Piece[0][0], original_piece);
+}
+
+TEST_F(InitTest, AttackTableFixtureSpotChecks) {
+    // Replaces the orphan verify_attack_tables() prod function. Same three
+    // fixture cases, now expressed with per-assertion diagnostics that
+    // actually run on every test invocation.
+    // e4 = file 4, rank 3 (0-indexed) = 3*8 + 4 = 28
+    // d2 = 11, f6 = 45, d5 = 35, f5 = 37
+    EXPECT_NE(knight_attacks[28] & (1ULL << 11), 0u)
+        << "knight on e4 should attack d2";
+    EXPECT_NE(knight_attacks[28] & (1ULL << 45), 0u)
+        << "knight on e4 should attack f6";
+    EXPECT_EQ(popcount(king_attacks[28]), 8)
+        << "king on e4 should attack 8 adjacent squares";
+    EXPECT_NE(pawn_attacks[static_cast<int>(Color::White)][28] & (1ULL << 35), 0u)
+        << "white pawn on e4 should attack d5";
+    EXPECT_NE(pawn_attacks[static_cast<int>(Color::White)][28] & (1ULL << 37), 0u)
+        << "white pawn on e4 should attack f5";
 }

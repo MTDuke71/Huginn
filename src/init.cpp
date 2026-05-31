@@ -24,9 +24,6 @@
 #include "attack_tables.hpp"
 #include "zobrist.hpp"
 #include "evaluation.hpp"
-#include "knight_lookup_tables.hpp"
-#include "king_lookup_tables.hpp"
-#include "pawn_lookup_tables.hpp"
 #include "magic_bitboards.hpp"
 
 namespace Huginn {
@@ -49,19 +46,9 @@ namespace Huginn {
         
         // Initialize evaluation masks
         EvalParams::init_evaluation_masks();
-        
-        // Initialize knight lookup tables for optimized move generation
-        KnightLookupTables::initialize_knight_tables();
-        
-        // Initialize king lookup tables for optimized move generation
-        #ifdef USE_KING_LOOKUP_TABLES
-        KingLookupTables::initialize_king_tables();
-        #endif
-        
-        // Initialize pawn lookup tables for optimized move generation
-        PawnLookupTables::initialize_pawn_tables();
-        
-        // Initialize attack tables for bitboard move generation (Phase 1 migration)
+
+        // Initialize attack tables (knight / king / pawn lookup arrays
+        // and sliding-piece scaffolding) for bitboard move generation.
         init_attack_tables();
 
         // Initialize real magic-bitboard slider attack tables (BACKLOG #24).

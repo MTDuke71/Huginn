@@ -19,7 +19,7 @@ All executables are built to: `build\msvc-x64-release\bin\Release\`
 
 - `huginn.exe` — main chess engine (UCI)
 - `huginn_tests.exe` — complete test suite (GoogleTest)
-- `perft_suite_vice.exe` — perft benchmarking
+- `perft_suite.exe` — perft benchmarking
 - `mirror_eval_test.exe` — evaluation symmetry tests
 
 ## Running Tests

@@ -328,12 +328,13 @@ set(COMMON_SOURCES
     src/search.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
-    src/knight_lookup_tables.cpp
-    src/king_lookup_tables.cpp
-    src/pawn_lookup_tables.cpp
     src/syzygy_tablebase.cpp
     src/epd_parser.cpp
     src/see.cpp
+    # Bundle Fathom (empty when ENABLE_FATHOM=OFF) so any target using
+    # COMMON_SOURCES picks up the Syzygy symbols that syzygy_tablebase.cpp
+    # references. Without this, perft_suite / mirror_eval_test link-fail.
+    ${FATHOM_SOURCES}
 )
 
 set(ENGINE_SOURCES
@@ -375,24 +376,6 @@ add_huginn_executable(huginn
         ${HUGINN_INCLUDE_DIRS}
 )
 
-# ---- Perft Suite ----
-add_huginn_executable(perft_suite
-    SOURCES
-        perft/perft_suite.cpp
-        ${ENGINE_SOURCES}
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
-# ---- Perft Benchmark ----
-add_huginn_executable(perft_benchmark
-    SOURCES
-        perft/perft_benchmark.cpp
-        ${ENGINE_SOURCES}
-    INCLUDE_DIRS
-        ${HUGINN_INCLUDE_DIRS}
-)
-
 # ---- Mirror Evaluation Test ----
 add_huginn_executable(mirror_eval_test
     SOURCES
@@ -401,16 +384,16 @@ add_huginn_executable(mirror_eval_test
         src/search.cpp
         src/pvtable.cpp
     INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${HUGINN_INCLUDE_DIRS}
 )
 
-# ---- Perft Suite VICE ----
-add_huginn_executable(perft_suite_vice
+# ---- Perft Suite ----
+add_huginn_executable(perft_suite
     SOURCES
-        perft/perft_suite_vice.cpp
+        perft/perft_suite.cpp
         ${COMMON_SOURCES}
     INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${HUGINN_INCLUDE_DIRS}
 )
 
 # ---- Move Generation Profiler ----

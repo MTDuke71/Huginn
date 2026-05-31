@@ -7,8 +7,7 @@
       "Bash(ctest --build-config Release *)",
       "Bash(./build/msvc-x64-release/bin/Release/huginn.exe *)",
       "Bash(./build/msvc-x64-release/bin/Release/huginn_tests.exe *)",
-      "Bash(./build/msvc-x64-release/bin/Release/perft_suite.exe *)",
-      "Bash(./build/msvc-x64-release/bin/Release/perft_benchmark.exe *)"
+      "Bash(./build/msvc-x64-release/bin/Release/perft_suite.exe *)"
     ]
   }
 }

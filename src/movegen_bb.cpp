@@ -13,9 +13,14 @@
 
 #include "movegen_bb.hpp"
 #include "square.hpp"
-#include "king_lookup_tables.hpp"
+#include "attack_detection.hpp"
+#include "chess_types.hpp"
 
 namespace BitboardMoveGen {
+
+// File-local: defined at end of namespace (only consumer is
+// generate_all_moves_bitboard below).
+static void generate_castling_moves_optimized(const Position& pos, S_MOVELIST& list, Color us);
 
 void generate_all_moves_bitboard(const Position& pos, S_MOVELIST& list) {
     list.count = 0;
@@ -29,8 +34,7 @@ void generate_all_moves_bitboard(const Position& pos, S_MOVELIST& list) {
     generate_queen_moves_bitboard(pos, list, us);
     generate_king_moves_bitboard(pos, list, us);
 
-    // Castling moves - this was missing!
-    KingLookupTables::generate_castling_moves_optimized(pos, list, us);
+    generate_castling_moves_optimized(pos, list, us);
 }
 
 void generate_knight_moves_bitboard(const Position& pos, S_MOVELIST& list, Color us) {
@@ -44,7 +48,7 @@ void generate_knight_moves_bitboard(const Position& pos, S_MOVELIST& list, Color
         knights &= knights - 1;  // Remove processed knight
 
         // Get all knight attacks for this square - O(1) lookup!
-        uint64_t attacks = KnightLookupTables::KNIGHT_ATTACKS[from_sq64];
+        uint64_t attacks = knight_attacks[from_sq64];
 
         // Remove our own pieces from targets
         attacks &= ~own_pieces;
@@ -112,7 +116,7 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
             pawn_copy &= pawn_copy - 1;
 
             // Get pawn attacks and filter to enemy pieces
-            uint64_t attacks = PawnLookupTables::get_pawn_attacks(Color::White, from_sq64) & enemies;
+            uint64_t attacks = pawn_attacks[int(Color::White)][from_sq64] & enemies;
 
             while (attacks != 0) {
                 int to_sq64 = get_lsb(attacks);
@@ -170,7 +174,7 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
             int from_sq64 = get_lsb(pawn_copy);
             pawn_copy &= pawn_copy - 1;
 
-            uint64_t attacks = PawnLookupTables::get_pawn_attacks(Color::Black, from_sq64) & enemies;
+            uint64_t attacks = pawn_attacks[int(Color::Black)][from_sq64] & enemies;
 
             while (attacks != 0) {
                 int to_sq64 = get_lsb(attacks);
@@ -200,11 +204,11 @@ void generate_pawn_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
             if (us == Color::White) {
                 // White pawns can capture en passant if they're on rank 5 (sq64: 32-39)
                 // and can attack the en passant square
-                ep_attackers = PawnLookupTables::get_pawn_attacks(Color::Black, ep_sq64) & pawns;
+                ep_attackers = pawn_attacks[int(Color::Black)][ep_sq64] & pawns;
             } else {
                 // Black pawns can capture en passant if they're on rank 4 (sq64: 24-31)
                 // and can attack the en passant square
-                ep_attackers = PawnLookupTables::get_pawn_attacks(Color::White, ep_sq64) & pawns;
+                ep_attackers = pawn_attacks[int(Color::White)][ep_sq64] & pawns;
             }
 
             while (ep_attackers != 0) {
@@ -224,7 +228,7 @@ void generate_king_moves_bitboard(const Position& pos, S_MOVELIST& list, Color u
     int king_sq64 = get_lsb(king);
 
     // Get king attacks - O(1) lookup
-    uint64_t attacks = KingLookupTables::KING_ATTACKS[king_sq64];
+    uint64_t attacks = king_attacks[king_sq64];
     uint64_t own_pieces = pos.color_bitboards[int(us)];
 
     // Remove own pieces
@@ -320,6 +324,93 @@ void generate_queen_moves_bitboard(const Position& pos, S_MOVELIST& list, Color 
                 list.add_quiet_move(make_move(from_sq64, to_sq64));
             } else {
                 list.add_capture_move(make_capture(from_sq64, to_sq64, type_of(target)), pos);
+            }
+        }
+    }
+}
+
+// File-local castling generator (moved from the deleted
+// king_lookup_tables module — only caller is generate_all_moves_bitboard).
+static void generate_castling_moves_optimized(const Position& pos, S_MOVELIST& list, Color us) {
+    // Calculate castle squares using the same logic as CastlingSquares
+    constexpr int WHITE_KING_START = sq64(File::E, Rank::R1);
+    constexpr int WHITE_KINGSIDE_KING_TO = sq64(File::G, Rank::R1);
+    constexpr int WHITE_QUEENSIDE_KING_TO = sq64(File::C, Rank::R1);
+    constexpr int BLACK_KING_START = sq64(File::E, Rank::R8);
+    constexpr int BLACK_KINGSIDE_KING_TO = sq64(File::G, Rank::R8);
+    constexpr int BLACK_QUEENSIDE_KING_TO = sq64(File::C, Rank::R8);
+
+    if (us == Color::White) {
+        const int e1 = WHITE_KING_START;
+        // Castling requires king on its starting square
+        if (pos.at_sq64(e1) != Piece::WhiteKing) return;
+
+        // White kingside castling (e1-g1)
+        if (pos.castling_rights & CASTLE_WK) {
+            const int f1 = sq64(File::F, Rank::R1);
+            const int g1 = sq64(File::G, Rank::R1);
+            const int h1 = sq64(File::H, Rank::R1);
+
+            if (pos.at_sq64(h1) == Piece::WhiteRook &&
+                pos.at_sq64(f1) == Piece::None && pos.at_sq64(g1) == Piece::None) {
+                if (!Huginn::SqAttackedBB(e1, pos, Color::Black) &&
+                    !Huginn::SqAttackedBB(f1, pos, Color::Black) &&
+                    !Huginn::SqAttackedBB(g1, pos, Color::Black)) {
+                    list.add_castle_move(make_castle(e1, WHITE_KINGSIDE_KING_TO));
+                }
+            }
+        }
+
+        // White queenside castling (e1-c1)
+        if (pos.castling_rights & CASTLE_WQ) {
+            const int d1 = sq64(File::D, Rank::R1);
+            const int c1 = sq64(File::C, Rank::R1);
+            const int b1 = sq64(File::B, Rank::R1);
+            const int a1 = sq64(File::A, Rank::R1);
+
+            if (pos.at_sq64(a1) == Piece::WhiteRook &&
+                pos.at_sq64(d1) == Piece::None && pos.at_sq64(c1) == Piece::None && pos.at_sq64(b1) == Piece::None) {
+                if (!Huginn::SqAttackedBB(e1, pos, Color::Black) &&
+                    !Huginn::SqAttackedBB(d1, pos, Color::Black) &&
+                    !Huginn::SqAttackedBB(c1, pos, Color::Black)) {
+                    list.add_castle_move(make_castle(e1, WHITE_QUEENSIDE_KING_TO));
+                }
+            }
+        }
+    } else {
+        const int e8 = BLACK_KING_START;
+        if (pos.at_sq64(e8) != Piece::BlackKing) return;
+
+        // Black kingside castling (e8-g8)
+        if (pos.castling_rights & CASTLE_BK) {
+            const int f8 = sq64(File::F, Rank::R8);
+            const int g8 = sq64(File::G, Rank::R8);
+            const int h8 = sq64(File::H, Rank::R8);
+
+            if (pos.at_sq64(h8) == Piece::BlackRook &&
+                pos.at_sq64(f8) == Piece::None && pos.at_sq64(g8) == Piece::None) {
+                if (!Huginn::SqAttackedBB(e8, pos, Color::White) &&
+                    !Huginn::SqAttackedBB(f8, pos, Color::White) &&
+                    !Huginn::SqAttackedBB(g8, pos, Color::White)) {
+                    list.add_castle_move(make_castle(e8, BLACK_KINGSIDE_KING_TO));
+                }
+            }
+        }
+
+        // Black queenside castling (e8-c8)
+        if (pos.castling_rights & CASTLE_BQ) {
+            const int d8 = sq64(File::D, Rank::R8);
+            const int c8 = sq64(File::C, Rank::R8);
+            const int b8 = sq64(File::B, Rank::R8);
+            const int a8 = sq64(File::A, Rank::R8);
+
+            if (pos.at_sq64(a8) == Piece::BlackRook &&
+                pos.at_sq64(d8) == Piece::None && pos.at_sq64(c8) == Piece::None && pos.at_sq64(b8) == Piece::None) {
+                if (!Huginn::SqAttackedBB(e8, pos, Color::White) &&
+                    !Huginn::SqAttackedBB(d8, pos, Color::White) &&
+                    !Huginn::SqAttackedBB(c8, pos, Color::White)) {
+                    list.add_castle_move(make_castle(e8, BLACK_QUEENSIDE_KING_TO));
+                }
             }
         }
     }
