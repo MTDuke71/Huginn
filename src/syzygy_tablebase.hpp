@@ -72,25 +72,12 @@ public:
     int probe_wdl(const Position& pos) const;
     
     /**
-     * @brief Probe DTZ (Distance-to-Zero) result  
-     * @param pos Position to probe
-     * @return DTZ in plies, or INT32_MAX if probe failed
-     */
-    int probe_dtz(const Position& pos) const;
-    
-    /**
      * @brief Get best move from tablebase
      * @param pos Position to probe
      * @return best move, or null move if probe failed
      */
     S_MOVE probe_root(const Position& pos) const;
-    
-    /**
-     * @brief Get tablebase path
-     * @return current tablebase path
-     */
-    const std::string& get_path() const;
-    
+
     /**
      * @brief Get tablebase statistics
      * @return string with tablebase info

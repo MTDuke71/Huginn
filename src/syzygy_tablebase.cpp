@@ -6,25 +6,6 @@
 #include <iostream>
 #include <filesystem>
 
-#if FATHOM_AVAILABLE
-// Fathom mapping functions
-
-// Fathom doesn't use individual piece constants - it uses bitboards by type
-// This function isn't needed in the same way, but we'll keep it for consistency
-unsigned fathom_piece_from_huginn(Piece piece) {
-    // This function is no longer needed since Fathom uses piece type bitboards
-    // But we'll return 1 for valid pieces, 0 for empty/offboard
-    return (is_none(piece) || is_offboard(piece)) ? 0 : 1;
-}
-
-// Map Fathom square back to Huginn square
-int huginn_square_from_fathom(unsigned fathom_square) {
-    if (fathom_square >= 64) return -1;
-    return static_cast<int>(fathom_square);
-}
-
-#endif // FATHOM_AVAILABLE
-
 namespace Huginn {
 
 SyzygyTablebase::SyzygyTablebase() 
@@ -90,10 +71,6 @@ void SyzygyTablebase::shutdown() {
         max_pieces = 0;
         tablebase_path.clear();
     }
-}
-
-const std::string& SyzygyTablebase::get_path() const {
-    return tablebase_path;
 }
 
 std::string SyzygyTablebase::get_info() const {
@@ -198,16 +175,6 @@ int SyzygyTablebase::probe_wdl(const Position& pos) const {
     }
     #else
     // Stub implementation - never probe
-    return INT32_MAX;
-    #endif
-}
-
-int SyzygyTablebase::probe_dtz(const Position& pos) const {
-    // TODO: Implement DTZ probing when needed
-    #if FATHOM_AVAILABLE
-    // DTZ probing is more complex and not needed for basic tablebase functionality
-    return INT32_MAX; // Not implemented yet
-    #else
     return INT32_MAX;
     #endif
 }

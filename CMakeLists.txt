@@ -329,7 +329,6 @@ set(COMMON_SOURCES
     src/pvtable.cpp
     src/polyglot_book.cpp
     src/syzygy_tablebase.cpp
-    src/epd_parser.cpp
     src/see.cpp
     # Bundle Fathom (empty when ENABLE_FATHOM=OFF) so any target using
     # COMMON_SOURCES picks up the Syzygy symbols that syzygy_tablebase.cpp

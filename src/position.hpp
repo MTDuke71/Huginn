@@ -123,29 +123,6 @@ public:
     void MakeNullMove();
     void TakeNullMove();
     
-    // Update derived state incrementally for a move (much faster than rebuild_counts).
-    // Maintains material_score and king_sq[]. Pawn bitboard updates removed in 4.8a
-    // (the legacy pawns_bb/all_pawns_bb fields are gone; piece_bitboards is the
-    // single source of truth, updated separately by move_piece).
-    void update_derived_state_for_move(const S_MOVE& m, Piece moving, Piece captured) {
-        Color moving_color = color_of(moving);
-        PieceType moving_type = type_of(moving);
-
-        if (!is_none(captured) && type_of(captured) != PieceType::King) {
-            Color captured_color = color_of(captured);
-            if (captured_color != Color::None) {
-                material_score[size_t(captured_color)] -= value_of(captured);
-            }
-        }
-
-        if (m.is_promotion()) {
-            material_score[size_t(moving_color)] -= value_of(make_piece(moving_color, PieceType::Pawn));
-            material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.get_promoted()));
-        } else if (moving_type == PieceType::King) {
-            king_sq[size_t(moving_color)] = m.get_to();
-        }
-    }
-    
     // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
     void update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square);
     
