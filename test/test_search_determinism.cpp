@@ -68,10 +68,10 @@ TEST_F(SearchDeterminismTest, FixedDepthSearchIsDeterministic) {
     for (auto& e : engines) {
         Position pos;
         ASSERT_TRUE(pos.set_from_fen(kqk));
-        MinimalLimits limits;
-        limits.max_depth = 12;
-        limits.infinite = true;  // bypass time mgmt -> depth-bounded, no timing variance
-        best_moves.push_back(e->search(pos, limits).move);
+        SearchInfo info;
+        info.max_depth = 12;
+        info.infinite = true;  // bypass time mgmt -> depth-bounded, no timing variance
+        best_moves.push_back(e->searchPosition(pos, info).move);  // production search path
     }
 
     for (int i = 0; i < kEngines; ++i)

@@ -158,8 +158,7 @@ public:  // Make members public for easier access
     // UCI score formatting helper
     // UCI score formatting
     std::string format_uci_score(int score, Color side_to_move) const;
-    
-    S_MOVE search(Position pos, const MinimalLimits& limits);
+
     void stop() { should_stop = true; }
     void reset() { should_stop = false; nodes_searched = 0; }
     
