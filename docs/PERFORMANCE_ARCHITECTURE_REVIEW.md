@@ -17,14 +17,18 @@ shipped item.
 | 3. `board64[64]` piece cache | ❌ DEFERRED — reverted | `e61f6e5` (#26) reverted | NPS +12% (real bench gain) | Intel +12.17/LOS 77%; AMD −38.37/LOS 0.86%; pool ≈ −13 Elo. Invariant test ruled out desync; cache footprint cost ≈ scan savings on this codebase. |
 | 4. Shrink + de-eager move list | ⏳ pending | — | — | — |
 | 5. Staged move picker | ⏳ pending | — | — | — |
-| 6. Cache static eval per node | ✅ IMPLEMENTED (gauntlet pending) | `1d1b013` | NPS +~8% @ d14 startpos (3.51M→3.82M), node count byte-identical (6,239,039) | pending gauntlet (~+5-15 Elo expected) |
-| 7. Remove dead undo-state writes | ✅ IMPLEMENTED (gauntlet pending) | `4c6c475` | S_UNDO −16 B/entry; NPS within noise of #6, node count byte-identical | pending gauntlet (bundles with #6) |
+| 6. Cache static eval per node | ✅ SHIPPED (`baseline-t9`) | `1d1b013` | NPS +~8% @ d14 startpos (3.51M→3.82M), node count byte-identical (6,239,039) | +13.90 / 2000g pooled vs t8 (bundled w/ perf trio + #7), LOS 99.6%, both machines >95% |
+| 7. Remove dead undo-state writes | ✅ SHIPPED (`baseline-t9`) | `4c6c475` | S_UNDO −16 B/entry; NPS within noise of #6, node count byte-identical | bundled in the +13.90 baseline-t9 pool (likely mover was #6) |
 | 8. Gate TT stats counters behind flag | ⏳ pending | — | — | — |
 | 9. TT cluster layout + generations | ⏳ pending | — | — | (after #4-7) |
 | 10. Incremental PST/phase + pawn hash | ⏳ pending | — | — | (largest remaining speed work) |
 
-**Shipped to date: 2 of 10 priorities** (#23 TT bound fix + #24 magic
-bitboards) — together they delivered the ~+78 Elo t4 → t5 jump.
+**Shipped to date: 4 of 10 priorities** (#23 TT bound fix + #24 magic
+bitboards → ~+78 Elo t4 → t5; #6 static-eval cache + #7 dead undo-state
+drop → +13.90 Elo pooled t8 → `baseline-t9`, LOS 99.6%, bundled with the
+perf trio / PV truncation). The t9 ship is the first to confirm
+pure-speed (byte-identical search, ~+15% cumulative NPS) converting to
+measurable Elo at fixed TC — the static-eval cache (#6) the likely mover.
 Priority 3 (board64 cache) was attempted at `e61f6e5` and reverted
 after a negative 400g pool — see Priority 3 row for the post-mortem.
 Cumulative wall-clock to depth 11 startpos at the current tip:

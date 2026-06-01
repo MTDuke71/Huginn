@@ -7,19 +7,19 @@ two gauntlet machines over git instead of manual file copy.
 
 | Machine | CPU | repo path | bat | outputs |
 |---|---|---|---|---|
-| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t8.bat` | `*_amd.pgn` / `*_amd.log` |
-| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t8.bat` | `*_intel.pgn` / `*_intel.log` |
+| AMD | Ryzen 7 7800X3D (8C/16T) | `C:\Users\m_lad\Repos\Huginn` | `test_huginn_vs_t9.bat` | `*_amd.pgn` / `*_amd.log` |
+| Intel | i7-13700K | `C:\Users\m_lad\Documents\Repos\Huginn` | `test_huginn_vs_t9.bat` | `*_intel.pgn` / `*_intel.log` |
 
 **One self-configuring bat now serves both machines** —
-`test_huginn_vs_t8.bat` auto-detects the box (repo path from `%~dp0`,
+`test_huginn_vs_t9.bat` auto-detects the box (repo path from `%~dp0`,
 CPU vendor → `_intel`/`_amd` suffix), so there is no longer a separate
-`_amd` variant. It runs **current Huginn vs the frozen `huginn_t8.exe`**
-(`git tag baseline-t8`), `tc=10+0.1`, concurrency 4, **SPRT
+`_amd` variant. It runs **current Huginn vs the frozen `huginn_t9.exe`**
+(`git tag baseline-t9`), `tc=10+0.1`, concurrency 4, **SPRT
 `elo0=0 elo1=10`** with a 500-round cap = up to 1000 games each, into
 machine-tagged files. 1000 + 1000 = **2000 games per experiment** (or
 fewer if the SPRT stops early). The per-tier bats
-(`test_huginn_vs_t4..t7`) are kept for historical regression checks;
-**use `test_huginn_vs_t8.bat` going forward**.
+(`test_huginn_vs_t4..t8`) are kept for historical regression checks;
+**use `test_huginn_vs_t9.bat` going forward**.
 
 ## Workflow
 
@@ -151,15 +151,17 @@ CI/LOS, not by the SPRT verdict.
   with an Intel push (different paths) — clean git merges.
 - Logs are committed too (per request). They are large and noisy;
   prune old ones if the repo gets heavy.
-- **Current baseline is `baseline-t8` = `b9d63f8`** (BACKLOG #15
-  counter-move @1500 enabled; +7.1 Elo pooled vs t7). **Each machine
-  builds its own `huginn_t8.exe` from the `baseline-t8` tag** with
-  `-DENABLE_FATHOM=ON` — the same per-machine build environment the bat
-  uses to rebuild the *candidate* from source, so both engines in the
-  match are compiled identically on that box. Do **not** copy one box's
-  binary to the other; the tag (= shared source) is what guarantees the
-  two legs play the same baseline. Prior baselines: t7 `304f2b7`,
-  t6 `5efaa78`, t4 `6e3a761` (BACKLOG #18).
+- **Current baseline is `baseline-t9` = `ca335c2`** (= t8 + perf trio +
+  PV repetition truncate + Priority 6 static-eval cache + Priority 7
+  dead undo-state drop; +13.90 Elo pooled vs t8, LOS 99.6%, both
+  machines clear 95% — pure-speed ship). **Each machine builds its own
+  `huginn_t9.exe` from the `baseline-t9` tag** with `-DENABLE_FATHOM=ON`
+  — the same per-machine build environment the bat uses to rebuild the
+  *candidate* from source, so both engines in the match are compiled
+  identically on that box. Do **not** copy one box's binary to the
+  other; the tag (= shared source) is what guarantees the two legs play
+  the same baseline. Prior baselines: t8 `b9d63f8` (#15 counter-move),
+  t7 `304f2b7`, t6 `5efaa78`, t4 `6e3a761` (BACKLOG #18).
 
 ## History
 

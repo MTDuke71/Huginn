@@ -12,9 +12,13 @@ representation for legality / square-walking helpers.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t8 = b9d63f8` (= t7 + BACKLOG #15
-  ply-tracked counter-move heuristic @ order-score 1500; +7.1 Elo pooled
-  vs t7, LOS 91%, both machines agree — soft ship). Prior:
+- ✅ **Baseline tag**: `baseline-t9 = ca335c2` (= t8 + perf trio
+  [triangular PV + input-poll throttle + eval mirror→XOR] + PV
+  repetition truncate + Priority 6 static-eval cache + Priority 7 dead
+  undo-state drop; +13.90 Elo pooled vs t8, LOS 99.6%, both machines
+  clear 95% — pure-speed ship, byte-identical search at equal depth).
+  Prior: `baseline-t8 = b9d63f8` (= t7 + BACKLOG #15 ply-tracked
+  counter-move @1500; +7.1 Elo vs t7, LOS 91%, soft ship),
   `baseline-t7 = 304f2b7` (#28 repetition fixes: halfmove-clock lookback
   + TT-safe Zarkov single-rep draw; +7.6 Elo vs t6), `baseline-t6`
   (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
