@@ -268,10 +268,6 @@ public:
     }
     
     // Pawn bitboard access functions (derive from piece_bitboards)
-    uint64_t get_pawn_bitboard(Color c) const {
-        return piece_bitboards[size_t(c)][size_t(PieceType::Pawn)];
-    }
-
     uint64_t get_all_pawns_bitboard() const {
         return piece_bitboards[size_t(Color::White)][size_t(PieceType::Pawn)] |
                piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
@@ -283,44 +279,6 @@ public:
 
     uint64_t get_black_pawns() const {
         return piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
-    }
-    
-    // Full bitboard access functions for all piece types
-    Bitboard get_piece_bitboard(Color color, PieceType piece_type) const {
-        return piece_bitboards[size_t(color)][size_t(piece_type)];
-    }
-    
-    Bitboard get_color_bitboard(Color color) const {
-        return color_bitboards[size_t(color)];
-    }
-    
-    Bitboard get_occupied_bitboard() const {
-        return occupied_bitboard;
-    }
-    
-    // Convenience accessors for specific piece types
-    Bitboard get_pawns(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Pawn)];
-    }
-    
-    Bitboard get_knights(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Knight)];
-    }
-    
-    Bitboard get_bishops(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Bishop)];
-    }
-    
-    Bitboard get_rooks(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Rook)];
-    }
-    
-    Bitboard get_queens(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Queen)];
-    }
-    
-    Bitboard get_kings(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::King)];
     }
     
     // Perft function for move generation validation - definition after class
