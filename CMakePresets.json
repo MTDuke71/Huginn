@@ -87,13 +87,14 @@
         {
             "name": "msvc-x64-release-ninja",
             "displayName": "MSVC x64 Release (Ninja)",
-            "description": "Release build using MSVC compiler with Ninja (manual setup required)",
+            "description": "Release build using MSVC compiler with Ninja (manual setup required). Generates compile_commands.json for cppcheck / clangd.",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/msvc-x64-release-ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl"
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             },
             "environment": {
                 "CMAKE_PREFIX_PATH": "",
