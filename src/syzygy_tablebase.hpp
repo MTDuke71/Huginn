@@ -56,13 +56,7 @@ public:
      * @return true if tablebases are available
      */
     bool is_available() const;
-    
-    /**
-     * @brief Get maximum number of pieces supported
-     * @return max pieces, or 0 if not initialized
-     */
-    int get_max_pieces() const { return is_initialized ? max_pieces : 0; }
-    
+
     /**
      * @brief Check if position can be probed
      * @param pos Position to check

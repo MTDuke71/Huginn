@@ -180,29 +180,9 @@ public:
         hits = misses = writes = 0;
     }
     
-    // Get table utilization statistics
-    double get_utilization() const {
-        size_t filled = 0;
-        for (const auto& entry : table) {
-            if (entry.zobrist_key != 0) filled++;
-        }
-        return double(filled) / table.size();
-    }
-    
     size_t get_size() const { return table.size(); }
-    
+
     // Get statistics
     uint64_t get_hits() const { return hits; }
-    uint64_t get_misses() const { return misses; }
     uint64_t get_writes() const { return writes; }
-    uint64_t get_total_probes() const { return hits + misses; }
-    double get_hit_rate() const { 
-        uint64_t total = get_total_probes();
-        return total > 0 ? double(hits) / total : 0.0; 
-    }
-    
-    // Clear statistics only
-    void clear_stats() {
-        hits = misses = writes = 0;
-    }
 };

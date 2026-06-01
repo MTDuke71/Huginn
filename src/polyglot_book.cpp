@@ -506,24 +506,6 @@ S_MOVE PolyglotBook::polyglot_to_move(uint16_t poly_move, const Position& pos) c
     return S_MOVE(from_64, to_64, captured_type, is_ep, is_pawn_start, promoted_type, is_castle);
 }
 
-std::vector<std::pair<S_MOVE, uint16_t>> PolyglotBook::get_all_book_moves(const Position& pos) const {
-    std::vector<std::pair<S_MOVE, uint16_t>> book_moves;
-    
-    if (!is_loaded) {
-        return book_moves;
-    }
-    
-    uint64_t key = get_polyglot_key(pos);
-    auto book_entries = find_entries(key);
-    
-    for (const auto* entry : book_entries) {
-        S_MOVE move = polyglot_to_move(entry->move, pos);
-        book_moves.emplace_back(move, entry->weight);
-    }
-    
-    return book_moves;
-}
-
 bool PolyglotBook::has_book_moves(const Position& pos) const {
     if (!is_loaded) {
         return false;
