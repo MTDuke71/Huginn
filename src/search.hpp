@@ -171,10 +171,7 @@ public:  // Make members public for easier access
     // PV table helper functions
     void store_pv_move(uint64_t position_key, const S_MOVE& move);
     bool probe_pv_move(uint64_t position_key, S_MOVE& move) const;
-    
-    // Get PV line for display (Part 53)
-    int get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]);
-    
+
     // Search history and killer move functions
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);
     void penalize_search_history(const Position& pos, const S_MOVE& move, int depth);

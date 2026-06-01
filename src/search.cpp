@@ -578,11 +578,6 @@ bool Engine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
     return pv_table.probe_move(position_key, move);
 }
 
-// Get PV line for display (Part 53)
-int Engine::get_pv_line(Position& pos, int depth, S_MOVE pv_array[64]) {
-    return pv_table.get_pv_line(pos, depth, pv_array);
-}
-
 // Update search history when move improves alpha (3:55)
 void Engine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;

@@ -1,8 +1,6 @@
 #include "pvtable.hpp"
 #include "position.hpp"
-#include "movegen.hpp"
 #include <iostream>
-#include <unordered_set>
 
 namespace Huginn {
 
@@ -51,72 +49,6 @@ bool PVTable::probe_move(uint64_t position_key, S_MOVE& move) const {
     }
     
     return false;  // Miss
-}
-
-// MoveExists function - check if move is legal (Part 53 - 1:04-2:28)
-bool PVTable::move_exists(Position& pos, const S_MOVE& move) const {
-    if (move.move == 0) return false;  // Invalid move
-    
-    // Generate all legal moves
-    S_MOVELIST move_list;
-    generate_legal_moves(pos, move_list);
-    
-    // Check if the move exists in the legal move list
-    for (int i = 0; i < move_list.count; ++i) {
-        if (move_list.moves[i].move == move.move) {
-            return true;  // Move is legal
-        }
-    }
-    
-    return false;  // Move not found - illegal
-}
-
-// GetPVLine function - retrieve PV line from table (Part 53 - 2:29-6:40)
-int PVTable::get_pv_line(Position& pos, int depth, S_MOVE pv_array[MAX_DEPTH]) {
-    int count = 0;
-    std::unordered_set<uint64_t> seen_keys;
-    seen_keys.reserve(pos.move_history.size() + static_cast<size_t>(depth) + 1);
-    for (const auto& undo : pos.move_history) {
-        if (undo.zobrist_key != 0) {
-            seen_keys.insert(undo.zobrist_key);
-        }
-    }
-    seen_keys.insert(pos.zobrist_key);
-    
-    // Probe PV table for moves up to desired depth
-    while (count < depth && count < MAX_DEPTH) {
-        S_MOVE move;
-        
-        // Probe table for best move at current position
-        if (!probe_move(pos.zobrist_key, move)) {
-            break;  // No move found in table
-        }
-        
-        // Check if move is legal (crucial due to hash collisions)
-        if (!move_exists(pos, move)) {
-            break;  // Illegal move - probably hash collision
-        }
-        
-        // Store move in PV array
-        pv_array[count] = move;
-        count++;
-        
-        // Make the move to get to next position
-        if (pos.MakeMove(move) != 1) {
-            break;  // Move failed to make
-        }
-
-        if (!seen_keys.insert(pos.zobrist_key).second) {
-            break;  // Stop PV reconstruction at repeated positions
-        }
-    }
-    
-    // Take back all moves to restore original position (Part 53 - 6:40)
-    for (int i = 0; i < count; ++i) {
-        pos.TakeMove();
-    }
-    
-    return count;  // Number of moves in PV line
 }
 
 } // namespace Huginn
