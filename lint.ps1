@@ -10,8 +10,9 @@
 # so it always works without a Ninja configure step.
 #
 # Usage:
-#   .\lint.ps1                # run, print findings, exit 0 (advisory)
-#   .\lint.ps1 -Strict        # exit 1 if any unusedFunction warnings (CI gate)
+#   .\lint.ps1                          # run, print findings, write report, exit 0 (advisory)
+#   .\lint.ps1 -Strict                  # exit 1 if any unusedFunction warnings (CI gate)
+#   .\lint.ps1 -Output path\report.txt  # custom report path (default: build\lint_report.txt)
 #
 # What it catches (real, has bitten us recently):
 #   - Functions defined but called from nowhere (verify_attack_tables,
@@ -27,7 +28,8 @@
 #   - Net-negative-Elo features (gauntlet measurement, not static analysis).
 
 param(
-    [switch]$Strict
+    [switch]$Strict,
+    [string]$Output = "build\lint_report.txt"
 )
 
 $ErrorActionPreference = "Continue"
@@ -101,22 +103,54 @@ $allOutput = @($stdout) + @($stderr)
 $unused = $allOutput | Select-String -Pattern "unusedFunction"
 
 Write-Host ""
+
+# Build the plain-text report. Same content the console shows, minus colour.
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+$commit = (& git rev-parse --short HEAD 2>$null)
+if (-not $commit) { $commit = "(no git)" }
+$mode = if (Test-Path $compileCommands) { "compile_commands.json" } else { "explicit -I" }
+
+$reportLines = @(
+    "Huginn lint report"
+    "Generated: $timestamp"
+    "Commit:    $commit"
+    "Mode:      $mode"
+    "cppcheck:  $cppcheckPath"
+    ""
+    "Unused functions (cppcheck --enable=unusedFunction)"
+    "===================================================="
+)
+
 if ($unused) {
     Write-Host "Unused functions found:" -ForegroundColor Yellow
     foreach ($line in $unused) {
         Write-Host "  $line" -ForegroundColor Yellow
+        $reportLines += $line.ToString()
     }
     Write-Host ""
     Write-Host "Total: $($unused.Count)" -ForegroundColor Yellow
-
-    if ($Strict) {
-        Write-Host "Strict mode - exiting 1." -ForegroundColor Red
-        exit 1
-    } else {
-        Write-Host "Advisory mode - exiting 0. Use -Strict to gate." -ForegroundColor DarkGray
-        exit 0
-    }
+    $reportLines += ""
+    $reportLines += "Total: $($unused.Count)"
 } else {
     Write-Host "No unused functions found." -ForegroundColor Green
-    exit 0
+    $reportLines += "(none)"
 }
+
+# Write the report - ensure parent dir exists. build\ is gitignored so the
+# default path doesn't pollute git status.
+$outDir = Split-Path -Path $Output -Parent
+if ($outDir -and -not (Test-Path $outDir)) {
+    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+}
+$reportLines | Set-Content -Path $Output -Encoding utf8
+Write-Host ""
+Write-Host "Report written to: $Output" -ForegroundColor Cyan
+
+if ($unused -and $Strict) {
+    Write-Host "Strict mode - exiting 1." -ForegroundColor Red
+    exit 1
+}
+if ($unused) {
+    Write-Host "Advisory mode - exiting 0. Use -Strict to gate." -ForegroundColor DarkGray
+}
+exit 0
