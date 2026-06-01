@@ -56,9 +56,9 @@
 namespace Huginn {
 
 /**
- * @namespace EvalParams
+ * @namespace Huginn::EvalParams
  * @brief Evaluation parameters and constants for position assessment
- * 
+ *
  * Contains all tunable parameters used by the evaluation function, including
  * piece values, positional bonuses, and game phase thresholds. These values
  * have been tuned through engine testing and analysis of master games.

@@ -15,8 +15,14 @@
 
 namespace Huginn {
 
-// Polyglot hash keys - the standardized 781-entry Random64 table used by Polyglot
-// Layout: RandomPiece (0..767), RandomCastle (768..771), RandomEnPassant (772..779), RandomTurn (780)
+/**
+ * @namespace Huginn::PolyglotKeys
+ * @brief Polyglot opening-book hash constants.
+ *
+ * The standardized 781-entry Random64 table used to compute a position's
+ * Polyglot book key. Layout: RandomPiece (0..767), RandomCastle (768..771),
+ * RandomEnPassant (772..779), RandomTurn (780).
+ */
 namespace PolyglotKeys {
     static const uint64_t RANDOM64[781] = {
         0x9D39247E33776D41ULL,0x2AF7398005AAA5C7ULL,0x44DB015024623547ULL,0x9C15F73E62A76AE2ULL,

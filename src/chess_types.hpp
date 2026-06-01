@@ -252,6 +252,14 @@ struct PieceTypeIter {
 // existed during the S_MOVE 120->64 migration; it lost its last caller
 // once MakeMove went 64-native and was deleted with the other dead
 // mailbox-120 structures. Only the sq64 table below remains.
+/**
+ * @namespace CastlingLookup
+ * @brief Castling-rights update table.
+ *
+ * Maps each square (sq64) to a mask that clears exactly the castling rights
+ * invalidated when a piece moves from or to it (the king and rook home
+ * squares). MakeMove ANDs this mask into the castling state for O(1) updates.
+ */
 namespace CastlingLookup {
     // 64-square table (a1=0, e1=4, h1=7, a8=56, e8=60, h8=63).
     constexpr std::array<uint8_t, 64> create_castling_mask_table_sq64() {

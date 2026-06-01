@@ -22,6 +22,15 @@
 #include "bitboard.hpp"
 #include "attack_tables.hpp"
 
+/**
+ * @namespace BitboardMoveGen
+ * @brief Bitboard-based move generation — the production move generator.
+ *
+ * Generates moves directly from per-piece attack bitboards (knight/king/pawn
+ * lookup tables and magic-bitboard sliders) rather than iterating piece lists.
+ * This is the path used by the search; the mailbox generator in movegen.* is
+ * retained only for cross-validation and tests.
+ */
 namespace BitboardMoveGen {
 
 /**

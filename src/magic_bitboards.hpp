@@ -41,6 +41,15 @@
 
 #include <cstdint>
 
+/**
+ * @namespace Magic
+ * @brief Magic-bitboard slider attack generation.
+ *
+ * Precomputed magic multipliers and per-square attack tables that turn a
+ * rook/bishop occupancy bitboard into the set of attacked squares with a
+ * single multiply-shift-index lookup (O(1) sliding-piece attacks), replacing
+ * runtime ray walking.
+ */
 namespace Magic {
 
 // ---- Table dimensions (fixed-shift plain magic) ---------------------

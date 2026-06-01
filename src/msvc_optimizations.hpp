@@ -56,7 +56,14 @@
 
 // ---- MSVC-Optimized Bit Operations ----
 
-// Fast bit manipulation using BMI instructions when available
+/**
+ * @namespace MSVCOptimizations
+ * @brief MSVC hardware bit-operation wrappers for the hot path.
+ *
+ * Thin inline wrappers over hardware population-count and bit-scan
+ * instructions (BMI / MSVC intrinsics) with portable fallbacks, used by
+ * bitboard iteration where these run millions of times per search.
+ */
 namespace MSVCOptimizations {
 
     // Fast population count using hardware instruction
