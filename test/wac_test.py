@@ -40,13 +40,15 @@ class WACPosition:
         return f"{self.id}: {self.fen} (best: {', '.join(self.best_moves)})"
 
 class WACTester:
-    def __init__(self, engine_path: str = "../build/msvc-x64-release/bin/Release/huginn.exe", 
+    def __init__(self, engine_path: str = "../build/msvc-x64-release/bin/Release/huginn.exe",
                  epd_file: str = "WAC300.epd", max_positions: Optional[int] = None,
-                 failed_positions_file: Optional[str] = None):
+                 failed_positions_file: Optional[str] = None,
+                 threads: int = 1):
         self.engine_path = engine_path
         self.epd_file = epd_file
         self.max_positions = max_positions
         self.failed_positions_file = failed_positions_file
+        self.threads = threads
         self.results = []
         self.log_file = None
         
@@ -196,84 +198,99 @@ class WACTester:
         self.log_file.write(f"Expected best moves: {', '.join(position.best_moves)}\n")
         self.log_file.write(f"{'='*60}\n")
         
+        # Drive UCI interactively with Popen instead of batching the whole
+        # script to subprocess.run.
+        #
+        # Why: subprocess.run(input=...) writes all input then closes stdin.
+        # Engines that poll stdin during search (e.g. Stockfish 18) treat
+        # stdin-EOF as "abort and exit ASAP" and return a depth-0 move
+        # before producing any real search output. The old code masked
+        # this because Huginn only reads stdin between checkup intervals,
+        # so the buffered EOF never reached its decision loop during the
+        # actual search. With proper interactive UCI we write commands,
+        # wait for `bestmove`, THEN send `quit` and close stdin.
+        #
+        # OwnBook is explicitly disabled so a book hit can't replace the
+        # engine's actual tactical search on a WAC position. Threads is
+        # set so the harness can drive multi-threaded engines for honest
+        # cross-engine comparison; default is 1 (matches single-thread
+        # gauntlet convention).
+        engine_output = []
+        best_move = None
+        proc = None
         try:
-            # Build the full UCI script and pipe it directly. Avoids the
-            # temp-file dance and the cleanup-on-exception risk it created.
-            # OwnBook is explicitly disabled so a book hit can't replace the
-            # engine's actual tactical search on a WAC position.
-            uci_commands = (
-                "uci\n"
-                "setoption name OwnBook value false\n"
-                "ucinewgame\n"
-                "isready\n"
-                f"position fen {position.fen}\n"
-                f"go movetime {search_time * 1000}\n"
-                "quit\n"
-            )
-
-            result = subprocess.run(
+            proc = subprocess.Popen(
                 [self.engine_path],
-                input=uci_commands,
-                capture_output=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
-                timeout=search_time + 10,
+                bufsize=1,  # line buffered
                 cwd=os.path.dirname(os.path.abspath(self.engine_path))
             )
 
-            engine_output = result.stdout.split('\n')
-            
-            # Log all output
-            for line in engine_output:
-                if line.strip():
-                    self.log_file.write(f"<<< {line}\n")
-                    print(f"Engine: {line}")
-            
-            # Find best move
-            best_move = None
-            for line in engine_output:
-                if line.startswith("bestmove"):
-                    best_move_match = re.search(r'bestmove\s+(\S+)', line)
-                    if best_move_match:
-                        best_move = best_move_match.group(1)
+            def send(line: str) -> None:
+                proc.stdin.write(line + "\n")
+                proc.stdin.flush()
+
+            send("uci")
+            send("setoption name OwnBook value false")
+            if self.threads and self.threads > 1:
+                send(f"setoption name Threads value {self.threads}")
+            send("ucinewgame")
+            send("isready")
+            send(f"position fen {position.fen}")
+            send(f"go movetime {search_time * 1000}")
+
+            # Read until `bestmove ...` or hard deadline. The deadline is a
+            # safety net for engines that hang; honest `go movetime N` ends
+            # within N ms plus a small overhead.
+            import time as _time
+            deadline = _time.monotonic() + search_time + 15
+            while _time.monotonic() < deadline:
+                line = proc.stdout.readline()
+                if not line:
+                    # Engine closed stdout — process likely exited.
                     break
-            
-            # Analyze result
-            success = False
-            if best_move:
-                success = self.moves_match(best_move, position.best_moves, position)
-            
-            result_data = {
-                'position': position,
-                'engine_move': best_move,
-                'expected_moves': position.best_moves,
-                'success': success,
-                'engine_output': engine_output
-            }
-            
-            # Log result
-            status = "PASS" if success else "FAIL"
-            print(f"Engine played: {best_move}")
-            print(f"Result: {status}")
-            
-            self.log_file.write(f"\nRESULT: {status}\n")
-            self.log_file.write(f"Engine move: {best_move}\n")
-            self.log_file.write(f"Expected: {', '.join(position.best_moves)}\n")
-            
-            return result_data
-            
-        except subprocess.TimeoutExpired:
-            print(f"Timeout after {search_time + 10} seconds")
-            self.log_file.write(f"ERROR: Timeout\n")
-            return {
-                'position': position,
-                'engine_move': None,
-                'expected_moves': position.best_moves,
-                'success': False,
-                'error': 'Timeout',
-                'engine_output': []
-            }
+                line = line.rstrip()
+                if line:
+                    engine_output.append(line)
+                    self.log_file.write(f"<<< {line}\n")
+                if line.startswith("bestmove"):
+                    m = re.search(r'bestmove\s+(\S+)', line)
+                    if m:
+                        best_move = m.group(1)
+                    break
+
+            # Clean shutdown: send quit only AFTER we have a bestmove, so
+            # the search has fully completed. If we never saw bestmove
+            # (deadline / EOF) we still try quit to give the engine a
+            # graceful exit before fallback kill.
+            try:
+                send("quit")
+            except (BrokenPipeError, OSError):
+                pass
+            try:
+                proc.stdin.close()
+            except (BrokenPipeError, OSError):
+                pass
+
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=2)
+
         except Exception as e:
-            print(f"Error testing position: {e}")
+            # Defensive: a hung engine or pipe error shouldn't kill the
+            # whole sweep. Log and return a clean failure for this position.
+            if proc is not None:
+                try:
+                    proc.kill()
+                    proc.wait(timeout=2)
+                except Exception:
+                    pass
+            print(f"Error analysing {position.id}: {e}")
             self.log_file.write(f"ERROR: {e}\n")
             return {
                 'position': position,
@@ -281,8 +298,34 @@ class WACTester:
                 'expected_moves': position.best_moves,
                 'success': False,
                 'error': str(e),
-                'engine_output': []
+                'engine_output': engine_output
             }
+
+        # Echo to console (replaces the old per-line print loop above).
+        for line in engine_output:
+            print(f"Engine: {line}")
+
+        # Analyze result
+        success = False
+        if best_move:
+            success = self.moves_match(best_move, position.best_moves, position)
+
+        # Log result
+        status = "PASS" if success else "FAIL"
+        print(f"Engine played: {best_move}")
+        print(f"Result: {status}")
+
+        self.log_file.write(f"\nRESULT: {status}\n")
+        self.log_file.write(f"Engine move: {best_move}\n")
+        self.log_file.write(f"Expected: {', '.join(position.best_moves)}\n")
+
+        return {
+            'position': position,
+            'engine_move': best_move,
+            'expected_moves': position.best_moves,
+            'success': success,
+            'engine_output': engine_output
+        }
     
     def run_test_suite(self, search_time: int = 5):
         """Run the complete test suite"""
@@ -644,12 +687,16 @@ Failed positions are saved to wac_failed_positions_TIMESTAMP.txt for easy re-tes
     parser.add_argument('--engine', type=str, default=None,
                        help='Path to UCI engine binary (default: ../build/msvc-x64-release/bin/Release/huginn.exe). '
                             'Any UCI-compliant engine works.')
+    parser.add_argument('--threads', type=int, default=1,
+                       help='UCI "Threads" option value (default: 1). '
+                            'Huginn is single-threaded; bump for multi-threaded engines '
+                            'like Stockfish when comparing tactical resolution at fixed time.')
 
     args = parser.parse_args()
 
     # Resolve the engine path. We honour --engine if given; otherwise the
     # WACTester default applies (huginn from this repo's release build).
-    engine_kwargs = {}
+    engine_kwargs = {'threads': args.threads}
     if args.engine:
         engine_kwargs['engine_path'] = args.engine
 
