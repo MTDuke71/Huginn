@@ -1962,10 +1962,23 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         S_MOVE display_pv[PV_DISPLAY_CAP];
         int pv_moves = 0;
         {
+            // Seen-set baseline: only the actual game-history positions
+            // (move_history[0..pos.ply-1]). The full move_history vector
+            // grows during search and retains stale zobrist keys from the
+            // last move sequence each alpha-beta iteration happened to
+            // try (TakeMove decrements pos.ply but doesn't clear the slot).
+            // Iterating the full vector poisoned the seen-set with stale
+            // keys from the search interior — when one of them collided
+            // with a position our walk visited (e.g. position-after-e2e4
+            // after the search's final tried sequence ran through e2e4),
+            // the walk aborted at one move. pos.ply is the game ply at
+            // root emission, so this gives the correct rep-detection
+            // baseline without false positives.
             std::unordered_set<uint64_t> seen;
-            seen.reserve(pos.move_history.size() + PV_DISPLAY_CAP);
-            for (const auto& undo : pos.move_history) {
-                if (undo.zobrist_key != 0) seen.insert(undo.zobrist_key);
+            seen.reserve(static_cast<size_t>(pos.ply) + PV_DISPLAY_CAP);
+            for (int i = 0; i < pos.ply; ++i) {
+                const uint64_t k = pos.move_history[i].zobrist_key;
+                if (k != 0) seen.insert(k);
             }
             seen.insert(pos.zobrist_key);
 
