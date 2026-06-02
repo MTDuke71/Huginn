@@ -1,10 +1,10 @@
-[INFO  ] [07:24:06.635943] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
-[INFO  ] [07:24:06.636140] <   > fastchess --- Setting seed to: 15271020011562147089
-[INFO  ] [07:24:06.670522] <   > fastchess --- Indexing opening suite...
+[INFO  ] [18:06:35.173183] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [18:06:35.173270] <   > fastchess --- Setting seed to: 10290437757282620458
+[INFO  ] [18:06:35.207832] <   > fastchess --- Indexing opening suite...
 
-[INFO  ] [07:24:06.676714] <   > fastchess --- Starting tournament...
-[INFO  ] [08:47:02.254410] <   > fastchess --- Finished match
+[INFO  ] [18:06:35.214870] <   > fastchess --- Starting tournament...
+[INFO  ] [19:28:10.226171] <   > fastchess --- Finished match
 
-[INFO  ] [08:47:02.254581] <   > fastchess --- Total Time: 01:22:55 (hours:minutes:seconds)
+[INFO  ] [19:28:10.226344] <   > fastchess --- Total Time: 01:21:35 (hours:minutes:seconds)
 
 
