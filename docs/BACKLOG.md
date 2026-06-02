@@ -6,7 +6,7 @@
 |---|-------|--------|------|----------|
 | 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
 | 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
-| 3 | Continuation history | **WIP — weight sweep** (w16 neutral; w64 SPRT pending) | feature | high |
+| 3 | Continuation history | **PARKED** — 1-ply additive falsified (w16 neutral, w64 −9); flag off, kept in-tree | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
@@ -942,6 +942,31 @@ structurally capped — a weight bump has limited headroom.
 nodes vs 363,757 @ w16 vs 364,401 off — engages marginally more). If w64
 is also flat, that confirms the structural cap → escalate to the
 bounded-gravity redesign or shelve.
+
+**Weight 64 SPRT result (2026-06-02): NEGATIVE — hypothesis falsified.**
+- Intel: **-9.04 ± 13.98** Elo, nElo -13.93, LOS 10.2%,
+  Ptnml [26,130,204,124,16], LLR -1.57. AMD: worse still.
+- vs w16 [27,123,204,116,30]: the **WW pairs collapsed 30 → 16** while LL
+  held — raising the weight specifically destroyed the double-win
+  outcomes. More conthist influence = worse play, on both machines.
+
+**Conclusion: the 1-ply *additive* design is the wrong recipe for Huginn,
+falsified — not "too weak."** The weight sweep (off≈0 → w16≈0 → w64 −9)
+is monotone-down: when forced to influence ordering, conthist's noisy
+1-ply guesses override BOTH butterfly AND the proven counter-move (its
+8000 cap outranks the 1500 counter-move bonus, and at w64 it does so on
+raw conthist ≥ 24 — frequently). The stale-guess risk the user flagged
+shows up exactly here. **PARKED**: `ENABLE_CONTINUATION_HISTORY` set to 0
+(flag-off byte-identical to baseline-t9, 364,401 nodes Kiwipete d11),
+code kept in-tree.
+
+**If revisited, do it RIGHT, not bigger:** (a) bounded "history gravity"
+updates so butterfly + conthist are co-scaled in [-MAX,+MAX] and a 1:1
+sum is principled; (b) **subsume** the counter-move into conthist rather
+than stacking additively (they are the same idea — the current design
+has them fighting); (c) consider multi-ply (1+2) only after 1-ply earns
+its keep. This is a deliberate redesign on proven code, not a tuning
+knob — schedule it as its own session, not a quick re-attempt.
 
 **Plan now that #13 has landed:**
 1. Add `int continuation_history[13][64][13][64]` (heap-allocated to

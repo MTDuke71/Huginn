@@ -17,8 +17,12 @@ namespace Huginn {
 // depth^2-updated history conditioned on the parent move. Gated for clean SPRT
 // A/B: when 0, the table, helpers, and call sites all vanish. See search.cpp
 // ordering/update sites and clear_search_tables() for the zero-init.
+// Default OFF: the 1-ply additive implementation was falsified by gauntlet
+// (w16 neutral, w64 -9 Elo Intel / worse AMD — see BACKLOG #3). Kept gated and
+// in-tree for a future bounded-gravity redesign; flag-off is byte-identical to
+// baseline-t9. Set to 1 only to re-test a revised design.
 #ifndef ENABLE_CONTINUATION_HISTORY
-#define ENABLE_CONTINUATION_HISTORY 1
+#define ENABLE_CONTINUATION_HISTORY 0
 #endif
 
 // BACKLOG #3 tuning knobs (the PRIMARY levers for the conthist gauntlet):
