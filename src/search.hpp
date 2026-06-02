@@ -8,8 +8,30 @@
 #include "polyglot_book.hpp"
 #include "syzygy_tablebase.hpp"
 #include <chrono>
+#include <vector>
 
 namespace Huginn {
+
+// BACKLOG #3: 1-ply continuation history (counter-move history). Generalizes
+// the scalar counter-move table (ENABLE_PLY_TRACKED_COUNTERMOVE) into a full
+// depth^2-updated history conditioned on the parent move. Gated for clean SPRT
+// A/B: when 0, the table, helpers, and call sites all vanish. See search.cpp
+// ordering/update sites and clear_search_tables() for the zero-init.
+#ifndef ENABLE_CONTINUATION_HISTORY
+#define ENABLE_CONTINUATION_HISTORY 1
+#endif
+
+// BACKLOG #3 tuning knobs (the PRIMARY levers for the conthist gauntlet):
+//   WEIGHT — multiplies the conthist score before blending into the quiet-move
+//     ordering score. At weight 1 the term is inert: Huginn's butterfly history
+//     accumulates unbounded over all parent contexts (~1K+ per entry, per the
+//     counter-move comment) and swamps a single-context conthist entry. ~16
+//     brings conthist to a co-equal secondary signal; tune by gauntlet.
+//   CAP — clamps |weight*conthist| so a hot quiet move stays in the history
+//     band and never leaps the promotion (25K-90K) / killer (800K-900K) /
+//     capture (1M) tiers, preserving the existing ordering hierarchy.
+constexpr int CONTHIST_ORDER_WEIGHT = 16;
+constexpr int CONTHIST_ORDER_CAP = 8000;
 
 // VICE Constants
 const int INFINITE = 30000;
@@ -132,7 +154,32 @@ public:  // Make members public for easier access
     // When move X causes beta-cutoff, store move Y as good counter to previous opponent move
     // 64x64 table (~32KB memory) for temporary per-search learning
     S_MOVE counter_moves[64][64];
-    
+
+#if ENABLE_CONTINUATION_HISTORY
+    // BACKLOG #3: 1-ply continuation history (counter-move history).
+    // Logically [prevPiece][prevTo][curPiece][curTo] -> score, flattened to a
+    // heap vector and indexed via ch_index(). The "prev" piece/to is the
+    // opponent's last move; at the current node that piece sits on prevTo, so
+    // it is recoverable via pos.at_sq64(prevTo). Updated with the same +/-depth^2
+    // bonus as butterfly history, blended additively into quiet-move ordering.
+    //
+    // HEAP-allocated (not a by-value array): at 13*64*13*64 int16 = ~1.38MB it
+    // would overflow the 1MB Windows stack when a test constructs Engine by
+    // value. int16_t (not int) halves the footprint — Huginn is footprint-
+    // sensitive (the board64 cache #26 was reverted on that basis).
+    // Zero-initialized at construction; clear_search_tables() ages rather than
+    // zeroing, so the first search never reads garbage (nondeterminism, cf. #30).
+    static constexpr int CH_PIECES = 13;
+    static constexpr int CH_SQUARES = 64;
+    static constexpr size_t CH_SIZE =
+        size_t(CH_PIECES) * CH_SQUARES * CH_PIECES * CH_SQUARES;
+    std::vector<int16_t> continuation_history = std::vector<int16_t>(CH_SIZE, 0);
+
+    static constexpr size_t ch_index(int pp, int prev_to, int cp, int to) {
+        return ((size_t(pp) * CH_SQUARES + prev_to) * CH_PIECES + cp) * CH_SQUARES + to;
+    }
+#endif
+
     // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) table
     // [victim][attacker] - prioritizes captures where weak pieces take strong pieces
     // Higher scores = better captures (e.g., pawn takes queen = high score)
@@ -177,7 +224,17 @@ public:  // Make members public for easier access
     // Counter-move heuristic functions (5-15% search speedup)
     void update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move);
     S_MOVE get_counter_move(const S_MOVE& previous_move) const;
-    
+
+#if ENABLE_CONTINUATION_HISTORY
+    // BACKLOG #3: 1-ply continuation history. `prev` is the parent move
+    // (info.search_stack[ply-1]); both helpers must be called with `pos` at the
+    // current node (after TakeMove), where prev's piece sits on prev.get_to().
+    void update_continuation_history(const Position& pos, const S_MOVE& prev,
+                                     const S_MOVE& move, int bonus);
+    int get_continuation_history(const Position& pos, const S_MOVE& prev,
+                                 const S_MOVE& move) const;
+#endif
+
     // MVV-LVA (Most Valuable Victim, Least Valuable Attacker) functions
     void init_mvv_lva();                                              // Initialize MVV-LVA scoring table
     int get_mvv_lva_score(PieceType victim, PieceType attacker) const; // Get capture score

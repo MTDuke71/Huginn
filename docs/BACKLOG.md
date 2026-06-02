@@ -6,7 +6,7 @@
 |---|-------|--------|------|----------|
 | 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
 | 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
-| 3 | Continuation history | **DEFERRED** | feature | high |
+| 3 | Continuation history | **WIP — gauntlet pending** (1-ply re-impl `2026-06-01`, flag on) | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
@@ -890,6 +890,40 @@ anti-compounded (+31 Elo combined vs +96/+104 individually). Watch
 for similar interaction when continuation history layers on top of
 TT-mate. If #3 alone is positive but combined with anything else
 regresses, the fix is ordering-table tuning, not feature deletion.
+
+**Clean 1-ply re-implementation (2026-06-01), on the `baseline-t9` tip.**
+The #13/#30 ply-tracking bugs that sank the 2005-05 attempts are long
+fixed, so this is a genuine fresh attempt. Gated behind
+`ENABLE_CONTINUATION_HISTORY` (default on) for A/B. Design:
+- 1-ply only (counter-move history): table keyed
+  `[prevPiece][prevTo][curPiece][curTo]`, `int16_t`, heap `std::vector`
+  (~1.38 MB). Updated with the same `+/-depth^2` bonus/penalty as
+  butterfly history; aged `/4` per search.
+- Blended **additively** into quiet-move ordering on top of the existing
+  counter-move (1500) bonus — counter-move kept as-is for isolation.
+
+Two findings worth keeping:
+1. **Heap allocation is mandatory.** As a by-value Engine member the
+   1.38 MB table overflowed the 1 MB Windows stack (a test constructs
+   `Engine` by value) → `0xC00000FD`. Same footprint class that killed
+   the `board64` cache (#26). Moved to a heap `std::vector<int16_t>`.
+2. **A 1:1 blend is inert.** Huginn's butterfly `search_history`
+   accumulates unbounded over *all* parent contexts, so each entry is
+   ~100-1000x larger than a single-context conthist entry and swamps it
+   — byte-identical search at weight 1. Verified live only after adding
+   `CONTHIST_ORDER_WEIGHT` (start **16**) + a `CONTHIST_ORDER_CAP` (8000)
+   to keep hot quiets inside the history band. At weight 16, depth-11
+   Kiwipete: 363,757 nodes vs 364,401 off (~0.18% fewer), deterministic,
+   same PV/eval. WAC-50 @5s: 48/50, no tactical regression.
+
+**Primary tuning knob = `CONTHIST_ORDER_WEIGHT`.** If the first SPRT is
+flat, sweep the weight before concluding conthist doesn't pay — the
+additive-on-unbounded-butterfly scaling makes the signal weight-
+sensitive. If still flat, the fallback design is bounded "history
+gravity" updates for both tables so a 1:1 sum is principled (deferred —
+it would modify the gauntlet-proven butterfly history, conflating two
+changes). Gauntlet: this commit (flag on) vs `baseline-t9`, both
+machines per the per-machine baseline rule.
 
 **Plan now that #13 has landed:**
 1. Add `int continuation_history[13][64][13][64]` (heap-allocated to

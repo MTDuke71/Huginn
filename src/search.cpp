@@ -536,6 +536,17 @@ void Engine::clear_search_tables() {
             counter_moves[from_sq][to_sq] = S_MOVE();
         }
     }
+
+#if ENABLE_CONTINUATION_HISTORY
+    // BACKLOG #3: age the continuation-history table by /4 each new search,
+    // mirroring search_history above — preserve 25% of cross-search learning
+    // while making room for new. Construction zero-inits, so the first search
+    // ages zeros (still zero); no nondeterminism (cf. #30). ~692K int16 ops
+    // once per search — negligible against Mnps search.
+    for (size_t k = 0; k < CH_SIZE; ++k) {
+        continuation_history[k] = static_cast<int16_t>(continuation_history[k] / 4);
+    }
+#endif
 }
 
 // PV table helper functions
@@ -633,6 +644,52 @@ S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
     // Return stored counter-move, or empty move if none stored
     return counter_moves[from_sq][to_sq];
 }
+
+#if ENABLE_CONTINUATION_HISTORY
+// BACKLOG #3: 1-ply continuation history. Both helpers take `pos` at the
+// current node (after TakeMove / before MakeMove), where the parent move's
+// piece sits on prev.get_to() and the current move's piece on move.get_from().
+//
+// Index validity: prev/move squares are sq64; piece_index uses the same
+// `static_cast<int>(piece) % 13` convention as butterfly history. A piece of
+// None on prev.get_to() (shouldn't happen for a real parent move, but guard
+// anyway) maps to index 0 and is harmless.
+namespace {
+inline int ch_piece_index(Piece p) { return static_cast<int>(p) % 13; }
+}
+
+void Engine::update_continuation_history(const Position& pos, const S_MOVE& prev,
+                                         const S_MOVE& move, int bonus) {
+    if (prev.move == 0 || move.move == 0) return;
+    int prev_to = prev.get_to();
+    int from = move.get_from();
+    int to = move.get_to();
+    if (prev_to < 0 || prev_to >= 64 || from < 0 || from >= 64 || to < 0 || to >= 64) return;
+
+    int pp = ch_piece_index(pos.at_sq64(prev_to));   // parent mover, now resting on prev_to
+    int cp = ch_piece_index(pos.at_sq64(from));       // current mover, back on its from-square
+
+    // Clamp into int16 range to avoid overflow under repeated +/-depth^2 bonuses.
+    size_t idx = ch_index(pp, prev_to, cp, to);
+    int updated = continuation_history[idx] + bonus;
+    if (updated > 32000) updated = 32000;
+    else if (updated < -32000) updated = -32000;
+    continuation_history[idx] = static_cast<int16_t>(updated);
+}
+
+int Engine::get_continuation_history(const Position& pos, const S_MOVE& prev,
+                                     const S_MOVE& move) const {
+    if (prev.move == 0 || move.move == 0) return 0;
+    int prev_to = prev.get_to();
+    int from = move.get_from();
+    int to = move.get_to();
+    if (prev_to < 0 || prev_to >= 64 || from < 0 || from >= 64 || to < 0 || to >= 64) return 0;
+
+    int pp = ch_piece_index(pos.at_sq64(prev_to));
+    int cp = ch_piece_index(pos.at_sq64(from));
+    return continuation_history[ch_index(pp, prev_to, cp, to)];
+}
+#endif
 
 // Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
 void Engine::init_mvv_lva() {
@@ -902,6 +959,21 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                             Piece piece = pos.at_sq64(from);
                             int piece_index = static_cast<int>(piece) % 13;
                             score = search_history[piece_index][to];  // History score
+#if ENABLE_CONTINUATION_HISTORY
+                            // BACKLOG #3: blend 1-ply continuation history into
+                            // the quiet-move score (additive, same scale as
+                            // butterfly history). Only the parent (ply-1) move
+                            // conditions it; killers/counters/promotions above
+                            // keep their fixed scores. Weight is a tuning knob.
+                            if (info.ply > 0 && info.ply < 64) {
+                                S_MOVE prev = info.search_stack[info.ply - 1];
+                                int contrib = CONTHIST_ORDER_WEIGHT *
+                                              get_continuation_history(pos, prev, move);
+                                if (contrib > CONTHIST_ORDER_CAP) contrib = CONTHIST_ORDER_CAP;
+                                else if (contrib < -CONTHIST_ORDER_CAP) contrib = -CONTHIST_ORDER_CAP;
+                                score += contrib;
+                            }
+#endif
                         } else {
                             score = 1000;  // Base score for quiet moves
                         }
@@ -1412,8 +1484,18 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 // VICE Part 64: Update history heuristic for non-capture moves that improve alpha
                 if (!move_list.moves[i].is_capture()) {
                     update_search_history(pos, move_list.moves[i], depth);
+#if ENABLE_CONTINUATION_HISTORY
+                    // BACKLOG #3: mirror butterfly history's +depth^2 bonus on
+                    // the parent-conditioned conthist table. pos is at the
+                    // current node here (TakeMove already ran), so prev's piece
+                    // sits on prev.get_to() as the helper expects.
+                    if (info.ply > 0 && info.ply < 64) {
+                        S_MOVE prev = info.search_stack[info.ply - 1];
+                        update_continuation_history(pos, prev, move_list.moves[i], depth * depth);
+                    }
+#endif
                 }
-                
+
                 if (alpha >= beta) {
                     // VICE Part 60: Track fail high statistics (0:13)
                     info.fh++; // Increment fail high count
@@ -1441,6 +1523,13 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             // Move didn't improve alpha - apply negative history scoring for quiet moves
             if (!move_list.moves[i].is_capture() && depth > 0) {
                 penalize_search_history(pos, move_list.moves[i], depth);
+#if ENABLE_CONTINUATION_HISTORY
+                // BACKLOG #3: mirror butterfly history's -depth^2 penalty on conthist.
+                if (info.ply > 0 && info.ply < 64) {
+                    S_MOVE prev = info.search_stack[info.ply - 1];
+                    update_continuation_history(pos, prev, move_list.moves[i], -depth * depth);
+                }
+#endif
             }
         }
     }
