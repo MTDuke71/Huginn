@@ -6,9 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Huginn is a UCI-compliant chess engine written in modern C++17/20. As of
 the `pure-bitboard-engine` branch (Phase 4 of the rewrite), the data flow
-is **bitboard-primary**: piece-bitboards are the source of truth for all
-movegen and evaluation, with mailbox-120 retained as a parallel
-representation for legality / square-walking helpers.
+is **pure bitboard**: per-piece bitboards are the sole source of truth for
+movegen and evaluation. Squares are indexed 0–63 (a1=0, h8=63). The old
+mailbox-120 board and piece lists were removed in Phase 4.8b; piece
+location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
@@ -108,17 +109,18 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 
 - **UCI Interface** ([src/uci.cpp](../src/uci.cpp), [src/uci_utils.cpp](../src/uci_utils.cpp)):
   Full UCI protocol — position setup, `go` parsing, search control, real-time `info` output
-- **Position Representation** — bitboard-primary, mailbox parallel:
+- **Position Representation** — pure bitboard:
   - [src/position.cpp](../src/position.cpp) / [src/position.hpp](../src/position.hpp):
     `Position` class with per-piece bitboards (`std::array<std::array<Bitboard, _Count>, 2>`),
-    `S_MOVE` system, and incremental Zobrist + material updates
-  - [src/board120.cpp](../src/board120.cpp): 10×12 mailbox with off-board sentinels
-    (used as a parallel representation for legality helpers; not a separate engine path)
-- **Move Generation** — two implementations, bitboard is the production path:
+    `S_MOVE` system, and incremental Zobrist + material updates. Piece-on-square
+    lookup (`at_sq64()`) is derived from the bitboards; there is no mailbox
+    board and no piece lists (both removed in Phase 4.8b).
+- **Move Generation** — two entry points, both backed by the bitboard core:
   - [src/movegen_bb.cpp](../src/movegen_bb.cpp) / [.hpp](../src/movegen_bb.hpp):
     bitboard-based generation — **the production movegen**
   - [src/movegen.cpp](../src/movegen.cpp) / [.hpp](../src/movegen.hpp):
-    mailbox movegen, retained for cross-validation and tests
+    legacy `S_MOVELIST` entry points that delegate to `BitboardMoveGen`;
+    retained for the move-list container and tests
   - [src/attack_tables.cpp](../src/attack_tables.cpp), [src/{knight,king,pawn}_lookup_tables.cpp](../src/):
     pre-computed attack tables; sliders use magic bitboards
 - **Search Engine** ([src/search.cpp](../src/search.cpp)):
@@ -141,10 +143,10 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 ### Key Design Patterns
 
 - **S_MOVE System**: High-performance 25-bit packed move representation with integrated scoring
-- **Dual Representation**: Position class maintains both mailbox-120 and full bitboards in sync
+- **Single Representation**: per-piece bitboards are the sole board state; piece-on-square is derived via `at_sq64()`
 - **Incremental Updates**: O(1) make/unmake operations with complete state restoration
 - **Type Safety**: Extensive use of C++17 type-safe enums and constexpr functions
-- **Performance Focus**: Zero-copy operations, efficient bit manipulation, O(1) piece location via piece lists
+- **Performance Focus**: Zero-copy operations, efficient bit manipulation, magic-bitboard slider attacks
 - **Comprehensive Testing**: 197 automated tests covering all major components with 100% pass rate
 
 ### Move System Architecture
@@ -152,15 +154,15 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
 **Production**: S_MOVE with 25-bit packed encoding (from/to/promotion + flags)
 plus an in-band `score` field used for move ordering. Make/unmake is
 `MakeMove`/`TakeMove` on `Position` with O(1) incremental updates to
-bitboards, mailbox, Zobrist key, material counts, and piece lists.
+the per-piece bitboards, Zobrist key, and material counts.
 
 ### Bitboard Infrastructure
 
 - **Per-piece bitboards**: `std::array<std::array<Bitboard, PieceType::_Count>, 2>`
 - **Magic bitboards** for slider attacks (rook / bishop), pre-computed
   attack tables for knight / king / pawn
-- **Mailbox parallel representation**: 10×12 with off-board sentinels —
-  used by legality / square-walking helpers; not a separate engine path
+- **Square indexing**: 0–63 (a1=0, h8=63); see [src/square.hpp](../src/square.hpp).
+  No mailbox board — piece-on-square is derived from the bitboards via `at_sq64()`
 
 ## Development Guidelines
 
@@ -213,7 +215,7 @@ bitboards, mailbox, Zobrist key, material counts, and piece lists.
 
 - **Quiescence Search**: Limited to 10 plies (`MAX_QUIESCENCE_DEPTH`) - prevents stack overflow
 - **Null Move Pruning**: Enhanced with R=4 reduction and minimum depth of 5 - 1.4% performance gain
-- **Board Representation**: 10x12 mailbox with squares 21-98 representing a1-h8
+- **Board Representation**: per-piece bitboards; squares indexed 0–63 (a1=0, h8=63)
 - **S_MOVE System**: 25-bit packed move encoding with integrated scoring
 - **UCI Protocol**: Full implementation compatible with Arena, Fritz, ChessBase, all major GUIs
 

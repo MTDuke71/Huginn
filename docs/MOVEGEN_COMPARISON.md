@@ -11,17 +11,32 @@ This document compares the two engines side-by-side at the level of
 data structures, move-gen flow, and per-move cost. It's a roadmap for
 where the speed gap likely lives, not a measurement of Elo gap.
 
+> **Status (updated 2026-06-01): partially superseded.** This is a
+> 2026-05-05 snapshot. Since then, Phase 4.8b **removed the mailbox-120
+> board and piece lists entirely** — squares are now pure 0–63 (a1=0,
+> h8=63; see [square.hpp](../src/square.hpp)) and `S_MOVE` from/to fields
+> carry sq64 values. So every "Hybrid 120/64 indexing" / "120-mailbox
+> legacy" framing below is **historical** and the "migrate to 64-square /
+> delete the 120-mailbox indirection" recommendations (§6 #1, §8 #5) are
+> **DONE**. Note the proposed fix "add a 64-square mailbox to `Position`
+> for direct `at()`" was tried as the `board64[64]` cache (BACKLOG #26)
+> and **reverted** — the +64 B footprint cost as much as the scan saved.
+> Still accurate as written: the `at_sq64()` bitboard-scan cost, the
+> heap `std::vector<S_UNDO>` history vs MTL's stack array, the move-list
+> footprint, and the eager-MVV-LVA points. Treat per-NPS estimates as
+> dated.
+
 ---
 
 ## 1. Board representation
 
 | Aspect | Huginn | MTLChess | Notes |
 |---|---|---|---|
-| **Square indexing** | Hybrid: 120-mailbox API + 64-bitboard underneath, `MAILBOX_MAPS.to64[120]` lookup at most boundaries | Pure 64-square (`Square = u6`) | Every Huginn move handler crosses 120↔64 — measurable per-move cost. Tracked as Tier 4 #18 in roadmap. |
+| **Square indexing** | ~~Hybrid: 120-mailbox API + 64-bitboard underneath~~ → **now pure 64-square** (a1=0, h8=63) since Phase 4.8b | Pure 64-square (`Square = u6`) | **Resolved.** The 120↔64 boundary crossing this row described no longer exists. `S_MOVE` from/to are sq64 (still stored in 7-bit fields — see Square width row). Was Tier 4 #18. |
 | **Piece bitboards** | `piece_bitboards[2][7]` (color × type, with type::None unused) — 14 boards | `pieces[12]` (color×type fused) — 12 boards | Functionally equivalent. MTL's flat layout is one fewer dimension — slightly better cache locality but small. |
 | **Occupancy** | `color_bitboards[2]` + `occupied_bitboard` — computed and stored as 3 fields | `occupancy[3]` — `[white, black, all]` array | Same 3 bitboards either way. MTL's array form lets `colorBB(c)` and `allBB()` index uniformly. |
-| **Mailbox** | `at(sq120)` → bitboard scan to find piece | `mailbox[64]` → direct `Piece` lookup | **Huginn's `at()` does ~14 bitboard tests per call**; MTL's is a single array load. Hot path: move-gen fills moves with captured-piece type via `pos.at(...)`. Significant cost differential. |
-| **King squares** | `king_sq[2]` (mailbox-120) | Computed on demand via `kingSquare(c)` (lsb of king bitboard) | Roughly equivalent. |
+| **Piece-on-square** | `at_sq64(s)` → bitboard scan to find piece | `mailbox[64]` → direct `Piece` lookup | **Still true.** Huginn's `at_sq64()` scans the per-type bitboards (~6–14 tests); MTL's is a single array load. Hot path: move-gen fills captured-piece type via `pos.at_sq64(...)`. The `board64[64]` cache fix (BACKLOG #26) was reverted as net-negative. |
+| **King squares** | `king_sq[2]` (now sq64) | Computed on demand via `kingSquare(c)` (lsb of king bitboard) | Roughly equivalent. |
 | **Move history** | `std::vector<S_UNDO> move_history;` (heap, dynamic resize) | `[512]IrreversibleState history;` (stack, fixed) | **Huginn pays heap-allocator cost** on first deep search; MTL's stack array has no allocation cost. Vector reserve helps but reallocation can still happen. |
 | **State stored per ply** | castling, ep, halfmove, zobrist, captured, king_sq backup, material backup | castling, ep, halfmove, captured, hash, psqt_score, phase | MTL stores incremental eval state (psqt + phase) for unmake; Huginn re-runs eval each call. |
 | **Incremental Zobrist** | yes (XOR-based) | yes (XOR-based) | Equivalent. |
@@ -47,7 +62,7 @@ MTL trades larger inline footprint for zero heap-alloc and faster mailbox lookup
 | **Move bits** | 25 bits used: from(7) to(7) captured-type(4) ep(1) pawn-start(1) promoted-type(4) castle(1) | 16 bits: from(6) to(6) flags(4) | MTL's 4-bit flag enum (16 values: quiet, double_push, capture, ep, 2 castles, 4 promos, 4 promo-captures) collapses Huginn's 4 separate flag bits into a single discriminator. |
 | **Score field** | int separate field | none — scored externally during ordering | Huginn pays score-load cost on every move list iteration; MTL loads score from a parallel array only when ordering. |
 | **Score storage at gen time** | MVV-LVA computed inside `add_capture_move` (calls `pos.at(from)` to find attacker) | none — generator emits bare moves only | Huginn does eager scoring; MTL does lazy. **Lazy scoring is faster when pruning by SEE early** because the generator doesn't waste work on moves that get pruned. |
-| **Square width** | 7-bit (mailbox 0-119, masks waste bits) | 6-bit (64 squares, packed efficiently) | Direct consequence of the 120-mailbox legacy. |
+| **Square width** | 7-bit fields holding sq64 values (0-63) — 1 bit/field now wasted | 6-bit (64 squares, packed efficiently) | The field width is still 7-bit (`0x7F` mask in [move.hpp](../src/move.hpp)); the values migrated to 0-63 in Phase 4.8b but the field was never shrunk to 6-bit. Minor packing waste. |
 
 ---
 
@@ -162,7 +177,7 @@ int Position::MakeMove(const S_MOVE& move) {
     S_UNDO& undo = move_history[ply];
     // capture state into undo (zobrist, castling, ep, captured)
     // dispatch on flag bits: en passant / castling / promotion
-    //   move_piece (bitboards + mailbox + zobrist)
+    //   move_piece (bitboards + zobrist)
     //   handle special: rook move on castle, pawn capture on ep, etc.
     // increment ply, flip side
     update_zobrist_for_move(...)
@@ -206,7 +221,7 @@ Probable sources, in order of likely impact:
 
 | # | Source | Estimated NPS impact | How to address |
 |---|---|---|---|
-| 1 | **Huginn's hybrid 120/64 indexing** — every move handler crosses the boundary, every `at()` call is a bitboard scan | 15-30% | Migrate `S_MOVE` to 64-square (Tier 4 #18). Add a 64-square mailbox to `Position` for direct `at()`. |
+| 1 | **`at_sq64()` is a bitboard scan** (the 120/64 boundary-crossing half of this is now gone — sq64 migration shipped in Phase 4.8b) | residual only | sq64 migration **DONE**. The remaining fix — a `board64[64]` cache for direct `at()` — was tried (BACKLOG #26) and **reverted** as net-negative. Scan kept. |
 | 2 | **Search uses legal-only generation, double-make/unmake per move** | 7-35% (already partially shipped at 7-10%; surgical version measured 35% in spike) | Backlog #14 — search loops use pseudo-legal directly. |
 | 3 | **`MakeMove` flag dispatch** — multiple bit tests vs single switch | 5-15% | Migrate move flags from independent bits to a 4-bit enum tag (matches MTL's design). |
 | 4 | **`std::vector<S_UNDO>` history with heap path** | 2-10% | Replace with `S_UNDO history[MAX_PLY]` stack array. |
@@ -233,7 +248,7 @@ If the goal is to close the per-node speed gap (NOT the search-shape gap):
 2. **Migrate `S_MOVE` flag bits to a 4-bit enum tag.** Replaces ~5 independent bit checks in `MakeMove` with a single switch. Touches every move site but is mechanical.
 3. **Replace `std::vector<S_UNDO>` history with a fixed-size stack array** (`S_UNDO history[MAX_PLY]`). Removes heap path. ~half-day refactor.
 4. **Drop the `score` field from `S_MOVE`** (parallel score array in `S_MOVELIST`). Halves move-list footprint. ~half-day refactor.
-5. **Migrate to 64-square mailbox** (delete the 120-mailbox indirection). Tier 4 #18 in the long-term roadmap. ~1-2 days.
+5. ~~**Migrate to 64-square mailbox** (delete the 120-mailbox indirection). Tier 4 #18.~~ **DONE in Phase 4.8b** — the 120-mailbox was removed and squares are pure sq64.
 6. **Lazy MVV-LVA scoring.** Tiny but compounds. ~few hours.
 
-Items 1-4 together would close most of the per-node gap with bounded risk and would unblock #5 (a bigger refactor) by removing the API surface that depends on 120-square moves.
+Items 1-4 together would close most of the per-node gap with bounded risk. (#5, the 120-mailbox removal that these were meant to unblock, has since shipped independently in Phase 4.8b.)

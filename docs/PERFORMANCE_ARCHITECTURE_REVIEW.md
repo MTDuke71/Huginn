@@ -66,13 +66,19 @@ Highest confidence priorities:
 
 ## The Big Architecture Mismatch
 
+> **Update (2026-06-01): largely RESOLVED.** All three doc-vs-code gaps
+> below have since been addressed — magic bitboards shipped (#24), the TT
+> bound classification was fixed (#23, Priority 1), and the CLAUDE.md /
+> MOVEGEN_COMPARISON.md mailbox/piece-list rot was corrected in the
+> 2026-06-01 docs cleanup. Kept verbatim below as the original diagnosis.
+
 The documentation overstates how far the engine has moved toward a fast pure-bitboard architecture.
 
-- [docs/MOVEGEN_COMPARISON.md](docs/MOVEGEN_COMPARISON.md) says sliders use magic bitboards and are runtime-equivalent to MTLChess. The actual `bishop_attacks()` and `rook_attacks()` in [src/bitboard.cpp](src/bitboard.cpp#L139-L156) call `generate_ray_attacks()` four times, and that function loops square by square with bounds checks and occupancy branches.
-- [docs/CLAUDE.md](docs/CLAUDE.md#L130-L150) still talks about mailbox parallel representation, piece lists, and O(1) piece location via piece lists. The current architecture has no `board[120]` and no piece lists. `at()` derives pieces from bitboards.
-- [docs/SEARCH_AND_EVAL.md](docs/SEARCH_AND_EVAL.md#L351-L375) lists TT as implemented with exact/lower/upper bounds. Structurally, yes. Behaviorally, the store-side node-type logic looks wrong.
+- ~~[docs/MOVEGEN_COMPARISON.md](docs/MOVEGEN_COMPARISON.md) says sliders use magic bitboards and are runtime-equivalent to MTLChess. The actual `bishop_attacks()` and `rook_attacks()`~~ — **fixed**: real magic bitboards shipped (#24, `3eab266`); the runtime ray-walk is gone.
+- ~~[docs/CLAUDE.md](docs/CLAUDE.md#L130-L150) still talks about mailbox parallel representation, piece lists, and O(1) piece location via piece lists.~~ — **fixed**: the docs were corrected (2026-06-01) to state the architecture is pure-bitboard with no mailbox and no piece lists; `at_sq64()` derives pieces from the bitboards.
+- ~~[docs/SEARCH_AND_EVAL.md](docs/SEARCH_AND_EVAL.md#L351-L375) lists TT as implemented... the store-side node-type logic looks wrong.~~ — **fixed**: TT bound classification corrected (#23, Priority 1).
 
-That matters because you can make bad engineering decisions from stale docs. Right now the docs make the slider and square-lookup costs look solved when they are not.
+That mattered because you can make bad engineering decisions from stale docs — which is exactly why these were tracked to closure.
 
 ## Priority 1: Fix TT Bound Classification
 
