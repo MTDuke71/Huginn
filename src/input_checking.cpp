@@ -135,30 +135,31 @@ bool input_is_waiting() {
  */
 
 void read_input(SearchInfo& info) {
-    // Only try to read if input is actually waiting
-    if (!input_is_waiting()) {
-        return;
-    }
-    
-    std::string input;
-    
-    // Read the input line
-    if (std::getline(std::cin, input)) {
-        // Check for quit command (3:01)
-        if (input == "quit") {
-            info.quit = true;
-            info.stopped = true;
-            return;
-        }
-        
-        // Check for stop command 
-        if (input == "stop") {
-            info.stopped = true;
-            return;
-        }
-        
-        // Any other input also stops the search (GUI might send other commands)
-        // This ensures the engine is responsive to GUI communication
+    // CRITICAL: do NOT consume the input line here.
+    //
+    // The old implementation called std::getline and discarded any line
+    // that wasn't `stop`/`quit`. That broke ChessBase Kibitzer (and any
+    // GUI that batches commands): when the user moves on the board,
+    // ChessBase sends a SEQUENCE on stdin —
+    //     stop
+    //     position fen <new>
+    //     go infinite
+    // The search loop bails only between iterative-deepening depths,
+    // not instantly, so checkup() can fire multiple times between
+    // "stop arrived" and "search actually returned". Each fire would
+    // consume one queued line — first `stop` (legitimate), then the
+    // `position` command (lost), then the `go infinite` (lost). The
+    // UCI command loop would then wake up to an empty stdin and the
+    // Kibitzer would silently stop without restarting on the new
+    // position.
+    //
+    // Correct behaviour: detect that the GUI sent SOMETHING, set
+    // info.stopped so the search bails at the next depth boundary,
+    // and leave the actual command bytes in the stdin buffer for the
+    // UCI command loop (UCIInterface::run) to consume via its own
+    // std::getline. That loop already handles `stop`/`quit`/`position`/
+    // `go` correctly and will process the full sequence in order.
+    if (input_is_waiting()) {
         info.stopped = true;
     }
 }
