@@ -61,19 +61,49 @@ namespace Huginn {
 
 bool input_is_waiting() {
 #ifdef _WIN32
-    // Windows implementation using _kbhit()
+    // The original `return _kbhit() != 0;` was a console-only check that
+    // returned false whenever stdin was a pipe — which is every UCI GUI
+    // (Arena, ChessBase, Fritz, etc., all spawn the engine with stdin/
+    // stdout redirected through pipes). That broke mid-search GUI input
+    // detection: with no input ever observed during search, `info.stopped`
+    // never got set from a GUI `stop`, the search just kept deepening on
+    // the old position, and queued `position`/`go` commands waited for a
+    // `bestmove` that never arrived (Kibitzer / analysis-mode silently
+    // hung on a position change).
+    //
+    // Fix: pick the right poll for the handle type once at startup and
+    // cache it. For pipe stdin (GUI mode) use PeekNamedPipe to inspect
+    // the pipe buffer; for actual console stdin (manual UCI testing)
+    // keep _kbhit. Pattern matches Stockfish's WinProcGroup::input_available.
+    static HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    static const bool is_pipe = (GetFileType(h_stdin) == FILE_TYPE_PIPE);
+
+    if (is_pipe) {
+        DWORD bytes_avail = 0;
+        if (PeekNamedPipe(h_stdin, NULL, 0, NULL, &bytes_avail, NULL)) {
+            return bytes_avail > 0;
+        }
+        // PeekNamedPipe failure typically means the GUI closed its end
+        // of the pipe — return true so the search bails, the UCI loop
+        // reads EOF from getline, and the engine exits cleanly instead
+        // of spinning forever on a dead pipe.
+        return true;
+    }
+    // Interactive console — original _kbhit path. Kept for manual UCI
+    // testing where the user types commands at a console prompt.
     return _kbhit() != 0;
 #else
-    // Unix/Linux implementation using select()
+    // Unix/Linux implementation using select() — handles both pipe and
+    // terminal stdin transparently, so no separate case needed.
     fd_set readfds;
     struct timeval timeout;
-    
+
     FD_ZERO(&readfds);
     FD_SET(STDIN_FILENO, &readfds);
-    
+
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
-    
+
     return select(STDIN_FILENO + 1, &readfds, nullptr, nullptr, &timeout) > 0;
 #endif
 }
