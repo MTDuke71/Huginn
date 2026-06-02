@@ -1271,7 +1271,7 @@ database doesn't list. The headline numbers are less useful than the
 
 | Bucket | Count | Practical meaning |
 |---|---:|---|
-| Both solve | 269 | Easy 90% — no engineering target |
+| Both solve | 259 | Easy bulk — no engineering target |
 | **Both fail** | **9** | Genuinely depth-bound — SF18 at 100 M nodes can't find these in 5 s either |
 | **SF-only fail** | **11** | Almost certainly "WAC-expected-too-strict" — SF picks an unlisted but still-winning move. Huginn "wins" these by happening to pick the WAC-listed move at lower depth. *Not* a strength signal. |
 | **Huginn-only fail** | **21** | The actual engineering target. SF solves these at 5 s, so they're reachable with stronger search; the gap is feature/ordering work. |
@@ -1319,10 +1319,12 @@ SF intersection):
 | **PEXT / TT-size sweep (#32, #31)** | Marginal here | Pure NPS levers help both buckets slowly. Won't move the needle on the depth-bound 9. |
 
 **Updated closure conditions:**
-- **Tier-1 target**: flip 10+ of the 21 Huginn-only failures via
+- **Tier-1 target**: flip 10 of the 21 Huginn-only failures via
   singular extension and/or better move ordering. That would bring
-  Huginn to roughly 91-92% (parity with SF on the *non-depth-bound*
-  subset) — much more honest than "stabilise above 95%".
+  Huginn to 280/300 = 93.3% — exact parity with SF's total and with SF
+  on the *non-depth-bound* subset (291 positions, both at 280) — much
+  more honest than "stabilise above 95%". (Each flip = +0.33pp; ~6 flips
+  reaches ~92%.)
 - **Tier-2 stretch**: flip 1-2 of the 9 both-fail via raw depth wins
   (PEXT, TT scaling, ordering compounding). Each flip there is a
   meaningful "we now see something SF18 doesn't at 5 s" claim.
