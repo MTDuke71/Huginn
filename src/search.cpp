@@ -1730,6 +1730,24 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
 
         S_MOVE move = move_list.moves[i];
 
+        // Delta pruning: if even winning the captured piece can't lift the
+        // stand-pat eval to within DELTA_MARGIN of alpha, this capture is
+        // hopeless — skip it before paying for SEE. Uses the eval material
+        // scale (PIECE_VALUES_MG) since the comparison is against stand_pat,
+        // an eval. Promotions are exempt (the ~800cp promotion gain isn't in
+        // the victim value); the victim is read from the board (robust for
+        // en passant, where the destination square is empty). Mirrors the
+        // existing stand_pat assumption above (no separate in-check guard).
+        const int DELTA_MARGIN = 200;
+        if (!move.is_promotion()) {
+            PieceType victim = move.is_en_passant()
+                ? PieceType::Pawn
+                : type_of(pos.at_sq64(move.get_to()));
+            if (stand_pat + PIECE_VALUES_MG[size_t(victim)] + DELTA_MARGIN <= alpha) {
+                continue;
+            }
+        }
+
         // SEE pruning: skip captures that lose material on the recapture
         // sequence. Promotions are searched anyway because the value gain
         // from promotion can flip a "bad" capture into a sound one. King
