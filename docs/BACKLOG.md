@@ -1233,6 +1233,102 @@ above ~95% (matches the MTLChess_v0.5 reference), or pause if the
 ROI is search shape (deeper trees, better ordering) rather than
 tactical surgery.
 
+#### vs Stockfish 18 — refined target (added 2026-06-02)
+
+Cross-engine comparison: same 300 positions, same 5 s/pos, AMD
+7800X3D. Stockfish 18 (AVX-512 build, 16 threads, NNUE) at
+~20–40 Mnps. Huginn (1 thread, post-t9 + Tier 1-4 cleanup, conthist
+OFF) at ~3.5 Mnps.
+
+Logs: `test/wac_test_log_20260602_120720.txt` (SF18 detailed),
+`test/wac_failed_positions_20260602_*.txt` (the failed-position
+companion files for each engine).
+
+**Note on harness:** running SF required fixing `test/wac_test.py` —
+the old batched-`subprocess.run` driver let engines that poll stdin
+mid-search (SF) see the buffered `quit` / stdin-EOF and abort
+without searching, returning a depth-0 instant move (commit
+`c9ce270`). Huginn happened to mask the bug because it only reads
+stdin between checkup intervals. After the fix, both engines drive
+correctly via interactive Popen UCI; `--threads N` was added so SF
+can use all 16 cores on the gauntlet boxes for the comparison.
+
+**Headline numbers:**
+
+| Engine | Solved | Rate |
+|---|---:|---:|
+| Huginn current (1 thread) | 270/300 | 90.0% |
+| Stockfish 18 (16 threads, NNUE) | 280/300 | 93.3% |
+
+SF18's 93.3% is *lower than expected* (would have predicted ~97-99%
+given Stockfish's strength). The reason is mostly the WAC test
+itself, not SF: many WAC "expected best moves" are dated and
+narrowly specified — SF often finds equally-winning alternatives the
+database doesn't list. The headline numbers are less useful than the
+**intersection analysis below**.
+
+**Intersection (the more useful data):**
+
+| Bucket | Count | Practical meaning |
+|---|---:|---|
+| Both solve | 269 | Easy 90% — no engineering target |
+| **Both fail** | **9** | Genuinely depth-bound — SF18 at 100 M nodes can't find these in 5 s either |
+| **SF-only fail** | **11** | Almost certainly "WAC-expected-too-strict" — SF picks an unlisted but still-winning move. Huginn "wins" these by happening to pick the WAC-listed move at lower depth. *Not* a strength signal. |
+| **Huginn-only fail** | **21** | The actual engineering target. SF solves these at 5 s, so they're reachable with stronger search; the gap is feature/ordering work. |
+
+**The 9 both-fail positions** (genuinely horizon-bound, no eval term
+will flip these — needs deeper search or singular-extension-style
+horizon expansion):
+
+| WAC | Expected | Huginn played | SF played | Note |
+|---|---|---|---|---|
+| 002 | `Rxb2` | `Rb6` | `Rb7` | Canonical horizon case — both engines pick "build b-file pressure" over the sacrifice; SF reports `score cp 497` for `Rb7` at depth 20 |
+| 131 | `Re8` | `Rf6` | `Rf6` | single-best tactic, both miss |
+| 145 | `Re8` | `Rf3` | `Rf3` | single-best tactic |
+| 230 | `Rb4` | `Rh7` | `Rb5` | quiet rook lift; SF lands closer (b-file but wrong rank) |
+| 241 | `Qxh7+` | `Qf6` | `Qf6` | multi-ply forcing check — even SF doesn't extend deep enough |
+| 247 | `Rxb5` | `Rg5` | `Rg5` | sacrifice both miss the same way |
+| 248 | `Qc5+` | `Qd5` | `Qb6` | forcing check |
+| 291 | `h3` | `c7` | `c3` | quiet positional move |
+| 293 | `Nfg5` | `Be3` | `Nb5` | **knight tactic SF18 also misses at 16 threads** — striking; pure depth-bound |
+
+**The 21 Huginn-only failures** (SF solves these; flipping them
+requires closing some of the SF gap — feature/ordering work):
+
+`029, 055, 071, 080, 081, 090, 091, 100, 141, 163, 196, 213, 222,
+237, 243, 256, 265, 277, 283, 287, 297`
+
+Of these, 5 are knight tactics SF solves (`071 Nxa7+`, `090 Nxg7`,
+`196 Nb4`, `256 Nf5`, `283 Ng5`). Huginn's 6 knight-tactic failures
+split as 5 in this bucket + 1 (WAC.293 `Nfg5`) in the depth-bound
+both-fail bucket — meaning **5/6 of Huginn's knight failures are
+reachable**, not depth-bound. King-safety / knight-attack eval work
+plausibly flips this subset.
+
+**Revised candidate-feature ranking** (replaces the original
+hypothesis-seeds list above; this is evidence-based once we have the
+SF intersection):
+
+| Candidate | Likely impact | Why |
+|---|---|---|
+| **Singular extension** (Tier 3 work) | **Highest ROI** | Directly addresses the "one move uniquely deserves depth" pattern. The both-fail set (9) includes the canonical case (WAC.002 `Rxb2`) where shallow eval prefers a positional alternative; singular extension is the textbook fix. Also targets multi-option positions (100, 277, 287, 297) in the 21-set. |
+| **History-aware LMR / improved move ordering** (continuation history done right; conthist re-attempt with a sane weight curve) | High | The 21-set is reachable at 5 s with stronger search — these are mostly cases where the right move is *findable* but Huginn doesn't reach it in time. Better ordering = effective deeper search at the same NPS. |
+| **King-zone knight-attack eval term** (#2 king safety revisit) | Medium | Five of the 6 knight-tactic failures are in the reachable (Huginn-only) set, suggesting eval support would help here. Lower priority than singular ext / ordering because SF's NNUE handles these implicitly; a hand-crafted eval term may not capture the right pattern. |
+| **Check extension on candidate's *follow-up*** (not just the candidate) | Medium | Several forcing checks in the 21-set (055, 213) — extension may close. Less useful for the both-fail forcing checks (241, 248) since SF also fails them with massive extension budget. |
+| **Recapture extension at low depth** | Low | Speculative — would deepen sacrifice sequences but SF's failure on 247 (`Rxb5`) suggests this class needs more than +1 ply. |
+| **PEXT / TT-size sweep (#32, #31)** | Marginal here | Pure NPS levers help both buckets slowly. Won't move the needle on the depth-bound 9. |
+
+**Updated closure conditions:**
+- **Tier-1 target**: flip 10+ of the 21 Huginn-only failures via
+  singular extension and/or better move ordering. That would bring
+  Huginn to roughly 91-92% (parity with SF on the *non-depth-bound*
+  subset) — much more honest than "stabilise above 95%".
+- **Tier-2 stretch**: flip 1-2 of the 9 both-fail via raw depth wins
+  (PEXT, TT scaling, ordering compounding). Each flip there is a
+  meaningful "we now see something SF18 doesn't at 5 s" claim.
+- **Not a goal**: closing the 11 SF-only failures. Those reflect WAC
+  test-database narrowness, not engine strength.
+
 ### #19: Two-machine gauntlet workflow + SPRT
 
 - status: in progress (2026-05-28) — Part A landed on t6 scripts; two-machine pooling active
