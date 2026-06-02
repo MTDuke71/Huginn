@@ -123,29 +123,6 @@ public:
     void MakeNullMove();
     void TakeNullMove();
     
-    // Update derived state incrementally for a move (much faster than rebuild_counts).
-    // Maintains material_score and king_sq[]. Pawn bitboard updates removed in 4.8a
-    // (the legacy pawns_bb/all_pawns_bb fields are gone; piece_bitboards is the
-    // single source of truth, updated separately by move_piece).
-    void update_derived_state_for_move(const S_MOVE& m, Piece moving, Piece captured) {
-        Color moving_color = color_of(moving);
-        PieceType moving_type = type_of(moving);
-
-        if (!is_none(captured) && type_of(captured) != PieceType::King) {
-            Color captured_color = color_of(captured);
-            if (captured_color != Color::None) {
-                material_score[size_t(captured_color)] -= value_of(captured);
-            }
-        }
-
-        if (m.is_promotion()) {
-            material_score[size_t(moving_color)] -= value_of(make_piece(moving_color, PieceType::Pawn));
-            material_score[size_t(moving_color)] += value_of(make_piece(moving_color, m.get_promoted()));
-        } else if (moving_type == PieceType::King) {
-            king_sq[size_t(moving_color)] = m.get_to();
-        }
-    }
-    
     // Update Zobrist key incrementally for a move using XOR (much faster than recomputation)
     void update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square);
     
@@ -291,10 +268,6 @@ public:
     }
     
     // Pawn bitboard access functions (derive from piece_bitboards)
-    uint64_t get_pawn_bitboard(Color c) const {
-        return piece_bitboards[size_t(c)][size_t(PieceType::Pawn)];
-    }
-
     uint64_t get_all_pawns_bitboard() const {
         return piece_bitboards[size_t(Color::White)][size_t(PieceType::Pawn)] |
                piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
@@ -306,44 +279,6 @@ public:
 
     uint64_t get_black_pawns() const {
         return piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
-    }
-    
-    // Full bitboard access functions for all piece types
-    Bitboard get_piece_bitboard(Color color, PieceType piece_type) const {
-        return piece_bitboards[size_t(color)][size_t(piece_type)];
-    }
-    
-    Bitboard get_color_bitboard(Color color) const {
-        return color_bitboards[size_t(color)];
-    }
-    
-    Bitboard get_occupied_bitboard() const {
-        return occupied_bitboard;
-    }
-    
-    // Convenience accessors for specific piece types
-    Bitboard get_pawns(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Pawn)];
-    }
-    
-    Bitboard get_knights(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Knight)];
-    }
-    
-    Bitboard get_bishops(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Bishop)];
-    }
-    
-    Bitboard get_rooks(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Rook)];
-    }
-    
-    Bitboard get_queens(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::Queen)];
-    }
-    
-    Bitboard get_kings(Color color) const {
-        return piece_bitboards[size_t(color)][size_t(PieceType::King)];
     }
     
     // Perft function for move generation validation - definition after class

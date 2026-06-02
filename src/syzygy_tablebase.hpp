@@ -56,13 +56,7 @@ public:
      * @return true if tablebases are available
      */
     bool is_available() const;
-    
-    /**
-     * @brief Get maximum number of pieces supported
-     * @return max pieces, or 0 if not initialized
-     */
-    int get_max_pieces() const { return is_initialized ? max_pieces : 0; }
-    
+
     /**
      * @brief Check if position can be probed
      * @param pos Position to check
@@ -78,25 +72,12 @@ public:
     int probe_wdl(const Position& pos) const;
     
     /**
-     * @brief Probe DTZ (Distance-to-Zero) result  
-     * @param pos Position to probe
-     * @return DTZ in plies, or INT32_MAX if probe failed
-     */
-    int probe_dtz(const Position& pos) const;
-    
-    /**
      * @brief Get best move from tablebase
      * @param pos Position to probe
      * @return best move, or null move if probe failed
      */
     S_MOVE probe_root(const Position& pos) const;
-    
-    /**
-     * @brief Get tablebase path
-     * @return current tablebase path
-     */
-    const std::string& get_path() const;
-    
+
     /**
      * @brief Get tablebase statistics
      * @return string with tablebase info

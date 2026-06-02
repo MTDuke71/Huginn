@@ -126,16 +126,10 @@ public:
     // Get book move for position (returns best weighted move)
     S_MOVE get_book_move(const Position& pos) const;
     
-    // Get all book moves for position with weights
-    std::vector<std::pair<S_MOVE, uint16_t>> get_all_book_moves(const Position& pos) const;
-    
     // Check if position is in opening book
     bool has_book_moves(const Position& pos) const;
     
-    // Get book statistics
-    size_t get_entry_count() const { return entries.size(); }
     bool is_book_loaded() const { return is_loaded; }
-    const std::string& get_book_path() const { return book_path; }
     
     // Clear loaded book
     void clear();

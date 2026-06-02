@@ -151,10 +151,7 @@ public:  // Make members public for easier access
     // Creates a mirrored copy of the position for symmetry testing
     Position mirrorBoard(const Position& pos);
 
-    // Time checking
-    bool time_up() const;
-    void check_up(SearchInfo& info);
-    
+
     // UCI score formatting helper
     // UCI score formatting
     std::string format_uci_score(int score, Color side_to_move) const;
@@ -170,7 +167,6 @@ public:  // Make members public for easier access
     
     // PV table helper functions
     void store_pv_move(uint64_t position_key, const S_MOVE& move);
-    bool probe_pv_move(uint64_t position_key, S_MOVE& move) const;
 
     // Search history and killer move functions
     void update_search_history(const Position& pos, const S_MOVE& move, int depth);
@@ -194,14 +190,9 @@ public:  // Make members public for easier access
     // IID Enhancement: Enhanced with Internal Iterative Deepening move support
     int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1, const S_MOVE& iid_move = S_MOVE{}) const;
     
-    // VICE Part 84: Transposition table statistics
-    void print_tt_stats() const;
-    
     // VICE Part 85: Opening book functions
     bool load_opening_book(const std::string& book_path);
     S_MOVE get_book_move(const Position& pos) const;
-    bool is_in_opening_book(const Position& pos) const;
-    void print_book_moves(const Position& pos) const;
     
     // VICE Part 55 - Search Function Definitions
     void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)

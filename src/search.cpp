@@ -402,37 +402,6 @@ Position Engine::mirrorBoard(const Position& pos) {
     return mirrored_pos;
 }
 
-bool Engine::time_up() const {
-    if (should_stop) return true;
-    if (current_limits.infinite) return false;
-    
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
-    return elapsed.count() >= current_limits.max_time_ms;
-}
-
-void Engine::check_up(SearchInfo& info) {
-    // VICE style time checking function
-    if (time_up()) {
-        info.stopped = true;
-        return;
-    }
-
-    // Also respect the per-search stop_time provided via SearchInfo
-    auto now = std::chrono::steady_clock::now();
-    if (!info.infinite) {
-        auto stop_time = info.stop_time;
-        if (stop_time != std::chrono::steady_clock::time_point{}) {
-            if (now >= stop_time) info.stopped = true;
-        }
-    }
-
-    // If the engine's external should_stop flag has been set (via UCI stop), honor it
-    if (should_stop) {
-        info.stopped = true;
-    }
-}
-
 std::string Engine::format_uci_score(int score, Color side_to_move) const {
     // Convert engine score to proper UCI format
     // UCI specification: 
@@ -572,10 +541,6 @@ void Engine::clear_search_tables() {
 // PV table helper functions
 void Engine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
     pv_table.store_move(position_key, move);
-}
-
-bool Engine::probe_pv_move(uint64_t position_key, S_MOVE& move) const {
-    return pv_table.probe_move(position_key, move);
 }
 
 // Update search history when move improves alpha (3:55)
@@ -1943,27 +1908,6 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     return best_move;
 }
 
-// VICE Part 84: Print transposition table statistics
-void Engine::print_tt_stats() const {
-    uint64_t hits = tt_table.get_hits();
-    uint64_t misses = tt_table.get_misses();
-    uint64_t writes = tt_table.get_writes();
-    uint64_t total_probes = hits + misses;
-    double hit_rate = tt_table.get_hit_rate();
-    double utilization = tt_table.get_utilization();
-    
-    std::cout << std::endl;
-    std::cout << "=== Transposition Table Statistics ===" << std::endl;
-    std::cout << "Table size: " << tt_table.get_size() << " entries" << std::endl;
-    std::cout << "Total probes: " << total_probes << std::endl;
-    std::cout << "Hits: " << hits << std::endl;
-    std::cout << "Misses: " << misses << std::endl;
-    std::cout << "Writes: " << writes << std::endl;
-    std::cout << "Hit rate: " << std::fixed << std::setprecision(1) << (hit_rate * 100.0) << "%" << std::endl;
-    std::cout << "Table utilization: " << std::fixed << std::setprecision(1) << (utilization * 100.0) << "%" << std::endl;
-    std::cout << "=======================================" << std::endl;
-}
-
 // VICE Part 85: Opening book functions
 bool Engine::load_opening_book(const std::string& book_path) {
     return opening_book.load_book(book_path);
@@ -1971,32 +1915,6 @@ bool Engine::load_opening_book(const std::string& book_path) {
 
 S_MOVE Engine::get_book_move(const Position& pos) const {
     return opening_book.get_book_move(pos);
-}
-
-bool Engine::is_in_opening_book(const Position& pos) const {
-    return opening_book.has_book_moves(pos);
-}
-
-void Engine::print_book_moves(const Position& pos) const {
-    auto book_moves = opening_book.get_all_book_moves(pos);
-    
-    if (book_moves.empty()) {
-        std::cout << "No book moves available for this position." << std::endl;
-        return;
-    }
-    
-    std::cout << "Opening book moves:" << std::endl;
-    uint32_t total_weight = 0;
-    for (const auto& [move, weight] : book_moves) {
-        total_weight += weight;
-    }
-    
-    for (const auto& [move, weight] : book_moves) {
-        double percentage = (double(weight) / total_weight) * 100.0;
-        std::cout << "  " << move_to_uci(move) 
-                  << " (weight: " << weight 
-                  << ", " << std::fixed << std::setprecision(1) << percentage << "%)" << std::endl;
-    }
 }
 
 // Syzygy Tablebase functions

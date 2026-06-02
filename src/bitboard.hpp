@@ -187,7 +187,6 @@ void printBitboard(Bitboard bb, char occupied_char, char empty_char = '-');
 int popcount(Bitboard bb);           // Count number of set bits (optimized with __builtin_popcountll)
 int countBit(Bitboard bb);           // Count number of set bits - alias for popcount (optimized with __builtin_popcountll)
 int get_lsb(Bitboard bb);           // Get least significant bit position (optimized with __builtin_ctzll)
-int get_msb(Bitboard bb);           // Get most significant bit position (optimized with __builtin_clzll)
 int pop_lsb(Bitboard& bb);          // Pop and return least significant bit (optimized with __builtin_ctzll)
 bool is_empty(Bitboard bb);         // Check if bitboard is empty
 bool is_set(Bitboard bb, int square); // Check if specific square is set
@@ -304,31 +303,3 @@ inline int pop_lsb(uint64_t& bitboard) {
     return square;
 }
 
-/**
- * @brief Get the least significant bit without modifying the bitboard
- * @param bitboard The bitboard to examine
- * @return The square index (0-63) of the LSB, or -1 if bitboard is empty
- */
-inline int peek_lsb(uint64_t bitboard) {
-    return get_lsb(bitboard);  // get_lsb() already returns -1 for an empty board
-}
-
-/**
- * @brief Iterate over all set bits in a bitboard using a lambda function
- * @param bitboard The bitboard to iterate over
- * @param func Function to call for each set bit (takes square index as parameter)
- * 
- * Convenience function for functional-style iteration:
- * ```cpp
- * for_each_bit(knight_attacks(square), [&](int target) {
- *     // Process each attacked square
- * });
- * ```
- */
-template<typename Func>
-inline void for_each_bit(uint64_t bitboard, Func func) {
-    int square;
-    while ((square = pop_lsb(bitboard)) != -1) {
-        func(square);
-    }
-}

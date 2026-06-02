@@ -89,58 +89,6 @@ constexpr int WQCA = CASTLE_WQ;
 constexpr int BKCA = CASTLE_BK;
 constexpr int BQCA = CASTLE_BQ;
 
-// Castling utility functions
-constexpr inline bool can_castle_kingside(uint8_t rights, Color c) {
-    return c == Color::White ? (rights & CASTLE_WK) : (rights & CASTLE_BK);
-}
-
-constexpr inline bool can_castle_queenside(uint8_t rights, Color c) {
-    return c == Color::White ? (rights & CASTLE_WQ) : (rights & CASTLE_BQ);
-}
-
-constexpr inline bool can_castle(uint8_t rights, Color c) {
-    return can_castle_kingside(rights, c) || can_castle_queenside(rights, c);
-}
-
-constexpr inline uint8_t remove_castling_rights(uint8_t rights, Color c) {
-    return c == Color::White ? (rights & ~(CASTLE_WK | CASTLE_WQ)) 
-                             : (rights & ~(CASTLE_BK | CASTLE_BQ));
-}
-
-// Helper function to update castling rights efficiently
-constexpr inline uint8_t update_castling_rights_for_squares(uint8_t current_rights, int from_square, int to_square) {
-    // Use bitwise operations to efficiently clear castling rights based on square involvement
-    uint8_t new_rights = current_rights;
-    
-    // Clear castling rights when pieces move from or to key squares
-    // A1 (21): Clear White Queenside
-    if (from_square == 21 || to_square == 21) {
-        new_rights &= ~CASTLE_WQ;
-    }
-    // E1 (25): Clear both White castling rights (king move)
-    if (from_square == 25 || to_square == 25) {
-        new_rights &= ~(CASTLE_WK | CASTLE_WQ);
-    }
-    // H1 (28): Clear White Kingside
-    if (from_square == 28 || to_square == 28) {
-        new_rights &= ~CASTLE_WK;
-    }
-    // A8 (91): Clear Black Queenside
-    if (from_square == 91 || to_square == 91) {
-        new_rights &= ~CASTLE_BQ;
-    }
-    // E8 (95): Clear both Black castling rights (king move)
-    if (from_square == 95 || to_square == 95) {
-        new_rights &= ~(CASTLE_BK | CASTLE_BQ);
-    }
-    // H8 (98): Clear Black Kingside
-    if (from_square == 98 || to_square == 98) {
-        new_rights &= ~CASTLE_BK;
-    }
-    
-    return new_rights;
-}
-
 // ---------- Piece Types (colorless) ----------
 enum class PieceType : uint8_t {
     None  = 0,
@@ -294,9 +242,3 @@ constexpr inline Color get_piece_color(Piece piece) {
     return Color((uint8_t(piece) >> 3) & 0x01);  // Bit 3 contains color
 }
 
-// Check if square is valid (on-board)
-constexpr inline bool is_valid_square(int square) {
-    return square >= 0 && square < 120 && 
-           (square % 10) >= 1 && (square % 10) <= 8 &&
-           (square / 10) >= 2 && (square / 10) <= 9;
-}

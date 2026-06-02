@@ -67,8 +67,7 @@ public:
     
     // Get table size information
     size_t size() const { return table_size; }
-    size_t memory_usage_mb() const { return (table_size * sizeof(PVEntry)) / (1024 * 1024); }
-    
+
     // Store a move in the PV table
     void store_move(uint64_t position_key, const S_MOVE& move);
     
