@@ -48,6 +48,17 @@
 #include <vector>
 #include <atomic>
 
+// Diagnostic-counter gate, mirrored from search.hpp so transposition_table.hpp
+// stays self-contained (no #include of search.hpp would create a cycle since
+// search.hpp already depends on this header). When 0, hits/misses/writes are
+// neither incremented nor reported via get_hits()/get_writes() — they read as
+// the always-zero ATOMIC defaults — saving 3 atomic ops per TT probe/store on
+// the hot path. The CLI `-DENABLE_INFO_DIAGNOSTICS=1` flag flips both files
+// uniformly because each #ifndef-guards its own redefinition.
+#ifndef ENABLE_INFO_DIAGNOSTICS
+#define ENABLE_INFO_DIAGNOSTICS 0
+#endif
+
 /**
  * @struct TTEntry
  * @brief Transposition table entry storing complete search result information
@@ -150,24 +161,30 @@ public:
             entry.depth = depth;
             entry.node_type = node_type;
             entry.best_move = best_move;
+#if ENABLE_INFO_DIAGNOSTICS
             writes++;  // Track write operations
+#endif
         }
     }
-    
+
     // Probe transposition table for position
     bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
         size_t index = zobrist_key & size_mask;
         const TTEntry& entry = table[index];
-        
+
         if (entry.zobrist_key == zobrist_key) {
             score = entry.score;
             depth = entry.depth;
             node_type = entry.node_type;
             best_move = entry.best_move;
+#if ENABLE_INFO_DIAGNOSTICS
             hits++;  // Track successful probes
+#endif
             return true;
         }
+#if ENABLE_INFO_DIAGNOSTICS
         misses++;  // Track failed probes
+#endif
         return false;
     }
     
@@ -181,6 +198,24 @@ public:
     }
     
     size_t get_size() const { return table.size(); }
+
+    // UCI standard `hashfull` — fraction of TT in use expressed in permill
+    // (0..1000). Loop is O(N) but only called once per iterative-deepening
+    // depth (one info line per depth), not per node. Always available
+    // regardless of the diagnostics gate; UCI GUIs use this to colour
+    // time-pressure indicators and decide adjudication.
+    int permill_full() const {
+        const size_t n = table.size();
+        if (n == 0) return 0;
+        // Sample-based estimate to keep cost negligible on huge TTs (e.g. 256MB).
+        // Walk the first 1000 entries; spec only requires accuracy to ~1‰.
+        const size_t sample = n < 1000 ? n : 1000;
+        size_t filled = 0;
+        for (size_t i = 0; i < sample; ++i) {
+            if (table[i].zobrist_key != 0) ++filled;
+        }
+        return static_cast<int>((filled * 1000ULL) / sample);
+    }
 
     // Get statistics
     uint64_t get_hits() const { return hits; }

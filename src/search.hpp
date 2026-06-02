@@ -37,6 +37,23 @@ namespace Huginn {
 constexpr int CONTHIST_ORDER_WEIGHT = 64;
 constexpr int CONTHIST_ORDER_CAP = 8000;
 
+// Engine-internal diagnostic counters gate. When 1, search emits a
+// second per-depth `info string` with non-standard counters (null-move
+// cuts, LMR attempt/failure ratio, TT hit/miss/write counters) AND
+// the per-node increments that feed them are compiled in. When 0, the
+// emission and ALL the increments compile out, saving a handful of
+// uint64_t ops per node in the hot path. The standard UCI `info` line
+// (depth/seldepth/multipv/score/nodes/nps/hashfull/tbhits/time/pv) is
+// always emitted regardless. Flip to 1 only when tuning pruning/LMR
+// or debugging TT behaviour.
+//
+// Same gate must be visible to transposition_table.hpp (which carries
+// the hits/misses/writes counters); both files #ifndef-guard so the
+// CLI `-DENABLE_INFO_DIAGNOSTICS=1` works uniformly.
+#ifndef ENABLE_INFO_DIAGNOSTICS
+#define ENABLE_INFO_DIAGNOSTICS 0
+#endif
+
 // VICE Constants
 const int INFINITE = 30000;
 const int MATE = 29000;
@@ -56,8 +73,10 @@ struct SearchInfo {
     bool stopped;       // Flag indicating search was stopped
     bool depth_only;    // UCI depth command - bypass time management
     uint64_t nodes;     // Nodes searched so far
+    int seldepth;       // Max selective depth seen (incl. qsearch); standard UCI info
+    uint64_t tbhits;    // Successful Syzygy tablebase probes; standard UCI info
     S_MOVE best_move;   // Best move found (VICE Part 58)
-    
+
     // VICE Part 60: Move ordering statistics (0:13)
     uint64_t fh;        // Fail high count (beta cutoffs)
     uint64_t fhf;       // Fail high first (beta cutoff on first move)
@@ -103,7 +122,8 @@ struct SearchInfo {
     int pv_length[64];
 
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
-                   quit(false), stopped(false), depth_only(false), nodes(0), best_move(), fh(0), fhf(0), null_cut(0),
+                   quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
+                   best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {

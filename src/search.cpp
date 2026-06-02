@@ -1090,6 +1090,14 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         info.nodes++;
     }
 
+    // Standard UCI `seldepth` tracking: max ply ever reached during the
+    // current iteration. Quiescence enters from a leaf and recurses further
+    // (incrementing info.ply each time), so AlphaBeta seeing ply 17 at
+    // depth 0 means qsearch already pushed to ply 17 below — accurate to
+    // within a few plies of true max. Cheap (one branch, one store, well
+    // predicted), always on (standard info field, not diagnostic).
+    if (info.ply > info.seldepth) info.seldepth = info.ply;
+
     // Triangular PV: this node starts with an empty line. Set this before any
     // early return (TT cutoff, repetition/50-move draw, leaf) so a parent that
     // reads pv_length[ply+1] after the child returns sees 0, not a stale value
@@ -1200,6 +1208,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     if (depth <= 1 && tablebase && tablebase->is_available()) {
         int wdl_score;
         if (probe_tablebase_wdl(pos, wdl_score)) {
+            info.tbhits++;  // standard UCI `tbhits`
             return wdl_score;
         }
     }
@@ -1287,7 +1296,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // then our actual moves should easily beat beta - prune this node
         if (null_score >= beta) {
             // Null move cutoff - this position is too good for the opponent
-            info.null_cut++; // Track null move cutoffs for statistics
+#if ENABLE_INFO_DIAGNOSTICS
+            info.null_cut++;
+#endif
             return beta;
         }
     }
@@ -1312,9 +1323,10 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // If even with the safety margin we can't reach alpha, prune this node
         if (eval + futility_margin <= alpha) {
             futility_prune = true;
-            
-            // For debugging: track futility pruning statistics
+
+#if ENABLE_INFO_DIAGNOSTICS
             info.futility_cuts++;
+#endif
             
             // Return alpha (or slightly better) since no move can improve it significantly
             return alpha;
@@ -1331,7 +1343,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             int eval = get_static_eval();
             if (eval + RAZORING_MARGIN < alpha) {
                 depth--;
+#if ENABLE_INFO_DIAGNOSTICS
                 info.razoring_cuts++;
+#endif
             }
         }
     }
@@ -1418,14 +1432,18 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             // Try reduced search first
             int reduced_depth = depth - 1 - reduction;
             if (reduced_depth >= 1) {
-                info.lmr_attempts++;  // Track LMR attempt
+#if ENABLE_INFO_DIAGNOSTICS
+                info.lmr_attempts++;
+#endif
                 ++info.ply;
                 score = -AlphaBeta(pos, -alpha - 1, -alpha, reduced_depth, info, true, false);
                 --info.ply;
 
                 // If reduced search fails high, we need full search
                 if (score > alpha) {
-                    info.lmr_failures++;  // Track LMR failure (needs re-search)
+#if ENABLE_INFO_DIAGNOSTICS
+                    info.lmr_failures++;
+#endif
                     needs_full_search = true;
                 } else {
                     needs_full_search = false;
@@ -1799,6 +1817,13 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             break;
         }
 
+        // Reset per-iteration UCI counters so each `info` line reports
+        // this iteration's seldepth/tbhits, not the cumulative since the
+        // search started. nodes intentionally NOT reset — UCI `nodes`
+        // is the cumulative search node count.
+        info.seldepth = current_depth;  // base: this iteration searches to current_depth at minimum
+        info.tbhits = 0;
+
         // Iteration-start time gate: if the next iteration likely won't fit in
         // the remaining budget, return the previous depth's best move instead
         // of wasting time on a partial iteration that we'll discard anyway.
@@ -1956,23 +1981,40 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             for (int i = 0; i < made; ++i) pos.TakeMove();
         }
 
-        // Print results after each completed depth (3:03, 5:32)
-        std::cout << "info depth " << current_depth 
+        // Spec-compliant UCI `info` line: tokens in canonical order, PV last
+        // (PV is variable-length and consumes to end-of-line per the spec).
+        // depth/seldepth/multipv/score/nodes/nps/hashfull/tbhits/time are
+        // the standard fields every UCI GUI and adjudication tool expects.
+        const uint64_t nps = info.nodes * 1000ULL / std::max<int64_t>(elapsed.count(), 1);
+        std::cout << "info depth " << current_depth
+                  << " seldepth " << info.seldepth
+                  << " multipv 1"
                   << " score " << format_uci_score(best_score, pos.side_to_move)
-                  << " nodes " << info.nodes 
+                  << " nodes " << info.nodes
+                  << " nps " << nps
+                  << " hashfull " << tt_table.permill_full()
+                  << " tbhits " << info.tbhits
                   << " time " << elapsed.count()
-                  << " nullcut " << info.null_cut
-                  << " lmr " << info.lmr_attempts << "/" << info.lmr_failures
-                  << " tthits " << tt_table.get_hits()
-                  << " ttwrites " << tt_table.get_writes()
                   << " pv ";
-        
-        // Print full Principal Variation
         for (int i = 0; i < pv_moves; ++i) {
             std::cout << move_to_uci(pv_array[i]);
             if (i < pv_moves - 1) std::cout << " ";
         }
         std::cout << std::endl;
+
+#if ENABLE_INFO_DIAGNOSTICS
+        // Engine-internal pruning/ordering counters. Gated off by default so
+        // (a) GUIs don't see non-standard tokens in the `info` line and
+        // (b) the increments above (null_cut, lmr_*, tt hits/misses/writes)
+        // compile out from the hot path. Build with
+        // `-DENABLE_INFO_DIAGNOSTICS=1` when tuning.
+        std::cout << "info string diag"
+                  << " nullcut " << info.null_cut
+                  << " lmr " << info.lmr_attempts << "/" << info.lmr_failures
+                  << " tthits " << tt_table.get_hits()
+                  << " ttwrites " << tt_table.get_writes()
+                  << std::endl;
+#endif
         
 #if ENABLE_PRUNING_STATS
         // Print futility pruning statistics for this depth
