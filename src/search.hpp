@@ -30,7 +30,7 @@ namespace Huginn {
 //   CAP — clamps |weight*conthist| so a hot quiet move stays in the history
 //     band and never leaps the promotion (25K-90K) / killer (800K-900K) /
 //     capture (1M) tiers, preserving the existing ordering hierarchy.
-constexpr int CONTHIST_ORDER_WEIGHT = 16;
+constexpr int CONTHIST_ORDER_WEIGHT = 64;
 constexpr int CONTHIST_ORDER_CAP = 8000;
 
 // VICE Constants

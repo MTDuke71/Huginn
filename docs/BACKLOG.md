@@ -6,7 +6,7 @@
 |---|-------|--------|------|----------|
 | 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
 | 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
-| 3 | Continuation history | **WIP — gauntlet pending** (1-ply re-impl `2026-06-01`, flag on) | feature | high |
+| 3 | Continuation history | **WIP — weight sweep** (w16 neutral; w64 SPRT pending) | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
@@ -924,6 +924,24 @@ gravity" updates for both tables so a 1:1 sum is principled (deferred —
 it would modify the gauntlet-proven butterfly history, conflating two
 changes). Gauntlet: this commit (flag on) vs `baseline-t9`, both
 machines per the per-machine baseline rule.
+
+**Weight 16 SPRT result (2026-06-02): NEUTRAL, not shippable.**
+1000g/machine vs `baseline-t9`, 10+0.1:
+- Intel: **-0.35 ± 14.72** Elo, LOS 48.2%, Ptnml [27,123,204,116,30],
+  DrawRatio 40.8%, PairsRatio 0.97 — dead flat.
+- AMD: **+6.6** Elo. Pooled ≈ +3 Elo (±~10), and the two machines
+  disagree in sign → noise around zero, below the cross-machine ship bar.
+The near-symmetric, draw-heavy pentanomial (WW30/LL27, WD116/LD123) says
+the two builds played almost the same chess — consistent with the
+pre-commit measurement that w16 changed only ~0.18% of nodes. **Most
+likely too weak to alter move selection**, NOT evidence conthist is
+useless. Caveat: the amplification probe showed even w1000 moved only
+~0.7% of nodes, so the additive-on-unbounded-butterfly term is
+structurally capped — a weight bump has limited headroom.
+**Now testing `CONTHIST_ORDER_WEIGHT = 64`** (w64 Kiwipete d11: 363,561
+nodes vs 363,757 @ w16 vs 364,401 off — engages marginally more). If w64
+is also flat, that confirms the structural cap → escalate to the
+bounded-gravity redesign or shelve.
 
 **Plan now that #13 has landed:**
 1. Add `int continuation_history[13][64][13][64]` (heap-allocated to
