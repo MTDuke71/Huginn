@@ -234,8 +234,13 @@ shim removed). Sub-phases 4.3-4.10 remain on the plan.
    killers + history + counter-move (on @1500) + MVV-LVA
 3. **Evaluation**: hand-crafted, phase-aware (3-bucket switch), full set
    of standard pawn-structure / piece-activity / mobility terms
-4. **Books / TBs**: Polyglot wired and used; Syzygy probe code present
-   but gated off (`if (false && …)` at search.cpp:1218)
+4. **Books / TBs**: Polyglot wired and used; Syzygy WDL probe **wired and
+   active** (BACKLOG #10 closed) — fires at leaf nodes (`depth <= 1`) when
+   tablebases are loaded ([search.cpp:1200](../src/search.cpp#L1200)),
+   plus a root probe. WDL results are mapped to Huginn's own score scale
+   (`±(MATE-1000)` = ±28000, inside `INFINITE`=30000), not Fathom's
+   `TB_VALUE_*` constants. TB scores are deliberately **not** stored in
+   the TT (rule50 isn't in the zobrist key)
 5. **Test suite**: ~197 GoogleTest cases + WAC300 / LCT2 EPD sweeps
 
 ### Where we are vs target strength
