@@ -1949,37 +1949,73 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
         
-        // Principal Variation collected in the triangular table during this
-        // iteration's root loop — exact and full-length, no side-table
-        // reconstruction (which truncated deep PVs to a single move).
-        const S_MOVE* pv_array = info.pv_line[0];
-        int pv_moves = info.pv_length[0];
-
-        // Truncate the *displayed* PV at the first position that repeats (a
-        // prior game position or one earlier in the line). The triangular PV
-        // faithfully follows the search through 2-fold repetitions, but a
-        // repetition tail is noise to a GUI and trips PV validators, so the
-        // printout stops at the move that first revisits a position — matching
-        // the old get_pv_line() behavior. One make/unmake walk of the line,
-        // paid once per depth (not per node). pos is at the root here.
+        // Build the PV to display: take the triangular PV as the prefix,
+        // then extend by walking the transposition table. When a root move
+        // bottoms out via a TT cutoff, the child never populates its own
+        // pv_line and the triangular array truncates to length 1 — but the
+        // deeper line still lives in the TT, so pull it out for the GUI.
+        // Repetition truncation runs across both phases: the *displayed* PV
+        // stops at the first position that revisits a prior game position or
+        // one earlier in the line (GUI validators reject repeating tails).
+        // One make/unmake walk paid once per depth, not per node.
+        constexpr int PV_DISPLAY_CAP = 32;  // deeper than Huginn ever reaches
+        S_MOVE display_pv[PV_DISPLAY_CAP];
+        int pv_moves = 0;
         {
             std::unordered_set<uint64_t> seen;
-            seen.reserve(pos.move_history.size() + static_cast<size_t>(pv_moves) + 1);
+            seen.reserve(pos.move_history.size() + PV_DISPLAY_CAP);
             for (const auto& undo : pos.move_history) {
                 if (undo.zobrist_key != 0) seen.insert(undo.zobrist_key);
             }
             seen.insert(pos.zobrist_key);
+
             int made = 0;
-            for (int i = 0; i < pv_moves; ++i) {
-                if (pos.MakeMove(pv_array[i]) != 1) { pv_moves = i; break; }
+            bool stop = false;
+
+            // Phase 1 — triangular PV prefix (search-truth, definitely legal).
+            const S_MOVE* tri_pv = info.pv_line[0];
+            const int tri_len = info.pv_length[0];
+            for (int i = 0; i < tri_len && pv_moves < PV_DISPLAY_CAP; ++i) {
+                if (pos.MakeMove(tri_pv[i]) != 1) { stop = true; break; }
                 ++made;
+                display_pv[pv_moves++] = tri_pv[i];
                 if (!seen.insert(pos.zobrist_key).second) {
-                    pv_moves = i + 1;  // keep the repetition-creating move, drop the tail
+                    stop = true;  // keep the rep-creating move, drop the tail
                     break;
                 }
             }
+
+            // Phase 2 — extend via TT walk. Same collision filter the main
+            // search uses (search.cpp:853-868): sanity-check the raw best_move
+            // before calling MakeMove, since a TT collision can hand back a
+            // move whose from-square is empty or wrong-coloured in the current
+            // position. MakeMove != 1 then catches king-in-check cases.
+            while (!stop && pv_moves < PV_DISPLAY_CAP) {
+                int tt_score;
+                uint8_t tt_depth, tt_type;
+                uint32_t tt_move_raw;
+                if (!tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_type, tt_move_raw)) break;
+                if (tt_move_raw == 0) break;
+
+                S_MOVE tt_move;
+                tt_move.move = static_cast<int>(tt_move_raw);
+                tt_move.score = 0;
+
+                const int from = tt_move.get_from();
+                const int to = tt_move.get_to();
+                if (from < 0 || from >= 64 || to < 0 || to >= 64) break;
+                const Piece p = pos.at_sq64(from);
+                if (p == Piece::None || color_of(p) != pos.side_to_move) break;
+
+                if (pos.MakeMove(tt_move) != 1) break;
+                ++made;
+                display_pv[pv_moves++] = tt_move;
+                if (!seen.insert(pos.zobrist_key).second) break;  // rep
+            }
+
             for (int i = 0; i < made; ++i) pos.TakeMove();
         }
+        const S_MOVE* pv_array = display_pv;
 
         // Spec-compliant UCI `info` line: tokens in canonical order, PV last
         // (PV is variable-length and consumes to end-of-line per the spec).
