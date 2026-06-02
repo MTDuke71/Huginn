@@ -1135,6 +1135,104 @@ not as a strength lever.
 to pair with #31 (both are cache experiments) and to measure with the
 profiling tooling once that's set up.
 
+### #33: WAC300 hard-position set — 30 deterministic-failure positions
+
+- status: **OPEN** (added 2026-06-02)
+- priority: medium (focused tactical improvement target)
+- type: investigation / strength
+- est: per-feature spot-check (~25 min/run), ongoing — close when
+  WAC stabilises ≥95% or pause if 30 prove genuinely depth-limited
+
+**Stable hard-position set.** With t9 + Tier 1-4 cleanup + conthist
+OFF (`#define ENABLE_CONTINUATION_HISTORY 0`), WAC300 scores
+**270/300 = 90.0%** at 5s/position, and **the same exact 30 positions
+fail on both gauntlet boxes** — verified by separate runs on the AMD
+7800X3D and Intel 13700KF at the same time control. Same total, same
+identical failure set, including matching engine moves where the
+engine picked the wrong best-line. This is the strongest possible
+cross-machine determinism check at the tactical level: the search
+tree at fixed 5s is bit-identical in observable output across both
+machines. **The 30 are genuinely hard, not per-machine luck.**
+
+**The 30:** WAC.002, 029, 055, 071, 080, 081, 090, 091, 100, 131,
+141, 145, 163, 196, 213, 222, 230, 237, 241, 243, 247, 248, 256,
+265, 277, 283, 287, 291, 293, 297.
+
+Logs: `test/wac_test_log_20260602_102823.txt` (full),
+`test/wac_failed_positions_20260602_104225.txt` (just the 30 +
+positional FEN + expected SAN + got-move).
+
+**Failure-category breakdown** (informal, for targeted work):
+
+- **Knight tactics (6):** 071 `Nxa7+`, 090 `Nxg7`, 196 `Nb4`,
+  256 `Nf5`, 283 `Ng5`, 293 `Nfg5`. Long-standing pattern flagged in
+  `SEARCH_AND_EVAL.md` ("5 of 11 hard positions are knight tactics"
+  from the older WAC runs). Knight forks resist deep search because
+  LMR steals the ply where the fork resolves into material gain.
+- **Multi-ply forcing checks (6):** 055 `Qxg7+`, 163 `Qg2+`,
+  213 `Rxh7+`, 237 `Rc1+`, 241 `Qxh7+`, 248 `Qc5+`. Sacrificial check
+  sequences where the immediate sac doesn't obviously recover material
+  — need check-extension depth on the *follow-up*, not just the
+  candidate move.
+- **Quiet / positional (4):** 080 `Ra1`, 230 `Rb4`, 243 `Qe2`,
+  291 `h3`. Engine prefers a tactical alternative; missing eval term
+  or insufficient depth for the positional payoff to register in
+  alpha-beta.
+- **Multi-option choose-your-route (4):** 100 (`Be3, b6+`),
+  277 (`Rg3, Rxg2`), 287 (`Qg4, Qh5`), 297 (`Bxg2, Bxh2+`). Solutions
+  list 2+ acceptable best moves; engine picks neither — exactly the
+  case singular-move detection / extension would catch ("no other
+  move is competitive at reduced depth").
+- **Single-best tactic, miscellaneous (10):** 002 `Rxb2`, 029 `c6`,
+  081 `Bd6`, 091 `Be6`, 131 `Re8`, 141 `Qxf4`, 145 `Re8`,
+  222 `Bf6`, 247 `Rxb5`, 265 `exf6`.
+
+**How to use this as a focused-improvement signal:**
+
+1. Run `cd test && python wac_test.py 300 -t 5` (~25 min on AMD) on
+   the candidate build. Compare the failed-position set to the 30
+   above.
+2. A change that **flips 3-5 of the 30** is real signal at the
+   tactical-resolution level. Cross-machine determinism gives this
+   teeth: the 30 are stable, so any flip is the change solving
+   something genuinely harder, not noise.
+3. Much cheaper than a 1000g SPRT (~25 min vs ~80 min) and **orthogonal
+   to gauntlet Elo**: WAC measures tactical resolution at depth,
+   SPRT measures move quality at tournament TC. An eval change can
+   flip WAC failures without moving Elo at 10+0.1, and vice versa.
+4. **Cross-machine sanity is automatic.** Both gauntlet boxes run
+   identical search at fixed time, so a WAC-affecting feature should
+   show the same flips on both. AMD/Intel divergence on which of the
+   30 newly solve/fail = #26-class machine-dependent behaviour to
+   investigate.
+
+**Candidate features expected to flip some of the 30** (hypothesis
+seeds, not commitments):
+
+- **King-zone knight-attack term** (#2 king safety revisit). Would
+  weight positions where a knight reaches an attack square near the
+  enemy king. Plausible flips: the 6 knight tactics, plus a few of
+  the forcing checks where the sac sequence ends in knight-fork.
+- **Check extension on the candidate move's *follow-up*,** not just
+  the candidate itself. Today's check extension may stop too early
+  in the multi-ply Qxg7+ / Rxh7+ / Qxh7+ continuations.
+- **Recapture extension at low depth.** Would deepen the sacrificial
+  check positions by one more ply at the cost the search currently
+  refuses.
+- **Singular extension** (Tier 3 work). The 4 multi-option positions
+  are exactly the case singular catches — "no other move is
+  competitive at reduced depth, extend the candidate."
+- **History-aware LMR** that doesn't reduce moves leading to mate
+  threats in the recent search. The forcing-check failures are
+  exactly where LMR's depth cut bites.
+
+**Not a single deliverable.** Tracking item for the hard set itself
+plus a workflow note. Close when post-improvement WAC stabilises
+above ~95% (matches the MTLChess_v0.5 reference), or pause if the
+30 prove genuinely depth-limited and the engine's better marginal
+ROI is search shape (deeper trees, better ordering) rather than
+tactical surgery.
+
 ### #19: Two-machine gauntlet workflow + SPRT
 
 - status: in progress (2026-05-28) — Part A landed on t6 scripts; two-machine pooling active
