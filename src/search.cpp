@@ -48,6 +48,15 @@
 #ifndef ENABLE_PRUNING_STATS
 #define ENABLE_PRUNING_STATS 0
 #endif
+// ENABLE_TAPERED_EVAL: BACKLOG #35. Replace the hard `is_endgame` boolean
+// (which flips king-PST + mobility weight at a 1150-material threshold) with
+// a smooth game-phase blend in [0,256]. The mg/eg accumulators differ ONLY in
+// the king PST and mobility weight — exactly the two terms the boolean gated —
+// so flag-OFF is byte-identical to the pre-#35 eval, and flag-ON only smooths
+// those two transitions. Tapered material values are a SEPARATE later step.
+#ifndef ENABLE_TAPERED_EVAL
+#define ENABLE_TAPERED_EVAL 1
+#endif
 
 namespace Huginn {
 
@@ -97,6 +106,24 @@ static const int mirror64[64] = {
      0,  1,  2,  3,  4,  5,  6,  7   // rank 8 -> rank 1
 };
 
+// Game phase in [0,256]: 256 = full opening material, 0 = bare kings (+pawns).
+// Standard non-pawn phase weights (N=1, B=1, R=2, Q=4); start position sums to
+// 24. Used by the tapered eval (#35) to blend mg/eg term values smoothly
+// instead of the hard `is_endgame` boolean flip.
+static inline int game_phase_256(const Position& pos) {
+    int npm =
+        popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Knight)] |
+                 pos.piece_bitboards[int(Color::Black)][int(PieceType::Knight)]) * 1 +
+        popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)] |
+                 pos.piece_bitboards[int(Color::Black)][int(PieceType::Bishop)]) * 1 +
+        popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)] |
+                 pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)]) * 2 +
+        popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Queen)] |
+                 pos.piece_bitboards[int(Color::Black)][int(PieceType::Queen)]) * 4;
+    if (npm > 24) npm = 24;  // early-promotion safety: extra queens cap at full phase
+    return (npm * 256 + 12) / 24;  // +12 rounds to nearest
+}
+
 // Function to swap piece colors using the bit-packed Piece enum
 Piece swapPieceColor(Piece piece) {
     if (piece == Piece::None || piece == Piece::Offboard) return piece;
@@ -123,10 +150,19 @@ int Engine::evaluate(const Position& pos) {
     
     // VICE Part 82: Use pre-existing material tracking for endgame detection
     // This is much more efficient than manually counting material
-    int total_material = pos.get_total_material();
-    bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
-    
-    // Evaluate all pieces using bitboard iteration
+    [[maybe_unused]] int total_material = pos.get_total_material();
+    [[maybe_unused]] bool is_endgame = (total_material <= EvalParams::ENDGAME_MATERIAL_THRESHOLD);
+#if ENABLE_TAPERED_EVAL
+    const int phase = game_phase_256(pos);  // 256 = opening, 0 = endgame (#35)
+#endif
+
+    // Material + PST accumulated into separate middlegame (mg) and endgame (eg)
+    // sums (white-positive). They diverge ONLY in the king PST table — the one
+    // term the legacy `is_endgame` boolean flipped — so the flag-off combine
+    // (`is_endgame ? eg : mg`) is byte-identical to the pre-#35 eval, while the
+    // flag-on combine blends them smoothly by game phase. Material stays MG for
+    // both sums for now (tapered material values are a separate #35 step).
+    int mg_pst = 0, eg_pst = 0;
     for (int color = 0; color <= 1; ++color) {
         Color piece_color = static_cast<Color>(color);
         // PST tables are stored from White's perspective; Black pieces look up
@@ -143,11 +179,12 @@ int Engine::evaluate(const Position& pos) {
             while (bb) {
                 int sq64 = pop_lsb(bb);
                 int table_index = sq64 ^ sq_flip;
-                int pst_value = 0;
+                int mg_val, eg_val;
                 if (pt == PieceType::King) {
-                    pst_value = is_endgame ? EvalParams::KING_TABLE_ENDGAME[table_index]
-                                           : EvalParams::KING_TABLE[table_index];
+                    mg_val = material_value + EvalParams::KING_TABLE[table_index];
+                    eg_val = material_value + EvalParams::KING_TABLE_ENDGAME[table_index];
                 } else {
+                    int pst_value = 0;
                     switch (pt) {
                         case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
                         case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
@@ -156,10 +193,10 @@ int Engine::evaluate(const Position& pos) {
                         case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
                         default: break;
                     }
+                    mg_val = eg_val = material_value + pst_value;
                 }
-                int piece_value = material_value + pst_value;
-                if (piece_color == Color::White) score += piece_value;
-                else score -= piece_value;
+                if (piece_color == Color::White) { mg_pst += mg_val; eg_pst += eg_val; }
+                else                             { mg_pst -= mg_val; eg_pst -= eg_val; }
             }
         }
     }
@@ -270,10 +307,10 @@ int Engine::evaluate(const Position& pos) {
     // Pawns are excluded (their move semantics aren't "attack squares")
     // and kings are excluded (their squares are evaluated elsewhere).
     // -----------------------------------------------------------------
+    // Signed mobility "units" (white count − black count); the per-phase weight
+    // is applied at the mg/eg combine below so mobility tapers smoothly too.
+    int mobility_units = 0;
     {
-        const int mob_weight = is_endgame ? EvalParams::MOBILITY_WEIGHT_ENDGAME
-                                          : EvalParams::MOBILITY_WEIGHT_DEFAULT;
-        int mobility_score = 0;
         const uint64_t occ = pos.occupied_bitboard;
 
         for (int color = 0; color <= 1; ++color) {
@@ -305,11 +342,24 @@ int Engine::evaluate(const Position& pos) {
                 count += popcount(queen_attacks(sq, occ) & ~own);
             }
 
-            if (color == int(Color::White)) mobility_score += count * mob_weight;
-            else                            mobility_score -= count * mob_weight;
+            if (color == int(Color::White)) mobility_units += count;
+            else                            mobility_units -= count;
         }
-        score += mobility_score;
     }
+
+    // Combine the phase-dependent material+PST+mobility sums. `score` already
+    // holds the phase-neutral terms (pawn structure, file bonuses, bishop pair).
+#if ENABLE_TAPERED_EVAL
+    // Smooth blend: mg at full opening (phase=256), eg at bare kings (phase=0).
+    int mg_total = mg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_DEFAULT;
+    int eg_total = eg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_ENDGAME;
+    score += (mg_total * phase + eg_total * (256 - phase)) / 256;
+#else
+    // Legacy hard boolean: pick one side of the blend at the 1150 threshold.
+    const int mob_weight = is_endgame ? EvalParams::MOBILITY_WEIGHT_ENDGAME
+                                      : EvalParams::MOBILITY_WEIGHT_DEFAULT;
+    score += (is_endgame ? eg_pst : mg_pst) + mobility_units * mob_weight;
+#endif
 
     // Return from current side's perspective (negate if black to move),
     // then add a tempo bonus (initiative goes to whoever moves next).

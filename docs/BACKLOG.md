@@ -5,7 +5,7 @@
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
 | 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
-| 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
+| 2 | Re-attempt king safety on top of mobility | **DEFERRED** — likely needs tapered eval first (see #35); KS on an untapered base poisons the endgame | feature | low |
 | 3 | Continuation history | **PARKED** — 1-ply additive falsified (w16 neutral, w64 −9); flag off, kept in-tree | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
@@ -36,6 +36,8 @@
 | 30 | Nondeterministic search from uninitialized history | **FIXED** — `search_history` was uninitialized; zero-init. Search now deterministic at fixed depth | bug | high |
 | 31 | TT-size (`Hash`) SPRT sweep — 64 vs 128 vs 256 MB | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated, fallback to magic) | **OPEN** | speed/research | low |
+| 34 | Pin/blocker-aware legal movegen (SF `blockersForKing`) | **OPEN** | speed/research | low |
+| 35 | Tapered eval + eval-gap closure vs Fruit 2.1 | **IN-PROGRESS** | feature/eval | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1330,6 +1332,164 @@ SF intersection):
   meaningful "we now see something SF18 doesn't at 5 s" claim.
 - **Not a goal**: closing the 11 SF-only failures. Those reflect WAC
   test-database narrowness, not engine strength.
+
+### #34: Pin/blocker-aware legal movegen (Stockfish `blockersForKing`)
+
+- status: **OPEN** (idea parked 2026-06-03)
+- priority: low (speed/architecture experiment, not a strength lever;
+  much bigger eval/search issues come first)
+- type: speed / research
+- est: ~1 session for the perft-side fast path + perft validation;
+  the search-side variant is larger and separate
+
+**Idea.** Adopt Stockfish's `st->blockersForKing[c]` / `st->pinners[~c]`
+precomputation: once per node, derive the set of own pieces pinned to
+the king (king-blockers) and the enemy sliders pinning them. Legality
+of a move then becomes an O(1) test — a non-king, non-EP move by a
+non-pinned piece is always legal; a pinned piece is legal iff its
+destination stays on the king↔pinner ray — replacing per-move king-
+attack scans.
+
+**Where Huginn stands today.** Movegen is pure pseudo-legal
+([movegen_bb.cpp:25](../src/movegen_bb.cpp#L25)); it has no pin
+awareness. Legality is decided by make/unmake + `SqAttackedBB(king)`
+([position.cpp:404](../src/position.cpp#L404)). Two consumers:
+1. **`generate_legal_moves`** ([movegen.cpp:25](../src/movegen.cpp#L25))
+   — make/unmake purely to test legality, then undo. Used by perft and
+   the mate/stalemate `legal_moves` count at
+   [search.cpp:1795](../src/search.cpp#L1795).
+2. **Search** — already pseudo-legal: `generate_all_moves` + inline
+   `if (pos.MakeMove(m) != 1) continue;` ([search.cpp:1388](../src/search.cpp#L1388)).
+   This path's pre-filter was *already removed* in **#14** (closed
+   `b1154c8`), so the legality test now piggybacks on a `MakeMove`
+   that has to happen anyway for recursion.
+
+**So the remaining win is narrower than it first looks:**
+- **Perft / `generate_legal_moves` (the real target).** Here make/unmake
+  is pure overhead — blockers let ~90%+ of moves skip it entirely.
+  Memory/diagnosis says **perft is movegen-bound**, so this is where the
+  gain lands.
+- **Search.** #14 already captured the easy win. Blockers would only
+  save (a) *making* the handful of illegal moves per node, and (b) the
+  `SqAttackedBB` inside `MakeMove` — but (b) requires changing
+  `MakeMove`'s contract to a "trusted-legal" make that skips the in-check
+  test. Invasive, modest payoff, and at 10+0.1 the engine is work-per-
+  node bound (cf. #26) — likely a #26-class "NPS up, Elo flat" result.
+
+**Correctness traps (why this is not a quick edit):**
+1. **En passant** — the captured pawn isn't on the from→to ray, so the
+   pin test can't classify it. Always route EP through full make/unmake.
+2. **In check** — blockers don't resolve evasions; the fast path is
+   invalid when `pos.in_check()`. Huginn has no `generate<EVASIONS>`, so
+   in-check nodes fall back to per-move checks.
+
+**Recommended low-risk shape (if revisited):** don't rewrite movegen
+into fully-legal generation. Add `compute_blockers(pos, us)` →
+pinned-bitboard + pin rays, then bolt a fast-path filter onto
+`generate_legal_moves`: in-check / EP / king moves fall back to the
+existing `MakeMove` oracle; non-pinned pieces are accepted with no make;
+pinned pieces are accepted iff `to` stays on the from–king line. Keeps
+`MakeMove` as the correctness fallback, and the perft suite catches any
+pin/EP bug instantly. Only escalate to a trusted-legal `MakeMove` for
+the search path if the perft-side win proves worth the larger change.
+
+**Expectation.** Real perft speedup; search Elo ~0 ± noise at our TC.
+Worth it mainly as a perft/movegen-architecture lever, sequenced behind
+the eval/search strength work (#33 tactical set, #17 aspiration, king
+safety) that has far higher strength ROI.
+
+### #35: Tapered eval + eval-gap closure vs Fruit 2.1
+
+- status: **IN-PROGRESS** (opened 2026-06-03)
+- priority: **high** — this is the largest identified strength lever; the
+  eval is where Huginn's move-quality gap lives
+- type: feature / eval
+- est: tapered-eval foundation ~1 session + gauntlet; full table is
+  multi-session
+
+**Trigger: Fruit 2.1 gauntlet wipeout.** Dropped `fruit_fast.exe` into the
+fastchess folder for a relative-strength read (10+0.1, noob_3moves,
+OwnBook off):
+- huginn_t9 vs Fruit, 40g: **0 W / 40 L / 0 D (0.0%)**, every game by mate.
+- huginn_current vs Fruit, 20g: **0 W / 20 L / 0 D (0.0%)**, same.
+
+Fruit 2.1 ≈ 2780 CCRL vs Huginn ≈ 1600 — a ~1000-1200 Elo gap, so 0% is
+expected and yields no measurement gradient (useless as a calibration
+sparring partner; the MTLChess ~1984 ladder is the right yardstick). PGNs:
+`gauntlet/huginn_vs_fruit.pgn` (40g), `gauntlet/huginn_vs_fruit_10r.pgn`.
+
+**The diagnostic signal (not the score itself).** In the PGN traces
+**Huginn searched DEEPER (d10-15) than Fruit (d8-12) and still got mated
+every game.** The gap is **move quality per node = evaluation**, not
+speed or depth. This is consistent with CLAUDE.md ("the remaining gap is
+search-tree shape and eval quality, not raw speed") and the post-#24
+speed-parity finding. Search-shape experiments (#3 conthist, #6 lazy SEE)
+have washed out near-neutral; eval is the under-invested axis.
+
+**Eval feature gap — Huginn vs Fruit 2.1** (Huginn claims verified against
+the code this session; ✅/❌ = present/absent):
+
+| Feature | Huginn | Fruit 2.1 | Impact |
+|---|---|---|---|
+| Tapered eval (op→eg blend) | ❌ hard boolean `is_endgame` flips only king-PST + mobility weight ([search.cpp:127](../src/search.cpp#L127),[:148](../src/search.cpp#L148),[:274](../src/search.cpp#L274)) | ✅ every term has op/eg, smooth phase 0–256 | **Huge** |
+| Tapered material values | ❌ single `PIECE_VALUES_MG` ([chess_types.hpp:166](../src/chess_types.hpp#L166)) | ✅ Pawn 80→90, etc. | High |
+| King safety | ❌ **dead code** — `KING_SHIELD_MULTIPLIER`/`KING_ATTACK_PENALTY`/`CASTLE_BONUS`/`STUCK_PENALTY` defined ([evaluation.hpp:126-130](../src/evaluation.hpp#L126-L130)) but referenced nowhere; KS = king-PST only | ✅ shelter + storm + multi-attacker non-linear | **Huge** |
+| Drawishness scaling | ❌ none | ✅ `mul[]` 0–16: opp-bishops ½, KNNK→0, "1 minor up no pawns"→⅛ | High |
+| Endgame recognizers | ❌ only KK/KNK/KBK draw ([search.cpp:322](../src/search.cpp#L322)) | ✅ KPK, KRKP, KQKP, KBPKB, wrong rook-pawn… | Med |
+| Passed pawns | basic rank bonus ([search.cpp:185](../src/search.cpp#L185)) | ✅ + unstoppable/free/king-distance | Med |
+| Pawn structure | isolated, doubled, passed | + backward, candidate passers | Med |
+| Mobility | flat square count ([search.cpp:273](../src/search.cpp#L273)) | per-piece tuned op/eg weights | Low-Med |
+| Rook on open file | ✅ | ✅ | — |
+| Rook on 7th / king-file | ❌ | ✅ | Low-Med |
+| Bishop pair | ✅ +50 | ✅ +50 | — |
+| Trapped/blocked pieces | ❌ | ✅ | Low |
+| Pawn/material hash tables | ❌ | ✅ | perf only |
+
+**Sequencing — tapered eval FIRST, and why it's the unblocker:**
+
+1. **Tapered eval (phase 0–256 smooth blend).** Foundational — it's a
+   multiplier on every other term. Low-risk: clean correctness test
+   (phase=256 ≡ today's MG eval, phase=0 ≡ EG eval; mirror-symmetry must
+   still hold). Partial infra already exists (`KING_TABLE_ENDGAME` + the
+   `is_endgame` phase concept), so this is an *extension*, not a rebuild.
+   **Key insight: this likely explains why #2 king safety regressed −126
+   Elo.** A KS penalty on an untapered eval applies at full strength in
+   the endgame, where the king should be *active* and KS should fade to
+   ~0 — so KS poisons EG play. Fruit's whole eval is phase-blended exactly
+   so KS can vanish in the EG. Tapering is the prerequisite that revives
+   #2.
+2. **Tapered material values.** Trivial once #1's blend machinery exists —
+   give `PIECE_VALUES` an EG column.
+3. **King safety (Fruit's shelter + storm + multi-attacker model),** now on
+   a tapered base — NOT the presence-zone that failed at −126 (#2).
+4. **Drawishness scaling (`mul[]`).** Independent, High-impact, cheap.
+
+**Why this should convert (unlike the recent neutral experiments).** The
+washed-out experiments (#3, #6, #26) were search-shape / speed levers that
+TC-bound Elo barely reflected. Eval-quality changes of this magnitude
+(missing KS, no tapering) are first-order move-selection changes — they
+should show real Elo vs t9 at 10+0.1. Measure each step vs `baseline-t9`,
+two machines, like every other ship. Don't refactor the whole table at
+once: land tapered eval, gauntlet it, then layer terms one at a time so
+each Elo delta is attributable.
+
+**Experiment 1 — tapered-eval foundation (`ENABLE_TAPERED_EVAL`, 2026-06-03).**
+Replaced the hard `is_endgame` boolean (material ≤ 1150 flips king-PST + mobility
+weight) with a smooth `game_phase_256()` blend (`search.cpp`: `mg_pst`/`eg_pst`
+sums diverge only on the king table; combine `(mg·phase+eg·(256−phase))/256`).
+**No new tuned values** — material stays MG; only the king-PST + mobility
+*transitions* are smoothed. Flag-off path is byte-identical to t9. 197/197 tests
+pass incl. all 8 eval-symmetry cases.
+- **AMD 40g vs t9: +79.53 ± 95.81 Elo, LOS 95.85%**, W17/L8/D15, 61.25%,
+  Ptnml [1,4,4,7,4]. PGN `gauntlet/huginn_tapered_vs_t9_amd.pgn`.
+- Far above the predicted "near-neutral." The win is **removing the eval
+  discontinuity** (a capture crossing 1150 instantly swapped king table +
+  mobility weight = double-digit-cp jump → search instability) plus earlier
+  graduated king-activation. **40g eyeball only** (±95 CI); needs the
+  two-machine SPRT (`test_huginn_vs_t9.bat`) to confirm before baselining.
+- Next: confirm via SPRT → if it holds, freeze as new baseline, then
+  Experiment 2 = tapered material values (`PIECE_VALUES_EG`), then Exp 3 =
+  king safety (Fruit shelter+storm+attacker) on the tapered base.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 
