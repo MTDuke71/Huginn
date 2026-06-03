@@ -348,7 +348,7 @@ is audited.
 | Negamax + alpha-beta | [search.cpp:1183](src/search.cpp#L1183) `Engine::AlphaBeta` | ✓ |
 | Principal Variation Search (PVS) | [search.cpp:1480](src/search.cpp#L1480) | ✓ null-window for moves ≥ 2, full re-search on score > alpha |
 | Iterative deepening | [search.cpp:1805](src/search.cpp#L1805) `searchPosition()` loop | ✓ |
-| Quiescence search | [search.cpp:1678](src/search.cpp#L1678) | ✓ captures + promotions, depth-limited (10 plies), SEE-pruned |
+| Quiescence search | [search.cpp:1686](src/search.cpp#L1686) | ✓ captures + promotions, depth-limited (10 plies), SEE-pruned + delta-pruned |
 | Transposition table | [transposition_table.hpp](src/transposition_table.hpp), probe at [search.cpp:1194](src/search.cpp#L1194), store at [search.cpp:1593](src/search.cpp#L1593) | ✓ EXACT/LOWER/UPPER bounds, depth-preferred replacement, mate-distance adjusted by ply |
 | PV table (triangular hash) | [pvtable.cpp](src/pvtable.cpp), reconstruction at [search.cpp:1921](src/search.cpp#L1921) `get_pv_line` | ✓ 2 MB hash, used for UCI `info pv` output |
 | Repetition detection | [search.cpp:534](src/search.cpp#L534) `isRepetition` | ✓ 3-fold, last 12 plies, ≥ 6-ply minimum |
@@ -367,7 +367,8 @@ is audited.
 | Futility pruning | [search.cpp:1325](src/search.cpp#L1325) | ✓ depth ≤ 3, margin = 100 + 50·depth |
 | Razoring | [search.cpp:1354](src/search.cpp#L1354) | ✓ depth 2-4, margin 400, soft (depth-reduction not return) — **+35 Elo measured** |
 | Late Move Reductions (LMR) | [search.cpp:1433](src/search.cpp#L1433) | ✓ 64×64 `log(d)·log(m)/2` table, min depth 3 / move ≥ 4, PVS re-search on fail-high. **P1a exemption (BACKLOG #1, shipped 2026-05-11)**: also skip LMR on moves that give check (lazy `gives_check` lambda using `SqAttacked(opp_king, pos, !side_to_move)` after MakeMove). +22 Elo / LOS 84% vs t4. |
-| SEE pruning (qsearch) | [search.cpp:1725](src/search.cpp#L1725), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
+| SEE pruning (qsearch) | [search.cpp:1742](src/search.cpp#L1742), [see.cpp:96](src/see.cpp#L96) | ✓ skip captures with SEE < 0 (excluding promotions) |
+| Delta pruning (qsearch) | [search.cpp:1733](src/search.cpp#L1733) | ✓ skip captures where `stand_pat + PIECE_VALUES_MG[victim] + 200cp ≤ alpha` (excluding promotions; victim read from board so en passant → pawn). Shipped 2026-06-02 (`a2ee961`): −8.6% nodes @ d11, **pooled ≈ −1.7 Elo vs t9 — neutral, within margin of error** (Intel +3.47 / AMD −6.95, sign-disagreeing). WAC300 identical 270/300 (only WAC.055 reshuffled an already-wrong move) → no tactical cost. **Kept as a sound pure-speed technique** that compounds at longer TC; `DELTA_MARGIN=200` is the lone knob. |
 | Check extension | [search.cpp:1242](src/search.cpp#L1242) | ✓ `depth++` when in check |
 | Internal Iterative Deepening (IID) | [search.cpp:1598](src/search.cpp#L1598) | ✓ when no TT move; ordered as priority 1.5M |
 | Late Move Pruning (LMP) | — | ✗ attempted, reverted; needs SEE main-ordering + continuation history first (see Tier 1 progress) |
