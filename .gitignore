@@ -99,3 +99,7 @@ test/__pycache__/
 test/wac_test_log_*.txt
 test/wac_failed_positions_*.txt
 test/wac_retest_*.txt
+# WAC-201 reduced-suite artifacts (wac201_test.py) — same policy.
+test/wac201_test_log_*.txt
+test/wac201_failed_positions_*.txt
+test/wac201_retest_*.txt
