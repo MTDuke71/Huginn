@@ -6,7 +6,7 @@ Tests engine tactical ability against the *sound* WAC subset (wac201.epd).
 The classic WAC-300 derives from the 1958 "Win at Chess" book; over the
 decades many of its positions were found to be busted (dual solutions,
 flat-out wrong "best" moves, or trivial by modern engine standards). This
-runs the curated wac201.epd set (200 positions, the dubious ones removed),
+runs the curated wac201.epd set (201 positions, the dubious ones removed),
 a more honest tactical-resolution signal. Same engine harness and output
 format as wac_test.py; only the default EPD file + position caps differ.
 """
@@ -680,9 +680,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python wac201_test.py            # Full reduced set (200 positions), 5 seconds each
+  python wac201_test.py            # Full reduced set (201 positions), 5 seconds each
   python wac201_test.py 50         # First 50 positions, 5 seconds each
-  python wac201_test.py 200 -t 10  # Full set, 10 seconds each
+  python wac201_test.py 201 -t 10  # Full set, 10 seconds each
   python wac201_test.py --failed-file wac_failed_positions_20250911_123456.txt
                                   # Retest only previously failed positions
 
@@ -690,8 +690,8 @@ Runs wac201.epd (the curated, more-sound subset). The script automatically
 offers interactive retest mode for failed positions; failed positions are
 saved to wac_failed_positions_TIMESTAMP.txt for easy re-testing.
         """)
-    parser.add_argument('positions', nargs='?', type=int, default=200,
-                       help='Number of positions to test (default: 200 = full reduced set, max: 200)')
+    parser.add_argument('positions', nargs='?', type=int, default=201,
+                       help='Number of positions to test (default: 201 = full reduced set, max: 201)')
     parser.add_argument('-t', '--time', type=int, default=5,
                        help='Search time per position in seconds (default: 5)')
     parser.add_argument('--failed-file', type=str,
@@ -726,8 +726,8 @@ saved to wac_failed_positions_TIMESTAMP.txt for easy re-testing.
         
     else:
         # Normal mode
-        if args.positions <= 0 or args.positions > 200:
-            print("Error: Number of positions must be between 1 and 200")
+        if args.positions <= 0 or args.positions > 201:
+            print("Error: Number of positions must be between 1 and 201")
             return
         
         if args.time <= 0:
@@ -739,9 +739,9 @@ saved to wac_failed_positions_TIMESTAMP.txt for easy re-testing.
         print(f"Estimated time: {args.positions * args.time / 60:.1f} minutes")
         
         # Show a tip for first-time users
-        if args.positions < 200 and args.time == 5:
+        if args.positions < 201 and args.time == 5:
             print("\n💡 Tip: pass no count to run the full reduced set.")
-            print("   'python wac201_test.py' runs all 200 sound positions.")
+            print("   'python wac201_test.py' runs all 201 sound positions.")
         
         tester = WACTester(max_positions=args.positions, **engine_kwargs)
         tester.run_test_suite(search_time=args.time)
