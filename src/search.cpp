@@ -57,6 +57,14 @@
 #ifndef ENABLE_TAPERED_EVAL
 #define ENABLE_TAPERED_EVAL 1
 #endif
+// ENABLE_TAPERED_MATERIAL: BACKLOG #35 Experiment 2. Give the eg accumulator
+// its own endgame piece values (PIECE_VALUES_EG) instead of reusing MG, so
+// material worth tapers by phase too. Meant to pair with ENABLE_TAPERED_EVAL
+// (the eg sum only reaches the score via the phase blend). Flag-off → eg uses
+// MG material → byte-identical to the tapered-eval foundation (baseline-t10).
+#ifndef ENABLE_TAPERED_MATERIAL
+#define ENABLE_TAPERED_MATERIAL 1
+#endif
 
 namespace Huginn {
 
@@ -175,14 +183,19 @@ int Engine::evaluate(const Position& pos) {
         for (int piece_type = int(PieceType::Pawn); piece_type <= int(PieceType::King); ++piece_type) {
             PieceType pt = static_cast<PieceType>(piece_type);
             uint64_t bb = pos.piece_bitboards[color][piece_type];
-            int material_value = PIECE_VALUES_MG[piece_type];
+            int mg_material = PIECE_VALUES_MG[piece_type];
+#if ENABLE_TAPERED_MATERIAL
+            int eg_material = PIECE_VALUES_EG[piece_type];  // #35 Exp 2
+#else
+            int eg_material = mg_material;
+#endif
             while (bb) {
                 int sq64 = pop_lsb(bb);
                 int table_index = sq64 ^ sq_flip;
                 int mg_val, eg_val;
                 if (pt == PieceType::King) {
-                    mg_val = material_value + EvalParams::KING_TABLE[table_index];
-                    eg_val = material_value + EvalParams::KING_TABLE_ENDGAME[table_index];
+                    mg_val = mg_material + EvalParams::KING_TABLE[table_index];
+                    eg_val = eg_material + EvalParams::KING_TABLE_ENDGAME[table_index];
                 } else {
                     int pst_value = 0;
                     switch (pt) {
@@ -193,7 +206,8 @@ int Engine::evaluate(const Position& pos) {
                         case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
                         default: break;
                     }
-                    mg_val = eg_val = material_value + pst_value;
+                    mg_val = mg_material + pst_value;
+                    eg_val = eg_material + pst_value;
                 }
                 if (piece_color == Color::White) { mg_pst += mg_val; eg_pst += eg_val; }
                 else                             { mg_pst -= mg_val; eg_pst -= eg_val; }

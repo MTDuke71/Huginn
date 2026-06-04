@@ -173,6 +173,23 @@ constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
     20000// King (or very large sentinel)
 };
 
+// Endgame piece values (BACKLOG #35, Experiment 2). Blended against
+// PIECE_VALUES_MG by game phase in evaluate() when ENABLE_TAPERED_MATERIAL is
+// set. Standard endgame directions, conservative first-cut magnitudes (to be
+// Texel-tuned later, #9): pawns up (passed-pawn / promotion potential), rook +
+// queen up (dominate open boards), knight slightly down (can't cover both
+// wings), bishop slightly up (long diagonals on an open board; the bishop-pair
+// term is separate). EVAL-ONLY — SEE / MVV-LVA keep their own MG-based tables.
+constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = {
+    0,    // None
+    120,  // Pawn   (+20)
+    315,  // Knight (−5)
+    340,  // Bishop (+10)
+    530,  // Rook   (+30)
+    940,  // Queen  (+40)
+    20000 // King (same sentinel; king material cancels and is never captured)
+};
+
 constexpr inline int value_of(Piece p) {
     return PIECE_VALUES_MG[size_t(type_of(p))];
 }
