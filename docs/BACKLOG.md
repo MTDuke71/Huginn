@@ -38,6 +38,7 @@
 | 32 | PEXT slider attacks (build-gated, fallback to magic) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen (SF `blockersForKing`) | **OPEN** | speed/research | low |
 | 35 | Tapered eval + eval-gap closure vs Fruit 2.1 | **IN-PROGRESS** | feature/eval | high |
+| 36 | Illegal move in displayed PV (TT-walk collision) | **OPEN** | bug | low |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1520,8 +1521,81 @@ gauntlet Elo, the eval work improves tactical resolution:
   the old hard-30 flipped solved (071/080/081/091/145/248/277), 3 new misses
   (180/226/242).
 - WAC201 (curated sound subset, new `test/wac201_test.py` + `wac201.epd`):
-  **184/200 (92.0%)**. The reduced set drops the busted/dual/trivial WAC-300
-  positions for a more honest tactical signal going forward.
+  **185/201 (92.0%)**. The reduced set drops the busted/dual/trivial WAC-300
+  positions for a more honest tactical signal going forward. (Note: the file
+  has 201 records — `wc -l` undercounts because WAC.300 has no trailing
+  newline; fixed the suite default/cap from 200→201 in `943faf1`.)
+
+**Experiment 2 status (2026-06-03): eyeball POSITIVE, two-machine SPRT running.**
+Committed `3b498f9` (source), pushed. Opponent = `huginn_t10.exe` (baseline-t10).
+- **AMD 40g eyeball vs t10: +52.51 ± 83.75 Elo, LOS 89.86%**, W12/L6/D22 (57.5%),
+  Ptnml [1,3,8,5,3]. Not the small lever feared — a second real-looking eval
+  gain. PGN `gauntlet/huginn_exp2_vs_t10_amd.pgn`.
+- **AMD SPRT vs t10: INCONCLUSIVE @ 1000g (full cap) — +7.99 ± 15.46 Elo,
+  LOS 84.48%, LLR 0.51** (never crossed ±2.94), W259/L236/D505 (51.15%),
+  Ptnml [30,126,165,149,30]. PGN `gauntlet/huginn_vs_t10_amd.pgn`.
+- **The 40g eyeball (+52) was noise** (±84 CI). Real effect ~+8 Elo — marginal,
+  not a clear ship. Likely because the foundation already tapers the king PST
+  (dominant phase term), so material tapering adds little on top, and the EG
+  magnitudes were a conservative first cut. **Lesson: skip the 40g eyeball for
+  small eval terms; it's uninformative — go straight to SPRT.**
+- **Intel SPRT vs t10: −2.43 ± 15.01 Elo** (1000g, W250/L257/D493, 49.65%).
+  Commit `f3838c2`, PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED 2000g: W509/L493/D998, 50.40% ~+2.8 Elo — MACHINES DISAGREE IN SIGN**
+  (AMD +7.99 / Intel −2.43). Same #26 fingerprint (board64: Intel +12 / AMD −38
+  → reverted); the *opposite* of a real ship (#15 counter-move agreed
+  +7.3/+6.95). **Verdict: NOISE around zero, NOT shippable with these values.**
+- **DECISION: PARK tapered material** (`ENABLE_TAPERED_MATERIAL 0`, keep code
+  in-tree like conthist #3). The foundation already taperes the dominant phase
+  term (king PST), leaving little for material tapering to add; blind EG-value
+  hand-tuning isn't worth the gauntlet hours without a Texel tuner (#9). t10
+  stays the clean confirmed baseline. Revisit when #9 lands (joint Texel tune
+  of material+PST EG values is the principled way to extract this).
+- **Next: Experiment 3 = king safety** (Fruit shelter+storm+multi-attacker),
+  measured vs t10 — the "Huge" gap-table item, currently dead code, now on a
+  tapered base so it fades correctly in the endgame (the #2 failure mode).
+
+### #36: Illegal move in displayed PV (TT-walk collision) — cosmetic
+
+- status: **OPEN** (logged 2026-06-03)
+- priority: low — cosmetic (display only; `bestmove` is always legal)
+- type: bug
+
+**Symptom.** fastchess occasionally logs `Warning; Illegal PV move - move <m>
+from Huginn_tXX` (~1 per few hundred games at 10+0.1). Seen on baseline-t10
+during the #35 Exp 2 SPRT. **More frequent on the Intel box than AMD.**
+
+**Mechanism.** The displayed PV = triangular-PV prefix (search-truth, length
+≤ search depth) **+ a TT-walk extension** that lengthens it past the searched
+depth ([search.cpp:2088](../src/search.cpp#L2088), commit `72b19f5`).
+Signature: a PV longer than `depth` — e.g. `depth 3 ... pv g3h4 e2e1 d4d3 e1d2
+h5h4 d2d3` (6 moves; the illegal `h5h4` is the 5th = in the TT-walk tail). The
+walk probes each reached position's TT entry and appends its `best_move`; on a
+**hash collision** that entry belongs to a *different* position, so the move is
+bogus for the walked line. The guard ([search.cpp:2099-2105](../src/search.cpp#L2099-L2105))
+only checks the from-square holds a side-to-move piece, then trusts `MakeMove`
+— which assumes pseudo-legal input and only verifies king safety, so a collided
+move on a correctly-coloured from-square slips through. **The PV walk is the
+only place a raw TT move is *applied* without being cross-checked against the
+generated move list** (the main search only uses the TT move for *ordering*
+within the legal list, and its per-move `MakeMove()!=1` guard filters illegals
+— so this is PV-display-specific, not a search-correctness bug).
+
+**Why more on Intel (hypothesis).** Intel's higher NPS reaches more nodes /
+greater depth at the same TC → more TT traffic and a fuller table → more
+collisions and more TT-walk firing. Confirm by correlating warning rate with
+avg depth/NPS (not yet measured).
+
+**Severity: cosmetic.** Only the displayed PV string is wrong. `bestmove` =
+PV[0] is always legal and is what's played; the board is fully restored by the
+`TakeMove` loop ([search.cpp:2111](../src/search.cpp#L2111)); search behaviour
+and Elo are unaffected; both engines can emit it so the SPRT is not biased.
+
+**Fix (after #35 part 2; ~5 lines).** In the PV walk, before appending a TT
+move, validate it against the position's generated legal moves (generate moves,
+confirm `tt_move` is present) instead of the weak from-square-colour check.
+Pure display change (no search/Elo impact), but it rebuilds the binary — don't
+do it mid-SPRT; batch with the next baseline build.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 
