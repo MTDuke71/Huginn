@@ -1480,16 +1480,48 @@ sums diverge only on the king table; combine `(mg·phase+eg·(256−phase))/256`
 **No new tuned values** — material stays MG; only the king-PST + mobility
 *transitions* are smoothed. Flag-off path is byte-identical to t9. 197/197 tests
 pass incl. all 8 eval-symmetry cases.
-- **AMD 40g vs t9: +79.53 ± 95.81 Elo, LOS 95.85%**, W17/L8/D15, 61.25%,
-  Ptnml [1,4,4,7,4]. PGN `gauntlet/huginn_tapered_vs_t9_amd.pgn`.
-- Far above the predicted "near-neutral." The win is **removing the eval
-  discontinuity** (a capture crossing 1150 instantly swapped king table +
-  mobility weight = double-digit-cp jump → search instability) plus earlier
-  graduated king-activation. **40g eyeball only** (±95 CI); needs the
-  two-machine SPRT (`test_huginn_vs_t9.bat`) to confirm before baselining.
-- Next: confirm via SPRT → if it holds, freeze as new baseline, then
-  Experiment 2 = tapered material values (`PIECE_VALUES_EG`), then Exp 3 =
-  king safety (Fruit shelter+storm+attacker) on the tapered base.
+- AMD 40g eyeball vs t9: +79.53 ± 95.81, LOS 95.85% (W17/L8/D15).
+- **AMD SPRT [elo0=0,elo1=10] vs t9: H1 ACCEPTED @ 602g — +45.86 ± 19.43 Elo,
+  LOS 100%, LLR 2.96**, W192/L113/D297 (56.56%), Ptnml [9,55,116,90,31].
+  Branch `experiment/tapered-eval` @ `476d33c`, pushed. The 40g +80 regressed
+  to mean; true effect ~+46 Elo — decisive, comparable to the #24 magic ship,
+  from a foundation change with **zero new tuned values**. PGN
+  `gauntlet/huginn_vs_t9_amd.pgn`.
+- The win is **removing the eval discontinuity** (a capture crossing the 1150
+  threshold instantly swapped king table + mobility weight = double-digit-cp
+  jump → search instability) plus earlier graduated king-activation.
+- **Intel SPRT vs t9: H1 ACCEPTED @ 846g — +35.03 ± 16.91 Elo, LOS 100%, LLR
+  2.97**, W273/L188/D385 (55.02%), Ptnml [26,64,172,121,40]. Commit `33f773b`,
+  PGN `gauntlet/huginn_vs_t9_intel.pgn`.
+- **POOLED two-machine (1448g): W465/L301/D682, 55.66% ≈ +39.5 Elo.** Both
+  machines independently H1-accepted at LOS 100% — the cross-machine agreement
+  that #26 lacked. **DECISIVE SHIP.** Foundation = commit `476d33c`; freeze as
+  **baseline-t10** (binary snapshot `huginn_t10c.exe` → `huginn_t10.exe`).
+- Next: Experiment 2 = tapered material values (`PIECE_VALUES_EG`, already
+  drafted) measured vs t10, then Exp 3 = king safety (Fruit
+  shelter+storm+attacker) on the tapered base.
+
+**Experiment 2 — tapered material (`ENABLE_TAPERED_MATERIAL`, DRAFTED 2026-06-03).**
+Added `PIECE_VALUES_EG` (P120/N315/B340/R530/Q940 vs MG P100/N320/B330/R500/Q900 —
+standard directions, conservative first-cut, Texel-tune later #9). The eg
+accumulator uses EG material; mg keeps MG; blended by the #35 phase machinery.
+Flag-off → eg uses MG → byte-identical to the foundation. Built, 197/197 tests
+pass, symmetry holds. Static-eval validation: inert at full material (startpos
+diff 0), engages in reduced material (KP −2P: Δ−40 = 2×20 exact; R+P: Δ−17;
+R+2P: Δ+64) — magnitudes match the blend math. **Uncommitted draft** on top of
+`476d33c`; NOT pushed (keeps the Intel foundation SPRT clean). Snapshot
+`huginn_t10c.exe` = baseline-t10 binary, the isolation opponent. Foundation is
+now confirmed + frozen as baseline-t10, so Experiment 2 is **ready to gauntlet
+vs t10** (`test_huginn_vs_t10.bat`).
+
+**WAC tactical corroboration (exp1+exp2 build, 5s/pos, AMD).** Independent of
+gauntlet Elo, the eval work improves tactical resolution:
+- WAC300: **274/300 (91.3%)**, up from baseline-t9's 270/300 (#33). Net +4: 7 of
+  the old hard-30 flipped solved (071/080/081/091/145/248/277), 3 new misses
+  (180/226/242).
+- WAC201 (curated sound subset, new `test/wac201_test.py` + `wac201.epd`):
+  **184/200 (92.0%)**. The reduced set drops the busted/dual/trivial WAC-300
+  positions for a more honest tactical signal going forward.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 

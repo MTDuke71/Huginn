@@ -13,7 +13,12 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t9 = ca335c2` (= t8 + perf trio
+- ✅ **Baseline tag**: `baseline-t10 = 476d33c` (= t9 + BACKLOG #35 tapered-eval
+  foundation: smooth `game_phase_256()` blend replaces the hard `is_endgame`
+  boolean — mg/eg sums diverge only on the king PST, flag-off byte-identical to
+  t9. No new tuned values. +39.5 Elo pooled 1448g vs t9 [AMD +45.86@602g /
+  Intel +35.03@846g], both LOS 100%, both SPRT H1-accept — first eval-quality
+  ship of the #35 program). Prior: `baseline-t9 = ca335c2` (= t8 + perf trio
   [triangular PV + input-poll throttle + eval mirror→XOR] + PV
   repetition truncate + Priority 6 static-eval cache + Priority 7 dead
   undo-state drop; +13.90 Elo pooled vs t8, LOS 99.6%, both machines
