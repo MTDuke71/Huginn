@@ -321,7 +321,6 @@ set(COMMON_SOURCES
     src/attack_detection.cpp
     src/attack_tables.cpp
     src/magic_bitboards.cpp
-    src/move.cpp
     src/chess_types.cpp
     src/evaluation.cpp
     src/input_checking.cpp

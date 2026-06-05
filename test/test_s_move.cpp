@@ -135,21 +135,20 @@ TEST_F(S_MoveTest, BitMaskValidation) {
     EXPECT_TRUE(move.is_castle());
 }
 
-TEST_F(S_MoveTest, StaticEncoding) {
-    // Test static encoding function
-    int encoded = S_MOVE::encode_move(
-        sq64(File::E, Rank::R2), 
-        sq64(File::E, Rank::R4), 
-        PieceType::None, 
-        false, 
+TEST_F(S_MoveTest, ConstructorEncoding) {
+    // Encode a pawn double-push e2-e4 via the S_MOVE constructor. (This used to
+    // exercise the static S_MOVE::encode_move helper, which was deprecated and
+    // removed — the constructor performs the identical inline bit encoding.)
+    S_MOVE move(
+        sq64(File::E, Rank::R2),
+        sq64(File::E, Rank::R4),
+        PieceType::None,
+        false,
         true,  // pawn start
-        PieceType::None, 
+        PieceType::None,
         false
     );
-    
-    S_MOVE move;
-    move.move = encoded;
-    
+
     EXPECT_EQ(move.get_from(), sq64(File::E, Rank::R2));
     EXPECT_EQ(move.get_to(), sq64(File::E, Rank::R4));
     EXPECT_TRUE(move.is_pawn_start());
