@@ -123,11 +123,37 @@ inline constexpr int DEVELOP_BONUS_ENDGAME = 0;
 // Lowered from 1300 to prevent engine from sacrificing material to force draws
 inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 
-inline constexpr int KING_SHIELD_MULTIPLIER = 10;
-inline constexpr int KING_ATTACK_PENALTY = 15;
+// ============================================================================
+// KING SAFETY (#35 Experiment 3)
+// MG-only: the tapered eval blends this out toward the endgame, where the king
+// should be active (an untapered KS term sank the #2 attempt at -126 Elo).
+// Magnitudes are a conservative first cut — Texel-tune later (#9). Replaces the
+// four dead constants (KING_SHIELD_MULTIPLIER / KING_ATTACK_PENALTY /
+// CASTLE_BONUS / STUCK_PENALTY) that were defined but never referenced.
+// ============================================================================
 
-inline constexpr int CASTLE_BONUS = 40;
-inline constexpr int STUCK_PENALTY = 20;
+// Per-attacker weight, per king-ring square attacked, indexed by PieceType
+// (None, Pawn, Knight, Bishop, Rook, Queen, King). Heavy pieces weigh more.
+inline constexpr std::array<int, size_t(PieceType::_Count)> KS_ATTACK_WEIGHT = {
+    0,  // None
+    0,  // Pawn  (pawn king-ring pressure folded into shelter, not attack units)
+    2,  // Knight
+    2,  // Bishop
+    3,  // Rook
+    5,  // Queen
+    0   // King
+};
+
+// Non-linear danger conversion: danger = min(units*units / DIVISOR, CAP), and
+// only when >= 2 distinct attackers hit the ring (a lone attacker is rarely a
+// real threat — the classic king-safety gate).
+inline constexpr int KS_ATTACK_DIVISOR = 8;
+inline constexpr int KS_ATTACK_CAP     = 500;
+inline constexpr int KS_MIN_ATTACKERS  = 2;
+
+// Shelter: penalty per open file on or adjacent to the king's file (no own pawn
+// anywhere on that file). Applied regardless of attacker count.
+inline constexpr int KS_OPEN_FILE_PENALTY = 18;
 
 inline constexpr std::array<int, 64> PAWN_TABLE = {
     0,  0,  0,  0,  0,  0,  0,  0,

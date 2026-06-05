@@ -65,6 +65,13 @@
 #ifndef ENABLE_TAPERED_MATERIAL
 #define ENABLE_TAPERED_MATERIAL 1
 #endif
+// ENABLE_KING_SAFETY: BACKLOG #35 Experiment 3. Multi-attacker king-ring danger
+// + open-file shelter, added to the MG accumulator only so it tapers out toward
+// the endgame (the #2 attempt regressed -126 Elo by NOT tapering — KS poisons
+// endgames where the king should be active). Requires ENABLE_TAPERED_EVAL.
+#ifndef ENABLE_KING_SAFETY
+#define ENABLE_KING_SAFETY 1
+#endif
 
 namespace Huginn {
 
@@ -131,6 +138,62 @@ static inline int game_phase_256(const Position& pos) {
     if (npm > 24) npm = 24;  // early-promotion safety: extra queens cap at full phase
     return (npm * 256 + 12) / 24;  // +12 rounds to nearest
 }
+
+#if ENABLE_KING_SAFETY
+// King-safety MG score, white-positive (#35 Experiment 3). For each side,
+// computes a "danger" = non-linear multi-attacker pressure on the king ring
+// (gated on >= KS_MIN_ATTACKERS distinct attackers) plus an open-file shelter
+// penalty, then returns Black's danger minus White's (White gains when Black's
+// king is unsafe). The caller adds this to the MG accumulator ONLY, so the
+// tapered blend fades it to zero in the endgame. Fully colour-symmetric (ring
+// + file occupancy carry no rank direction), so eval mirror-symmetry holds.
+static int king_safety_white_mg(const Position& pos) {
+    const uint64_t occ = pos.occupied_bitboard;
+
+    auto danger_for = [&](Color c) -> int {
+        const int ksq = pos.king_sq[int(c)];
+        if (ksq < 0) return 0;
+        const Color them = (c == Color::White) ? Color::Black : Color::White;
+        const uint64_t zone = king_attacks[ksq] | (1ULL << ksq);
+        const auto& ep = pos.piece_bitboards[int(them)];
+
+        int units = 0, attackers = 0;
+        uint64_t bb;
+
+        bb = ep[int(PieceType::Knight)];
+        while (bb) { int s = pop_lsb(bb); int h = popcount(knight_attacks[s] & zone);
+            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Knight)] * h; } }
+        bb = ep[int(PieceType::Bishop)];
+        while (bb) { int s = pop_lsb(bb); int h = popcount(bishop_attacks(s, occ) & zone);
+            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Bishop)] * h; } }
+        bb = ep[int(PieceType::Rook)];
+        while (bb) { int s = pop_lsb(bb); int h = popcount(rook_attacks(s, occ) & zone);
+            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Rook)] * h; } }
+        bb = ep[int(PieceType::Queen)];
+        while (bb) { int s = pop_lsb(bb); int h = popcount(queen_attacks(s, occ) & zone);
+            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Queen)] * h; } }
+
+        int danger = 0;
+        if (attackers >= EvalParams::KS_MIN_ATTACKERS) {
+            danger = units * units / EvalParams::KS_ATTACK_DIVISOR;
+            if (danger > EvalParams::KS_ATTACK_CAP) danger = EvalParams::KS_ATTACK_CAP;
+        }
+
+        // Shelter: open files on/adjacent to the king's file (no own pawn).
+        const uint64_t own_pawns = pos.piece_bitboards[int(c)][int(PieceType::Pawn)];
+        const int kf = ksq & 7;
+        const int lo = (kf > 0) ? kf - 1 : 0;
+        const int hi = (kf < 7) ? kf + 1 : 7;
+        for (int f = lo; f <= hi; ++f) {
+            if ((own_pawns & EvalParams::FILE_MASKS[f]) == 0)
+                danger += EvalParams::KS_OPEN_FILE_PENALTY;
+        }
+        return danger;
+    };
+
+    return danger_for(Color::Black) - danger_for(Color::White);
+}
+#endif // ENABLE_KING_SAFETY
 
 // Function to swap piece colors using the bit-packed Piece enum
 Piece swapPieceColor(Piece piece) {
@@ -367,6 +430,10 @@ int Engine::evaluate(const Position& pos) {
     // Smooth blend: mg at full opening (phase=256), eg at bare kings (phase=0).
     int mg_total = mg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_DEFAULT;
     int eg_total = eg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_ENDGAME;
+#if ENABLE_KING_SAFETY
+    // MG-only: added before the blend so it fades to 0 as phase -> 0 (#35 Exp 3).
+    mg_total += king_safety_white_mg(pos);
+#endif
     score += (mg_total * phase + eg_total * (256 - phase)) / 256;
 #else
     // Legacy hard boolean: pick one side of the blend at the 1150 threshold.
