@@ -1,10 +1,10 @@
 /**
  * @file movegen_bb.hpp
- * @brief True bitboard-based move generation for Huginn2
+ * @brief True bitboard-based move generation for Huginn
  * 
  * This module implements actual bitboard move generation that should demonstrate
  * the dramatic performance improvement over piece lists. This is what will replace
- * the piece list approach in huginn2.exe.
+ * the piece list approach in huginn.exe.
  * 
  * Expected Performance Gains:
  * - Knight moves: 10-15x faster (bitboard lookup vs. piece list iteration)
@@ -38,7 +38,7 @@ namespace BitboardMoveGen {
  * @param pos Current position
  * @param list Move list to populate
  * 
- * This is the main function that will replace generate_all_moves() in huginn2.
+ * This is the main function.
  * Uses bitboards throughout for maximum performance.
  */
 void generate_all_moves_bitboard(const Position& pos, S_MOVELIST& list);

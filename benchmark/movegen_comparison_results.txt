@@ -42,7 +42,7 @@ ANALYSIS:
 
 CONCLUSIONS:
 -----------
-- Bitboard move generation is the superior approach for Huginn2
+- Bitboard move generation is the superior approach for Huginn
 - Expected 10-15x improvement was not achieved, but 1.3x is still significant
 - Need to fix bitboard correctness issues before production use
 - Piece count scaling favors bitboards (more pieces = bigger advantage)
