@@ -12,7 +12,7 @@
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
 | 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
 | 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
-| 9 | Texel-style tuner | **OPEN — NEXT** | research | high |
+| 9 | Texel-style tuner | **SHIPPED** — tune 1 (mat+PSTs) +71.4 Elo 2-machine → baseline-t11; reusable infra | research | high |
 | 10 | Wire up Syzygy tablebase probe | **CLOSED** @ `5347e6d` | feature | low |
 | 11 | CLAUDE.md NPS figure is stale | **CLOSED** @ `b9cc1be` | maintenance | low |
 | 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
@@ -2566,8 +2566,11 @@ isolates the eval change. 197/197 tests pass.
   `gauntlet/huginn_vs_t10_amd.pgn`. **The largest single gain of the program**
   (> 2× the tapering foundation's +40). The never-tuned hand-set VICE PSTs were
   the locked-up Elo, exactly as predicted.
-- **Intel leg pending** (two-machine formality; at +88/LOS 100% a sign flip is
-  impossible). On confirm → freeze **baseline-t11**.
+- **Intel SPRT vs t10: H1 ACCEPTED @ 512g — +59.62 ± 23.58 Elo** (commit
+  `386195d`), W199/L111/D203 (58.58%). PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED two-machine (863g): W342/L167/D354, 60.14% = +71.4 Elo.** Both
+  machines H1-accept, same sign, both decisive — **DECISIVE SHIP, by far the
+  largest gain of the program.** → freeze **baseline-t11**.
 - **Re-tune candidates** now that the harness works: separate EG PSTs (tapered
   PSTs), mobility weights, KS weights (revisit #35 Exp 3 under the tuner),
   bishop-pair / open-file / passed-pawn terms. Each just adds params to

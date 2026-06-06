@@ -13,7 +13,13 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t10 = 476d33c` (= t9 + BACKLOG #35 tapered-eval
+- ✅ **Baseline tag**: `baseline-t11 = 4f091c1` (= t10 + BACKLOG #9 first Texel
+  tune: material MG/EG + all 6 PSTs + king-EG fit on the Zurichess quiet-labeled
+  725k corpus, MSE 0.0642→0.0596; the hand-set VICE PSTs had never been tuned.
+  `value_of()` decoupled onto a fixed canonical table so ordering/material don't
+  drift. **+71.4 Elo pooled 863g vs t10** [AMD +88.2@350g / Intel +59.6@512g],
+  both LOS 100%, both SPRT H1-accept — the largest single ship of the program).
+  Prior: `baseline-t10 = 476d33c` (= t9 + BACKLOG #35 tapered-eval
   foundation: smooth `game_phase_256()` blend replaces the hard `is_endgame`
   boolean — mg/eg sums diverge only on the king PST, flag-off byte-identical to
   t9. No new tuned values. +39.5 Elo pooled 1448g vs t9 [AMD +45.86@602g /
