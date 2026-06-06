@@ -172,20 +172,19 @@ Piece from_char(char ch);
 // tuning build (all its call sites are runtime anyway).
 #ifdef HUGINN_TUNING
   #define EVAL_PARAM inline
-  #define EVAL_FN    inline
 #else
   #define EVAL_PARAM inline constexpr
-  #define EVAL_FN    constexpr inline
 #endif
 
+// Texel-tuned on Zurichess quiet-labeled (725k pos), #9. Was 100/320/330/500/900.
 EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
-    0,   // None
-    100, // Pawn
-    320, // Knight
-    330, // Bishop
-    500, // Rook
-    900, // Queen
-    20000// King (or very large sentinel)
+    0,    // None
+    95,   // Pawn
+    390,  // Knight
+    382,  // Bishop
+    527,  // Rook
+    1190, // Queen
+    20000 // King (or very large sentinel)
 };
 
 // Endgame piece values (BACKLOG #35, Experiment 2). Blended against
@@ -195,18 +194,29 @@ EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
 // queen up (dominate open boards), knight slightly down (can't cover both
 // wings), bishop slightly up (long diagonals on an open board; the bishop-pair
 // term is separate). EVAL-ONLY — SEE / MVV-LVA keep their own MG-based tables.
+// Texel-tuned endgame values (#9). Note the EG shifts vs MG: knight 390->292
+// (weaker), rook 527->575 (stronger) — emerged from the fit.
 EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = {
     0,    // None
-    120,  // Pawn   (+20)
-    315,  // Knight (−5)
-    340,  // Bishop (+10)
-    530,  // Rook   (+30)
-    940,  // Queen  (+40)
+    98,   // Pawn
+    292,  // Knight
+    316,  // Bishop
+    575,  // Rook
+    1067, // Queen
     20000 // King (same sentinel; king material cancels and is never captured)
 };
 
-EVAL_FN int value_of(Piece p) {
-    return PIECE_VALUES_MG[size_t(type_of(p))];
+// Fixed canonical piece values for move ordering + incremental material
+// tracking (value_of). Deliberately NOT the Texel-tuned PIECE_VALUES_MG: per
+// the note above, ordering/material must not drift with eval tuning (the eval
+// reads PIECE_VALUES_MG/EG directly). A third independent table alongside
+// SEE_PIECE_VALUE and the Engine MVV-LVA table; all start from the classics.
+constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES = {
+    0, 100, 320, 330, 500, 900, 20000
+};
+
+constexpr inline int value_of(Piece p) {
+    return PIECE_VALUES[size_t(type_of(p))];
 }
 
 // Optional: piece loops
