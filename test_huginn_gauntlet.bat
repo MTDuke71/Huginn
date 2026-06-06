@@ -67,7 +67,7 @@ if "%MODE%"=="baseline" set OPP_NAME=Huginn_%OPP%
 if "%MODE%"=="baseline" set OPP_OPT=option.OwnBook=false
 
 REM External calibration table (extend here when adding a rated opponent).
-if /I "%OPP%"=="mtl03" set OPPONENT=mtlchessV3.exe
+if /I "%OPP%"=="mtl03" set OPPONENT=mtlchess_v03.exe
 if /I "%OPP%"=="mtl03" set OPP_NAME=MTLChess_v0.3
 if /I "%OPP%"=="mora"  set OPPONENT=MORA110.exe
 if /I "%OPP%"=="mora"  set OPP_NAME=MORA
