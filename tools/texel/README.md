@@ -37,8 +37,8 @@ un-tuned. Texel tuning fits them jointly against real game results.
 
 4. **Bake + validate:** paste the printed `PIECE_VALUES_MG/EG` into
    `src/chess_types.hpp` and the PST tables into `src/evaluation.hpp`, rebuild
-   the release engine, and run a **two-machine SPRT vs baseline-t10**
-   (`test_huginn_vs_t10.bat`). Only ship on a confirmed gain.
+   the release engine, and run a **two-machine SPRT vs the current baseline**
+   (`test_huginn_gauntlet.bat t11`). Only ship on a confirmed gain.
 
 ## How the parameterization works (no eval drift)
 
