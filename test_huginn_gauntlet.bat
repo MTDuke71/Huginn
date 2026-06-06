@@ -10,8 +10,9 @@ REM   tN  (t9, t10, t11, ...) -> internal baseline regression vs huginn_tN.exe
 REM                              SPRT [0,10], OwnBook off both sides, concurrency
 REM                              4, results -> gauntlet\huginn_vs_tN_<machine>.pgn.
 REM                              Any tN works automatically — no new script ever.
-REM   mtl03 | mora | mtl05    -> external calibration vs a known-rated engine
-REM                              (~1984 / ~2191 / ~2314). No SPRT, concurrency 1.
+REM   cdrill | mtl03 | mora | mtl05 -> external calibration vs a known-rated
+REM                              engine (~1949 / ~1984 / ~2191 / ~2314 blitz).
+REM                              No SPRT, concurrency 1 by default.
 REM
 REM [rounds]: cap (default 500 for baselines = SPRT early-stops; 50 for calib).
 REM           Pass a small number (e.g. 20) for a quick eyeball.
@@ -72,6 +73,8 @@ if /I "%OPP%"=="mora"  set OPPONENT=MORA110.exe
 if /I "%OPP%"=="mora"  set OPP_NAME=MORA
 if /I "%OPP%"=="mtl05" set OPPONENT=mtlchess_v05.exe
 if /I "%OPP%"=="mtl05" set OPP_NAME=MTLChess_v0.5
+if /I "%OPP%"=="cdrill" set OPPONENT=cdrill_2000.exe
+if /I "%OPP%"=="cdrill" set OPP_NAME=CDrill_2000
 
 if "%OPPONENT%"=="" (
     echo Unknown opponent "%OPP%". Use tN, or add it to the calibration table.
