@@ -163,7 +163,22 @@ Piece from_char(char ch);
 // into one shared constant; coupling capture pruning/ordering to eval
 // tuning would inject noise and break MVV-LVA's king=0 special case. The
 // matching values are a coincidental starting point, not a constraint.
-constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
+// ---- Texel-tuning hook (#9) -------------------------------------------------
+// Eval parameter tables are `constexpr` for the release engine (folded, zero
+// cost) but become plain mutable `inline` globals when built with
+// -DHUGINN_TUNING, so the tuner can overwrite them and re-evaluate. The eval
+// source is identical either way; only the storage class differs by build, so
+// there is NO release NPS impact. value_of() loses constexpr-ness only in the
+// tuning build (all its call sites are runtime anyway).
+#ifdef HUGINN_TUNING
+  #define EVAL_PARAM inline
+  #define EVAL_FN    inline
+#else
+  #define EVAL_PARAM inline constexpr
+  #define EVAL_FN    constexpr inline
+#endif
+
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
     0,   // None
     100, // Pawn
     320, // Knight
@@ -180,7 +195,7 @@ constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = {
 // queen up (dominate open boards), knight slightly down (can't cover both
 // wings), bishop slightly up (long diagonals on an open board; the bishop-pair
 // term is separate). EVAL-ONLY — SEE / MVV-LVA keep their own MG-based tables.
-constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = {
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = {
     0,    // None
     120,  // Pawn   (+20)
     315,  // Knight (−5)
@@ -190,7 +205,7 @@ constexpr std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = {
     20000 // King (same sentinel; king material cancels and is never captured)
 };
 
-constexpr inline int value_of(Piece p) {
+EVAL_FN int value_of(Piece p) {
     return PIECE_VALUES_MG[size_t(type_of(p))];
 }
 

@@ -103,3 +103,6 @@ test/wac_retest_*.txt
 test/wac201_test_log_*.txt
 test/wac201_failed_positions_*.txt
 test/wac201_retest_*.txt
+
+# Texel tuner (#9) extracted training corpora — large and regenerable from PGNs.
+tools/texel/fens*.txt

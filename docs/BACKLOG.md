@@ -2529,10 +2529,35 @@ than P1a was.
 
 ### #9: Texel-style tuner
 
-- status: open / blocked (no tuner infra yet)
-- priority: low
-- type: research
-- est: large (1-3 sessions to bring up; ongoing use thereafter)
+- status: **IN-PROGRESS — infra BUILT & proven (2026-06-05)**; awaiting a real
+  ChessBase/Lichess corpus for the first production tune + SPRT
+- priority: high (the unblock for #35's noise-bound eval terms)
+- type: research / tooling
+- est: large (bring-up done; ongoing use thereafter)
+
+**Brought up this session (`tools/texel/`, see its README):**
+- `extract_fens.py` — PGN → `<result> <FEN>` labeled quiet positions (opening +
+  in-check filtered, sampled per game, optional Elo floor). Validated: 2000
+  gauntlet games → 19,825 positions.
+- Eval parameterized via `EVAL_PARAM`/`EVAL_FN` macros (chess_types.hpp,
+  evaluation.hpp): `constexpr` in release (verified byte-identical — 197 tests
+  pass, startpos eval unchanged, **zero NPS cost**), mutable `inline` globals
+  under `-DHUGINN_TUNING`.
+- `tuner.cpp` + `huginn_tuner` CMake target (built with `-DHUGINN_TUNING`):
+  loads samples, fits K, coordinate-descent (per-param line search) on
+  `MSE(sigmoid(K·white_eval), result)`. Reuses the REAL `Engine::evaluate`
+  (no second eval → no drift). Tunes material MG+EG + 6 PSTs + king-EG (~458
+  params); prints paste-ready tables.
+- **Smoke test (gauntlet 19,825 pos): MSE 0.07547 → 0.06892 over 3 sweeps,
+  monotone — machinery proven.** Values are overfit garbage on that tiny
+  draw-heavy corpus (expected); sane *directions* already emerge (EG pawn/rook
+  > MG). Needs the large clean corpus for usable values.
+
+**Next (Phase 4):** export ChessBase games (≥~2200, decisive+draws) → PGN →
+`extract_fens.py` (~1–2M positions) → `huginn_tuner` → paste tables → rebuild →
+two-machine SPRT vs t10. Perf note: single-threaded; cap `--positions` (few
+hundred k tunes fine) or parallelize `mse()` for the full corpus. Extensions
+once it converts: separate EG PSTs (tapered PSTs), mobility + KS weights.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18

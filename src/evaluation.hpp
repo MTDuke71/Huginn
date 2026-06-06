@@ -155,7 +155,7 @@ inline constexpr int KS_MIN_ATTACKERS  = 2;
 // anywhere on that file). Applied regardless of attacker count.
 inline constexpr int KS_OPEN_FILE_PENALTY = 18;
 
-inline constexpr std::array<int, 64> PAWN_TABLE = {
+EVAL_PARAM std::array<int, 64> PAWN_TABLE = {
     0,  0,  0,  0,  0,  0,  0,  0,
     10, 10, 0,  -10, -10, 0,  10, 10,
     5,  0,  0,  5,  5,  0,  0,  5,
@@ -165,7 +165,7 @@ inline constexpr std::array<int, 64> PAWN_TABLE = {
     20, 20, 20, 30, 30, 20, 20, 20,
     0,  0,  0,  0,  0,  0,  0,  0};
 
-inline constexpr std::array<int, 64> KNIGHT_TABLE = {
+EVAL_PARAM std::array<int, 64> KNIGHT_TABLE = {
     0,  -10, 0,  0,  0,  0,  -10, 0,
     0,  0,   0,  5,  5,  0,  0,   0,
     0,  0,   10, 10, 10, 10, 0,   0,
@@ -175,7 +175,7 @@ inline constexpr std::array<int, 64> KNIGHT_TABLE = {
     0,  0,   5,  10, 10, 5,  0,   0,
     0,  0,   0,  0,  0,  0,  0,   0};
 
-inline constexpr std::array<int, 64> BISHOP_TABLE = {
+EVAL_PARAM std::array<int, 64> BISHOP_TABLE = {
     0,  0,  -10, 0,  0,  -10, 0,  0,
     0,  0,  0,   10, 10, 0,   0,  0,
     0,  0,  10,  15, 15, 10,  0,  0,
@@ -185,7 +185,7 @@ inline constexpr std::array<int, 64> BISHOP_TABLE = {
     0,  0,  0,   10, 10, 0,   0,  0,
     0,  0,  0,   0,  0,  0,   0,  0};
 
-inline constexpr std::array<int, 64> ROOK_TABLE = {
+EVAL_PARAM std::array<int, 64> ROOK_TABLE = {
     0,  0,  5,  10, 10, 5,  0,  0,
     0,  0,  5,  10, 10, 5,  0,  0,
     0,  0,  5,  10, 10, 5,  0,  0,
@@ -195,7 +195,7 @@ inline constexpr std::array<int, 64> ROOK_TABLE = {
     25, 25, 25, 25, 25, 25, 25, 25,
     0,  0,  5,  10, 10, 5,  0,  0};
 
-inline constexpr std::array<int, 64> QUEEN_TABLE = {
+EVAL_PARAM std::array<int, 64> QUEEN_TABLE = {
     -20, -10, -10, -5,  -5, -10, -10, -20, 
     -10, 0,   0,   0,    0,  0,   0,   -10, 
     -10, 0,   5,   5,    5,  5,   0,  -10, 
@@ -207,7 +207,7 @@ inline constexpr std::array<int, 64> QUEEN_TABLE = {
 
 // VICE Part 82: King position evaluation tables
 // KingO[64] - Opening/middlegame king table (encourages castling and back rank safety)
-inline constexpr std::array<int, 64> KING_TABLE = {
+EVAL_PARAM std::array<int, 64> KING_TABLE = {
   -5,  -10, -10, -10, -10, -10, -10, -5,
     -10, -10, -10, -10, -10, -10, -10, -10,
     -30, -30, -30, -30, -30, -30, -30, -30,
@@ -218,7 +218,7 @@ inline constexpr std::array<int, 64> KING_TABLE = {
   -5,  -10, -10, -10, -10, -10, -10, -5};
 
 // KingE[64] - Endgame king table (encourages centralization)
-inline constexpr std::array<int, 64> KING_TABLE_ENDGAME = {
+EVAL_PARAM std::array<int, 64> KING_TABLE_ENDGAME = {
     -50, 0,   0,   0,   0,   0,   0,   -50,
     0,   20,  20,  20,  20,  20,  20,  0,
     0,   20,  40,  40,  40,  40,  20,  0,
