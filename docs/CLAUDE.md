@@ -36,9 +36,13 @@ location is derived from the bitboards via `Position::at_sq64()`.
   (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
   fix + magic bitboards).
 - ✅ **Comprehensive test suite**: 197 GoogleTest cases
-- ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
-  see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration
-  ladder
+- ✅ **Strength**: **~1818 ± 30 Elo** (10+0.1, no book, CCRL-Blitz scale) as of
+  baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
+  (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old
+  "~1500-1700" (that figure predates the t5→t11 stack: magic bitboards, TT-bound
+  fix, tapered eval, Texel tune). Note real style non-transitivity (CDrill is a
+  bogey −7.5pp; MTL/MORA favorable +9pp), so treat as ~1800–1850. See BACKLOG #5
+  + [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the calibration ladder
 - 🔬 **Performance**: **~3.55 Mnps** single-threaded at depth 11 from
   startpos (post-#24 magic bitboards; up from ~2.06 Mnps pre-t5)
 

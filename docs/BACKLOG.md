@@ -2000,7 +2000,31 @@ possible concurrency=2-vs-1 compression.
 - type: maintenance
 - est: 5 minutes per run (script auto-rebuilds)
 
-**Recent MTLChess v0.3 runs:**
+**CALIBRATED RATING — baseline-t11, 2026-06-06: ~1818 ± 30 Elo** (10+0.1, no
+book, CCRL-Blitz scale). Multi-anchor pooled MLE (anchored logistic fit,
+opponents fixed at their CCRL ratings) over 600 games:
+
+| Opponent (CCRL) | Score | Games | matchup residual |
+|---|---|---|---|
+| Snowy 0.2 (1868) | 41.2% | 200 | −1.6pp (neutral) |
+| CDrill 2000 (1949) | 24.5% | 200 | −7.5pp (**bogey**) |
+| MTLChess v0.3 (1984) | 36.8% | 200 | +9.0pp (favorable) |
+| MORA (2189) | 20.0% | 60 | +9.4pp (favorable; excluded from fit — thin) |
+
+**Key finding: real style non-transitivity (~±8pp / ~±55 Elo).** CDrill is
+Huginn's tough matchup; the MTL family + MORA are soft. So single-opponent
+calibrations mislead (MORA alone implied ~1948, CDrill alone ~1753); only the
+multi-anchor pool is trustworthy → **~1800–1850, best point ~1818**.
+Tooling: `test_huginn_gauntlet.bat <opp>` + the anchored-MLE snippet (run inline).
+NuclearChess 1.0 (1691) dropped — non-UCI promotion output, contaminated games.
+
+**Caveats:** CCRL's own conditions are 2′+1″ + 12-move book + 6-piece EGTB; this
+is 10+0.1 no-book, so it's a *placement* on the CCRL scale, not an identical-
+conditions rating. For regression tracking, the internal baseline ladder
+(t9→t10→t11) remains the noise-free metric; external calibration is the
+human/engine-scale sanity check.
+
+**Recent MTLChess v0.3 runs (historical, pre-t11, single-opponent — noisy):**
 - **2026-04-30, post-mobility, vs old `mtlchess003.exe` (20g):** 2W/17L/1D,
   ~−340 Elo. Real progress from 0W/20L/0D the run before, but
   still firmly behind.
