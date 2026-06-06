@@ -12,7 +12,7 @@
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
 | 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
 | 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
-| 9 | Texel-style tuner | **OPEN** | research | low |
+| 9 | Texel-style tuner | **OPEN — NEXT** | research | high |
 | 10 | Wire up Syzygy tablebase probe | **CLOSED** @ `5347e6d` | feature | low |
 | 11 | CLAUDE.md NPS figure is stale | **CLOSED** @ `b9cc1be` | maintenance | low |
 | 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
@@ -1551,9 +1551,35 @@ Committed `3b498f9` (source), pushed. Opponent = `huginn_t10.exe` (baseline-t10)
   hand-tuning isn't worth the gauntlet hours without a Texel tuner (#9). t10
   stays the clean confirmed baseline. Revisit when #9 lands (joint Texel tune
   of material+PST EG values is the principled way to extract this).
-- **Next: Experiment 3 = king safety** (Fruit shelter+storm+multi-attacker),
-  measured vs t10 — the "Huge" gap-table item, currently dead code, now on a
-  tapered base so it fades correctly in the endgame (the #2 failure mode).
+**Experiment 3 status (2026-06-03): KS v1 implemented, AMD neutral.** Commit
+`91f29ce` (source), pushed. `king_safety_white_mg()` = non-linear multi-attacker
+king-ring danger (≥2-attacker gate, units²/8 cap 500, weights N2/B2/R3/Q5) +
+open-file shelter (18/file), added to the MG accumulator only so it tapers out
+in the endgame (the #2 −126 failure mode). Replaces the 4 dead KS constants.
+197/197 tests pass; static-eval validation correct (startpos/symmetric 0,
+W-king-attacked −10, open-file −19; tapers with phase).
+- **AMD SPRT vs t10 (t10+material+KS): +3.82 ± 14.47 Elo, LOS 69.78%, LLR 0.06
+  (flat, inconclusive @1000g cap)**, W245/L234/D521 (50.55%), Ptnml
+  [24,120,205,123,28]. PGN `gauntlet/huginn_vs_t10_amd.pgn`. (Eyeball was
+  +11.6/60g — noise again.) Material was ~neutral, so this ≈ KS itself ≈ neutral.
+- **Read: amplitude problem, not a design fault.** No regression (tapering +
+  gate work). The first-cut magnitudes are likely too small to change move
+  selection at 10+0.1 (typical king-danger ~20–50cp pre-taper); the search may
+  already resolve king attacks tactically. Same "individual eval term is
+  marginal" pattern as tapered material — the tapering *foundation* was the big
+  lever (+40), not the terms layered on it.
+- **Intel SPRT vs t10: −10.43 ± 14.88 Elo** (1000g, W244/L274/D482, 48.50%).
+  Commit `6c5f769`, PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED 2000g: W489/L508/D1003, 49.53% ~−3.3 Elo — MACHINES DISAGREE IN SIGN**
+  (AMD +3.8 / Intel −10.4). Same #26 fingerprint as tapered material.
+  **Verdict: KS v1 is noise/slightly-negative, NOT shippable.**
+- **Conclusion of the hand-tuned phase.** Foundation/tapering = +40 (shipped).
+  The two eval *terms* layered on it — material (+2.8) and KS (−3.3) — are both
+  in the noise. Structurally correct (tapering, gate, symmetry all verified),
+  but first-cut magnitudes don't convert. **Pivot to #9 Texel tuner** to jointly
+  fit material-EG + KS weights + EG-PST values, rather than blind one-at-a-time
+  gauntlet sweeps. Material + KS kept ENABLED in-tree as the tuning targets;
+  **baseline stays t10** until the tuner produces a two-machine-confirmed gain.
 
 ### #36: Illegal move in displayed PV (TT-walk collision) — cosmetic
 
