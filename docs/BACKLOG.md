@@ -2553,11 +2553,25 @@ than P1a was.
   draw-heavy corpus (expected); sane *directions* already emerge (EG pawn/rook
   > MG). Needs the large clean corpus for usable values.
 
-**Next (Phase 4):** export ChessBase games (≥~2200, decisive+draws) → PGN →
-`extract_fens.py` (~1–2M positions) → `huginn_tuner` → paste tables → rebuild →
-two-machine SPRT vs t10. Perf note: single-threaded; cap `--positions` (few
-hundred k tunes fine) or parallelize `mse()` for the full corpus. Extensions
-once it converts: separate EG PSTs (tapered PSTs), mobility + KS weights.
+**PRODUCTION TUNE 1 (2026-06-05/06): the payoff.** Corpus = Zurichess
+`quiet-labeled` (725k decisive-rich positions, 27% draws). Threaded tuner
+converged MSE 0.064173 → 0.059618 (27 sweeps, K=1.420). Baked tuned
+PIECE_VALUES_MG/EG + all 6 PSTs + king-EG (commit `4f091c1`); also decoupled
+`value_of()` (ordering/material) onto a fixed canonical table so the SPRT
+isolates the eval change. 197/197 tests pass.
+- 20g eyeball vs t10: +136.97, LOS 99.99% — and unlike the marginal terms, the
+  decisiveness held up.
+- **AMD SPRT vs t10: H1 ACCEPTED @ 350g — +88.21 ± 28.49 Elo, LOS 100%, LLR
+  2.97**, W143/L56/D151 (62.43%), Ptnml [4,28,52,59,32]. PGN
+  `gauntlet/huginn_vs_t10_amd.pgn`. **The largest single gain of the program**
+  (> 2× the tapering foundation's +40). The never-tuned hand-set VICE PSTs were
+  the locked-up Elo, exactly as predicted.
+- **Intel leg pending** (two-machine formality; at +88/LOS 100% a sign flip is
+  impossible). On confirm → freeze **baseline-t11**.
+- **Re-tune candidates** now that the harness works: separate EG PSTs (tapered
+  PSTs), mobility weights, KS weights (revisit #35 Exp 3 under the tuner),
+  bishop-pair / open-file / passed-pawn terms. Each just adds params to
+  `collect_params()` and re-runs.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18

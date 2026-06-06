@@ -1423,3 +1423,44 @@ Moves; d2d4 h7h6 c1f4 e7e6 f3d2 b8c6 e2e4 d7d6 d4d5 e6d5 e4d5 c6e7 c3c4 g7g5 f4h
 [INFO  ] [14:47:43.174977] <   > fastchess --- Total Time: 01:21:33 (hours:minutes:seconds)
 
 
+[INFO  ] [23:56:18.004807] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [23:56:18.004940] <   > fastchess --- Setting seed to: 4402618588820842869
+[INFO  ] [23:56:18.034524] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [23:56:18.040110] <   > fastchess --- Starting tournament...
+[WARN  ] [00:14:31.561545] <   > fastchess --- Warning; Illegal PV move - move c2c1q from Huginn_t10
+Info; info depth 8 seldepth 10 multipv 1 score mate 6 nodes 24400 nps 4066666 hashfull 1000 tbhits 955 time 6 pv h4h5 d2d3 b1c1 d3c4 c2c1q c4b4 h5c5 b4a4
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[WARN  ] [00:14:31.561590] <   > fastchess --- Warning; Illegal PV move - move b1c2 from Huginn_t10
+Info; info depth 9 seldepth 15 multipv 1 score cp 28000 nodes 200266 nps 7417259 hashfull 1000 tbhits 5720 time 27 pv h4h2 d2c3 h2e2 c3b4 b1c2 b4c4 e2f2 c4d4 f2f3
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[WARN  ] [00:14:31.561620] <   > fastchess --- Warning; Illegal PV move - move b1c2 from Huginn_t10
+Info; info depth 10 seldepth 10 multipv 1 score cp 28000 nodes 209461 nps 7222793 hashfull 1000 tbhits 321 time 29 pv h4h2 d2c3 h2e2 c3b4 b1c2 b4c4
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[WARN  ] [00:14:31.561705] <   > fastchess --- Warning; Illegal PV move - move b1c2 from Huginn_t10
+Info; info depth 11 seldepth 16 multipv 1 score cp 28000 nodes 336379 nps 7312586 hashfull 1000 tbhits 4591 time 46 pv h4h2 d2c3 h2e2 c3b4 b1c2 b4c4 e2e1 c4d5 e1e3 d5d4 e3f3
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[WARN  ] [00:14:31.561734] <   > fastchess --- Warning; Illegal PV move - move b1c2 from Huginn_t10
+Info; info depth 12 seldepth 14 multipv 1 score cp 28000 nodes 367286 nps 7063192 hashfull 1000 tbhits 1581 time 52 pv h4h2 d2c3 h2e2 c3b4 b1c2 b4c4 e2e1 c4d5
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[WARN  ] [00:14:31.561762] <   > fastchess --- Warning; Illegal PV move - move c2c4 from Huginn_t10
+Info; info depth 13 seldepth 19 multipv 1 score cp 1389 nodes 1713562 nps 7896599 hashfull 1000 tbhits 48156 time 217 pv h4h3 c2c4 h3f3 c4c5 f3a3 d2e2 f4f3 e2d1 f3f2 d1e2 a3a2 e2e3 f2f1q e3e4 f1f6
+Position; fen rnbqkbnr/2pp1ppp/1p2p3/p7/P3P3/2P5/1P1P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 e4e5 c7c5 g1f3 d8c7 b1a3 c5d4 a3b5 c7b7 b5d4 b8d7 f1d3 d7c5 d3e2 f8e7 e1g1 c5e4 c1e3 c8d7 d4b3 b7c7 d1d4 e4c5 b3d2 g8h6 e3h6 g7h6 c3c4 c7c6 b2b3 h8g8 c4d5 e6d5 g2g3 e8c8 a1c1 d7h3 f1e1 h3f5 d4f4 c6g6 e2a6 c8c7 f3d4 e7g5 f4f5 g6f5 d4f5 g5d2 c1c5 b6c5 e1d1 g8g6 f5d6 d2b4 a6e2 d8d7 d1d5 g6g8 g1g2 g8b8 e2f3 b8g8 d6b5 c7d8 b5d6 d8c7 h2h3 g8b8 d5d1 f7f5 g2f1 b8d8 g3g4 f5f4 d6b5 c7c8 d1d6 d7d6 b5d6 c8b8 f1e2 b4c3 d6c4 c3e5 c4a5 d8e8 a5c6 b8c7 c6e5 e8e5 e2d2 c7b6 h3h4 b6a5 d2c3 e5e1 f3d5 e1e5 c3c4 h6h5 g4g5 e5e2 f2f3 e2c2 c4d3 c2h2 d5e4 a5b4 e4h7 b4b3 g5g6 h2g2 h7g8 b3a4 g8f7 a4b4 f7d5 g2g6 d5f7 g6f6 f7h5 c5c4 d3e2 f6h6 h5f7 h6h4 f7g6 c4c3 e2d1 b4b3 g6c2 b3b2 c2b1 b2b1 d1e2 c3c2 e2d2
+
+[INFO  ] [00:24:11.239729] <   > fastchess --- SPRT ([0.00, 10.00]) completed - H1 was accepted
+[INFO  ] [00:24:13.049137] <   > fastchess --- Finished match
+
+[INFO  ] [00:24:13.049189] <   > fastchess --- Total Time: 00:27:55 (hours:minutes:seconds)
+
+
