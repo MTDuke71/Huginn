@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "init.hpp"
@@ -55,11 +56,29 @@ inline double sigmoid(double s) {
 }
 
 double mse(Huginn::Engine& eng, const std::vector<Sample>& s) {
-    double sum = 0.0;
-    for (const auto& x : s) {
-        double d = double(x.result) - sigmoid(white_eval(eng, x.pos));
-        sum += d * d;
+    // evaluate() is pure (reads position + global eval tables, writes no Engine
+    // state), so all threads safely share one Engine for concurrent reads.
+    unsigned nt = std::max(1u, std::thread::hardware_concurrency());
+    if (s.size() < 40000) nt = 1;  // not worth the thread overhead
+    std::vector<double> partial(nt, 0.0);
+    std::vector<std::thread> th;
+    const size_t chunk = (s.size() + nt - 1) / nt;
+    for (unsigned t = 0; t < nt; ++t) {
+        const size_t a = size_t(t) * chunk;
+        const size_t b = std::min(s.size(), a + chunk);
+        if (a >= b) break;
+        th.emplace_back([&, t, a, b] {
+            double sum = 0.0;
+            for (size_t i = a; i < b; ++i) {
+                double d = double(s[i].result) - sigmoid(white_eval(eng, s[i].pos));
+                sum += d * d;
+            }
+            partial[t] = sum;
+        });
     }
+    for (auto& x : th) x.join();
+    double sum = 0.0;
+    for (double p : partial) sum += p;
     return sum / double(s.size());
 }
 

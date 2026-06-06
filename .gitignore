@@ -106,3 +106,6 @@ test/wac201_retest_*.txt
 
 # Texel tuner (#9) extracted training corpora — large and regenerable from PGNs.
 tools/texel/fens*.txt
+# Large raw training datasets dropped into test/ (Zurichess EPD, game dumps).
+test/quiet-labeled.epd.txt
+test/*.epd.txt
