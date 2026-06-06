@@ -3,7 +3,7 @@ REM ===========================================================================
 REM Unified Huginn gauntlet runner — replaces the per-baseline clones
 REM (test_huginn_vs_t9/t10/...) AND test_huginn_calibration.bat.
 REM
-REM   test_huginn_gauntlet.bat <opponent> [rounds]
+REM   test_huginn_gauntlet.bat <opponent> [rounds] [concurrency]
 REM
 REM <opponent>:
 REM   tN  (t9, t10, t11, ...) -> internal baseline regression vs huginn_tN.exe
@@ -15,6 +15,9 @@ REM                              (~1984 / ~2191 / ~2314). No SPRT, concurrency 1
 REM
 REM [rounds]: cap (default 500 for baselines = SPRT early-stops; 50 for calib).
 REM           Pass a small number (e.g. 20) for a quick eyeball.
+REM [concurrency]: games in parallel (default 4 baseline / 1 calib). KEEP 4 on
+REM           BOTH boxes for poolable two-machine baseline runs — mixing it
+REM           perturbs tc=10+0.1 timing. Override only for calib / local eyeballs.
 REM
 REM Two-machine workflow (baselines): run on EACH box; auto-detects the CPU
 REM vendor and tags the PGN (_intel / _amd) so the two pool without conflict.
@@ -25,8 +28,9 @@ setlocal
 
 set OPP=%1
 set ROUNDS=%2
+set CC_ARG=%3
 if "%OPP%"=="" (
-    echo usage: test_huginn_gauntlet.bat ^<tN ^| mtl03 ^| mora ^| mtl05^> [rounds]
+    echo usage: test_huginn_gauntlet.bat ^<tN ^| mtl03 ^| mora ^| mtl05^> [rounds] [concurrency]
     exit /b 1
 )
 
@@ -87,6 +91,11 @@ set "SPRT="
 set CC=1
 if "%MODE%"=="baseline" set SPRT=-sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 if "%MODE%"=="baseline" set CC=4
+REM Optional concurrency override (arg 3). WARNING: for poolable two-machine
+REM baseline runs keep cc=4 on BOTH boxes — mixing concurrency perturbs
+REM tc=10+0.1 timing and breaks pentanomial pooling. Safe to vary for
+REM calibration or a quick local eyeball.
+if not "%CC_ARG%"=="" set CC=%CC_ARG%
 
 REM --- Build current Huginn (Fathom on, to match TB-enabled baselines) --------
 echo Configuring + building current Huginn (msvc-x64-release, Fathom ON)...
