@@ -10,9 +10,9 @@ REM   tN  (t9, t10, t11, ...) -> internal baseline regression vs huginn_tN.exe
 REM                              SPRT [0,10], OwnBook off both sides, concurrency
 REM                              4, results -> gauntlet\huginn_vs_tN_<machine>.pgn.
 REM                              Any tN works automatically — no new script ever.
-REM   snowy | cdrill | mtl03 | mora | mtl05 -> external calibration vs a
-REM                              known-rated engine (~1868 / ~1949 / ~1984 /
-REM                              ~2191 / ~2314). No SPRT, concurrency 1 default.
+REM   nuclear | snowy | cdrill | mtl03 | mora | mtl05 -> external calibration
+REM                              vs a CCRL-Blitz-rated engine (~1691 / ~1868 /
+REM                              ~1949 / ~1984 / ~2189 / ~2314). No SPRT, cc=1.
 REM
 REM [rounds]: cap (default 500 for baselines = SPRT early-stops; 50 for calib).
 REM           Pass a small number (e.g. 20) for a quick eyeball.
@@ -77,6 +77,8 @@ if /I "%OPP%"=="cdrill" set OPPONENT=cdrill_2000.exe
 if /I "%OPP%"=="cdrill" set OPP_NAME=CDrill_2000
 if /I "%OPP%"=="snowy" set OPPONENT=snowy_0_2_x64.exe
 if /I "%OPP%"=="snowy" set OPP_NAME=Snowy_0.2
+if /I "%OPP%"=="nuclear" set OPPONENT=Nuclear.exe
+if /I "%OPP%"=="nuclear" set OPP_NAME=NuclearChess_1.0
 
 if "%OPPONENT%"=="" (
     echo Unknown opponent "%OPP%". Use tN, or add it to the calibration table.
