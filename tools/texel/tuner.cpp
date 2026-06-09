@@ -110,6 +110,15 @@ std::vector<int*> collect_params() {
     add(Huginn::EvalParams::QUEEN_TABLE);
     add(Huginn::EvalParams::KING_TABLE);
     add(Huginn::EvalParams::KING_TABLE_ENDGAME);
+    // #9 round 2: endgame PSTs for the non-king pieces (tapered PSTs).
+    add(Huginn::EvalParams::PAWN_TABLE_EG);
+    add(Huginn::EvalParams::KNIGHT_TABLE_EG);
+    add(Huginn::EvalParams::BISHOP_TABLE_EG);
+    add(Huginn::EvalParams::ROOK_TABLE_EG);
+    add(Huginn::EvalParams::QUEEN_TABLE_EG);
+    // Mobility weights (mg / eg).
+    p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT);
+    p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
     return p;
 }
 
@@ -178,6 +187,14 @@ void dump_results() {
     print_array("QUEEN_TABLE", Huginn::EvalParams::QUEEN_TABLE);
     print_array("KING_TABLE", Huginn::EvalParams::KING_TABLE);
     print_array("KING_TABLE_ENDGAME", Huginn::EvalParams::KING_TABLE_ENDGAME);
+    print_array("PAWN_TABLE_EG", Huginn::EvalParams::PAWN_TABLE_EG);
+    print_array("KNIGHT_TABLE_EG", Huginn::EvalParams::KNIGHT_TABLE_EG);
+    print_array("BISHOP_TABLE_EG", Huginn::EvalParams::BISHOP_TABLE_EG);
+    print_array("ROOK_TABLE_EG", Huginn::EvalParams::ROOK_TABLE_EG);
+    print_array("QUEEN_TABLE_EG", Huginn::EvalParams::QUEEN_TABLE_EG);
+    std::printf("MOBILITY_WEIGHT_DEFAULT = %d;  MOBILITY_WEIGHT_ENDGAME = %d;\n",
+                Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT,
+                Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
     std::printf("=====================================================\n");
 }
 

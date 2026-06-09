@@ -260,17 +260,18 @@ int Engine::evaluate(const Position& pos) {
                     mg_val = mg_material + EvalParams::KING_TABLE[table_index];
                     eg_val = eg_material + EvalParams::KING_TABLE_ENDGAME[table_index];
                 } else {
-                    int pst_value = 0;
+                    // Separate MG/EG piece-square tables (#9 round 2, tapered PSTs).
+                    int pst_mg = 0, pst_eg = 0;
                     switch (pt) {
-                        case PieceType::Pawn:   pst_value = EvalParams::PAWN_TABLE[table_index]; break;
-                        case PieceType::Knight: pst_value = EvalParams::KNIGHT_TABLE[table_index]; break;
-                        case PieceType::Bishop: pst_value = EvalParams::BISHOP_TABLE[table_index]; break;
-                        case PieceType::Rook:   pst_value = EvalParams::ROOK_TABLE[table_index]; break;
-                        case PieceType::Queen:  pst_value = EvalParams::QUEEN_TABLE[table_index]; break;
+                        case PieceType::Pawn:   pst_mg = EvalParams::PAWN_TABLE[table_index];   pst_eg = EvalParams::PAWN_TABLE_EG[table_index];   break;
+                        case PieceType::Knight: pst_mg = EvalParams::KNIGHT_TABLE[table_index]; pst_eg = EvalParams::KNIGHT_TABLE_EG[table_index]; break;
+                        case PieceType::Bishop: pst_mg = EvalParams::BISHOP_TABLE[table_index]; pst_eg = EvalParams::BISHOP_TABLE_EG[table_index]; break;
+                        case PieceType::Rook:   pst_mg = EvalParams::ROOK_TABLE[table_index];   pst_eg = EvalParams::ROOK_TABLE_EG[table_index];   break;
+                        case PieceType::Queen:  pst_mg = EvalParams::QUEEN_TABLE[table_index];  pst_eg = EvalParams::QUEEN_TABLE_EG[table_index];  break;
                         default: break;
                     }
-                    mg_val = mg_material + pst_value;
-                    eg_val = eg_material + pst_value;
+                    mg_val = mg_material + pst_mg;
+                    eg_val = eg_material + pst_eg;
                 }
                 if (piece_color == Color::White) { mg_pst += mg_val; eg_pst += eg_val; }
                 else                             { mg_pst -= mg_val; eg_pst -= eg_val; }
