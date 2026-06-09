@@ -2620,6 +2620,26 @@ recomputes MSE 0.058696 to the digit). Commit `1a0b3a1`. 197/197 tests pass.
   crack — now tunable via the harness), bishop-pair / open-file / passed-pawn,
   and a re-tune on fresh self-play data from the stronger engine.
 
+**PRODUCTION TUNE 3 (2026-06-08): positional scalars — FLAT, tuning floor hit.**
+Made the remaining hand-set positional scalars tunable (bishop-pair, rook/queen
+open+semi-open file bonuses, isolated/doubled penalties, passed-pawn rank array,
+tempo) and re-tuned the full ~796-param vector. MSE 0.058689 -> 0.058310. KS
+excluded (under-constrained by quiet data). bake.py generalized (arbitrary
+arrays + scalars); bake verified exact. Commit `07f27cf`.
+- **AMD SPRT vs t12: +1.74 ± 15.28, LOS 58.8%, LLR -0.21 (inconclusive @1000g
+  cap)**, W261/L256/D483 (50.25%). **FLAT — not shippable. Baseline stays t12.**
+- **The diminishing MSE drops predicted this** (round 1 -0.0046 -> +71 Elo;
+  round 2 -0.0009 -> +37; round 3 -0.0004 -> ~0). **The current eval feature
+  set is tuned out** — re-fitting existing terms is exhausted.
+- **STRATEGIC PIVOT for further eval Elo: add NEW features, don't re-tune.**
+  The tuner is now a force-multiplier — any new term (pawn structure: backward
+  / connected / phalanx / blockade; threats; rook-on-7th; piece coordination;
+  KS done right) gets optimized for free once added to `collect_params()`.
+  Alternatively, revisit search-shape work (#1/#3/#7/#8/#17) — those were
+  blocked on move-ordering quality, which a much stronger eval may have lifted.
+  Round-3 commit kept (neutral, MSE-better, keeps the tunable-scalar infra);
+  tip is t12-strength.
+
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
 Elo from a real bug fix); further gains are tuning-bound.
