@@ -12,7 +12,7 @@
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
 | 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
 | 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
-| 9 | Texel-style tuner | **SHIPPED** — tune 1 (mat+PSTs) +71.4 Elo 2-machine → baseline-t11; reusable infra | research | high |
+| 9 | Texel-style tuner | **SHIPPED** — t1 (mat+PSTs) +71.4 → t11; t2 (tapered EG PSTs) +37.4 → t12; reusable infra (bake.py) | research | high |
 | 10 | Wire up Syzygy tablebase probe | **CLOSED** @ `5347e6d` | feature | low |
 | 11 | CLAUDE.md NPS figure is stale | **CLOSED** @ `b9cc1be` | maintenance | low |
 | 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
@@ -2613,7 +2613,9 @@ recomputes MSE 0.058696 to the digit). Commit `1a0b3a1`. 197/197 tests pass.
   `gauntlet/huginn_vs_t11_amd.pgn`. (Eyeball-free; went straight to SPRT.)
   Beat the +10-20 estimate — tapered PSTs are a bigger lever than the MSE drop
   alone suggested.
-- **Intel leg pending** (formality at +37/LOS 100%). On confirm -> baseline-t12.
+- **FROZEN as baseline-t12 = `1a0b3a1`** (binary `huginn_t12.exe`). Intel leg
+  skipped by choice — at +37/LOS 100% a sign-flip is impossible, so this is a
+  single-machine decisive freeze (the two-machine rule is for borderline calls).
 - Round-3 candidates: KS weights (the non-linear term hand-tuning couldn't
   crack — now tunable via the harness), bishop-pair / open-file / passed-pawn,
   and a re-tune on fresh self-play data from the stronger engine.

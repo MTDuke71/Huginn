@@ -13,7 +13,12 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t11 = 4f091c1` (= t10 + BACKLOG #9 first Texel
+- ✅ **Baseline tag**: `baseline-t12 = 1a0b3a1` (= t11 + BACKLOG #9 round 2:
+  tapered (endgame) PSTs for the 5 non-king pieces + tunable mobility, full
+  ~780-param re-tune on the 725k corpus, MSE 0.0596→0.0587. **+37.4 ± 17.9 Elo
+  vs t11, LOS 100%, SPRT H1-accept @764g (AMD)** — single-machine decisive
+  freeze; Intel leg skipped (sign-flip impossible at this magnitude). Prior:
+  `baseline-t11 = 4f091c1` (= t10 + BACKLOG #9 first Texel
   tune: material MG/EG + all 6 PSTs + king-EG fit on the Zurichess quiet-labeled
   725k corpus, MSE 0.0642→0.0596; the hand-set VICE PSTs had never been tuned.
   `value_of()` decoupled onto a fixed canonical table so ordering/material don't
