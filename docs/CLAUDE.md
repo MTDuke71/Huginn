@@ -13,7 +13,23 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t9 = ca335c2` (= t8 + perf trio
+- ✅ **Baseline tag**: `baseline-t12 = 1a0b3a1` (= t11 + BACKLOG #9 round 2:
+  tapered (endgame) PSTs for the 5 non-king pieces + tunable mobility, full
+  ~780-param re-tune on the 725k corpus, MSE 0.0596→0.0587. **+37.4 ± 17.9 Elo
+  vs t11, LOS 100%, SPRT H1-accept @764g (AMD)** — single-machine decisive
+  freeze; Intel leg skipped (sign-flip impossible at this magnitude). Prior:
+  `baseline-t11 = 4f091c1` (= t10 + BACKLOG #9 first Texel
+  tune: material MG/EG + all 6 PSTs + king-EG fit on the Zurichess quiet-labeled
+  725k corpus, MSE 0.0642→0.0596; the hand-set VICE PSTs had never been tuned.
+  `value_of()` decoupled onto a fixed canonical table so ordering/material don't
+  drift. **+71.4 Elo pooled 863g vs t10** [AMD +88.2@350g / Intel +59.6@512g],
+  both LOS 100%, both SPRT H1-accept — the largest single ship of the program).
+  Prior: `baseline-t10 = 476d33c` (= t9 + BACKLOG #35 tapered-eval
+  foundation: smooth `game_phase_256()` blend replaces the hard `is_endgame`
+  boolean — mg/eg sums diverge only on the king PST, flag-off byte-identical to
+  t9. No new tuned values. +39.5 Elo pooled 1448g vs t9 [AMD +45.86@602g /
+  Intel +35.03@846g], both LOS 100%, both SPRT H1-accept — first eval-quality
+  ship of the #35 program). Prior: `baseline-t9 = ca335c2` (= t8 + perf trio
   [triangular PV + input-poll throttle + eval mirror→XOR] + PV
   repetition truncate + Priority 6 static-eval cache + Priority 7 dead
   undo-state drop; +13.90 Elo pooled vs t8, LOS 99.6%, both machines
@@ -25,9 +41,13 @@ location is derived from the bitboards via `Position::at_sq64()`.
   (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
   fix + magic bitboards).
 - ✅ **Comprehensive test suite**: 197 GoogleTest cases
-- ⚠️ **Strength**: ~1500-1700 Elo at 10+0.1 vs MTLChess_v0.3 (~1984 Elo);
-  see [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live calibration
-  ladder
+- ✅ **Strength**: **~1818 ± 30 Elo** (10+0.1, no book, CCRL-Blitz scale) as of
+  baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
+  (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old
+  "~1500-1700" (that figure predates the t5→t11 stack: magic bitboards, TT-bound
+  fix, tapered eval, Texel tune). Note real style non-transitivity (CDrill is a
+  bogey −7.5pp; MTL/MORA favorable +9pp), so treat as ~1800–1850. See BACKLOG #5
+  + [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the calibration ladder
 - 🔬 **Performance**: **~3.55 Mnps** single-threaded at depth 11 from
   startpos (post-#24 magic bitboards; up from ~2.06 Mnps pre-t5)
 

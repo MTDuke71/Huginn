@@ -5,14 +5,14 @@
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
 | 1 | Skip SEE-prune and LMR-reduce on check-giving moves (P1a) | **CLOSED** @ `2dbd856` | feature | high |
-| 2 | Re-attempt king safety on top of mobility | **DEFERRED** | feature | low |
+| 2 | Re-attempt king safety on top of mobility | **DEFERRED** — likely needs tapered eval first (see #35); KS on an untapered base poisons the endgame | feature | low |
 | 3 | Continuation history | **PARKED** — 1-ply additive falsified (w16 neutral, w64 −9); flag off, kept in-tree | feature | high |
 | 4 | Refresh `huginn_t3` baseline | **CLOSED** @ `2e97066` | maintenance | medium |
 | 5 | Recalibrate vs external opponent (MTLChess) | **OPEN** | maintenance | medium |
 | 6 | Lazy SEE in main-search capture ordering | **WIP (parked)** — attempt 2 `f75a830` pooled +2.08 neutral, reverted `66bce5d`; branch `wip/see-capture-ordering` | feature | low |
 | 7 | LMP (Late Move Pruning) fix | **DEFERRED** | feature | low |
 | 8 | Aspiration step (b) — narrow-window search | **DEFERRED** | feature | low |
-| 9 | Texel-style tuner | **OPEN** | research | low |
+| 9 | Texel-style tuner | **SHIPPED** — t1 (mat+PSTs) +71.4 → t11; t2 (tapered EG PSTs) +37.4 → t12; reusable infra (bake.py) | research | high |
 | 10 | Wire up Syzygy tablebase probe | **CLOSED** @ `5347e6d` | feature | low |
 | 11 | CLAUDE.md NPS figure is stale | **CLOSED** @ `b9cc1be` | maintenance | low |
 | 12 | Fastchess hang at 80 games | **OPEN** | bug | low |
@@ -36,6 +36,9 @@
 | 30 | Nondeterministic search from uninitialized history | **FIXED** — `search_history` was uninitialized; zero-init. Search now deterministic at fixed depth | bug | high |
 | 31 | TT-size (`Hash`) SPRT sweep — 64 vs 128 vs 256 MB | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated, fallback to magic) | **OPEN** | speed/research | low |
+| 34 | Pin/blocker-aware legal movegen (SF `blockersForKing`) | **OPEN** | speed/research | low |
+| 35 | Tapered eval + eval-gap closure vs Fruit 2.1 | **IN-PROGRESS** | feature/eval | high |
+| 36 | Illegal move in displayed PV (TT-walk collision) | **OPEN** | bug | low |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1331,6 +1334,295 @@ SF intersection):
 - **Not a goal**: closing the 11 SF-only failures. Those reflect WAC
   test-database narrowness, not engine strength.
 
+### #34: Pin/blocker-aware legal movegen (Stockfish `blockersForKing`)
+
+- status: **OPEN** (idea parked 2026-06-03)
+- priority: low (speed/architecture experiment, not a strength lever;
+  much bigger eval/search issues come first)
+- type: speed / research
+- est: ~1 session for the perft-side fast path + perft validation;
+  the search-side variant is larger and separate
+
+**Idea.** Adopt Stockfish's `st->blockersForKing[c]` / `st->pinners[~c]`
+precomputation: once per node, derive the set of own pieces pinned to
+the king (king-blockers) and the enemy sliders pinning them. Legality
+of a move then becomes an O(1) test — a non-king, non-EP move by a
+non-pinned piece is always legal; a pinned piece is legal iff its
+destination stays on the king↔pinner ray — replacing per-move king-
+attack scans.
+
+**Where Huginn stands today.** Movegen is pure pseudo-legal
+([movegen_bb.cpp:25](../src/movegen_bb.cpp#L25)); it has no pin
+awareness. Legality is decided by make/unmake + `SqAttackedBB(king)`
+([position.cpp:404](../src/position.cpp#L404)). Two consumers:
+1. **`generate_legal_moves`** ([movegen.cpp:25](../src/movegen.cpp#L25))
+   — make/unmake purely to test legality, then undo. Used by perft and
+   the mate/stalemate `legal_moves` count at
+   [search.cpp:1795](../src/search.cpp#L1795).
+2. **Search** — already pseudo-legal: `generate_all_moves` + inline
+   `if (pos.MakeMove(m) != 1) continue;` ([search.cpp:1388](../src/search.cpp#L1388)).
+   This path's pre-filter was *already removed* in **#14** (closed
+   `b1154c8`), so the legality test now piggybacks on a `MakeMove`
+   that has to happen anyway for recursion.
+
+**So the remaining win is narrower than it first looks:**
+- **Perft / `generate_legal_moves` (the real target).** Here make/unmake
+  is pure overhead — blockers let ~90%+ of moves skip it entirely.
+  Memory/diagnosis says **perft is movegen-bound**, so this is where the
+  gain lands.
+- **Search.** #14 already captured the easy win. Blockers would only
+  save (a) *making* the handful of illegal moves per node, and (b) the
+  `SqAttackedBB` inside `MakeMove` — but (b) requires changing
+  `MakeMove`'s contract to a "trusted-legal" make that skips the in-check
+  test. Invasive, modest payoff, and at 10+0.1 the engine is work-per-
+  node bound (cf. #26) — likely a #26-class "NPS up, Elo flat" result.
+
+**Correctness traps (why this is not a quick edit):**
+1. **En passant** — the captured pawn isn't on the from→to ray, so the
+   pin test can't classify it. Always route EP through full make/unmake.
+2. **In check** — blockers don't resolve evasions; the fast path is
+   invalid when `pos.in_check()`. Huginn has no `generate<EVASIONS>`, so
+   in-check nodes fall back to per-move checks.
+
+**Recommended low-risk shape (if revisited):** don't rewrite movegen
+into fully-legal generation. Add `compute_blockers(pos, us)` →
+pinned-bitboard + pin rays, then bolt a fast-path filter onto
+`generate_legal_moves`: in-check / EP / king moves fall back to the
+existing `MakeMove` oracle; non-pinned pieces are accepted with no make;
+pinned pieces are accepted iff `to` stays on the from–king line. Keeps
+`MakeMove` as the correctness fallback, and the perft suite catches any
+pin/EP bug instantly. Only escalate to a trusted-legal `MakeMove` for
+the search path if the perft-side win proves worth the larger change.
+
+**Expectation.** Real perft speedup; search Elo ~0 ± noise at our TC.
+Worth it mainly as a perft/movegen-architecture lever, sequenced behind
+the eval/search strength work (#33 tactical set, #17 aspiration, king
+safety) that has far higher strength ROI.
+
+### #35: Tapered eval + eval-gap closure vs Fruit 2.1
+
+- status: **IN-PROGRESS** (opened 2026-06-03)
+- priority: **high** — this is the largest identified strength lever; the
+  eval is where Huginn's move-quality gap lives
+- type: feature / eval
+- est: tapered-eval foundation ~1 session + gauntlet; full table is
+  multi-session
+
+**Trigger: Fruit 2.1 gauntlet wipeout.** Dropped `fruit_fast.exe` into the
+fastchess folder for a relative-strength read (10+0.1, noob_3moves,
+OwnBook off):
+- huginn_t9 vs Fruit, 40g: **0 W / 40 L / 0 D (0.0%)**, every game by mate.
+- huginn_current vs Fruit, 20g: **0 W / 20 L / 0 D (0.0%)**, same.
+
+Fruit 2.1 ≈ 2780 CCRL vs Huginn ≈ 1600 — a ~1000-1200 Elo gap, so 0% is
+expected and yields no measurement gradient (useless as a calibration
+sparring partner; the MTLChess ~1984 ladder is the right yardstick). PGNs:
+`gauntlet/huginn_vs_fruit.pgn` (40g), `gauntlet/huginn_vs_fruit_10r.pgn`.
+
+**The diagnostic signal (not the score itself).** In the PGN traces
+**Huginn searched DEEPER (d10-15) than Fruit (d8-12) and still got mated
+every game.** The gap is **move quality per node = evaluation**, not
+speed or depth. This is consistent with CLAUDE.md ("the remaining gap is
+search-tree shape and eval quality, not raw speed") and the post-#24
+speed-parity finding. Search-shape experiments (#3 conthist, #6 lazy SEE)
+have washed out near-neutral; eval is the under-invested axis.
+
+**Eval feature gap — Huginn vs Fruit 2.1** (Huginn claims verified against
+the code this session; ✅/❌ = present/absent):
+
+| Feature | Huginn | Fruit 2.1 | Impact |
+|---|---|---|---|
+| Tapered eval (op→eg blend) | ❌ hard boolean `is_endgame` flips only king-PST + mobility weight ([search.cpp:127](../src/search.cpp#L127),[:148](../src/search.cpp#L148),[:274](../src/search.cpp#L274)) | ✅ every term has op/eg, smooth phase 0–256 | **Huge** |
+| Tapered material values | ❌ single `PIECE_VALUES_MG` ([chess_types.hpp:166](../src/chess_types.hpp#L166)) | ✅ Pawn 80→90, etc. | High |
+| King safety | ❌ **dead code** — `KING_SHIELD_MULTIPLIER`/`KING_ATTACK_PENALTY`/`CASTLE_BONUS`/`STUCK_PENALTY` defined ([evaluation.hpp:126-130](../src/evaluation.hpp#L126-L130)) but referenced nowhere; KS = king-PST only | ✅ shelter + storm + multi-attacker non-linear | **Huge** |
+| Drawishness scaling | ❌ none | ✅ `mul[]` 0–16: opp-bishops ½, KNNK→0, "1 minor up no pawns"→⅛ | High |
+| Endgame recognizers | ❌ only KK/KNK/KBK draw ([search.cpp:322](../src/search.cpp#L322)) | ✅ KPK, KRKP, KQKP, KBPKB, wrong rook-pawn… | Med |
+| Passed pawns | basic rank bonus ([search.cpp:185](../src/search.cpp#L185)) | ✅ + unstoppable/free/king-distance | Med |
+| Pawn structure | isolated, doubled, passed | + backward, candidate passers | Med |
+| Mobility | flat square count ([search.cpp:273](../src/search.cpp#L273)) | per-piece tuned op/eg weights | Low-Med |
+| Rook on open file | ✅ | ✅ | — |
+| Rook on 7th / king-file | ❌ | ✅ | Low-Med |
+| Bishop pair | ✅ +50 | ✅ +50 | — |
+| Trapped/blocked pieces | ❌ | ✅ | Low |
+| Pawn/material hash tables | ❌ | ✅ | perf only |
+
+**Sequencing — tapered eval FIRST, and why it's the unblocker:**
+
+1. **Tapered eval (phase 0–256 smooth blend).** Foundational — it's a
+   multiplier on every other term. Low-risk: clean correctness test
+   (phase=256 ≡ today's MG eval, phase=0 ≡ EG eval; mirror-symmetry must
+   still hold). Partial infra already exists (`KING_TABLE_ENDGAME` + the
+   `is_endgame` phase concept), so this is an *extension*, not a rebuild.
+   **Key insight: this likely explains why #2 king safety regressed −126
+   Elo.** A KS penalty on an untapered eval applies at full strength in
+   the endgame, where the king should be *active* and KS should fade to
+   ~0 — so KS poisons EG play. Fruit's whole eval is phase-blended exactly
+   so KS can vanish in the EG. Tapering is the prerequisite that revives
+   #2.
+2. **Tapered material values.** Trivial once #1's blend machinery exists —
+   give `PIECE_VALUES` an EG column.
+3. **King safety (Fruit's shelter + storm + multi-attacker model),** now on
+   a tapered base — NOT the presence-zone that failed at −126 (#2).
+4. **Drawishness scaling (`mul[]`).** Independent, High-impact, cheap.
+
+**Why this should convert (unlike the recent neutral experiments).** The
+washed-out experiments (#3, #6, #26) were search-shape / speed levers that
+TC-bound Elo barely reflected. Eval-quality changes of this magnitude
+(missing KS, no tapering) are first-order move-selection changes — they
+should show real Elo vs t9 at 10+0.1. Measure each step vs `baseline-t9`,
+two machines, like every other ship. Don't refactor the whole table at
+once: land tapered eval, gauntlet it, then layer terms one at a time so
+each Elo delta is attributable.
+
+**Experiment 1 — tapered-eval foundation (`ENABLE_TAPERED_EVAL`, 2026-06-03).**
+Replaced the hard `is_endgame` boolean (material ≤ 1150 flips king-PST + mobility
+weight) with a smooth `game_phase_256()` blend (`search.cpp`: `mg_pst`/`eg_pst`
+sums diverge only on the king table; combine `(mg·phase+eg·(256−phase))/256`).
+**No new tuned values** — material stays MG; only the king-PST + mobility
+*transitions* are smoothed. Flag-off path is byte-identical to t9. 197/197 tests
+pass incl. all 8 eval-symmetry cases.
+- AMD 40g eyeball vs t9: +79.53 ± 95.81, LOS 95.85% (W17/L8/D15).
+- **AMD SPRT [elo0=0,elo1=10] vs t9: H1 ACCEPTED @ 602g — +45.86 ± 19.43 Elo,
+  LOS 100%, LLR 2.96**, W192/L113/D297 (56.56%), Ptnml [9,55,116,90,31].
+  Branch `experiment/tapered-eval` @ `476d33c`, pushed. The 40g +80 regressed
+  to mean; true effect ~+46 Elo — decisive, comparable to the #24 magic ship,
+  from a foundation change with **zero new tuned values**. PGN
+  `gauntlet/huginn_vs_t9_amd.pgn`.
+- The win is **removing the eval discontinuity** (a capture crossing the 1150
+  threshold instantly swapped king table + mobility weight = double-digit-cp
+  jump → search instability) plus earlier graduated king-activation.
+- **Intel SPRT vs t9: H1 ACCEPTED @ 846g — +35.03 ± 16.91 Elo, LOS 100%, LLR
+  2.97**, W273/L188/D385 (55.02%), Ptnml [26,64,172,121,40]. Commit `33f773b`,
+  PGN `gauntlet/huginn_vs_t9_intel.pgn`.
+- **POOLED two-machine (1448g): W465/L301/D682, 55.66% ≈ +39.5 Elo.** Both
+  machines independently H1-accepted at LOS 100% — the cross-machine agreement
+  that #26 lacked. **DECISIVE SHIP.** Foundation = commit `476d33c`; freeze as
+  **baseline-t10** (binary snapshot `huginn_t10c.exe` → `huginn_t10.exe`).
+- Next: Experiment 2 = tapered material values (`PIECE_VALUES_EG`, already
+  drafted) measured vs t10, then Exp 3 = king safety (Fruit
+  shelter+storm+attacker) on the tapered base.
+
+**Experiment 2 — tapered material (`ENABLE_TAPERED_MATERIAL`, DRAFTED 2026-06-03).**
+Added `PIECE_VALUES_EG` (P120/N315/B340/R530/Q940 vs MG P100/N320/B330/R500/Q900 —
+standard directions, conservative first-cut, Texel-tune later #9). The eg
+accumulator uses EG material; mg keeps MG; blended by the #35 phase machinery.
+Flag-off → eg uses MG → byte-identical to the foundation. Built, 197/197 tests
+pass, symmetry holds. Static-eval validation: inert at full material (startpos
+diff 0), engages in reduced material (KP −2P: Δ−40 = 2×20 exact; R+P: Δ−17;
+R+2P: Δ+64) — magnitudes match the blend math. **Uncommitted draft** on top of
+`476d33c`; NOT pushed (keeps the Intel foundation SPRT clean). Snapshot
+`huginn_t10c.exe` = baseline-t10 binary, the isolation opponent. Foundation is
+now confirmed + frozen as baseline-t10, so Experiment 2 is **ready to gauntlet
+vs t10** (`test_huginn_vs_t10.bat`).
+
+**WAC tactical corroboration (exp1+exp2 build, 5s/pos, AMD).** Independent of
+gauntlet Elo, the eval work improves tactical resolution:
+- WAC300: **274/300 (91.3%)**, up from baseline-t9's 270/300 (#33). Net +4: 7 of
+  the old hard-30 flipped solved (071/080/081/091/145/248/277), 3 new misses
+  (180/226/242).
+- WAC201 (curated sound subset, new `test/wac201_test.py` + `wac201.epd`):
+  **185/201 (92.0%)**. The reduced set drops the busted/dual/trivial WAC-300
+  positions for a more honest tactical signal going forward. (Note: the file
+  has 201 records — `wc -l` undercounts because WAC.300 has no trailing
+  newline; fixed the suite default/cap from 200→201 in `943faf1`.)
+
+**Experiment 2 status (2026-06-03): eyeball POSITIVE, two-machine SPRT running.**
+Committed `3b498f9` (source), pushed. Opponent = `huginn_t10.exe` (baseline-t10).
+- **AMD 40g eyeball vs t10: +52.51 ± 83.75 Elo, LOS 89.86%**, W12/L6/D22 (57.5%),
+  Ptnml [1,3,8,5,3]. Not the small lever feared — a second real-looking eval
+  gain. PGN `gauntlet/huginn_exp2_vs_t10_amd.pgn`.
+- **AMD SPRT vs t10: INCONCLUSIVE @ 1000g (full cap) — +7.99 ± 15.46 Elo,
+  LOS 84.48%, LLR 0.51** (never crossed ±2.94), W259/L236/D505 (51.15%),
+  Ptnml [30,126,165,149,30]. PGN `gauntlet/huginn_vs_t10_amd.pgn`.
+- **The 40g eyeball (+52) was noise** (±84 CI). Real effect ~+8 Elo — marginal,
+  not a clear ship. Likely because the foundation already tapers the king PST
+  (dominant phase term), so material tapering adds little on top, and the EG
+  magnitudes were a conservative first cut. **Lesson: skip the 40g eyeball for
+  small eval terms; it's uninformative — go straight to SPRT.**
+- **Intel SPRT vs t10: −2.43 ± 15.01 Elo** (1000g, W250/L257/D493, 49.65%).
+  Commit `f3838c2`, PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED 2000g: W509/L493/D998, 50.40% ~+2.8 Elo — MACHINES DISAGREE IN SIGN**
+  (AMD +7.99 / Intel −2.43). Same #26 fingerprint (board64: Intel +12 / AMD −38
+  → reverted); the *opposite* of a real ship (#15 counter-move agreed
+  +7.3/+6.95). **Verdict: NOISE around zero, NOT shippable with these values.**
+- **DECISION: PARK tapered material** (`ENABLE_TAPERED_MATERIAL 0`, keep code
+  in-tree like conthist #3). The foundation already taperes the dominant phase
+  term (king PST), leaving little for material tapering to add; blind EG-value
+  hand-tuning isn't worth the gauntlet hours without a Texel tuner (#9). t10
+  stays the clean confirmed baseline. Revisit when #9 lands (joint Texel tune
+  of material+PST EG values is the principled way to extract this).
+**Experiment 3 status (2026-06-03): KS v1 implemented, AMD neutral.** Commit
+`91f29ce` (source), pushed. `king_safety_white_mg()` = non-linear multi-attacker
+king-ring danger (≥2-attacker gate, units²/8 cap 500, weights N2/B2/R3/Q5) +
+open-file shelter (18/file), added to the MG accumulator only so it tapers out
+in the endgame (the #2 −126 failure mode). Replaces the 4 dead KS constants.
+197/197 tests pass; static-eval validation correct (startpos/symmetric 0,
+W-king-attacked −10, open-file −19; tapers with phase).
+- **AMD SPRT vs t10 (t10+material+KS): +3.82 ± 14.47 Elo, LOS 69.78%, LLR 0.06
+  (flat, inconclusive @1000g cap)**, W245/L234/D521 (50.55%), Ptnml
+  [24,120,205,123,28]. PGN `gauntlet/huginn_vs_t10_amd.pgn`. (Eyeball was
+  +11.6/60g — noise again.) Material was ~neutral, so this ≈ KS itself ≈ neutral.
+- **Read: amplitude problem, not a design fault.** No regression (tapering +
+  gate work). The first-cut magnitudes are likely too small to change move
+  selection at 10+0.1 (typical king-danger ~20–50cp pre-taper); the search may
+  already resolve king attacks tactically. Same "individual eval term is
+  marginal" pattern as tapered material — the tapering *foundation* was the big
+  lever (+40), not the terms layered on it.
+- **Intel SPRT vs t10: −10.43 ± 14.88 Elo** (1000g, W244/L274/D482, 48.50%).
+  Commit `6c5f769`, PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED 2000g: W489/L508/D1003, 49.53% ~−3.3 Elo — MACHINES DISAGREE IN SIGN**
+  (AMD +3.8 / Intel −10.4). Same #26 fingerprint as tapered material.
+  **Verdict: KS v1 is noise/slightly-negative, NOT shippable.**
+- **Conclusion of the hand-tuned phase.** Foundation/tapering = +40 (shipped).
+  The two eval *terms* layered on it — material (+2.8) and KS (−3.3) — are both
+  in the noise. Structurally correct (tapering, gate, symmetry all verified),
+  but first-cut magnitudes don't convert. **Pivot to #9 Texel tuner** to jointly
+  fit material-EG + KS weights + EG-PST values, rather than blind one-at-a-time
+  gauntlet sweeps. Material + KS kept ENABLED in-tree as the tuning targets;
+  **baseline stays t10** until the tuner produces a two-machine-confirmed gain.
+
+### #36: Illegal move in displayed PV (TT-walk collision) — cosmetic
+
+- status: **OPEN** (logged 2026-06-03)
+- priority: low — cosmetic (display only; `bestmove` is always legal)
+- type: bug
+
+**Symptom.** fastchess occasionally logs `Warning; Illegal PV move - move <m>
+from Huginn_tXX` (~1 per few hundred games at 10+0.1). Seen on baseline-t10
+during the #35 Exp 2 SPRT. **More frequent on the Intel box than AMD.**
+
+**Mechanism.** The displayed PV = triangular-PV prefix (search-truth, length
+≤ search depth) **+ a TT-walk extension** that lengthens it past the searched
+depth ([search.cpp:2088](../src/search.cpp#L2088), commit `72b19f5`).
+Signature: a PV longer than `depth` — e.g. `depth 3 ... pv g3h4 e2e1 d4d3 e1d2
+h5h4 d2d3` (6 moves; the illegal `h5h4` is the 5th = in the TT-walk tail). The
+walk probes each reached position's TT entry and appends its `best_move`; on a
+**hash collision** that entry belongs to a *different* position, so the move is
+bogus for the walked line. The guard ([search.cpp:2099-2105](../src/search.cpp#L2099-L2105))
+only checks the from-square holds a side-to-move piece, then trusts `MakeMove`
+— which assumes pseudo-legal input and only verifies king safety, so a collided
+move on a correctly-coloured from-square slips through. **The PV walk is the
+only place a raw TT move is *applied* without being cross-checked against the
+generated move list** (the main search only uses the TT move for *ordering*
+within the legal list, and its per-move `MakeMove()!=1` guard filters illegals
+— so this is PV-display-specific, not a search-correctness bug).
+
+**Why more on Intel (hypothesis).** Intel's higher NPS reaches more nodes /
+greater depth at the same TC → more TT traffic and a fuller table → more
+collisions and more TT-walk firing. Confirm by correlating warning rate with
+avg depth/NPS (not yet measured).
+
+**Severity: cosmetic.** Only the displayed PV string is wrong. `bestmove` =
+PV[0] is always legal and is what's played; the board is fully restored by the
+`TakeMove` loop ([search.cpp:2111](../src/search.cpp#L2111)); search behaviour
+and Elo are unaffected; both engines can emit it so the SPRT is not biased.
+
+**Fix (after #35 part 2; ~5 lines).** In the PV walk, before appending a TT
+move, validate it against the position's generated legal moves (generate moves,
+confirm `tt_move` is present) instead of the weak from-square-colour check.
+Pure display change (no search/Elo impact), but it rebuilds the binary — don't
+do it mid-SPRT; batch with the next baseline build.
+
 ### #19: Two-machine gauntlet workflow + SPRT
 
 - status: in progress (2026-05-28) — Part A landed on t6 scripts; two-machine pooling active
@@ -1708,7 +2000,31 @@ possible concurrency=2-vs-1 compression.
 - type: maintenance
 - est: 5 minutes per run (script auto-rebuilds)
 
-**Recent MTLChess v0.3 runs:**
+**CALIBRATED RATING — baseline-t11, 2026-06-06: ~1818 ± 30 Elo** (10+0.1, no
+book, CCRL-Blitz scale). Multi-anchor pooled MLE (anchored logistic fit,
+opponents fixed at their CCRL ratings) over 600 games:
+
+| Opponent (CCRL) | Score | Games | matchup residual |
+|---|---|---|---|
+| Snowy 0.2 (1868) | 41.2% | 200 | −1.6pp (neutral) |
+| CDrill 2000 (1949) | 24.5% | 200 | −7.5pp (**bogey**) |
+| MTLChess v0.3 (1984) | 36.8% | 200 | +9.0pp (favorable) |
+| MORA (2189) | 20.0% | 60 | +9.4pp (favorable; excluded from fit — thin) |
+
+**Key finding: real style non-transitivity (~±8pp / ~±55 Elo).** CDrill is
+Huginn's tough matchup; the MTL family + MORA are soft. So single-opponent
+calibrations mislead (MORA alone implied ~1948, CDrill alone ~1753); only the
+multi-anchor pool is trustworthy → **~1800–1850, best point ~1818**.
+Tooling: `test_huginn_gauntlet.bat <opp>` + the anchored-MLE snippet (run inline).
+NuclearChess 1.0 (1691) dropped — non-UCI promotion output, contaminated games.
+
+**Caveats:** CCRL's own conditions are 2′+1″ + 12-move book + 6-piece EGTB; this
+is 10+0.1 no-book, so it's a *placement* on the CCRL scale, not an identical-
+conditions rating. For regression tracking, the internal baseline ladder
+(t9→t10→t11) remains the noise-free metric; external calibration is the
+human/engine-scale sanity check.
+
+**Recent MTLChess v0.3 runs (historical, pre-t11, single-opponent — noisy):**
 - **2026-04-30, post-mobility, vs old `mtlchess003.exe` (20g):** 2W/17L/1D,
   ~−340 Elo. Real progress from 0W/20L/0D the run before, but
   still firmly behind.
@@ -2237,10 +2553,92 @@ than P1a was.
 
 ### #9: Texel-style tuner
 
-- status: open / blocked (no tuner infra yet)
-- priority: low
-- type: research
-- est: large (1-3 sessions to bring up; ongoing use thereafter)
+- status: **IN-PROGRESS — infra BUILT & proven (2026-06-05)**; awaiting a real
+  ChessBase/Lichess corpus for the first production tune + SPRT
+- priority: high (the unblock for #35's noise-bound eval terms)
+- type: research / tooling
+- est: large (bring-up done; ongoing use thereafter)
+
+**Brought up this session (`tools/texel/`, see its README):**
+- `extract_fens.py` — PGN → `<result> <FEN>` labeled quiet positions (opening +
+  in-check filtered, sampled per game, optional Elo floor). Validated: 2000
+  gauntlet games → 19,825 positions.
+- Eval parameterized via `EVAL_PARAM`/`EVAL_FN` macros (chess_types.hpp,
+  evaluation.hpp): `constexpr` in release (verified byte-identical — 197 tests
+  pass, startpos eval unchanged, **zero NPS cost**), mutable `inline` globals
+  under `-DHUGINN_TUNING`.
+- `tuner.cpp` + `huginn_tuner` CMake target (built with `-DHUGINN_TUNING`):
+  loads samples, fits K, coordinate-descent (per-param line search) on
+  `MSE(sigmoid(K·white_eval), result)`. Reuses the REAL `Engine::evaluate`
+  (no second eval → no drift). Tunes material MG+EG + 6 PSTs + king-EG (~458
+  params); prints paste-ready tables.
+- **Smoke test (gauntlet 19,825 pos): MSE 0.07547 → 0.06892 over 3 sweeps,
+  monotone — machinery proven.** Values are overfit garbage on that tiny
+  draw-heavy corpus (expected); sane *directions* already emerge (EG pawn/rook
+  > MG). Needs the large clean corpus for usable values.
+
+**PRODUCTION TUNE 1 (2026-06-05/06): the payoff.** Corpus = Zurichess
+`quiet-labeled` (725k decisive-rich positions, 27% draws). Threaded tuner
+converged MSE 0.064173 → 0.059618 (27 sweeps, K=1.420). Baked tuned
+PIECE_VALUES_MG/EG + all 6 PSTs + king-EG (commit `4f091c1`); also decoupled
+`value_of()` (ordering/material) onto a fixed canonical table so the SPRT
+isolates the eval change. 197/197 tests pass.
+- 20g eyeball vs t10: +136.97, LOS 99.99% — and unlike the marginal terms, the
+  decisiveness held up.
+- **AMD SPRT vs t10: H1 ACCEPTED @ 350g — +88.21 ± 28.49 Elo, LOS 100%, LLR
+  2.97**, W143/L56/D151 (62.43%), Ptnml [4,28,52,59,32]. PGN
+  `gauntlet/huginn_vs_t10_amd.pgn`. **The largest single gain of the program**
+  (> 2× the tapering foundation's +40). The never-tuned hand-set VICE PSTs were
+  the locked-up Elo, exactly as predicted.
+- **Intel SPRT vs t10: H1 ACCEPTED @ 512g — +59.62 ± 23.58 Elo** (commit
+  `386195d`), W199/L111/D203 (58.58%). PGN `gauntlet/huginn_vs_t10_intel.pgn`.
+- **POOLED two-machine (863g): W342/L167/D354, 60.14% = +71.4 Elo.** Both
+  machines H1-accept, same sign, both decisive — **DECISIVE SHIP, by far the
+  largest gain of the program.** → freeze **baseline-t11**.
+- **Re-tune candidates** now that the harness works: separate EG PSTs (tapered
+  PSTs), mobility weights, KS weights (revisit #35 Exp 3 under the tuner),
+  bishop-pair / open-file / passed-pawn terms. Each just adds params to
+  `collect_params()` and re-runs.
+
+**PRODUCTION TUNE 2 (2026-06-06): tapered (EG) PSTs + mobility.** Added separate
+endgame PSTs for the 5 non-king pieces (king already had MG+EG) so all PST
+values taper by phase, plus made mobility weights tunable. Re-tuned the full
+~780-param vector on the 725k corpus jointly with t11's tables: MSE 0.059579 ->
+0.058696 (K=1.480). Round 1 already nailed material/mobility (both barely moved);
+the win is the EG PSTs. New `tools/texel/bake.py` rewrites the headers from the
+tuner dump with zero manual transcription; bake verified exact (baked engine
+recomputes MSE 0.058696 to the digit). Commit `1a0b3a1`. 197/197 tests pass.
+- **AMD SPRT vs t11: H1 ACCEPTED @ 764g — +37.43 ± 17.92 Elo, LOS 100%, LLR
+  2.95**, W240/L158/D366 (55.37%), Ptnml [12,87,132,109,42]. PGN
+  `gauntlet/huginn_vs_t11_amd.pgn`. (Eyeball-free; went straight to SPRT.)
+  Beat the +10-20 estimate — tapered PSTs are a bigger lever than the MSE drop
+  alone suggested.
+- **FROZEN as baseline-t12 = `1a0b3a1`** (binary `huginn_t12.exe`). Intel leg
+  skipped by choice — at +37/LOS 100% a sign-flip is impossible, so this is a
+  single-machine decisive freeze (the two-machine rule is for borderline calls).
+- Round-3 candidates: KS weights (the non-linear term hand-tuning couldn't
+  crack — now tunable via the harness), bishop-pair / open-file / passed-pawn,
+  and a re-tune on fresh self-play data from the stronger engine.
+
+**PRODUCTION TUNE 3 (2026-06-08): positional scalars — FLAT, tuning floor hit.**
+Made the remaining hand-set positional scalars tunable (bishop-pair, rook/queen
+open+semi-open file bonuses, isolated/doubled penalties, passed-pawn rank array,
+tempo) and re-tuned the full ~796-param vector. MSE 0.058689 -> 0.058310. KS
+excluded (under-constrained by quiet data). bake.py generalized (arbitrary
+arrays + scalars); bake verified exact. Commit `07f27cf`.
+- **AMD SPRT vs t12: +1.74 ± 15.28, LOS 58.8%, LLR -0.21 (inconclusive @1000g
+  cap)**, W261/L256/D483 (50.25%). **FLAT — not shippable. Baseline stays t12.**
+- **The diminishing MSE drops predicted this** (round 1 -0.0046 -> +71 Elo;
+  round 2 -0.0009 -> +37; round 3 -0.0004 -> ~0). **The current eval feature
+  set is tuned out** — re-fitting existing terms is exhausted.
+- **STRATEGIC PIVOT for further eval Elo: add NEW features, don't re-tune.**
+  The tuner is now a force-multiplier — any new term (pawn structure: backward
+  / connected / phalanx / blockade; threats; rook-on-7th; piece coordination;
+  KS done right) gets optimized for free once added to `collect_params()`.
+  Alternatively, revisit search-shape work (#1/#3/#7/#8/#17) — those were
+  blocked on move-ordering quality, which a much stronger eval may have lifted.
+  Round-3 commit kept (neutral, MSE-better, keeps the tunable-scalar infra);
+  tip is t12-strength.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18

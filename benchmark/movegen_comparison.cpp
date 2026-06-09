@@ -4,7 +4,7 @@
  * 
  * This benchmark specifically tests the fundamental difference between:
  * 1. Piece Lists: Iterate through pList arrays (current Huginn approach)
- * 2. Bitboards: Use bitboard operations to find pieces (future Huginn2 approach)
+ * 2. Bitboards: Use bitboard operations to find pieces (future Huginn approach)
  * 
  * Expected Results:
  * - Bitboards should be faster for positions with fewer pieces

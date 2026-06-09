@@ -321,7 +321,6 @@ set(COMMON_SOURCES
     src/attack_detection.cpp
     src/attack_tables.cpp
     src/magic_bitboards.cpp
-    src/move.cpp
     src/chess_types.cpp
     src/evaluation.cpp
     src/input_checking.cpp
@@ -394,6 +393,19 @@ add_huginn_executable(perft_suite
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
+
+# ---- Texel tuner (#9) ----
+# Built with -DHUGINN_TUNING so the eval parameter tables become mutable inline
+# globals the tuner can optimize (release engine keeps them constexpr). Not part
+# of the default build's critical path; build explicitly: --target huginn_tuner
+add_huginn_executable(huginn_tuner
+    SOURCES
+        tools/texel/tuner.cpp
+        ${COMMON_SOURCES}
+    INCLUDE_DIRS
+        ${HUGINN_INCLUDE_DIRS}
+)
+target_compile_definitions(huginn_tuner PRIVATE HUGINN_TUNING)
 
 # ---- Move Generation Profiler ----
 

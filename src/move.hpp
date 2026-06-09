@@ -128,25 +128,6 @@ struct S_MOVE {
                (castle ? MOVE_CASTLE : 0);
     }
     
-    /**
-     * @brief Static move encoding function
-     * 
-     * Combines all move components into a single 25-bit integer using bitwise operations.
-     * This function is implemented in move.cpp to keep the header interface clean.
-     * 
-     * @param from        Source square index (0-127)
-     * @param to          Destination square index (0-127)
-     * @param captured    Type of piece captured (default: PieceType::None)
-     * @param en_passant  En passant capture flag (default: false)
-     * @param pawn_start  Pawn double-push flag (default: false)
-     * @param promoted    Type of piece to promote to (default: PieceType::None)
-     * @param castle      Castle move flag (default: false)
-     * @return            Encoded 25-bit move as integer
-     */
-    static int encode_move(int from, int to, PieceType captured = PieceType::None,
-                          bool en_passant = false, bool pawn_start = false,
-                          PieceType promoted = PieceType::None, bool castle = false);
-    
     // ========================================================================
     // MOVE DECODING INTERFACE
     // Fast bitwise extraction of move components using precomputed masks
