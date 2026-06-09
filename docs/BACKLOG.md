@@ -2600,6 +2600,24 @@ isolates the eval change. 197/197 tests pass.
   bishop-pair / open-file / passed-pawn terms. Each just adds params to
   `collect_params()` and re-runs.
 
+**PRODUCTION TUNE 2 (2026-06-06): tapered (EG) PSTs + mobility.** Added separate
+endgame PSTs for the 5 non-king pieces (king already had MG+EG) so all PST
+values taper by phase, plus made mobility weights tunable. Re-tuned the full
+~780-param vector on the 725k corpus jointly with t11's tables: MSE 0.059579 ->
+0.058696 (K=1.480). Round 1 already nailed material/mobility (both barely moved);
+the win is the EG PSTs. New `tools/texel/bake.py` rewrites the headers from the
+tuner dump with zero manual transcription; bake verified exact (baked engine
+recomputes MSE 0.058696 to the digit). Commit `1a0b3a1`. 197/197 tests pass.
+- **AMD SPRT vs t11: H1 ACCEPTED @ 764g — +37.43 ± 17.92 Elo, LOS 100%, LLR
+  2.95**, W240/L158/D366 (55.37%), Ptnml [12,87,132,109,42]. PGN
+  `gauntlet/huginn_vs_t11_amd.pgn`. (Eyeball-free; went straight to SPRT.)
+  Beat the +10-20 estimate — tapered PSTs are a bigger lever than the MSE drop
+  alone suggested.
+- **Intel leg pending** (formality at +37/LOS 100%). On confirm -> baseline-t12.
+- Round-3 candidates: KS weights (the non-linear term hand-tuning couldn't
+  crack — now tunable via the harness), bishop-pair / open-file / passed-pawn,
+  and a re-tune on fresh self-play data from the stronger engine.
+
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
 Elo from a real bug fix); further gains are tuning-bound.
