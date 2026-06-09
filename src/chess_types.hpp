@@ -177,7 +177,7 @@ Piece from_char(char ch);
 #endif
 
 // Texel-tuned on Zurichess quiet-labeled (725k pos), #9. Was 100/320/330/500/900.
-EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 95, 391, 382, 527, 1188, 20000 };
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 95, 391, 382, 527, 1185, 20000 };
 
 // Endgame piece values (BACKLOG #35, Experiment 2). Blended against
 // PIECE_VALUES_MG by game phase in evaluate() when ENABLE_TAPERED_MATERIAL is
@@ -188,7 +188,7 @@ EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 95,
 // term is separate). EVAL-ONLY — SEE / MVV-LVA keep their own MG-based tables.
 // Texel-tuned endgame values (#9). Note the EG shifts vs MG: knight 390->292
 // (weaker), rook 527->575 (stronger) — emerged from the fit.
-EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 97, 291, 316, 574, 1067, 20000 };
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 97, 291, 316, 568, 1070, 20000 };
 
 // Fixed canonical piece values for move ordering + incremental material
 // tracking (value_of). Deliberately NOT the Texel-tuned PIECE_VALUES_MG: per

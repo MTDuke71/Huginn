@@ -119,6 +119,18 @@ std::vector<int*> collect_params() {
     // Mobility weights (mg / eg).
     p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT);
     p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
+    // #9 round 3: positional scalars (well-constrained by quiet data) + the
+    // passed-pawn rank bonus. KS is deliberately excluded — its non-linear
+    // attacker term fires too rarely in quiet positions to tune reliably.
+    for (int i = 0; i < 8; ++i) p.push_back(&Huginn::EvalParams::PASSED_PAWN_BONUS[i]);
+    p.push_back(&Huginn::EvalParams::BISHOP_PAIR_BONUS);
+    p.push_back(&Huginn::EvalParams::ROOK_OPEN_FILE_BONUS);
+    p.push_back(&Huginn::EvalParams::ROOK_SEMI_OPEN_FILE_BONUS);
+    p.push_back(&Huginn::EvalParams::QUEEN_OPEN_FILE_BONUS);
+    p.push_back(&Huginn::EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS);
+    p.push_back(&Huginn::EvalParams::ISOLATED_PAWN_PENALTY);
+    p.push_back(&Huginn::EvalParams::DOUBLED_PAWN_PENALTY);
+    p.push_back(&Huginn::EvalParams::TEMPO_BONUS);
     return p;
 }
 
@@ -192,9 +204,19 @@ void dump_results() {
     print_array("BISHOP_TABLE_EG", Huginn::EvalParams::BISHOP_TABLE_EG);
     print_array("ROOK_TABLE_EG", Huginn::EvalParams::ROOK_TABLE_EG);
     print_array("QUEEN_TABLE_EG", Huginn::EvalParams::QUEEN_TABLE_EG);
-    std::printf("MOBILITY_WEIGHT_DEFAULT = %d;  MOBILITY_WEIGHT_ENDGAME = %d;\n",
-                Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT,
-                Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
+    std::printf("MOBILITY_WEIGHT_DEFAULT = %d;\n", Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT);
+    std::printf("MOBILITY_WEIGHT_ENDGAME = %d;\n", Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
+    std::printf("PASSED_PAWN_BONUS = {");
+    for (int i = 0; i < 8; ++i) std::printf(" %d,", Huginn::EvalParams::PASSED_PAWN_BONUS[i]);
+    std::printf(" };\n");
+    std::printf("BISHOP_PAIR_BONUS = %d;\n", Huginn::EvalParams::BISHOP_PAIR_BONUS);
+    std::printf("ROOK_OPEN_FILE_BONUS = %d;\n", Huginn::EvalParams::ROOK_OPEN_FILE_BONUS);
+    std::printf("ROOK_SEMI_OPEN_FILE_BONUS = %d;\n", Huginn::EvalParams::ROOK_SEMI_OPEN_FILE_BONUS);
+    std::printf("QUEEN_OPEN_FILE_BONUS = %d;\n", Huginn::EvalParams::QUEEN_OPEN_FILE_BONUS);
+    std::printf("QUEEN_SEMI_OPEN_FILE_BONUS = %d;\n", Huginn::EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS);
+    std::printf("ISOLATED_PAWN_PENALTY = %d;\n", Huginn::EvalParams::ISOLATED_PAWN_PENALTY);
+    std::printf("DOUBLED_PAWN_PENALTY = %d;\n", Huginn::EvalParams::DOUBLED_PAWN_PENALTY);
+    std::printf("TEMPO_BONUS = %d;\n", Huginn::EvalParams::TEMPO_BONUS);
     std::printf("=====================================================\n");
 }
 
