@@ -2661,8 +2661,15 @@ Implemented in `evaluate()`, both accumulated into the tapered mg/eg sums:
 - MSE delta vs round-3 floor = −0.0003. By the round 1-3 MSE→Elo slope that
   predicts small; but new-feature MSE (new information) may convert better
   than re-fit MSE (the round-3 lesson cuts the other way here). SPRT decides.
-- **AMD SPRT vs t12: RUNNING** (tip = t12-strength round-3 + this, so the
-  delta is attributable to the pawn terms).
+- **AMD SPRT vs t12: +11.82 ± 15.03 Elo, LOS 93.86%, LLR 0.98 (inconclusive
+  @1000g cap)**, W260/L226/D514 (51.70%), Ptnml [30,110,183,150,27],
+  PairsRatio 1.26. PGN `gauntlet/huginn_vs_t12_amd.pgn`. (Tip = t12-strength
+  round-3 + this, so the delta is attributable to the pawn terms.)
+- Strongest borderline leg of the program — above the #15 counter-move legs
+  (83.5%/82.7%) that shipped on two-machine agreement at pooled LOS 91%.
+  **Next: Intel leg** (pull `f90fd54`, `test_huginn_gauntlet.bat t12`), then
+  pool. Same-sign Intel ≈ +10 would put pooled 2000g near +11 ± ~10.6 →
+  ship; sign disagreement = the #26 fingerprint → park.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
