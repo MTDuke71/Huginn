@@ -286,7 +286,19 @@ int Engine::evaluate(const Position& pos) {
     // Get bitboards for efficient pawn structure analysis
     uint64_t white_pawns = pos.get_white_pawns();
     uint64_t black_pawns = pos.get_black_pawns();
-    
+
+    // Connected-pawn sets (#9 round 4): a pawn is connected if it is phalanx
+    // (own pawn on an adjacent file, same rank) or supported (defended by an
+    // own pawn). Computed set-wise once, membership-tested per pawn below.
+    const uint64_t FILE_A_BB = EvalParams::FILE_MASKS[0];
+    const uint64_t FILE_H_BB = EvalParams::FILE_MASKS[7];
+    const uint64_t w_pawn_attacks = ((white_pawns & ~FILE_A_BB) << 7) | ((white_pawns & ~FILE_H_BB) << 9);
+    const uint64_t b_pawn_attacks = ((black_pawns & ~FILE_A_BB) >> 9) | ((black_pawns & ~FILE_H_BB) >> 7);
+    const uint64_t w_neighbors = ((white_pawns & ~FILE_H_BB) << 1) | ((white_pawns & ~FILE_A_BB) >> 1);
+    const uint64_t b_neighbors = ((black_pawns & ~FILE_H_BB) << 1) | ((black_pawns & ~FILE_A_BB) >> 1);
+    const uint64_t w_connected = white_pawns & (w_neighbors | w_pawn_attacks);
+    const uint64_t b_connected = black_pawns & (b_neighbors | b_pawn_attacks);
+
     // Iterate white pawns directly via bitboard
     uint64_t bb = white_pawns;
     while (bb) {
@@ -294,8 +306,26 @@ int Engine::evaluate(const Position& pos) {
         int file_idx = sq64 & 7;
         int rank_idx = sq64 >> 3;
 
+        // Isolated / connected / backward are mutually exclusive: connected
+        // implies a neighbor on an adjacent file (not isolated) at the same
+        // rank or behind (not backward); isolated pawns can't be backward by
+        // definition here (no neighbors at all — already penalized).
         if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
             pawn_structure_score -= EvalParams::ISOLATED_PAWN_PENALTY;
+        } else if ((1ULL << sq64) & w_connected) {
+            mg_pst += EvalParams::CONNECTED_PAWN_BONUS_MG[rank_idx];
+            eg_pst += EvalParams::CONNECTED_PAWN_BONUS_EG[rank_idx];
+        } else {
+            // Backward: no own pawn on an adjacent file at the same rank or
+            // behind, and the stop square is controlled by an enemy pawn
+            // (enemy pawn on an adjacent file two ranks ahead).
+            const uint64_t behind_or_eq = (1ULL << (8 * (rank_idx + 1))) - 1;
+            if ((white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx] & behind_or_eq) == 0 &&
+                rank_idx + 2 <= 7 &&
+                (black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx] & EvalParams::RANK_MASKS[rank_idx + 2]) != 0) {
+                mg_pst -= EvalParams::BACKWARD_PAWN_PENALTY_MG;
+                eg_pst -= EvalParams::BACKWARD_PAWN_PENALTY_EG;
+            }
         }
         if ((black_pawns & EvalParams::WHITE_PASSED_PAWN_MASKS[sq64]) == 0) {
             pawn_structure_score += EvalParams::PASSED_PAWN_BONUS[rank_idx];
@@ -311,6 +341,17 @@ int Engine::evaluate(const Position& pos) {
 
         if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx]) == 0) {
             pawn_structure_score += EvalParams::ISOLATED_PAWN_PENALTY;
+        } else if ((1ULL << sq64) & b_connected) {
+            mg_pst -= EvalParams::CONNECTED_PAWN_BONUS_MG[7 - rank_idx];
+            eg_pst -= EvalParams::CONNECTED_PAWN_BONUS_EG[7 - rank_idx];
+        } else {
+            const uint64_t ahead_or_eq = ~0ULL << (8 * rank_idx);
+            if ((black_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx] & ahead_or_eq) == 0 &&
+                rank_idx - 2 >= 0 &&
+                (white_pawns & EvalParams::ISOLATED_PAWN_MASKS[file_idx] & EvalParams::RANK_MASKS[rank_idx - 2]) != 0) {
+                mg_pst += EvalParams::BACKWARD_PAWN_PENALTY_MG;
+                eg_pst += EvalParams::BACKWARD_PAWN_PENALTY_EG;
+            }
         }
         if ((white_pawns & EvalParams::BLACK_PASSED_PAWN_MASKS[sq64]) == 0) {
             int mirror_rank = 7 - rank_idx;

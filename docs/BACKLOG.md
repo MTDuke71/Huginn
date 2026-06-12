@@ -2640,6 +2640,30 @@ arrays + scalars); bake verified exact. Commit `07f27cf`.
   Round-3 commit kept (neutral, MSE-better, keeps the tunable-scalar infra);
   tip is t12-strength.
 
+**PRODUCTION TUNE 4 (2026-06-12): NEW features — connected + backward pawns.**
+First round of the round-3 strategic pivot (add new terms, don't re-tune).
+Implemented in `evaluate()`, both accumulated into the tapered mg/eg sums:
+- **Connected pawns**: phalanx (own pawn on adjacent file, same rank) or
+  supported (defended by an own pawn), bonus indexed by relative rank,
+  `CONNECTED_PAWN_BONUS_MG/EG[8]` (ranks 1/8 pinned 0).
+- **Backward pawns**: no own pawn on an adjacent file at same rank or behind,
+  stop square controlled by an enemy pawn; isolated pawns excluded (already
+  penalized). `BACKWARD_PAWN_PENALTY_MG/EG`.
+- Classification is mutually exclusive per pawn: isolated / connected /
+  backward. Set-wise bitboard precompute, ~6 extra ops per pawn.
+- 197/197 tests pass (incl. 8 eval-symmetry) pre- and post-bake; static-eval
+  spot checks vs t12 binary confirm terms fire in the right direction.
+- Tune: full 810-param vector on the 725k Zurichess corpus, K=1.500. Seeded
+  values alone beat the round-3 floor (start MSE 0.058180 < 0.058310);
+  converged 0.058009 in 9 sweeps. Bake verified exact to the digit.
+- Tuned values are sane/monotone: CONNECTED_MG {0,2,6,12,17,29,43,0},
+  CONNECTED_EG {0,-3,2,3,10,30,31,0}, BACKWARD MG 16 / EG 11.
+- MSE delta vs round-3 floor = −0.0003. By the round 1-3 MSE→Elo slope that
+  predicts small; but new-feature MSE (new information) may convert better
+  than re-fit MSE (the round-3 lesson cuts the other way here). SPRT decides.
+- **AMD SPRT vs t12: RUNNING** (tip = t12-strength round-3 + this, so the
+  delta is attributable to the pawn terms).
+
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
 Elo from a real bug fix); further gains are tuning-bound.

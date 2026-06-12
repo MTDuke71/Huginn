@@ -131,6 +131,14 @@ std::vector<int*> collect_params() {
     p.push_back(&Huginn::EvalParams::ISOLATED_PAWN_PENALTY);
     p.push_back(&Huginn::EvalParams::DOUBLED_PAWN_PENALTY);
     p.push_back(&Huginn::EvalParams::TEMPO_BONUS);
+    // #9 round 4: connected + backward pawn terms. Ranks 1/8 can't hold pawns,
+    // so connected indices 0 and 7 stay pinned at 0 (excluded from tuning).
+    for (int i = 1; i <= 6; ++i) {
+        p.push_back(&Huginn::EvalParams::CONNECTED_PAWN_BONUS_MG[i]);
+        p.push_back(&Huginn::EvalParams::CONNECTED_PAWN_BONUS_EG[i]);
+    }
+    p.push_back(&Huginn::EvalParams::BACKWARD_PAWN_PENALTY_MG);
+    p.push_back(&Huginn::EvalParams::BACKWARD_PAWN_PENALTY_EG);
     return p;
 }
 
@@ -217,6 +225,14 @@ void dump_results() {
     std::printf("ISOLATED_PAWN_PENALTY = %d;\n", Huginn::EvalParams::ISOLATED_PAWN_PENALTY);
     std::printf("DOUBLED_PAWN_PENALTY = %d;\n", Huginn::EvalParams::DOUBLED_PAWN_PENALTY);
     std::printf("TEMPO_BONUS = %d;\n", Huginn::EvalParams::TEMPO_BONUS);
+    std::printf("CONNECTED_PAWN_BONUS_MG = {");
+    for (int i = 0; i < 8; ++i) std::printf(" %d,", Huginn::EvalParams::CONNECTED_PAWN_BONUS_MG[i]);
+    std::printf(" };\n");
+    std::printf("CONNECTED_PAWN_BONUS_EG = {");
+    for (int i = 0; i < 8; ++i) std::printf(" %d,", Huginn::EvalParams::CONNECTED_PAWN_BONUS_EG[i]);
+    std::printf(" };\n");
+    std::printf("BACKWARD_PAWN_PENALTY_MG = %d;\n", Huginn::EvalParams::BACKWARD_PAWN_PENALTY_MG);
+    std::printf("BACKWARD_PAWN_PENALTY_EG = %d;\n", Huginn::EvalParams::BACKWARD_PAWN_PENALTY_EG);
     std::printf("=====================================================\n");
 }
 
