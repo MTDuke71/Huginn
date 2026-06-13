@@ -2695,8 +2695,17 @@ Colour-symmetric; 197/197 tests pass incl. all 8 eval-symmetry cases.
 - Small corpus MSE drop, but that's a weak predictor for a single localized
   new term (the round-4 lesson: new-feature MSE converts better than re-fit
   MSE). SPRT decides.
-- **AMD + Intel SPRT vs t13: PENDING** (user-run; tip = t13-strength + this,
-  so the delta is attributable to the rook-on-7th term).
+- **Intel SPRT vs t13: −4.52 ± 15.00 Elo, nElo −6.49 ± 21.53, LOS 27.74%,
+  LLR −0.95 (−32.3%, drifting toward H0)**, 1000g, W244/L257/D499 (49.35%),
+  Ptnml [30,127,201,110,32], PairsRatio 0.90, DrawRatio 40.2%. PGN
+  `gauntlet/huginn_vs_t13_intel.pgn`. (Tip = t13-strength + this, so the
+  delta is attributable to the rook-on-7th term.)
+- **Negative Intel leg, but AMD came back +17.73 → sign disagreement** (the
+  #26 fingerprint): Intel −4.52 / AMD +17.73, naive pool ≈ +6.6 Elo. The
+  split itself is the cautionary pattern, not a clean ship — the two boxes
+  disagree on the term's sign. **The AMD box owns the combined call:** it will
+  pool the two PGNs and make the keep-vs-park decision there. Tuner infra +
+  812-param corpus work are kept regardless of the outcome.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
