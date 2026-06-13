@@ -2667,9 +2667,14 @@ Implemented in `evaluate()`, both accumulated into the tapered mg/eg sums:
   round-3 + this, so the delta is attributable to the pawn terms.)
 - Strongest borderline leg of the program — above the #15 counter-move legs
   (83.5%/82.7%) that shipped on two-machine agreement at pooled LOS 91%.
-  **Next: Intel leg** (pull `f90fd54`, `test_huginn_gauntlet.bat t12`), then
-  pool. Same-sign Intel ≈ +10 would put pooled 2000g near +11 ± ~10.6 →
-  ship; sign disagreement = the #26 fingerprint → park.
+- **Intel SPRT vs t12: +26.11 ± 15.20 Elo, nElo +37.16 ± 21.53, LOS 99.96%,
+  LLR 2.63 (89.4%)**, 1000g, W279/L204/D517 (53.75%), Ptnml
+  [20,117,168,158,37], PairsRatio 1.42, DrawRatio 33.6%. PGN
+  `gauntlet/huginn_vs_t12_intel.pgn`. Came in *stronger* than the AMD leg —
+  no #26 sign-flip.
+- **SHIP. Pooled 2000g ≈ +18.9 ± 10.7 Elo** (inverse-variance weighted over
+  the two same-sign legs). Intel cleared the "≈ +10 → ship" bar outright.
+  → freeze `baseline-t13`.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
