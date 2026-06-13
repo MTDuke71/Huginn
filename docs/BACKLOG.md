@@ -2842,22 +2842,22 @@ Not yet at the +50 trigger for refreshing t3 baseline (#4).
 
 ## Open — bugs
 
-### #12: Fastchess hang at 80 games during mobility gauntlet
+### #12: Fastchess hang at 80 games during mobility gauntlet — CLOSED (one-off)
 
-- status: open / unreproduced (one-off?)
-- priority: low (medium if recurs)
-- type: bug
+- status: **CLOSED (2026-06-12) — one-time fluke, never reproduced.**
+- priority: low
+- type: bug (infrastructure)
 
-**State:** During the mobility gauntlet (`test_huginn_vs_t2.bat 50`)
-on 2026-04-30, fastchess became unresponsive after 80 of 100 games.
-Result is the 80-game sample (+4.34 Elo, LOS 54.86%). Could be:
-- One-off (cosmic ray, OS scheduling, polyglot book load races)
-- Real engine hang on a specific position
-- Fastchess bug
+**State:** During the mobility gauntlet (`test_huginn_vs_t2.bat 50`) on
+2026-04-30, fastchess became unresponsive after 80 of 100 games (80-game
+sample: +4.34 Elo, LOS 54.86%). The engines did not crash and produced no
+error output.
 
-**Action:** if recurs in a future gauntlet, capture engine state
-(stack trace, last position from PGN, last engine output line) and
-investigate. Until then, ignore.
+**Resolution:** never recurred. Across the entire t9–t13 program the same
+binaries ran many full 1000-game gauntlets to completion (e.g. the t13
+Intel ship leg finished all 1000 games clean), so this was a one-off
+harness/OS hiccup, not a Huginn defect or a reproducible fastchess bug.
+Closing as resolved — no action needed.
 
 ---
 
