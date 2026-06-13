@@ -2719,6 +2719,30 @@ Colour-symmetric; 197/197 tests pass incl. all 8 eval-symmetry cases.
   snapshotted. The clean-baseline purist call would have been to park; logged
   here so the exception is visible, not silent.
 
+**PRODUCTION TUNE 6 (2026-06-13): NEW feature — threats.** Bonus per enemy
+piece attacked by a cheaper/more-dangerous attacker, by attacker→target class
+(pawn→minor/rook/queen, minor→rook/queen, rook→queen), tapered MG/EG, computed
+per side and folded white-positive into the accumulators. Reuses the pawn-
+attack spans; minor/rook attack unions computed in the block. Colour-symmetric;
+197/197 tests pass incl. all 8 eval-symmetry cases. Spot checks confirm threats
+fire and cancel correctly.
+- Tune: full 824-param vector on the 725k corpus, K=1.520. **Strongest new-term
+  MSE signal since the early rounds:** the seeded threats alone dropped MSE
+  0.057993 → 0.057469 (−0.00052 before any tuning), converged to **0.057315**
+  (total −0.00068 vs the round-5 floor). Compare round 4 (shipped +18.9) at
+  −0.0003 and round 5 (sign-split +6.6) at −0.00007. Bake verified exact.
+- **Every threat sub-term fit to a meaningful non-zero magnitude with sane
+  directions** — not one was zeroed (vs the concern that threats are under-
+  constrained by quiet data): PAWN_ON_MINOR 67/41, PAWN_ON_ROOK 79/16 (big MG,
+  small EG — a pawn forking a rook matters most in the middlegame), PAWN_ON_QUEEN
+  67/33, MINOR_ON_ROOK 48/30, MINOR_ON_QUEEN 50/26, ROOK_ON_QUEEN 76/30. The
+  tuner also nudged tempo 21→26, bishop-pair 45→44 jointly (full-vector re-fit).
+- By the new-feature MSE→Elo pattern (round 4's −0.0003 → +18.9), a drop >2×
+  that size is the most favorable prior of any round since the first tune.
+  SPRT decides, but this is the best-looking new term yet.
+- **AMD + Intel SPRT vs t14: PENDING** (user-run; tip = t14-strength + this, so
+  the delta is attributable to the threats cluster).
+
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
 Elo from a real bug fix); further gains are tuning-bound.

@@ -442,6 +442,48 @@ int Engine::evaluate(const Position& pos) {
         }
     }
 
+    // Threats (#9 round 6): bonus per enemy piece attacked by a cheaper / more
+    // dangerous attacker. Computed per side and folded white-positive into the
+    // tapered accumulators. Reuses the pawn-attack spans from the pawn-structure
+    // block; minor/rook attack unions are computed here. Colour-symmetric (each
+    // side uses its own pawn direction), so eval mirror-symmetry holds.
+    {
+        const uint64_t occ = pos.occupied_bitboard;
+        auto threats_for = [&](Color us, uint64_t pawn_att, int& mg, int& eg) {
+            const Color them = (us == Color::White) ? Color::Black : Color::White;
+            const auto& mp = pos.piece_bitboards[int(us)];
+            const auto& ep = pos.piece_bitboards[int(them)];
+
+            uint64_t minor_att = 0, rook_att = 0, b;
+            b = mp[int(PieceType::Knight)]; while (b) minor_att |= knight_attacks[pop_lsb(b)];
+            b = mp[int(PieceType::Bishop)]; while (b) minor_att |= bishop_attacks(pop_lsb(b), occ);
+            b = mp[int(PieceType::Rook)];   while (b) rook_att  |= rook_attacks(pop_lsb(b), occ);
+
+            const uint64_t e_minor = ep[int(PieceType::Knight)] | ep[int(PieceType::Bishop)];
+            const uint64_t e_rook  = ep[int(PieceType::Rook)];
+            const uint64_t e_queen = ep[int(PieceType::Queen)];
+
+            const int pm = popcount(pawn_att  & e_minor);
+            const int pr = popcount(pawn_att  & e_rook);
+            const int pq = popcount(pawn_att  & e_queen);
+            const int mr = popcount(minor_att & e_rook);
+            const int mq = popcount(minor_att & e_queen);
+            const int rq = popcount(rook_att  & e_queen);
+
+            mg += pm * EvalParams::THREAT_PAWN_ON_MINOR_MG  + pr * EvalParams::THREAT_PAWN_ON_ROOK_MG
+                + pq * EvalParams::THREAT_PAWN_ON_QUEEN_MG  + mr * EvalParams::THREAT_MINOR_ON_ROOK_MG
+                + mq * EvalParams::THREAT_MINOR_ON_QUEEN_MG + rq * EvalParams::THREAT_ROOK_ON_QUEEN_MG;
+            eg += pm * EvalParams::THREAT_PAWN_ON_MINOR_EG  + pr * EvalParams::THREAT_PAWN_ON_ROOK_EG
+                + pq * EvalParams::THREAT_PAWN_ON_QUEEN_EG  + mr * EvalParams::THREAT_MINOR_ON_ROOK_EG
+                + mq * EvalParams::THREAT_MINOR_ON_QUEEN_EG + rq * EvalParams::THREAT_ROOK_ON_QUEEN_EG;
+        };
+        int wmg = 0, weg = 0, bmg = 0, beg = 0;
+        threats_for(Color::White, w_pawn_attacks, wmg, weg);
+        threats_for(Color::Black, b_pawn_attacks, bmg, beg);
+        mg_pst += wmg - bmg;
+        eg_pst += weg - beg;
+    }
+
     // -----------------------------------------------------------------
     // Mobility: count squares each non-pawn, non-king piece can move to
     // (excluding squares occupied by own pieces). Weighted per phase.
