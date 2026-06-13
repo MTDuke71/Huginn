@@ -2674,7 +2674,29 @@ Implemented in `evaluate()`, both accumulated into the tapered mg/eg sums:
   no #26 sign-flip.
 - **SHIP. Pooled 2000g ≈ +18.9 ± 10.7 Elo** (inverse-variance weighted over
   the two same-sign legs). Intel cleared the "≈ +10 → ship" bar outright.
-  → freeze `baseline-t13`.
+  → freeze `baseline-t13` (= `f90fd54`, binary `huginn_t13.exe`).
+
+**PRODUCTION TUNE 5 (2026-06-12): NEW feature — rook on the 7th.** Continuing
+the add-new-terms path (round 4 converted at +18.9). Per-rook tapered bonus
+for a rook on the enemy's 2nd rank, **gated on a target** — enemy king on its
+back rank OR enemy pawns on that rank (the textbook Fruit/CPW condition). The
+gate captures both value sources: king-confinement (back-rank clause) and
+lateral pawn-raking (pawns-on-rank clause, fires regardless of king position),
+while suppressing a pointless rook-on-7th in a bare endgame. Linear in rook
+count (doubled "blind pigs" under-rewarded — a clean follow-up if this lands).
+Colour-symmetric; 197/197 tests pass incl. all 8 eval-symmetry cases.
+- Tune: full 812-param vector on the 725k corpus, K=1.520, converged
+  0.058059 → **0.057993** in 7 sweeps. Bake verified exact.
+- **Fitted ROOK_ON_7TH_MG = 20, EG = 24** — the tuner kept it at a meaningful
+  magnitude (didn't zero it), the signal that the term carries real predictive
+  value. EG pulled down from the 30 seed; MG held at 20.
+- Static-eval spot checks confirm gating: fires with enemy king on back rank,
+  silent when the king walks off with no pawn targets, mirror-identical.
+- Small corpus MSE drop, but that's a weak predictor for a single localized
+  new term (the round-4 lesson: new-feature MSE converts better than re-fit
+  MSE). SPRT decides.
+- **AMD + Intel SPRT vs t13: PENDING** (user-run; tip = t13-strength + this,
+  so the delta is attributable to the rook-on-7th term).
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18

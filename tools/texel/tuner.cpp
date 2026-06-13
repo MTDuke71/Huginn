@@ -139,6 +139,9 @@ std::vector<int*> collect_params() {
     }
     p.push_back(&Huginn::EvalParams::BACKWARD_PAWN_PENALTY_MG);
     p.push_back(&Huginn::EvalParams::BACKWARD_PAWN_PENALTY_EG);
+    // #9 round 5: rook on the relative 7th rank (tapered MG/EG).
+    p.push_back(&Huginn::EvalParams::ROOK_ON_7TH_MG);
+    p.push_back(&Huginn::EvalParams::ROOK_ON_7TH_EG);
     return p;
 }
 
@@ -233,6 +236,8 @@ void dump_results() {
     std::printf(" };\n");
     std::printf("BACKWARD_PAWN_PENALTY_MG = %d;\n", Huginn::EvalParams::BACKWARD_PAWN_PENALTY_MG);
     std::printf("BACKWARD_PAWN_PENALTY_EG = %d;\n", Huginn::EvalParams::BACKWARD_PAWN_PENALTY_EG);
+    std::printf("ROOK_ON_7TH_MG = %d;\n", Huginn::EvalParams::ROOK_ON_7TH_MG);
+    std::printf("ROOK_ON_7TH_EG = %d;\n", Huginn::EvalParams::ROOK_ON_7TH_EG);
     std::printf("=====================================================\n");
 }
 

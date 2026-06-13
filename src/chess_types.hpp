@@ -188,7 +188,7 @@ EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 91,
 // term is separate). EVAL-ONLY — SEE / MVV-LVA keep their own MG-based tables.
 // Texel-tuned endgame values (#9). Note the EG shifts vs MG: knight 390->292
 // (weaker), rook 527->575 (stronger) — emerged from the fit.
-EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 93, 291, 315, 568, 1072, 20000 };
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 93, 291, 315, 568, 1071, 20000 };
 
 // Fixed canonical piece values for move ordering + incremental material
 // tracking (value_of). Deliberately NOT the Texel-tuned PIECE_VALUES_MG: per

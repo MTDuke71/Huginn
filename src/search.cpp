@@ -420,6 +420,28 @@ int Engine::evaluate(const Position& pos) {
         score -= EvalParams::BISHOP_PAIR_BONUS;
     }
 
+    // Rook on the relative 7th rank (#9 round 5). White's 7th = rank index 6;
+    // Black's 7th = rank index 1. Gated on a target — enemy king on its back
+    // rank, or enemy pawns on the rook's rank — so a rook on the 7th in a bare
+    // endgame isn't over-rewarded. Tapered into the mg/eg accumulators
+    // (white-positive); colour-symmetric, so eval mirror-symmetry holds.
+    {
+        const uint64_t RANK7 = EvalParams::RANK_MASKS[6];  // White's 7th
+        const uint64_t RANK2 = EvalParams::RANK_MASKS[1];  // Black's 7th
+        const int wk_rank = pos.king_sq[int(Color::White)] >> 3;
+        const int bk_rank = pos.king_sq[int(Color::Black)] >> 3;
+        if (bk_rank == 7 || (black_pawns & RANK7)) {
+            int n = popcount(wbb[int(PieceType::Rook)] & RANK7);
+            mg_pst += n * EvalParams::ROOK_ON_7TH_MG;
+            eg_pst += n * EvalParams::ROOK_ON_7TH_EG;
+        }
+        if (wk_rank == 0 || (white_pawns & RANK2)) {
+            int n = popcount(bbb[int(PieceType::Rook)] & RANK2);
+            mg_pst -= n * EvalParams::ROOK_ON_7TH_MG;
+            eg_pst -= n * EvalParams::ROOK_ON_7TH_EG;
+        }
+    }
+
     // -----------------------------------------------------------------
     // Mobility: count squares each non-pawn, non-king piece can move to
     // (excluding squares occupied by own pieces). Weighted per phase.
