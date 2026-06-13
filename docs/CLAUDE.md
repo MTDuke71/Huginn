@@ -13,7 +13,15 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t13 = f90fd54` (= t12 + BACKLOG #9 round 4:
+- ✅ **Baseline tag**: `baseline-t14 = db3f1ef` (= t13 + BACKLOG #9 round 5:
+  NEW feature — rook on the relative 7th rank, gated tapered bonus (enemy king
+  on back rank OR enemy pawns on the rank); full 812-param tune on the 725k
+  corpus, MSE 0.05806→0.05799, fitted MG 20 / EG 24. **Shipped on a sign-split
+  as a deliberate methodology exception** [AMD +17.73@1000g LOS 99.0% / Intel
+  −4.52@1000g LOS 27.7%, pooled +6.6 ± 10.6] — does NOT meet the usual same-
+  sign two-machine bar, taken on the strong AMD leg + theoretical soundness +
+  near-zero downside of a small gated eval term; see BACKLOG #9 round 5.
+  Prior: `baseline-t13 = f90fd54` (= t12 + BACKLOG #9 round 4:
   NEW features — connected (phalanx/supported) + backward pawn terms, both
   tapered; full 810-param tune on the 725k corpus, MSE 0.0583→0.0580.
   **+18.9 ± 10.7 Elo pooled 2000g vs t12** [AMD +11.82@1000g LOS 93.9% /

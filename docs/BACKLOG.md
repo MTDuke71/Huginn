@@ -2700,12 +2700,24 @@ Colour-symmetric; 197/197 tests pass incl. all 8 eval-symmetry cases.
   Ptnml [30,127,201,110,32], PairsRatio 0.90, DrawRatio 40.2%. PGN
   `gauntlet/huginn_vs_t13_intel.pgn`. (Tip = t13-strength + this, so the
   delta is attributable to the rook-on-7th term.)
-- **Negative Intel leg, but AMD came back +17.73 → sign disagreement** (the
-  #26 fingerprint): Intel −4.52 / AMD +17.73, naive pool ≈ +6.6 Elo. The
-  split itself is the cautionary pattern, not a clean ship — the two boxes
-  disagree on the term's sign. **The AMD box owns the combined call:** it will
-  pool the two PGNs and make the keep-vs-park decision there. Tuner infra +
-  812-param corpus work are kept regardless of the outcome.
+- **Sign disagreement** (the #26 fingerprint): Intel −4.52 / AMD +17.73.
+  **Pooled 2000g: W523/L485/D992, 50.95% ≈ +6.6 Elo** (CI ≈ ±10.6, includes
+  zero), Ptnml [49,245,397,237,72].
+- **SHIPPED as baseline-t14 = `db3f1ef` — a deliberate methodology exception.**
+  This is a sign-split, so it does NOT meet the program's usual same-sign
+  two-machine ship bar (every prior sign-split — board64 #26, tapered material,
+  KS v1 — was parked). Shipped anyway on the balance of: (a) strongest sign-
+  split the program has seen — AMD +17.73 at LOS 99.03% and pooled +6.6 vs the
+  parked tapered-material's +2.8 / KS's −3.3; (b) rook-on-7th is a universally
+  accepted, theoretically sound pattern, and the tuner fit it to a real non-
+  zero magnitude rather than zeroing it; (c) a small gated positional bonus has
+  near-zero downside even if true Elo ≈ 0 — it can't poison play the way a
+  perf/cache change (board64) or a search-shape change could. The cost is a
+  slightly noisier baseline for future attribution; accepted knowingly.
+- **Caveat for future-me:** if a later experiment's t14 SPRT looks oddly flat
+  on Intel, suspect this term contributed ~0 there. Binary `huginn_t14.exe`
+  snapshotted. The clean-baseline purist call would have been to park; logged
+  here so the exception is visible, not silent.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
