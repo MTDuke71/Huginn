@@ -13,7 +13,12 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t12 = 1a0b3a1` (= t11 + BACKLOG #9 round 2:
+- ✅ **Baseline tag**: `baseline-t13 = f90fd54` (= t12 + BACKLOG #9 round 4:
+  NEW features — connected (phalanx/supported) + backward pawn terms, both
+  tapered; full 810-param tune on the 725k corpus, MSE 0.0583→0.0580.
+  **+18.9 ± 10.7 Elo pooled 2000g vs t12** [AMD +11.82@1000g LOS 93.9% /
+  Intel +26.11@1000g LOS 99.96%], both legs same-sign positive — two-machine
+  ship). Prior: `baseline-t12 = 1a0b3a1` (= t11 + BACKLOG #9 round 2:
   tapered (endgame) PSTs for the 5 non-king pieces + tunable mobility, full
   ~780-param re-tune on the 725k corpus, MSE 0.0596→0.0587. **+37.4 ± 17.9 Elo
   vs t11, LOS 100%, SPRT H1-accept @764g (AMD)** — single-machine decisive
