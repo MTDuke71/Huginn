@@ -22,6 +22,13 @@
   (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats.
   ~3.55 Mnps single-thread.
 - **Active thread:** the **#9 / #35 eval program** — round 7 is next.
+- **Direction (2026-06-13): push pure HCE as far as it goes before reaching for
+  multithreading or NNUE.** The +490 over 2.0 was mostly foundational repair
+  (structural bugs, a never-tuned eval) and won't recur — but pure-HCE engines
+  (Fruit 2.1 ≈ 2780 CCRL, Toga, early Stockfish) prove the HCE ceiling sits
+  *hundreds* of Elo above Huginn's ~1818. So the road ahead is incremental HCE
+  terms (see the round-7+ roadmap under #9/#35), with the two big architectural
+  levers (#39 NNUE, #40 Lazy SMP) deliberately deferred.
 - See [CLAUDE.md](CLAUDE.md) for the full baseline ladder and
   [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) for the live search/eval inventory.
 
@@ -37,6 +44,8 @@
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
+| 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
+| 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS)
@@ -53,13 +62,39 @@ the 725k Zurichess quiet-labeled corpus. Shipped ladder:
 - t14: rook-on-7th (sign-split +6.6, shipped as a logged exception)
 - t15: **threats** (+54.2 pooled vs t14 — largest eval-term ship)
 
-**Round 7 candidates:** king-safety weights via the harness (the non-linear
-term hand-tuning couldn't crack — #2 is now unblocked since the base is
-tapered), doubled rooks / blind-pig follow-up to t14, mobility re-fit on fresh
-self-play data from the stronger engine, or a re-tune on a larger corpus.
 Method note (learned across rounds): **new-feature MSE converts to Elo better
-than re-fit MSE**; SPRT decides every round. Full round-by-round detail in the
-archive (PRODUCTION TUNE 1–6).
+than re-fit MSE** (re-fitting existing terms hit a floor at round 3, flat);
+SPRT decides every round. Full round-by-round detail in the archive
+(PRODUCTION TUNE 1–6).
+
+**HCE roadmap (round 7+).** Remaining hand-crafted-eval levers, roughly by
+Elo-per-effort. Add a new term → wire it into `collect_params()` → tune →
+bake → two-machine SPRT. Each is its own round; pick by appetite for
+risk-vs-yield.
+
+- **Outposts** *(cleanest next win)* — knight/bishop on a hole the enemy can't
+  hit with a pawn, supported by an own pawn. Constants (`KNIGHT_OUTPOST_BONUS`,
+  the rank bounds) are already defined in `evaluation.hpp` but **dead/unused** —
+  so it's part new-term, part cleanup. Cleanly tunable, low risk, ~+5–20.
+- **King safety, reformulated for the tuner** *(marquee — biggest single gap)* —
+  #2 is now unblocked (tapered base). The in-tree term is neutral and was
+  *excluded* from tuning because the ≥2-attacker non-linear gate fires too
+  rarely in quiet positions to constrain. Reformulate it more continuously
+  (per-attacker-linear + shelter + safe-checks) so it fires often enough to
+  Texel-fit. Highest ceiling (~+30–60 if cracked), highest tuning risk.
+- **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
+  *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
+- **Mobility refinement** — currently flat square-count × weight; go per-piece-
+  type and restrict the area to *safe* squares (exclude enemy-pawn-attacked).
+- **Passed-pawn refinements** — king distance to the passer (own + enemy),
+  blockade, rook-behind-passer. Endgame Elo.
+- **Drawishness scaling (`mul[]`)** — opposite-coloured bishops →½, KNNK→0,
+  "a minor up, no pawns"→⅛. High impact, cheap, independent; kills the
+  "scores a dead-drawn endgame as winning" class. **Not** sigmoid-tunable (it's
+  a final-eval multiplier) — hand-set from known values + SPRT to confirm.
+- **Lower priority:** doubled-rooks / blind-pig follow-up to t14's rook-on-7th;
+  space (safe squares behind own centre pawns); rook-on-king-file; specific
+  endgame recognizers (KPK, KRKP); trapped-bishop (#20, parked).
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
@@ -121,6 +156,44 @@ dormant fail-high break at root) is already in place. Related parked work:
 tags PGNs `_intel`/`_amd`, runs SPRT [0,10] for baselines. Keep cc=4 on both
 boxes for poolable runs. Pentanomial pooling pairs games by `[Round]` tag. Full
 notes in the archive (#19, #22).
+
+## Big levers (deferred — HCE first)
+
+The two architectural jumps that dwarf any single HCE term. Both deliberately
+deferred (2026-06-13) to exhaust pure-HCE headroom first — but recorded here so
+the strategic picture is explicit.
+
+### #39: NNUE evaluation (deferred)
+
+- The per-node *quality* lever — hundreds of Elo, and the honest path to closing
+  the gap to Fruit/Stockfish-class strength. Replaces (or augments) the HCE
+  `evaluate()` with a small efficiently-updatable network.
+- **Why it fits this project:** preserves single-thread determinism (the
+  fixed-depth / cross-machine-bit-identical test methodology survives), and it
+  improves the thing we actually care about — move quality per node.
+- **Cost:** a multi-session build — training-data generation (self-play at depth,
+  labelled), the net + quantisation, and incremental-update integration into
+  make/unmake. Highest conceptual lift of the options; lowest methodology cost.
+
+### #40: Lazy SMP / multithreading (deferred)
+
+- The biggest *Elo-at-tournament-hardware* lever short of NNUE: ~**+100–200 Elo**
+  on the 8-core gauntlet boxes (currently idle — a cc=4 gauntlet just runs 4
+  separate single-thread games, never one strong parallel search). Lazy SMP is a
+  near-boilerplate algorithm, so lowest *conceptual* risk.
+- **But three real catches** (the reason it's deferred, not done):
+  1. **Buys Elo with hardware, not smarts** — per-node quality is unchanged.
+     Legitimate for CCRL placement and GUI use, but orthogonal to the eval gap.
+  2. **Breaks the determinism the test methodology leans on** — Lazy SMP is
+     non-deterministic by construction, killing the bit-identical-at-fixed-depth
+     ship checks and the cross-machine WAC determinism (#33-class).
+  3. **Highest engineering risk** — needs a race-tolerant (lockless XOR-key) TT,
+     per-thread history/killers, a clean multi-thread stop, and forces
+     **concurrency-1 gauntlets** (cc=4 would oversubscribe the CPU and make
+     10+0.1 wall-clock meaningless) → ~4× throughput hit per box. Concurrency
+     bugs are the worst class to debug — and #37 (a *single*-threaded desync) is
+     still open.
+- **Decision:** revisit after the HCE roadmap is mined out (or alongside NNUE).
 
 ## Deferred / parked ideas
 
