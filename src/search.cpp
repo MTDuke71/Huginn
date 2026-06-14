@@ -2064,11 +2064,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
     const int root_static_eval = evalPosition(pos);
-
-    // Centre of the next iteration's aspiration window: the score from the last
-    // completed depth (used by the aspiration loop below, from depth 4 on).
-    int prev_score = 0;
-
+    
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
@@ -2116,6 +2112,12 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
 
         if (move_list.count == 0) break; // No pseudo-legal moves at all
 
+        int best_score = -30000;
+        S_MOVE depth_best_move;
+        depth_best_move.move = 0;
+        int legal_count = 0;
+        info.pv_length[0] = 0;  // reset root PV for this iteration
+
         // Order moves to try previous iteration's best move first for better alpha-beta cutoffs
         if (prev_best.move != 0) {
             for (int i = 0; i < move_list.count; ++i) {
@@ -2129,91 +2131,56 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             }
         }
 
-        // Aspiration windows (MTLChess-style). From ASPIRATION_MIN_DEPTH on,
-        // search a narrow window centred on the previous depth's score instead
-        // of the full width — far more cutoffs, so more depth in the same time.
-        // On a fail (best_score <= alpha = fail-low, or >= beta = fail-high) we
-        // widen that side by a geometrically growing delta and re-run the root
-        // move loop. Shallow depths use the full window (no score to centre on).
-        constexpr int ASPIRATION_MIN_DEPTH = 4;
-        constexpr int ASPIRATION_DELTA = 50;
-        int delta = ASPIRATION_DELTA;
-        int alpha = (current_depth < ASPIRATION_MIN_DEPTH)
-                        ? -30000 : std::max(prev_score - delta, -30000);
-        int beta  = (current_depth < ASPIRATION_MIN_DEPTH)
-                        ?  30000 : std::min(prev_score + delta,  30000);
+        // Try each move at the root with PVS-style alpha tightening:
+        // pass local_alpha (the best score found so far at root) as the
+        // recursion's alpha, so subsequent subtrees can produce alpha-beta
+        // cutoffs against it instead of searching with the full window.
+        // The fail-high break is dormant here (beta = 30000 only fires on
+        // found-mate) but is in place ready for aspiration windows.
+        const int root_alpha_init = -30000;
+        const int root_beta = 30000;
+        int local_alpha = root_alpha_init;
 
-        int best_score = -30000;
-        S_MOVE depth_best_move;
-        depth_best_move.move = 0;
-        int legal_count = 0;
+        for (int i = 0; i < move_list.count; ++i) {
+            if (info.stopped || info.quit) break;
 
-        while (true) {
-            best_score = -30000;
-            depth_best_move.move = 0;
-            legal_count = 0;
-            info.pv_length[0] = 0;  // reset root PV for this (re-)search
+            if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+            ++legal_count;
+            const bool immediate_repetition = isRepetition(pos);
 
-            // PVS-style alpha tightening: local_alpha starts at the window's
-            // alpha and rises as moves improve it, so siblings search the
-            // narrow (-beta, -local_alpha) window and cut against the best so far.
-            int local_alpha = alpha;
-
-            for (int i = 0; i < move_list.count; ++i) {
-                if (info.stopped || info.quit) break;
-
-                if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
-                ++legal_count;
-                const bool immediate_repetition = isRepetition(pos);
-
-                // Track move in search stack for counter-move heuristic.
-                // info.ply is 0 at root; this writes search_stack[0].
-                if (info.ply >= 0 && info.ply < 64) {
-                    info.search_stack[info.ply] = move_list.moves[i];
-                }
-
-                ++info.ply;
-                int score = -AlphaBeta(pos, -beta, -local_alpha, current_depth - 1, info, true, false);
-                --info.ply;
-
-                if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
-                    score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
-                }
-
-                pos.TakeMove();
-
-                if (info.stopped || info.quit) break;
-
-                if (score > best_score) {
-                    best_score = score;
-                    depth_best_move = move_list.moves[i];
-
-                    // Triangular PV at the root (ply 0): this move + the child's
-                    // line, which the recursion stored at ply 1.
-                    info.pv_line[0][0] = move_list.moves[i];
-                    int child_len = info.pv_length[1];
-                    for (int j = 0; j < child_len; ++j) {
-                        info.pv_line[0][j + 1] = info.pv_line[1][j];
-                    }
-                    info.pv_length[0] = child_len + 1;
-
-                    if (best_score > local_alpha) local_alpha = best_score;
-                    if (best_score >= beta) break; // fail-high → widen beta and re-search
-                }
+            // Track move in search stack for counter-move heuristic.
+            // info.ply is 0 at root; this writes search_stack[0].
+            if (info.ply >= 0 && info.ply < 64) {
+                info.search_stack[info.ply] = move_list.moves[i];
             }
 
-            // Don't widen or loop on an interrupted or terminal search.
-            if (info.stopped || info.quit) break;
-            if (legal_count == 0) break;
+            ++info.ply;
+            int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
+            --info.ply;
 
-            if (best_score <= alpha) {            // fail low: widen the lower bound
-                alpha = std::max(best_score - delta, -30000);
-                delta *= 2;
-            } else if (best_score >= beta) {      // fail high: widen the upper bound
-                beta = std::min(best_score + delta, 30000);
-                delta *= 2;
-            } else {
-                break;                             // score within window — accept
+            if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
+                score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
+            }
+
+            pos.TakeMove();
+
+            if (info.stopped || info.quit) break;
+
+            if (score > best_score) {
+                best_score = score;
+                depth_best_move = move_list.moves[i];
+
+                // Triangular PV at the root (ply 0): this move + the child's
+                // line, which the recursion stored at ply 1.
+                info.pv_line[0][0] = move_list.moves[i];
+                int child_len = info.pv_length[1];
+                for (int j = 0; j < child_len; ++j) {
+                    info.pv_line[0][j + 1] = info.pv_line[1][j];
+                }
+                info.pv_length[0] = child_len + 1;
+
+                if (best_score > local_alpha) local_alpha = best_score;
+                if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
             }
         }
 
@@ -2232,9 +2199,6 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             // Store in PV table for next iteration's move ordering
             store_pv_move(pos.zobrist_key, depth_best_move);
         }
-
-        // Centre the next depth's aspiration window on this depth's score.
-        prev_score = best_score;
         
         // Calculate elapsed time for output
         auto now = std::chrono::steady_clock::now();

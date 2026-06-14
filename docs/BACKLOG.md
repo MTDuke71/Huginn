@@ -41,7 +41,7 @@
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
-| 17 | Aspiration-window widening on score swings | **OPEN** — round-7 search track (MTLChess comparison) | feature | high |
+| 17 | Aspiration windows at the root | **REJECTED** @ t15 (−33.8 Elo, H0) — reverted, parked | feature | low |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -163,11 +163,14 @@ author/tooling, magic-bitboard-native, and sits ~+500 above 2.1; round-robin
   weight (N/B=2, R=3, Q=5); penalty = `min(units²/4, 500)`, **MG-only, no
   shelter / no safe-checks**. Simpler than Huginn's stalled hand-tuned attempts —
   start by porting this, then optionally extend.
-- **NEW — the search track attacks #41's 73% "depth, not eval" share.** #41 found
-  most misses are Huginn out-searched (d11 vs d22) and called it non-HCE; it *is*
-  a search target. MTLChess has two depth-buying levers Huginn lacks:
-  - **Aspiration windows (#17)** — ±50cp window, geometric (×2) widening on
-    fail. Huginn re-searches the full width every iteration. Low-risk, no tuning.
+- **The search track attacks #41's 73% "depth, not eval" share** — but its first
+  lever just failed. #41 found most misses are Huginn out-searched (d11 vs d22).
+  MTLChess has depth-buying levers Huginn lacks:
+  - **Aspiration windows (#17)** — **REJECTED @ t15, −33.8 Elo H0 (2026-06-14).**
+    Regressed even on the strong eval base (the "stronger eval unblocks it"
+    hypothesis is falsified); reverted. **Tempers the whole search track:**
+    search-*efficiency* levers don't convert at 10+0.1 for an eval-bound engine —
+    the eval track (king safety) is the higher-confidence bet. See #17.
   - **SEE-based capture ordering (#6, parked)** — good captures (SEE≥0) score
     *above* killers, **bad captures (SEE<0) below quiets**. Huginn orders by
     MVV-LVA, so it tries losing captures early → wasted nodes. (Their parked #6
@@ -180,10 +183,13 @@ author/tooling, magic-bitboard-native, and sits ~+500 above 2.1; round-robin
   heavier stack at R=4 may over-prune / leak tactics. Worth checking a sound-lean
   config against the current one.
 
-**Revised round 7: run two tracks in parallel.** Eval: **king safety** (port the
-MTLChess recipe) — agreed #1 from both studies. Search: **aspiration windows
-(#17) → SEE capture ordering (#6, unpark)** — addresses the larger (73%) depth
-share #41 measured. Both are higher-leverage than any further eval-breadth term.
+**Revised round 7 (after aspiration's rejection): lead with eval.** Eval track is
+now the clear priority: **king safety** (port the MTLChess recipe) — agreed #1
+from both studies, and the #17 result removes aspiration from contention. The
+search track is demoted: aspiration rejected; **SEE capture ordering (#6)** is the
+one remaining search lever worth a look (different mechanism — move-ordering
+quality, not window efficiency — but its own history is only ~neutral, so treat
+it as low-priority after king safety, not parallel to it).
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
@@ -251,12 +257,24 @@ MLE (~1818).
   and/or broaden to non-MTL anchors (MORA ~2189, rebuild CDrill/Snowy) for a
   multi-point MLE.
 
-### #17: Aspiration-window widening (OPEN)
+### #17: Aspiration windows at the root — REJECTED @ t15 (2026-06-14)
 
-Replace the full-width root window with an aspiration window around the previous
-iteration's score, widening on fail-high/low. Prereq groundwork (PVS, the
-dormant fail-high break at root) is already in place. Related parked work:
-#8 (aspiration step b).
+Implemented (`228817b`, MTLChess-guided): ±50cp window around the previous
+iteration's score, geometric (×2) widening on fail, full window at shallow
+depths. Wrapped the existing root PVS loop. 197/197 tests pass.
+
+**SPRT vs t15 (AMD, 10+0.1): H0 ACCEPTED @ 660g — −33.8 ± 18.0 Elo, LOS 0.01%,
+LLR −2.98**, W123/L187/D350 (45.15%), Ptnml [28,94,131,68,9].
+
+**Reverted; preserved on branch `experiment/aspiration-root` (`228817b`).** This
+is the **key new datapoint**: aspiration regresses even on the much stronger t15
+base — the "a smoother/stronger eval will stabilize inter-iteration scores and
+unblock aspiration" hypothesis is **falsified at t15**. Consistent with the #8
+history (−24…−75 across tunings) and with the #41 finding that Huginn's gap is
+*eval quality*, not search efficiency: a narrow-window speed lever can't pay when
+the re-search tax from score swings exceeds the pruning saved at d~10. **Lesson:
+search-efficiency levers are the wrong track for an eval-bound engine at this
+TC.** Related: #8 (aspiration step b, parked).
 
 ### #31 / #32 / #34: Speed / research (OPEN, low)
 
