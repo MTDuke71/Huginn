@@ -621,6 +621,13 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     // Perform the search using Engine interface
     // Perform the search using Engine interface
     S_MOVE best_move;
+    // Snapshot the pre-search root position. searchPosition() runs on
+    // `position` by reference; a rare, time-dependent make/unmake imbalance can
+    // leave the engine's internal board desynced from the real position, so the
+    // returned move may be illegal in the *actual* root position (fastchess then
+    // forfeits the game on "Illegal move" — BACKLOG #12-followup). We validate
+    // the chosen move against this clean snapshot before emitting bestmove.
+    auto pre_search = position;
     // Publish pointer to running SearchInfo so 'stop' can update it
     running_info.store(&info);
     try {
@@ -637,13 +644,44 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     // Clear running_info pointer
     running_info.store(nullptr);
     
-    // Emergency fallback: if search took too long or returned no move, get any legal move
-    if (best_move.move == 0 || should_stop) {
-        S_MOVELIST moves;
-        generate_legal_moves(position, moves);
-        if (moves.count > 0) {
-            best_move = moves.moves[0]; // Use first legal move as fallback
+    // Illegal-move / board-desync guard. Validate the search's chosen move
+    // against a freshly generated *legal* move list for the clean pre-search
+    // position. This catches both "no move returned" (best_move == 0) and the
+    // rare board-desync case where the search returns a move that is illegal in
+    // the real position. On a miss we substitute a legal move so the engine
+    // never forfeits on an illegal bestmove, and we emit a diagnostic capturing
+    // the exact FEN + offending move so the underlying corruption can be
+    // reproduced and root-caused.
+    S_MOVELIST legal_moves;
+    generate_legal_moves(pre_search, legal_moves);
+
+    bool best_is_legal = false;
+    if (best_move.move != 0) {
+        for (int i = 0; i < legal_moves.count; ++i) {
+            if (legal_moves.moves[i].move == best_move.move) {
+                best_is_legal = true;
+                break;
+            }
         }
+    }
+
+    if (!best_is_legal) {
+        if (best_move.move != 0) {
+            // Non-zero but illegal: a real board-desync escaped the search.
+            // Log loudly so a gauntlet run captures a deterministic repro.
+            std::cout << "info string board-desync guard: search returned illegal move "
+                      << search_engine->move_to_uci(best_move)
+                      << " for fen " << pre_search.to_fen()
+                      << " — substituting a legal move" << std::endl;
+            std::cout.flush();
+        }
+        best_move.move = 0;
+        if (legal_moves.count > 0) {
+            best_move = legal_moves.moves[0]; // legal fallback (never forfeit)
+        }
+        // Drop the corrupted internal board; the next `position` command
+        // rebuilds it, but restoring now keeps any follow-up consistent.
+        position = pre_search;
     }
     
     // Engine already outputs complete UCI info during search
