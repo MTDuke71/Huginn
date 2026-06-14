@@ -37,6 +37,7 @@
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t15 shipped; round 7 next | feature/eval | high |
+| 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -67,16 +68,19 @@ than re-fit MSE** (re-fitting existing terms hit a floor at round 3, flat);
 SPRT decides every round. Full round-by-round detail in the archive
 (PRODUCTION TUNE 1–6).
 
-**HCE roadmap (round 7+).** Remaining hand-crafted-eval levers, roughly by
-Elo-per-effort. Add a new term → wire it into `collect_params()` → tune →
-bake → two-machine SPRT. Each is its own round; pick by appetite for
-risk-vs-yield.
+**HCE roadmap (round 7+).** Remaining hand-crafted-eval levers. Add a new term →
+wire it into `collect_params()` → tune → bake → two-machine SPRT. Each is its
+own round.
 
-- **Outposts** *(cleanest next win)* — knight/bishop on a hole the enemy can't
-  hit with a pawn, supported by an own pawn. Constants (`KNIGHT_OUTPOST_BONUS`,
-  the rank bounds) are already defined in `evaluation.hpp` but **dead/unused** —
-  so it's part new-term, part cleanup. Cleanly tunable, low risk, ~+5–20.
-- **King safety, reformulated for the tuner** *(marquee — biggest single gap)* —
+**Priority order is now data-backed — set by the #41 calibration study
+(2026-06-14): king safety → threats round 2 → safe mobility → outposts.** The
+study found Huginn's gap is *positional move-selection in balanced middlegames*
+(systematic +44cp over-optimism), not tactics or endgames — which is exactly the
+king-safety/threats shaped hole. Outposts stays the lowest-risk warm-up, but KS
+is the bigger lever.
+
+- **King safety, reformulated for the tuner** *(marquee — the #41 data-backed #1
+  target)* —
   #2 is now unblocked (tapered base). The in-tree term is neutral and was
   *excluded* from tuning because the ≥2-attacker non-linear gate fires too
   rarely in quiet positions to constrain. Reformulate it more continuously
@@ -84,10 +88,18 @@ risk-vs-yield.
   Texel-fit. Highest ceiling (~+30–60 if cracked), highest tuning risk.
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
-- **Mobility refinement** — currently flat square-count × weight; go per-piece-
-  type and restrict the area to *safe* squares (exclude enemy-pawn-attacked).
+- **Mobility refinement (safe mobility)** — currently flat square-count × weight;
+  go per-piece-type and restrict the area to *safe* squares (exclude enemy-pawn-
+  attacked). #41 ties the Queen-error cluster to this (stop crediting a queen on
+  a square enemy minors attack).
+- **Outposts** *(low-risk tuner warm-up; #41 Knight-error cluster)* —
+  knight/bishop on a hole the enemy can't hit with a pawn, supported by an own
+  pawn. Constants (`KNIGHT_OUTPOST_BONUS`, the rank bounds) are already defined
+  in `evaluation.hpp` but **dead/unused** — part new-term, part cleanup. Cleanly
+  tunable, low risk, ~+5–20.
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
-  blockade, rook-behind-passer. Endgame Elo.
+  blockade, rook-behind-passer. Endgame Elo — **deprioritized**: #41 shows
+  balanced-endgame play is already solid (fair-fight cp-loss 13.3).
 - **Drawishness scaling (`mul[]`)** — opposite-coloured bishops →½, KNNK→0,
   "a minor up, no pawns"→⅛. High impact, cheap, independent; kills the
   "scores a dead-drawn endgame as winning" class. **Not** sigmoid-tunable (it's
@@ -95,6 +107,44 @@ risk-vs-yield.
 - **Lower priority:** doubled-rooks / blind-pig follow-up to t14's rook-on-7th;
   space (safe squares behind own centre pawns); rook-on-king-file; specific
   endgame recognizers (KPK, KRKP); trapped-bishop (#20, parked).
+
+### #41: Played-game calibration study — round-7 priority evidence (DONE 2026-06-14)
+
+Analyzed **Huginn 2.1 vs Stockfish 17.1 over 6,649 unique positions** from a
+correspondence-game variation tree (`CC_Games.pgn`). Per position: SF depth-22
+best + eval (ground truth), Huginn's move at 1.5 s, **SF's eval of Huginn's own
+move** (mover-POV, so cp-loss = `sf_eval − sf_eval_after_hug`), plus phase /
+material / tactical tags. Reusable harness (resumable, ~4 h for the full tree):
+`tools/analyze_played_vs_engines.py`, `tools/summarize_cc.py`,
+`run_cc_analysis.bat` → `tools/cc_analysis.csv`.
+
+**Findings** (on *fair fights* = |material| ≤ 200 ∧ |SF eval| ≤ 300 cp, the
+meaningful subset — raw endgame/quiet cp-loss is inflated by decided deep-
+analysis lines and was discarded):
+
+- **Positional, not tactical.** Huginn matches SF's best move **71 % in tactical
+  positions** (SF-best is a capture/check) but only **34 % in quiet** ones. The
+  gap is positional move-selection = eval quality.
+- **Systematic over-optimism, worst in the middlegame.** Huginn over-rates the
+  positions it steers into (its own eval − SF's truth of its move): opening +30,
+  **middlegame +44**, endgame +21 cp. Consistent optimism is the fingerprint of
+  an engine that under-weights danger to its own king and the opponent's
+  resources — a king-safety / threats shaped hole.
+- **Most "errors" are depth, not eval.** Of fair-fight move-choice misses, only
+  **27 % are genuine eval-blindness** (Huginn over-rated its move ≥ 75 cp); 73 %
+  are moves it evaluated ~correctly that SF (d22) simply out-searched (Huginn ran
+  at ~d11). The dramatic 400–567 cp tail is largely tactical-depth — **not** an
+  HCE target; don't chase it.
+- **Balanced endgames are fine** (fair-fight cp-loss 13.3) → no endgame priority.
+- Eval-blind errors cluster by piece: **Queen / Pawn / Knight**.
+
+**Conclusion → round-7 order (now data-backed):** king safety (the systematic
+middlegame optimism + quiet-move weakness *is* the KS hole) → threats round 2
+(the other half of the optimism: under-credited opponent resources) → safe
+mobility (the Queen cluster) → outposts (the Knight cluster; low-risk warm-up).
+Passed-pawn / drawishness drop in priority. See the round-7+ roadmap under
+#9/#35. **Validation hook:** a shipped KS term should measurably shrink the
+middlegame over-rating — re-run the harness on a larger game set to confirm.
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
