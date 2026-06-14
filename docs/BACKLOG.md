@@ -2802,16 +2802,23 @@ fire and cancel correctly.
   PairsRatio 2.05, DrawRatio 36.2%. PGN `gauntlet/huginn_vs_t14_amd.pgn`. The
   prior held: **the largest eval-*term* gain of the program** (only the
   original full material+PST tune, +71, was bigger). The MSE signal converted.
-- **Intel SPRT vs t14: PENDING — and BASELINE HELD.** An illegal move was
-  observed on the Intel box and is under investigation before the leg is
-  trusted. **Do NOT freeze baseline-t15 until that is resolved** (no tag, no
-  `huginn_t15.exe` snapshot yet). The threats code is pure evaluation (reads
-  bitboards, returns a score; never touches movegen / make-unmake), so it
-  cannot make an illegal move *played* — bestmove legality is unaffected. Most
-  likely the known cosmetic **#36** (TT-walk PV-display collision, more frequent
-  on Intel: higher NPS → more TT traffic → more collisions); the stronger eval
-  may have shifted depths and changed its rate. Confirm it's display-only
-  (bestmove always legal) vs a real regression before shipping t15.
+- **Intel SPRT vs t14: H1 ACCEPTED @ 482g — +58.95 ± 22.17 Elo, nElo +84.20,
+  LOS 100%, LLR 2.98**, W159/L78/D245 (58.40%), Ptnml [7,40,87,79,28],
+  PairsRatio 2.28, DrawRatio 36.1%. PGN `gauntlet/huginn_vs_t14_intel.pgn`.
+  Came in *above* the AMD leg.
+- **Illegal-move investigation RESOLVED — not a threats regression.** The Intel
+  illegal move was a *real* played illegal bestmove (`b2b4` from a phantom pawn
+  on a desynced board), not the cosmetic #36. Root cause is a rare, time-
+  dependent make/unmake board desync that **predates threats** (the same illegal-
+  PV signature appears in the t12 and t13 logs) — pure-eval threats cannot cause
+  it. Filed as **#37** and guarded at the UCI boundary so the engine can never
+  emit an illegal move (commit `390ea13`); the cosmetic **#36** TT-walk PV
+  display bug was also closed (`a9173ad`). The leg is trustworthy.
+- **SHIP. Pooled ~1018g ≈ +54.2 ± 14.9 Elo vs t14** [AMD +50.26@536g LOS 100% /
+  Intel +58.95@482g LOS 100%], both legs same-sign positive, both SPRT
+  H1-accept — the largest eval-*term* ship of the program and a clean two-
+  machine decision (no t14-style sign-split exception needed). → freeze
+  `baseline-t15`.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
