@@ -265,6 +265,10 @@ depths. Wrapped the existing root PVS loop. 197/197 tests pass.
 
 **SPRT vs t15 (AMD, 10+0.1): H0 ACCEPTED @ 660g — −33.8 ± 18.0 Elo, LOS 0.01%,
 LLR −2.98**, W123/L187/D350 (45.15%), Ptnml [28,94,131,68,9].
+**SPRT vs t15 (Intel, 10+0.1): H0 ACCEPTED @ 756g — −29.95 ± 17.5 Elo, LOS 0.04%,
+LLR −2.96**, W165/L230/D361 (45.70%), Ptnml [35,103,147,78,15]. Same-sign
+two-machine rejection — the regression is real and machine-independent (PGN
+`gauntlet/huginn_vs_t15_intel.pgn`).
 
 **Reverted; preserved on branch `experiment/aspiration-root` (`228817b`).** This
 is the **key new datapoint**: aspiration regresses even on the much stronger t15
