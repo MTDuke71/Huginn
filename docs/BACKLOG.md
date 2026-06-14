@@ -2740,8 +2740,21 @@ fire and cancel correctly.
 - By the new-feature MSE→Elo pattern (round 4's −0.0003 → +18.9), a drop >2×
   that size is the most favorable prior of any round since the first tune.
   SPRT decides, but this is the best-looking new term yet.
-- **AMD + Intel SPRT vs t14: PENDING** (user-run; tip = t14-strength + this, so
-  the delta is attributable to the threats cluster).
+- **AMD SPRT vs t14: H1 ACCEPTED @ 536g — +50.26 ± 20.07 Elo, nElo +74.76,
+  LOS 100%, LLR 2.97**, W176/L99/D261 (57.18%), Ptnml [6,50,97,91,24],
+  PairsRatio 2.05, DrawRatio 36.2%. PGN `gauntlet/huginn_vs_t14_amd.pgn`. The
+  prior held: **the largest eval-*term* gain of the program** (only the
+  original full material+PST tune, +71, was bigger). The MSE signal converted.
+- **Intel SPRT vs t14: PENDING — and BASELINE HELD.** An illegal move was
+  observed on the Intel box and is under investigation before the leg is
+  trusted. **Do NOT freeze baseline-t15 until that is resolved** (no tag, no
+  `huginn_t15.exe` snapshot yet). The threats code is pure evaluation (reads
+  bitboards, returns a score; never touches movegen / make-unmake), so it
+  cannot make an illegal move *played* — bestmove legality is unaffected. Most
+  likely the known cosmetic **#36** (TT-walk PV-display collision, more frequent
+  on Intel: higher NPS → more TT traffic → more collisions); the stronger eval
+  may have shifted depths and changed its rate. Confirm it's display-only
+  (bestmove always legal) vs a real regression before shipping t15.
 
 **Evidence:** King-safety v1→v2→v3 hand-tuning hit a ceiling at ~0
 Elo across 3 iterations. The implementation is correct (v1→v2 = +18
