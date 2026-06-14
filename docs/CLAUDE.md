@@ -13,7 +13,16 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t14 = db3f1ef` (= t13 + BACKLOG #9 round 5:
+- ✅ **Baseline tag**: `baseline-t15 = cdcd31f` (= t14 + BACKLOG #9 round 6:
+  NEW feature — threats (bonus per enemy piece attacked by a cheaper/more-
+  dangerous attacker, by attacker→target class, tapered); full 824-param tune
+  on the 725k corpus, MSE 0.05799→0.05732 (strongest new-term signal since the
+  early rounds). **+54.2 ± 14.9 Elo pooled ~1018g vs t14** [AMD +50.26@536g
+  LOS 100% / Intel +58.95@482g LOS 100%], both legs same-sign positive, both
+  SPRT H1-accept — the largest eval-*term* ship of the program, a clean two-
+  machine decision. **Also includes the #37 illegal-bestmove guard + #36
+  PV-display fix** (so t15 won't forfeit on the board-desync bug during round-7
+  gauntlets). Prior: `baseline-t14 = db3f1ef` (= t13 + BACKLOG #9 round 5:
   NEW feature — rook on the relative 7th rank, gated tapered bonus (enemy king
   on back rank OR enemy pawns on the rank); full 812-param tune on the 725k
   corpus, MSE 0.05806→0.05799, fitted MG 20 / EG 24. **Shipped on a sign-split
