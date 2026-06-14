@@ -132,9 +132,35 @@ Intel; fastchess forfeits on it).
 
 ### #5: Recalibrate vs external opponents (OPEN)
 
-Re-anchor the CCRL-Blitz-scale Elo estimate now that the eval program has added
-~+150 Elo since the last calibration (t11 ≈ 1818). Calibration ladder + scripts
-(`test_huginn_gauntlet.bat <snowy|cdrill|mtl03|mora|mtl05>`) in the archive (#5).
+Re-anchor the CCRL-Blitz-scale Elo estimate. Scripts: `test_huginn_gauntlet.bat
+<snowy|cdrill|mtl03|mora|mtl05|mtl06>`; the archive (#5) has the t11 3-anchor
+MLE (~1818).
+
+**Round-robin (2026-06-14, Intel, 10+0.1, no book, 1200g, fresh MTLChess builds):**
+
+| Engine | RR Elo | Score |
+|---|---|---|
+| MTLChess v0.6 | +259.5 | 81.7% |
+| MTLChess v0.5 | +143.8 | 69.6% |
+| MTLChess v0.3 | −154.1 | 29.2% |
+| Huginn 2.1 | −245.4 | 19.6% |
+
+- Internal spacing (clean — all fresh builds): 2.1 is **~91 Elo below v0.3**;
+  v0.3→v0.5 = ~298; v0.5→v0.6 = ~116. (The direct 2.1-vs-v0.3 head-to-head
+  agreed: −74 ± 37, 39.5%.)
+- **Scale check:** RR v0.3→v0.5 (~298) ≈ the CCRL gap (1984→2314 = 330) → the
+  fresh builds are roughly consistent with their CCRL ratings (~10% compressed).
+- **Absolute (two-anchor fit, v0.3=1984 / v0.5=2314):** Huginn 2.1 ≈ **~1880
+  CCRL-Blitz**. The +9pp MTL-*favorable* non-transitivity pulls the transitive
+  estimate lower (~1820–1850).
+- **Finding:** on the external scale 2.1 is only ~+60 over t11 (1818) despite
+  ~+130 in self-play — self-play Elo inflates. Corroborates the "+490 over 2.0
+  was foundational repair; future HCE gains will be harder-won" direction.
+- **Confound:** the fresh `mtlchess_v03` is NOT the old build behind the
+  historical 36.8% record, so the before/after vs that record is invalid.
+  **Next:** fresh-`v03` vs old-`mtlchessV3` head-to-head to quantify the shift,
+  and/or broaden to non-MTL anchors (MORA ~2189, rebuild CDrill/Snowy) for a
+  multi-point MLE.
 
 ### #17: Aspiration-window widening (OPEN)
 
