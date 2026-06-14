@@ -99,24 +99,24 @@ EVAL_PARAM int TEMPO_BONUS = 26;
 // ============================================================================
 
 /** @brief Rook bonus for controlling an open file (no pawns of either color) */
-EVAL_PARAM int ROOK_OPEN_FILE_BONUS = 17;      
+EVAL_PARAM int ROOK_OPEN_FILE_BONUS = 16;      
 
 /** @brief Rook bonus for controlling a semi-open file (no own pawns, enemy pawns present) */
-EVAL_PARAM int ROOK_SEMI_OPEN_FILE_BONUS = 17;  
+EVAL_PARAM int ROOK_SEMI_OPEN_FILE_BONUS = 16;  
 
 /** @brief Queen bonus for controlling an open file */
-EVAL_PARAM int QUEEN_OPEN_FILE_BONUS = 4;
-EVAL_PARAM int QUEEN_SEMI_OPEN_FILE_BONUS = 6; // VICE value: QueenSemiOpenFile = 3
+EVAL_PARAM int QUEEN_OPEN_FILE_BONUS = 3;
+EVAL_PARAM int QUEEN_SEMI_OPEN_FILE_BONUS = 5; // VICE value: QueenSemiOpenFile = 3
 
-EVAL_PARAM int ISOLATED_PAWN_PENALTY = 11;  // #9 round 3, Texel-tunable
-EVAL_PARAM int DOUBLED_PAWN_PENALTY = 11;
+EVAL_PARAM int ISOLATED_PAWN_PENALTY = 10;  // #9 round 3, Texel-tunable
+EVAL_PARAM int DOUBLED_PAWN_PENALTY = 10;
 
 // Connected pawns (#9 round 4): bonus per pawn that is phalanx (own pawn on an
 // adjacent file, same rank) or supported (defended by an own pawn), indexed by
 // relative rank (White POV; Black mirrors). Ranks 1/8 can't hold pawns, so
 // those entries stay pinned at 0. Tapered MG/EG, Texel-tunable.
-EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_MG = { 0, 2, 6, 12, 17, 29, 50, 0 };
-EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_EG = { 0, -3, 2, 3, 10, 31, 29, 0 };
+EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_MG = { 0, 2, 8, 14, 19, 37, 56, 0 };
+EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_EG = { 0, -5, 2, 3, 10, 32, 28, 0 };
 
 // Backward pawn (#9 round 4): no own pawn on an adjacent file at the same rank
 // or behind (so it can never be supported by one), and its stop square is
@@ -131,7 +131,7 @@ EVAL_PARAM int BACKWARD_PAWN_PENALTY_EG = 11;
 // gating avoids rewarding a pointless rook-on-7th in a bare endgame. Tapered
 // MG/EG (stronger in the endgame), colour-symmetric, Texel-tunable.
 EVAL_PARAM int ROOK_ON_7TH_MG = 20;
-EVAL_PARAM int ROOK_ON_7TH_EG = 24;
+EVAL_PARAM int ROOK_ON_7TH_EG = 22;
 
 // Threats (#9 round 6): bonus per enemy piece attacked by a cheaper / more
 // dangerous attacker — the side to move usually wins material or forces a
@@ -140,16 +140,16 @@ EVAL_PARAM int ROOK_ON_7TH_EG = 24;
 // tunable. Less constrained by quiet data than pawn structure (threats fire
 // less often in quiet positions) — watch the fitted magnitudes for sanity.
 EVAL_PARAM int THREAT_PAWN_ON_MINOR_MG  = 67;
-EVAL_PARAM int THREAT_PAWN_ON_MINOR_EG  = 41;
-EVAL_PARAM int THREAT_PAWN_ON_ROOK_MG   = 79;
-EVAL_PARAM int THREAT_PAWN_ON_ROOK_EG   = 16;
-EVAL_PARAM int THREAT_PAWN_ON_QUEEN_MG  = 67;
-EVAL_PARAM int THREAT_PAWN_ON_QUEEN_EG  = 33;
-EVAL_PARAM int THREAT_MINOR_ON_ROOK_MG  = 48;
+EVAL_PARAM int THREAT_PAWN_ON_MINOR_EG  = 44;
+EVAL_PARAM int THREAT_PAWN_ON_ROOK_MG   = 89;
+EVAL_PARAM int THREAT_PAWN_ON_ROOK_EG   = 12;
+EVAL_PARAM int THREAT_PAWN_ON_QUEEN_MG  = 68;
+EVAL_PARAM int THREAT_PAWN_ON_QUEEN_EG  = 30;
+EVAL_PARAM int THREAT_MINOR_ON_ROOK_MG  = 50;
 EVAL_PARAM int THREAT_MINOR_ON_ROOK_EG  = 30;
-EVAL_PARAM int THREAT_MINOR_ON_QUEEN_MG = 50;
-EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 26;
-EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 76;
+EVAL_PARAM int THREAT_MINOR_ON_QUEEN_MG = 52;
+EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 24;
+EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 79;
 EVAL_PARAM int THREAT_ROOK_ON_QUEEN_EG  = 30;
 
 EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   // mg, Texel-tunable (#9 round 2)
@@ -175,100 +175,100 @@ inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 
 // Per-attacker weight, per king-ring square attacked, indexed by PieceType
 // (None, Pawn, Knight, Bishop, Rook, Queen, King). Heavy pieces weigh more.
-inline constexpr std::array<int, size_t(PieceType::_Count)> KS_ATTACK_WEIGHT = {
-    0,  // None
-    0,  // Pawn  (pawn king-ring pressure folded into shelter, not attack units)
-    2,  // Knight
-    2,  // Bishop
-    3,  // Rook
-    5,  // Queen
-    0   // King
-};
+// #9 round 7: reformulated to be Texel-tunable. The previous design gated on
+// >= 2 distinct attackers, which made the term ZERO on most quiet positions —
+// so the tuner couldn't constrain it and hand-tuning stalled at ~0 Elo (#35
+// Exp 3). The gate is now removed (danger fires on >= 1 attacker, like the
+// MTLChess recipe that scored +116 there), and these weights + the shelter
+// penalty are EVAL_PARAM so the harness fits them. Seeded at the MTLChess
+// values (N/B=2, R=3, Q=5).
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> KS_ATTACK_WEIGHT = { 0, 0, 3, 4, 3, 5, 0 };
 
-// Non-linear danger conversion: danger = min(units*units / DIVISOR, CAP), and
-// only when >= 2 distinct attackers hit the ring (a lone attacker is rarely a
-// real threat — the classic king-safety gate).
-inline constexpr int KS_ATTACK_DIVISOR = 8;
+// Non-linear danger conversion: danger = min(units*units / DIVISOR, CAP),
+// applied whenever ANY enemy piece attacks the king ring (no min-attacker gate
+// — that gate is what made the term untunable). DIVISOR/CAP are fixed structure
+// (only the ratio weight^2/DIVISOR matters, and the weights are tunable, so the
+// tuner has full freedom without a tunable divisor). DIVISOR=4 matches MTLChess.
+inline constexpr int KS_ATTACK_DIVISOR = 4;
 inline constexpr int KS_ATTACK_CAP     = 500;
-inline constexpr int KS_MIN_ATTACKERS  = 2;
 
 // Shelter: penalty per open file on or adjacent to the king's file (no own pawn
-// anywhere on that file). Applied regardless of attacker count.
-inline constexpr int KS_OPEN_FILE_PENALTY = 18;
+// anywhere on that file). Fires very often → aids tunability. Texel-tunable.
+EVAL_PARAM int KS_OPEN_FILE_PENALTY = 21;
 
 // Texel-tuned on Zurichess quiet-labeled (725k pos), #9. rank1 top -> rank8 bottom.
 EVAL_PARAM std::array<int, 64> PAWN_TABLE = {
        0,   0,   0,   0,   0,   0,   0,   0,
-     -13,   2,  -7,  -1,  -1,  28,  37,  -8,
-      -6,  -9,   6,   0,  10,  12,  27,  -2,
-     -13, -12,   7,  18,  21,  10,   0, -19,
-      -9,  11,   7,  23,  25,  18,  13, -18,
-      -7, -23,   4, -14,  43,  77,  24, -17,
-      32,  64,  11,  66,  56,  77, -66,-112,
+     -15,   1,  -5,  -1,   1,  33,  39,  -8,
+      -9,  -9,   6,  -1,  10,  14,  27,  -4,
+     -13, -11,   8,  18,  22,  12,   0, -20,
+      -9,  12,   8,  23,  23,  20,  15, -17,
+      -7, -23,   5, -13,  43,  77,  25, -16,
+      32,  58,  10,  66,  52,  77, -73,-109,
        0,   0,   0,   0,   0,   0,   0,   0,};;
 
 EVAL_PARAM std::array<int, 64> KNIGHT_TABLE = {
-    -107,  -9, -38, -14,   7,  -6,  -7, -14,
-     -17, -31,   6,  19,  23,  26,   1,   1,
-     -21,   2,  16,  25,  32,  31,  33,  -9,
-      -5,  13,  23,  18,  35,  24,  34,   2,
-      -7,  26,  13,  53,  30,  74,  26,  30,
-     -48,  48,  19,  53,  90, 116,  81,  40,
-     -91, -58,  54,  23,  13,  47,   1, -24,
-    -197, -77, -49, -35,  20,-115, -44,-112,};;
+    -110, -10, -38, -14,   8,  -6,  -8, -13,
+     -20, -29,   5,  19,  23,  27,  -2,  -1,
+     -21,   3,  17,  26,  34,  33,  34,  -9,
+      -5,  14,  24,  21,  37,  24,  33,   2,
+      -6,  29,  13,  52,  26,  73,  24,  30,
+     -49,  46,  19,  53,  86, 118,  77,  41,
+     -93, -59,  51,  15,  14,  46,  -4, -26,
+    -194, -83, -49, -36,  22,-120, -44,-112,};;
 
 EVAL_PARAM std::array<int, 64> BISHOP_TABLE = {
-     -20,  11,   4,   6,   9,  -2, -24, -16,
-      20,  30,  26,  15,  24,  25,  47,  13,
-       7,  27,  24,  13,  15,  42,  22,  14,
-       3,  15,  14,  33,  38,   3,  14,  15,
-      -4,  13,  12,  50,  32,  32,  12,   9,
-      -6,  23,  32,  24,  33,  45,  43,  18,
-     -39,  -7, -28, -38,   8,  55,   4, -57,
-     -32, -16,-115, -85, -31, -40, -16,  -1,};;
+     -20,  12,   3,   7,  10,  -3, -22, -14,
+      17,  30,  26,  15,  25,  26,  47,  15,
+       3,  27,  26,  13,  16,  43,  23,  15,
+       3,  17,  13,  37,  39,   5,  14,  16,
+      -3,  14,  11,  50,  32,  32,  12,   8,
+      -3,  26,  31,  24,  33,  49,  40,  17,
+     -37, -11, -30, -45,   4,  55,  -8, -58,
+     -32, -20,-113, -86, -33, -46, -17,   2,};;
 
 EVAL_PARAM std::array<int, 64> ROOK_TABLE = {
-       1,   6,  21,  25,  28,  23, -14,   5,
-     -25,   0,   2,   9,  15,  13,   8, -50,
-     -30, -10,  -3,   0,   5,   7,   7, -15,
-     -29, -14,  -6,   1,  14,   2,  19, -20,
-     -13, -13,   0,  17,  10,  30,   0, -12,
-       1,  17,  15,  19,   4,  27,  54,  10,
-     -17,  -4,  18,  11,  47,  44,   0,   6,
-      31,  22,  26,  32,  33,  11,  22,  20,};;
+       1,   6,  21,  25,  28,  22, -14,   5,
+     -27,   1,   2,   9,  16,  16,   7, -50,
+     -29, -11,  -1,   1,   5,   9,   7, -16,
+     -29, -15,  -6,   2,  14,  -1,  18, -21,
+     -15, -14,   1,  17,  10,  30,  -2, -12,
+       1,  18,  18,  19,   4,  28,  54,  10,
+     -13,  -1,  18,  12,  49,  44,  -1,   3,
+      30,  20,  25,  33,  35,   9,  21,  17,};;
 
 EVAL_PARAM std::array<int, 64> QUEEN_TABLE = {
-      10,  15,  25,  36,   9,  -2,  -7, -39,
-     -16,   1,  20,  22,  29,  28,   5,  21,
-     -10,   7,  -5,  -3,  -5,   4,  13,  10,
-      -8, -37, -13, -26,  -9, -10,  -4,  -5,
-     -38, -36, -38, -38, -20,  -2,  -7,  -5,
-     -15, -22,  -4, -32,  25,  49,  50,  51,
-     -31, -53, -17,   6, -35,  31,  23,  49,
-     -24,  -1,   4,   9,  55,  42,  29,  39,};;
+      12,  17,  28,  38,  13,  -2,  -5, -36,
+     -15,   4,  21,  24,  32,  31,   9,  26,
+     -10,  11,  -4,  -1,  -2,   5,  14,   8,
+      -4, -37, -11, -25, -10, -13,  -7,  -7,
+     -33, -31, -39, -47, -27, -14, -15, -17,
+     -11, -21,  -4, -44,   6,  18,  17,  21,
+     -29, -52, -21,   5, -54,  18,   7,  37,
+     -26,  -4,   1, -11,  47,  40,  28,  38,};;
 
 // VICE Part 82: King position evaluation tables
 // KingO[64] - Opening/middlegame king table (encourages castling and back rank safety)
 EVAL_PARAM std::array<int, 64> KING_TABLE = {
-     -34,  30,   8, -91, -15, -55,  26,   6,
-     -17,  -6, -32, -94, -74, -50, -11,   0,
-     -31, -27, -38, -62, -73, -57, -37, -54,
-     -86, -20, -58, -86, -86, -61, -65,-106,
-     -52,  -5, -24, -63, -67, -30,  17, -77,
-      29,  32,  28,  -5,   1,  73, 121,  -9,
-      48,  39,  15,  69,  10,  25, -11, -61,
-     -38,  65,  76,   9, -32, -13,  13,   0,};;
+     -34,  30,   8, -88, -15, -55,  26,   6,
+     -18,  -6, -32, -93, -68, -50,  -5,   0,
+     -34, -22, -36, -60, -73, -56, -37, -54,
+     -86,  -8, -58, -86, -86, -61, -65,-109,
+     -48,  -6, -24, -63, -67, -30,  17, -80,
+      31,  32,  29,  -4,   4,  73, 121, -15,
+      48,  41,  14,  74,   8,  23, -14, -68,
+     -48,  71,  81,  17, -30, -14,  12,   2,};;
 
 // KingE[64] - Endgame king table (encourages centralization)
 EVAL_PARAM std::array<int, 64> KING_TABLE_ENDGAME = {
-     -60, -38, -16,  12, -15,   6, -35, -61,
-     -24,  -2,  24,  39,  38,  27,   7, -21,
-     -13,  12,  30,  43,  48,  37,  23,   1,
-      -5,  13,  43,  52,  54,  44,  29,   7,
-       2,  34,  42,  51,  49,  51,  36,  17,
-       8,  27,  31,  26,  28,  50,  38,  17,
-     -18,  19,  20,  15,  26,  47,  34,  20,
-     -90, -43, -27, -18,  -3,  19,   9, -21,};;
+     -61, -41, -16,  11, -15,   6, -35, -61,
+     -26,  -2,  24,  39,  38,  28,   4, -21,
+     -16,  11,  30,  43,  49,  38,  23,   1,
+      -6,   9,  43,  52,  56,  45,  29,   7,
+      -1,  35,  42,  53,  49,  51,  36,  16,
+       3,  28,  31,  26,  28,  50,  39,  16,
+     -23,  18,  21,  16,  28,  48,  37,  20,
+     -91, -47, -28, -21,  -2,  18,   8, -24,};;
 
 // Endgame PSTs for the non-king pieces (#9 round 2 — tapered PSTs). Initialized
 // as copies of the MG tables, so the eval is byte-identical to baseline-t11
@@ -276,51 +276,51 @@ EVAL_PARAM std::array<int, 64> KING_TABLE_ENDGAME = {
 // accumulator (search.cpp); the king already has MG + EG tables above.
 EVAL_PARAM std::array<int, 64> PAWN_TABLE_EG   = {
        0,   0,   0,   0,   0,   0,   0,   0,
-      20,   8,  18,   9,  17,  10,  -2,  -5,
-       8,  10,   1,   9,   6,   2,  -6,  -4,
-      20,  14,   1,  -6,  -4,  -4,   1,   4,
-      35,  19,   7, -11,  -7,  -1,   8,  16,
-      72,  69,  43,  12,  -8,   3,  38,  53,
-     156, 135, 115,  76,  85,  81, 137, 179,
+      20,  12,  18,   9,  17,   6,  -2,  -1,
+      10,  10,   0,   6,   6,   0,  -9,  -4,
+      20,  14,   1,  -6,  -5,  -4,  -1,   4,
+      34,  17,   7, -11,  -7,  -2,   8,  16,
+      73,  70,  42,  10, -10,   2,  37,  53,
+     158, 136, 115,  80,  87,  80, 138, 179,
        0,   0,   0,   0,   0,   0,   0,   0,};;
 EVAL_PARAM std::array<int, 64> KNIGHT_TABLE_EG = {
-      12, -27,   4,  14,   3,   7, -20, -43,
-     -10,   3,  14,  13,  16,   3,   4, -29,
-       4,  21,  17,  36,  30,  12,   3,   2,
-      11,  20,  40,  50,  38,  42,  32,   8,
-      11,  28,  49,  44,  47,  29,  33,   8,
-       2,   4,  33,  25,   8,   6,  -6, -23,
-       3,  23,  -8,  21,  11, -11,  -4, -28,
-     -25, -20,  10, -11,  -5,  -7, -43, -79,};;
+      13, -25,   4,  15,   2,   4, -19, -43,
+     -10,   3,  14,  13,  16,   4,   5, -26,
+       4,  21,  19,  36,  31,  12,   3,   4,
+      11,  20,  41,  48,  38,  43,  33,   7,
+      11,  28,  49,  44,  46,  29,  33,   8,
+       1,   4,  32,  23,   7,   2,  -6, -25,
+       3,  23,  -8,  20,  11, -12,  -4, -29,
+     -25, -20,  10, -10,  -5,  -8, -44, -77,};;
 EVAL_PARAM std::array<int, 64> BISHOP_TABLE_EG = {
-      -2,  13,   2,  12,  10,   6,  15,   6,
-       2,  -1,   6,  14,  13,  13,   1, -16,
-       8,  12,  24,  26,  31,  11,  14,   4,
-      10,  16,  28,  30,  18,  25,  13,   9,
-      16,  24,  26,  22,  25,  23,  16,  18,
-      18,  12,  14,  12,  10,  16,  18,  15,
-      15,  14,  23,   8,  11,   2,  11,   7,
-      -2,  -5,  15,  15,  13,   6,   3, -12,};;
+      -1,  12,   2,  13,  12,   6,  16,   5,
+       2,  -2,   6,  14,  13,  12,   1, -15,
+       8,  13,  24,  26,  31,  11,  14,   3,
+      10,  16,  28,  28,  18,  25,  13,   8,
+      17,  23,  27,  22,  26,  22,  15,  18,
+      16,  13,  14,  11,  10,  12,  15,  13,
+      16,  18,  22,   9,  12,   3,  12,   6,
+       0,  -1,  16,  16,  13,   7,   2, -10,};;
 EVAL_PARAM std::array<int, 64> ROOK_TABLE_EG   = {
-       7,  10,   8,   7,   1,   7,  10, -13,
-      11,   5,   7,  10,   1,   7,  -2,  17,
-      15,  13,   5,   6,   3,   3,   5,   0,
-      25,  23,  21,  14,   7,  11,   5,  12,
-      23,  21,  27,  13,  14,  18,  14,  25,
-      22,  20,  16,  15,  15,  13,  10,  13,
-      18,  14,   9,   9, -12,   5,  16,  16,
-      21,  20,  20,  18,  20,  23,  19,  20,};;
+       7,  10,   8,   7,   1,   3,  10, -13,
+      13,   5,   7,  10,   1,   3,  -3,  17,
+      15,  16,   5,   6,   3,   3,   5,   0,
+      24,  23,  22,  14,   7,  10,   4,  15,
+      24,  21,  28,  12,  13,  18,  15,  23,
+      22,  20,  16,  15,  15,  10,   8,  13,
+      18,  14,   9,   9, -14,   4,  17,  16,
+      21,  19,  18,  18,  17,  22,  18,  20,};;
 EVAL_PARAM std::array<int, 64> QUEEN_TABLE_EG  = {
-     -41, -61, -55, -68, -24, -42, -34, -48,
-     -24, -31, -42, -41, -41, -34, -45, -28,
-     -13, -44,  -4,  -8,  -2,   6,   9,   6,
-     -21,  27,   3,  46,  14,  24,  36,  25,
-       9,  18,  25,  41,  53,  38,  62,  44,
-     -22,  -5, -10,  60,  38,  33,  23,  17,
-     -20,  16,  22,  25,  56,  26,  24,  12,
-     -23,  14,  18,  15,  17,  20,   8,  26,};;
+     -40, -61, -53, -68, -24, -40, -32, -46,
+     -24, -31, -42, -41, -41, -34, -45, -27,
+     -13, -44,  -4,  -9,   2,   6,  10,   8,
+     -19,  35,   5,  46,  16,  24,  34,  23,
+      15,  21,  27,  42,  53,  38,  61,  44,
+     -22,  -1, -10,  59,  38,  33,  23,  12,
+     -19,  16,  22,  23,  56,  25,  24,  -5,
+     -22,  14,  16,  15,   1,   2,  -8,  12,};;
 
-EVAL_PARAM std::array<int, 8> PASSED_PAWN_BONUS = { 0, 3, 5, 21, 44, 89, 104, 200 };
+EVAL_PARAM std::array<int, 8> PASSED_PAWN_BONUS = { 0, 2, 5, 21, 45, 89, 104, 200 };
 
 // VICE Part 77: Evaluation masks for pawn structure analysis (2:00)
 // These bitboards help identify passed pawns and isolated pawns

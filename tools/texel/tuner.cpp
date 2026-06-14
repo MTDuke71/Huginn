@@ -155,6 +155,12 @@ std::vector<int*> collect_params() {
     p.push_back(&Huginn::EvalParams::THREAT_MINOR_ON_QUEEN_EG);
     p.push_back(&Huginn::EvalParams::THREAT_ROOK_ON_QUEEN_MG);
     p.push_back(&Huginn::EvalParams::THREAT_ROOK_ON_QUEEN_EG);
+    // #9 round 7: king-safety attacker weights (Knight..Queen) + open-file
+    // shelter. Now tunable since the >=2-attacker gate was removed (the term
+    // fires on quiet positions). MG-only in the eval, so no EG counterpart.
+    for (int pt = int(PieceType::Knight); pt <= int(PieceType::Queen); ++pt)
+        p.push_back(&Huginn::EvalParams::KS_ATTACK_WEIGHT[size_t(pt)]);
+    p.push_back(&Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
     return p;
 }
 
@@ -263,6 +269,12 @@ void dump_results() {
     std::printf("THREAT_MINOR_ON_QUEEN_EG = %d;\n", Huginn::EvalParams::THREAT_MINOR_ON_QUEEN_EG);
     std::printf("THREAT_ROOK_ON_QUEEN_MG = %d;\n",  Huginn::EvalParams::THREAT_ROOK_ON_QUEEN_MG);
     std::printf("THREAT_ROOK_ON_QUEEN_EG = %d;\n",  Huginn::EvalParams::THREAT_ROOK_ON_QUEEN_EG);
+    std::printf("KS_ATTACK_WEIGHT = { %d, %d, %d, %d, %d, %d, %d };\n",
+        Huginn::EvalParams::KS_ATTACK_WEIGHT[0], Huginn::EvalParams::KS_ATTACK_WEIGHT[1],
+        Huginn::EvalParams::KS_ATTACK_WEIGHT[2], Huginn::EvalParams::KS_ATTACK_WEIGHT[3],
+        Huginn::EvalParams::KS_ATTACK_WEIGHT[4], Huginn::EvalParams::KS_ATTACK_WEIGHT[5],
+        Huginn::EvalParams::KS_ATTACK_WEIGHT[6]);
+    std::printf("KS_OPEN_FILE_PENALTY = %d;\n", Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
     std::printf("=====================================================\n");
 }
 

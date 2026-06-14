@@ -141,8 +141,8 @@ static inline int game_phase_256(const Position& pos) {
 
 #if ENABLE_KING_SAFETY
 // King-safety MG score, white-positive (#35 Experiment 3). For each side,
-// computes a "danger" = non-linear multi-attacker pressure on the king ring
-// (gated on >= KS_MIN_ATTACKERS distinct attackers) plus an open-file shelter
+// computes a "danger" = non-linear attacker pressure on the king ring
+// (fires on >= 1 attacker; #9 round 7 removed the old gate) plus an open-file shelter
 // penalty, then returns Black's danger minus White's (White gains when Black's
 // king is unsafe). The caller adds this to the MG accumulator ONLY, so the
 // tapered blend fades it to zero in the endgame. Fully colour-symmetric (ring
@@ -157,27 +157,28 @@ static int king_safety_white_mg(const Position& pos) {
         const uint64_t zone = king_attacks[ksq] | (1ULL << ksq);
         const auto& ep = pos.piece_bitboards[int(them)];
 
-        int units = 0, attackers = 0;
+        int units = 0;
         uint64_t bb;
 
         bb = ep[int(PieceType::Knight)];
         while (bb) { int s = pop_lsb(bb); int h = popcount(knight_attacks[s] & zone);
-            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Knight)] * h; } }
+            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Knight)] * h; }
         bb = ep[int(PieceType::Bishop)];
         while (bb) { int s = pop_lsb(bb); int h = popcount(bishop_attacks(s, occ) & zone);
-            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Bishop)] * h; } }
+            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Bishop)] * h; }
         bb = ep[int(PieceType::Rook)];
         while (bb) { int s = pop_lsb(bb); int h = popcount(rook_attacks(s, occ) & zone);
-            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Rook)] * h; } }
+            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Rook)] * h; }
         bb = ep[int(PieceType::Queen)];
         while (bb) { int s = pop_lsb(bb); int h = popcount(queen_attacks(s, occ) & zone);
-            if (h) { ++attackers; units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Queen)] * h; } }
+            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Queen)] * h; }
 
-        int danger = 0;
-        if (attackers >= EvalParams::KS_MIN_ATTACKERS) {
-            danger = units * units / EvalParams::KS_ATTACK_DIVISOR;
-            if (danger > EvalParams::KS_ATTACK_CAP) danger = EvalParams::KS_ATTACK_CAP;
-        }
+        // No min-attacker gate (#9 round 7): danger fires whenever units > 0.
+        // The square still concentrates danger on heavy / multi-piece attacks,
+        // but the term is now non-zero on most middlegame positions so the
+        // Texel tuner can constrain the weights.
+        int danger = units * units / EvalParams::KS_ATTACK_DIVISOR;
+        if (danger > EvalParams::KS_ATTACK_CAP) danger = EvalParams::KS_ATTACK_CAP;
 
         // Shelter: open files on/adjacent to the king's file (no own pawn).
         const uint64_t own_pawns = pos.piece_bitboards[int(c)][int(PieceType::Pawn)];
