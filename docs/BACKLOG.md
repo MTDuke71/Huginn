@@ -38,7 +38,8 @@
 | 32 | PEXT slider attacks (build-gated, fallback to magic) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen (SF `blockersForKing`) | **OPEN** | speed/research | low |
 | 35 | Tapered eval + eval-gap closure vs Fruit 2.1 | **IN-PROGRESS** | feature/eval | high |
-| 36 | Illegal move in displayed PV (TT-walk collision) | **OPEN** | bug | low |
+| 36 | Illegal move in displayed PV (TT-walk collision) | **CLOSED** (2026-06-13) — PV capped at depth + TT-walk moves validated vs legal list | bug | low |
+| 37 | Engine emitted illegal bestmove (board desync) — guarded | **GUARDED** (2026-06-13) — UCI-boundary legality guard prevents forfeits; root cause OPEN (needs repro) | bug | high |
 
 **Status Legend:**
 - **CLOSED**: Completed and shipped (or documented closure reason)
@@ -1581,11 +1582,24 @@ W-king-attacked −10, open-file −19; tapers with phase).
   gauntlet sweeps. Material + KS kept ENABLED in-tree as the tuning targets;
   **baseline stays t10** until the tuner produces a two-machine-confirmed gain.
 
-### #36: Illegal move in displayed PV (TT-walk collision) — cosmetic
+### #36: Illegal move in displayed PV (TT-walk collision) — CLOSED
 
-- status: **OPEN** (logged 2026-06-03)
+- status: **CLOSED (2026-06-13).** Two-part fix in the PV-display block
+  ([search.cpp](../src/search.cpp)): (1) the displayed PV is now capped at the
+  searched depth (`pv_cap = min(PV_DISPLAY_CAP, current_depth)`), so it never
+  runs past the verified line; (2) the TT-walk extension now validates each
+  raw TT move against the position's generated move list (membership in
+  `generate_all_moves`) before applying it, replacing the weak
+  from-square-colour check that let collided moves through. Pure display change
+  — no search/Elo impact. 197/197 tests pass; verified PV length never exceeds
+  depth on the out-of-book endgame position.
 - priority: low — cosmetic (display only; `bestmove` is always legal)
 - type: bug
+
+> NOTE: #36 is the *cosmetic* case (illegal move in the PV **tail**, beyond
+> depth, `bestmove` still legal). The separate, severe case where `bestmove`
+> **itself** is illegal — a board desync that corrupts the root position — is
+> tracked as **#37** and guarded at the UCI boundary.
 
 **Symptom.** fastchess occasionally logs `Warning; Illegal PV move - move <m>
 from Huginn_tXX` (~1 per few hundred games at 10+0.1). Seen on baseline-t10
@@ -1622,6 +1636,49 @@ move, validate it against the position's generated legal moves (generate moves,
 confirm `tt_move` is present) instead of the weak from-square-colour check.
 Pure display change (no search/Elo impact), but it rebuilds the binary — don't
 do it mid-SPRT; batch with the next baseline build.
+
+### #37: Engine emitted illegal bestmove (board desync) — GUARDED, root cause open
+
+- status: **GUARDED (2026-06-13).** A UCI-boundary legality guard now prevents
+  the forfeit; the underlying corruption is still **OPEN** pending a
+  deterministic repro.
+- priority: high — game-losing when it fires (fastchess forfeits on an illegal
+  move), though rare (~1 per few hundred games at 10+0.1).
+- type: bug
+
+**Symptom.** During round-6 (threats) vs t14 on Intel, fastchess logged
+`Warning; Illegal move b2b4 played by Huginn_current` and forfeited the game.
+`b2b4` was the engine's `bestmove`, and it appeared as PV[0] at every depth.
+
+**Diagnosis.** The real position was `8/8/8/1pQ5/8/7P/1p3PPK/1k6 w` — b2 holds a
+**black** pawn. The engine internally had a **phantom white pawn on b2**:
+`generate_all_moves` emitted `b2b4` and `MakeMove` accepted it at the root
+([search.cpp:2147](../src/search.cpp#L2147)), so the PV/bestmove faithfully
+reported a corrupted board. This is distinct from #36 (which is a *display*-only
+TT-walk-tail collision) — here the root `pos` itself is corrupt, so the
+*returned* move is illegal.
+
+**Reproduction status — could not reproduce deterministically.** Cold search on
+the exact position, warm-TT re-search, and a faithful game replay (movetime)
+all return the legal `c5b5`. It only manifested under real 10+0.1 time pressure
+(a specific clock-interrupt node), i.e. it's a rare, **time-dependent
+make/unmake imbalance** that leaves `pos` with one phantom move. Audited every
+make/unmake site (root, main loop, null-move, quiescence, IID, PV-walk) and the
+`MakeMove`/`TakeMove`/`MakeNullMove`/`TakeNullMove` primitives — all balanced on
+inspection (incl. the illegal-move self-undo and promotion-colour logic). The
+leak is real but not localizable without a live repro.
+
+**Guard (shipped).** [uci.cpp `search_best_move`](../src/uci.cpp): snapshot the
+clean pre-search position, validate the returned move against a freshly
+generated legal move list, and if it's illegal → substitute a legal move (never
+forfeit), restore the clean board, and **log the exact FEN + offending move**.
+The diagnostic is the key to root-causing: the next time it fires in a gauntlet
+we capture a deterministic repro (FEN + the bad move + that it was time-driven).
+
+**Next step for root cause.** Run an instrumented debug build with a per-node
+board-integrity assertion (bitboard self-consistency + `at_sq64` agreement)
+over a few hundred self-play games until it trips, then bisect the offending
+make/unmake from the captured FEN/move.
 
 ### #19: Two-machine gauntlet workflow + SPRT
 

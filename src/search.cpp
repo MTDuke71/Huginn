@@ -2213,7 +2213,14 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // stops at the first position that revisits a prior game position or
         // one earlier in the line (GUI validators reject repeating tails).
         // One make/unmake walk paid once per depth, not per node.
-        constexpr int PV_DISPLAY_CAP = 32;  // deeper than Huginn ever reaches
+        constexpr int PV_DISPLAY_CAP = 32;  // array bound (deeper than Huginn ever reaches)
+        // BACKLOG #36: never display a PV longer than the depth actually
+        // searched. The triangular prefix is search-truth (length <= depth);
+        // the TT-walk extension below recovers a full-length line when the
+        // triangular array truncates via a TT cutoff, but must not run past the
+        // searched depth — that tail is unverified, and a collision there used
+        // to print bogus moves and an over-long PV.
+        const int pv_cap = std::min(PV_DISPLAY_CAP, current_depth);
         S_MOVE display_pv[PV_DISPLAY_CAP];
         int pv_moves = 0;
         {
@@ -2243,7 +2250,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             // Phase 1 — triangular PV prefix (search-truth, definitely legal).
             const S_MOVE* tri_pv = info.pv_line[0];
             const int tri_len = info.pv_length[0];
-            for (int i = 0; i < tri_len && pv_moves < PV_DISPLAY_CAP; ++i) {
+            for (int i = 0; i < tri_len && pv_moves < pv_cap; ++i) {
                 if (pos.MakeMove(tri_pv[i]) != 1) { stop = true; break; }
                 ++made;
                 display_pv[pv_moves++] = tri_pv[i];
@@ -2258,7 +2265,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             // before calling MakeMove, since a TT collision can hand back a
             // move whose from-square is empty or wrong-coloured in the current
             // position. MakeMove != 1 then catches king-in-check cases.
-            while (!stop && pv_moves < PV_DISPLAY_CAP) {
+            while (!stop && pv_moves < pv_cap) {
                 int tt_score;
                 uint8_t tt_depth, tt_type;
                 uint32_t tt_move_raw;
@@ -2272,8 +2279,21 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                 const int from = tt_move.get_from();
                 const int to = tt_move.get_to();
                 if (from < 0 || from >= 64 || to < 0 || to >= 64) break;
-                const Piece p = pos.at_sq64(from);
-                if (p == Piece::None || color_of(p) != pos.side_to_move) break;
+
+                // BACKLOG #36: validate the raw TT move against this position's
+                // generated moves before applying it. A hash collision can hand
+                // back a move that belongs to a *different* position but happens
+                // to have a correctly-coloured from-square — the old check
+                // trusted that and let a bogus move into the displayed PV.
+                // Requiring membership in the pseudo-legal list (then MakeMove
+                // for king safety) makes every displayed move genuinely legal.
+                S_MOVELIST walk_moves;
+                generate_all_moves(pos, walk_moves);
+                bool tt_move_legal = false;
+                for (int wi = 0; wi < walk_moves.count; ++wi) {
+                    if (walk_moves.moves[wi].move == tt_move.move) { tt_move_legal = true; break; }
+                }
+                if (!tt_move_legal) break;
 
                 if (pos.MakeMove(tt_move) != 1) break;
                 ++made;
