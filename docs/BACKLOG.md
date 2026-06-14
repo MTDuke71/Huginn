@@ -14,14 +14,18 @@
   = 94.4%**, both LOS 100%. That's the full stack since the 2.0 stamp
   (2026-04-26): magic bitboards, TT-bound fix, pure-bitboard rewrite, tapered
   eval, the Texel program (t10→t15), threats, and the illegal-move guard.
-- **Baseline:** `baseline-t15 = cdcd31f` — round-6 threats (+54.2 ± 14.9 Elo
-  pooled vs t14: AMD +50.26 / Intel +58.95, both LOS 100%) **plus the #37
-  illegal-bestmove guard + #36 PV-display fix**. The largest eval-*term* ship
-  of the program. Per-machine build from the tag; `huginn_t15.exe` snapshotted.
+- **Baseline:** `baseline-t16 = 533d0b9` — round-7 **king safety** (#2/#41):
+  reformulated tunable (gate removed → fires on quiet positions; weights moved
+  under the tuner), MSE 0.05732→0.05717. **+10.1 Elo pooled 2000g vs t15** [AMD
+  +20.52@1000g LOS 99.6% / Intel −0.35 neutral] — AMD-strong, Intel
+  non-regressive; the **first king-safety ship in the program's history**.
+  Per-machine build from the tag; `huginn_t16.exe` snapshotted. Prior:
+  `baseline-t15 = cdcd31f` (round-6 threats, +54.2 pooled; + #37 guard + #36 fix).
 - **Architecture:** pure bitboard; magic-bitboard sliders; tapered eval
-  (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats.
-  ~3.55 Mnps single-thread.
-- **Active thread:** the **#9 / #35 eval program** — round 7 is next.
+  (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats/
+  **king safety**. ~3.55 Mnps single-thread.
+- **Active thread:** the **#9 / #35 eval program** — round 8 is next (threats
+  round 2 or safe mobility, per the #41 roadmap).
 - **Direction (2026-06-13): push pure HCE as far as it goes before reaching for
   multithreading or NNUE.** The +490 over 2.0 was mostly foundational repair
   (structural bugs, a never-tuned eval) and won't recur — but pure-HCE engines
@@ -36,7 +40,7 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t15 shipped; round 7 next | feature/eval | high |
+| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped (t16 = king safety, #2); round 8 next | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
@@ -62,11 +66,16 @@ the 725k Zurichess quiet-labeled corpus. Shipped ladder:
 - t13: connected + backward pawns (+18.9 pooled vs t12)
 - t14: rook-on-7th (sign-split +6.6, shipped as a logged exception)
 - t15: **threats** (+54.2 pooled vs t14 — largest eval-term ship)
+- t16: **king safety** (+10.1 pooled vs t15 [AMD +20.5 LOS 99.6% / Intel −0.35] —
+  first KS ship; converted far above its MSE drop)
 
 Method note (learned across rounds): **new-feature MSE converts to Elo better
 than re-fit MSE** (re-fitting existing terms hit a floor at round 3, flat);
-SPRT decides every round. Full round-by-round detail in the archive
-(PRODUCTION TUNE 1–6).
+SPRT decides every round. **King safety (t16) is the exception that proves a
+corollary: quiet-corpus MSE UNDER-states terms that pay in sharp positions** —
+KS's tiny −0.00014 MSE drop converted to +20 on AMD, because king danger matters
+most in the attacking positions a quiet-labeled corpus excludes. Full
+round-by-round detail in the archive (PRODUCTION TUNE 1–6).
 
 **HCE roadmap (round 7+).** Remaining hand-crafted-eval levers. Add a new term →
 wire it into `collect_params()` → tune → bake → two-machine SPRT. Each is its
@@ -79,21 +88,27 @@ study found Huginn's gap is *positional move-selection in balanced middlegames*
 king-safety/threats shaped hole. Outposts stays the lowest-risk warm-up, but KS
 is the bigger lever.
 
-- **King safety, reformulated for the tuner** *(marquee — the #41 data-backed #1
-  target)* —
-  #2 is now unblocked (tapered base). The in-tree term is neutral and was
-  *excluded* from tuning because the ≥2-attacker non-linear gate fires too
-  rarely in quiet positions to constrain. Reformulate it more continuously
-  (per-attacker-linear + shelter + safe-checks) so it fires often enough to
-  Texel-fit. Highest ceiling (~+30–60 if cracked), highest tuning risk.
-  - **Round-7 result (`533d0b9`, gate removed + Texel-fit) — Intel leg vs t15:
-    −0.35 ± 14.1 Elo, 49.95%** (W238/L239/D523, 1000g to cap, LLR −0.46
-    inconclusive), Ptnml [24,123,203,130,20]. PGN
-    `gauntlet/huginn_vs_t15_ks_intel.pgn`. Dead-neutral on Intel; **AMD leg
-    positive** → a **keeper** on two-machine agreement (positive AMD +
-    non-regressive Intel). AMD box pools + freezes t16. First eval term to
-    *not* clearly clear the bar on both boxes — the #41 KS lever paid on AMD but
-    is ≈0 on Intel, consistent with KS being position/style sensitive.
+- **King safety, reformulated for the tuner** *(SHIPPED → baseline-t16, `533d0b9`)* —
+  #2 was unblocked by the tapered base. The in-tree term was neutral and
+  *excluded* from tuning because the ≥2-attacker non-linear gate fired too
+  rarely in quiet positions to constrain. **Fix: removed the gate (fires on ≥1
+  attacker, MTLChess units²/4 shape, MG-only), made the attacker weights +
+  open-file shelter EVAL_PARAM.** The tuner then *moved* them off their seeds
+  (N 2→3, B 2→4, shelter 18→21) = genuinely tunable at last.
+  - **Round-7 SPRT vs t15 (533d0b9): SHIPPED, pooled +10.1 Elo / 2000g.**
+    AMD: **+20.52 ± 15.17, LOS 99.61%** (W282/L223/D495, Ptnml [23,112,187,139,39]).
+    Intel: **−0.35 ± 14.1, 49.95%** (W238/L239/D523, Ptnml [24,123,203,130,20],
+    `gauntlet/huginn_vs_t15_ks_intel.pgn`). Pooled W520/L462/D1018 = 51.45%,
+    Ptnml [47,235,390,269,59].
+  - **AMD-strong / Intel-neutral — a keeper, the first king-safety ship ever.**
+    Not a clean same-sign decisive (Intel ≈0, not positive), but milder than the
+    t14 rook-on-7th exception (there Intel was −4.5): Intel here is non-regressive
+    and AMD is much stronger (+20.5/LOS 99.6%). Converted **far above its MSE
+    drop** (−0.00014) → confirms quiet-corpus MSE under-states KS.
+  - **Round-8 hooks:** (a) re-run the #41 harness on t16 to confirm KS shrank the
+    middlegame over-rating / recovered the king-attack bucket (~40% of blunders);
+    (b) the Intel-neutrality leaves headroom — safe-checks / a king-danger table
+    are natural KS extensions if a later round wants more.
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
 - **Mobility refinement (safe mobility)** — currently flat square-count × weight;

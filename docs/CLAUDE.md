@@ -13,7 +13,18 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t15 = cdcd31f` (= t14 + BACKLOG #9 round 6:
+- ✅ **Baseline tag**: `baseline-t16 = 533d0b9` (= t15 + BACKLOG #9 round 7 / #2:
+  **king safety, finally converted** — reformulated the in-tree term to be
+  Texel-tunable (removed the ≥2-attacker gate that made it zero on quiet
+  positions and stalled hand-tuning at ~0 Elo; MTLChess-recipe king-zone units²/4,
+  MG-only; weights + shelter now EVAL_PARAM). The KS weights moved off their seeds
+  under tuning (N 2→3, B 2→4, shelter 18→21) = genuinely tunable at last; full
+  829-param tune, MSE 0.05732→0.05717. **+10.1 Elo pooled 2000g vs t15** [AMD
+  +20.52@1000g LOS 99.6% / Intel −0.35@1000g neutral] — AMD-strong, Intel
+  non-regressive; the first king-safety ship in the program's history (the #41
+  calibration study had pegged KS as the #1 lever). Converted far above its MSE
+  drop — quiet-corpus MSE under-states KS. Prior: `baseline-t15 = cdcd31f`
+  (= t14 + BACKLOG #9 round 6:
   NEW feature — threats (bonus per enemy piece attacked by a cheaper/more-
   dangerous attacker, by attacker→target class, tapered); full 824-param tune
   on the 725k corpus, MSE 0.05799→0.05732 (strongest new-term signal since the
