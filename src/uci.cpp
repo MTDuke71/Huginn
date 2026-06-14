@@ -208,7 +208,7 @@ void UCIInterface::run() {
  * for engine selection and tournament management.
  */
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 2.0" << std::endl;
+    std::cout << "id name Huginn 2.1" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
