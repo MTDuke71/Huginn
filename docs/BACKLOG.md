@@ -41,7 +41,7 @@
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
-| 17 | Aspiration-window widening on score swings | **OPEN** | feature | medium |
+| 17 | Aspiration-window widening on score swings | **OPEN** — round-7 search track (MTLChess comparison) | feature | high |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -145,6 +145,45 @@ mobility (the Queen cluster) → outposts (the Knight cluster; low-risk warm-up)
 Passed-pawn / drawishness drop in priority. See the round-7+ roadmap under
 #9/#35. **Validation hook:** a shipped KS term should measurably shrink the
 middlegame over-rating — re-run the harness on a larger game set to confirm.
+
+### MTLChess v0.6 source comparison (2026-06-14) — adds a *search* track to #41
+
+Read MTLChess v0.6's `search.zig` + `eval.zig` as an answer key (it's the same
+author/tooling, magic-bitboard-native, and sits ~+500 above 2.1; round-robin
+#5). It reframes round 7.
+
+- **Their eval is *simpler* than Huginn's — and still wins.** MTLChess v0.6 =
+  material + tapered PST + king safety. **No mobility, no pawn structure, no
+  bishop pair, no rook-on-file, no threats, no outposts**, all hand-tuned. So
+  eval *breadth* is decisively not the gap → **demote outposts / more pawn terms
+  further** (corroborates #41 dropping passed-pawn/drawishness).
+- **King safety converges as the #1 eval lever** (both #41's middlegame
+  over-optimism *and* MTLChess's +116 v0.6 jump). Their recipe is dead simple and
+  directly portable: king-zone = king + 8 neighbours; sum attacker hits ×
+  weight (N/B=2, R=3, Q=5); penalty = `min(units²/4, 500)`, **MG-only, no
+  shelter / no safe-checks**. Simpler than Huginn's stalled hand-tuned attempts —
+  start by porting this, then optionally extend.
+- **NEW — the search track attacks #41's 73% "depth, not eval" share.** #41 found
+  most misses are Huginn out-searched (d11 vs d22) and called it non-HCE; it *is*
+  a search target. MTLChess has two depth-buying levers Huginn lacks:
+  - **Aspiration windows (#17)** — ±50cp window, geometric (×2) widening on
+    fail. Huginn re-searches the full width every iteration. Low-risk, no tuning.
+  - **SEE-based capture ordering (#6, parked)** — good captures (SEE≥0) score
+    *above* killers, **bad captures (SEE<0) below quiets**. Huginn orders by
+    MVV-LVA, so it tries losing captures early → wasted nodes. (Their parked #6
+    was "lazy SEE"; this is the full good/bad split.) They also fixed a SEE loop
+    bug — audit Huginn's SEE for correctness while there.
+  - These won't reach d22, but they narrow the Huginn-vs-MTLChess search gap and
+    lift the share eval can't touch.
+- **Pruning audit:** MTLChess prunes *less* — null R=2/3 (depth-scaled) vs
+  Huginn's **R=4**, and **no** futility/razoring/IID/counter-move. Huginn's
+  heavier stack at R=4 may over-prune / leak tactics. Worth checking a sound-lean
+  config against the current one.
+
+**Revised round 7: run two tracks in parallel.** Eval: **king safety** (port the
+MTLChess recipe) — agreed #1 from both studies. Search: **aspiration windows
+(#17) → SEE capture ordering (#6, unpark)** — addresses the larger (73%) depth
+share #41 measured. Both are higher-leverage than any further eval-breadth term.
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
