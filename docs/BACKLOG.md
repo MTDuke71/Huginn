@@ -86,6 +86,14 @@ is the bigger lever.
   rarely in quiet positions to constrain. Reformulate it more continuously
   (per-attacker-linear + shelter + safe-checks) so it fires often enough to
   Texel-fit. Highest ceiling (~+30–60 if cracked), highest tuning risk.
+  - **Round-7 result (`533d0b9`, gate removed + Texel-fit) — Intel leg vs t15:
+    −0.35 ± 14.1 Elo, 49.95%** (W238/L239/D523, 1000g to cap, LLR −0.46
+    inconclusive), Ptnml [24,123,203,130,20]. PGN
+    `gauntlet/huginn_vs_t15_ks_intel.pgn`. Dead-neutral on Intel; **AMD leg
+    positive** → a **keeper** on two-machine agreement (positive AMD +
+    non-regressive Intel). AMD box pools + freezes t16. First eval term to
+    *not* clearly clear the bar on both boxes — the #41 KS lever paid on AMD but
+    is ≈0 on Intel, consistent with KS being position/style sensitive.
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
 - **Mobility refinement (safe mobility)** — currently flat square-count × weight;
