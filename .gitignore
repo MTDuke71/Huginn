@@ -109,3 +109,5 @@ tools/texel/fens*.txt
 # Large raw training datasets dropped into test/ (Zurichess EPD, game dumps).
 test/quiet-labeled.epd.txt
 test/*.epd.txt
+# Played-game calibration output (#41) — large, regenerable via run_cc_analysis.bat.
+tools/cc_analysis*.csv
