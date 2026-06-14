@@ -8,6 +8,12 @@
 
 ## Current state (2026-06-13)
 
+- **Release: Huginn 2.1** (`v2.1`) = baseline-t15 content. **~+490 Elo over
+  Huginn 2.0** — pooled two-machine advertising gauntlet (10+0.1, no book,
+  600 games): Intel +517.7 ± 70 / AMD +468.0 ± 54, combined **536W / 3L / 61D
+  = 94.4%**, both LOS 100%. That's the full stack since the 2.0 stamp
+  (2026-04-26): magic bitboards, TT-bound fix, pure-bitboard rewrite, tapered
+  eval, the Texel program (t10→t15), threats, and the illegal-move guard.
 - **Baseline:** `baseline-t15 = cdcd31f` — round-6 threats (+54.2 ± 14.9 Elo
   pooled vs t14: AMD +50.26 / Intel +58.95, both LOS 100%) **plus the #37
   illegal-bestmove guard + #36 PV-display fix**. The largest eval-*term* ship

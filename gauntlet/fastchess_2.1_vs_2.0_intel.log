@@ -1,0 +1,264 @@
+[INFO  ] [20:45:32.148221] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [20:45:32.148467] <   > fastchess --- Setting seed to: 3033976913788270334
+[INFO  ] [20:45:32.179412] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [20:45:32.185014] <   > fastchess --- Starting tournament...
+[WARN  ] [20:46:38.519665] <   > fastchess --- Warning; PV continues after threefold repetition - move c3b4 from Huginn_2.0
+Info; info depth 9 score cp -440 nodes 14991 time 15 nullcut 40 lmr 2202/488 tthits 2945632 ttwrites 2041783 pv c4c3 b3c2 c3b4 b1b2 b4c5 c2g6 c5c6 g6e4 c6d6
+Position; fen rnbqkbnr/pp3ppp/3pp3/2p5/4P3/2P5/PP1PNPPP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 d6d5 e4d5 d8d5 c1e3 b8c6 d4c5 d5d1 e1d1 g8f6 f2f4 f8e7 e2g3 f6d5 e3d2 e7c5 g3e4 c5e7 c3c4 d5f6 e4f6 e7f6 b1c3 e8g8 a1c1 f8d8 f1e2 b7b6 h1e1 c6d4 e2d3 d4f3 d3h7 g8h7 g2f3 c8b7 e1e3 h7g6 c1c2 d8d7 c3e4 f6d4 e3d3 a8c8 d2e3 c8d8 c2d2 f7f5 d3d4 d7d4 d2d4 d8d4 e3d4 f5e4 f3e4 b7e4 c4c5 b6c5 d4c5 a7a5 c5d4 g6f5 d4g7 f5f4 g7c3 a5a4 h2h4 e4d5 a2a3 e6e5 c3b4 e5e4 h4h5 f4g5 d1d2 g5h5 b4d6 h5g4 d6e5 g4f3 e5d6 e4e3 d2d3 e3e2 d6b4 f3f2 b4c5 f2f1 c5b4 f1f2 b4e7 e2e1r e7h4 f2f1 h4e1 f1e1 d3d4 d5b3 d4e4 e1d1 e4d3 b3c2 d3c3 d1c1 c3c4 c2b3 c4d4 b3c2 d4c3 c1b1 c3c4 c2b3 c4c3 b3c2 c3c4 c2b3
+
+[WARN  ] [20:46:38.519777] <   > fastchess --- Warning; PV continues after threefold repetition - move c3b4 from Huginn_2.0
+Info; info depth 10 score cp -460 nodes 34177 time 33 nullcut 91 lmr 4392/718 tthits 2965611 ttwrites 2048373 pv c4c3 b3c2 c3b4 b1b2 b4c5 c2e4 c5d6 b2a3 d6e5
+Position; fen rnbqkbnr/pp3ppp/3pp3/2p5/4P3/2P5/PP1PNPPP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 d6d5 e4d5 d8d5 c1e3 b8c6 d4c5 d5d1 e1d1 g8f6 f2f4 f8e7 e2g3 f6d5 e3d2 e7c5 g3e4 c5e7 c3c4 d5f6 e4f6 e7f6 b1c3 e8g8 a1c1 f8d8 f1e2 b7b6 h1e1 c6d4 e2d3 d4f3 d3h7 g8h7 g2f3 c8b7 e1e3 h7g6 c1c2 d8d7 c3e4 f6d4 e3d3 a8c8 d2e3 c8d8 c2d2 f7f5 d3d4 d7d4 d2d4 d8d4 e3d4 f5e4 f3e4 b7e4 c4c5 b6c5 d4c5 a7a5 c5d4 g6f5 d4g7 f5f4 g7c3 a5a4 h2h4 e4d5 a2a3 e6e5 c3b4 e5e4 h4h5 f4g5 d1d2 g5h5 b4d6 h5g4 d6e5 g4f3 e5d6 e4e3 d2d3 e3e2 d6b4 f3f2 b4c5 f2f1 c5b4 f1f2 b4e7 e2e1r e7h4 f2f1 h4e1 f1e1 d3d4 d5b3 d4e4 e1d1 e4d3 b3c2 d3c3 d1c1 c3c4 c2b3 c4d4 b3c2 d4c3 c1b1 c3c4 c2b3 c4c3 b3c2 c3c4 c2b3
+
+[WARN  ] [20:46:50.378452] <   > fastchess --- Warning; PV continues after threefold repetition - move c1c2 from Huginn_2.0
+Info; info depth 4 score cp -10 nodes 39903 time 32 nullcut 0 lmr 1323/64 tthits 1968571 ttwrites 1764230 pv c2c1 a1b3 c1c2 b3d2
+Position; fen rnbqkbnr/p1p2ppp/1p1p4/4p3/2P5/3PP3/PP3PPP/RNBQKBNR w KQkq - 0 4
+Moves; d1f3 c7c6 b1c3 g7g6 c1d2 f8g7 f1e2 g8e7 g1h3 d6d5 c4d5 c6d5 e3e4 d5d4 c3d1 h7h6 a1c1 c8e6 a2a3 a7a5 e1g1 b8d7 f1e1 d7c5 g1h1 c5b3 c1c2 b3a1 c2c1 a1b3 c1c2 b3a1
+
+[WARN  ] [20:49:55.852596] <   > fastchess --- Warning; PV continues after threefold repetition - move c8e6 from Huginn_2.0
+Info; info depth 2 score cp 23 nodes 3263 time 1 nullcut 0 lmr 0/0 tthits 7396968 ttwrites 6067137 pv h6f4 c8e6
+Position; fen rnbqkbnr/pp3ppp/3pp3/2p5/2P2P2/2N5/PP1PP1PP/R1BQKBNR w KQkq - 0 4
+Moves; e2e4 b8c6 f1d3 g7g6 a1b1 e6e5 d1f3 c6b4 d3e2 b4c2 e1d1 c2d4 f3g3 f8g7 e2d3 e5f4 g3f4 g8e7 g1f3 d4f3 f4f3 e8g8 h1f1 e7c6 f3f4 g7e5 f4h6 e5g7 h6f4 g7e5 f4h6 e5g7
+
+[WARN  ] [20:49:55.852622] <   > fastchess --- Warning; PV continues after threefold repetition - move c8e6 from Huginn_2.0
+Info; info depth 3 score cp 0 nodes 12522 time 9 nullcut 0 lmr 0/0 tthits 7400502 ttwrites 6068213 pv h6f4 c8e6
+Position; fen rnbqkbnr/pp3ppp/3pp3/2p5/2P2P2/2N5/PP1PP1PP/R1BQKBNR w KQkq - 0 4
+Moves; e2e4 b8c6 f1d3 g7g6 a1b1 e6e5 d1f3 c6b4 d3e2 b4c2 e1d1 c2d4 f3g3 f8g7 e2d3 e5f4 g3f4 g8e7 g1f3 d4f3 f4f3 e8g8 h1f1 e7c6 f3f4 g7e5 f4h6 e5g7 h6f4 g7e5 f4h6 e5g7
+
+[WARN  ] [20:50:03.039207] <   > fastchess --- Warning; PV continues after threefold repetition - move e7c6 from Huginn_2.0
+Info; info depth 7 score cp -190 nodes 17600 time 18 nullcut 8 lmr 1016/120 tthits 6501335 ttwrites 5894439 pv c6e7 g7g5 e7c6 h8g7 c6e7 g5f5 c5c4
+Position; fen rnbqkb1r/pp1ppppp/5n2/2p5/2P5/5N2/PPQPPPPP/RNB1KB1R w KQkq - 0 4
+Moves; d2d3 b8c6 h2h3 e7e5 c1g5 h7h6 g5h4 g7g5 h4g3 d7d6 e2e3 f8e7 b1c3 c6b4 c2b3 g5g4 h3g4 c8g4 a2a3 d8a5 f3h2 g4f5 b3d1 b4c6 d1f3 f5e6 e1c1 a8d8 g3h4 f6d7 h4e7 e8e7 h2g4 h6h5 g4h2 f7f5 f1e2 h5h4 f3h3 d7f6 h2f1 d6d5 c4d5 f6d5 c3d5 d8d5 f1h2 a5b5 h2f3 f5f4 h3h2 f4e3 f2e3 h4h3 h2g3 h8g8 g3h4 e7d7 a3a4 b5b3 f3d2 b3b4 h4h7 c6e7 e2f3 h3g2 f3d5 e6d5 h1g1 b4a4 e3e4 a4a1 c1c2 a1a4 c2c1 d5b3 d2b3 a4b3 d1d2 g8g3 g1g2 g3g2 d2g2 b3e6 h7h8 a7a6 g2g5 e6d6 c1c2 e7c6 g5g7 c6e7 g7g5 e7c6 g5g7
+
+[WARN  ] [20:50:03.039267] <   > fastchess --- Warning; PV continues after threefold repetition - move e7c6 from Huginn_2.0
+Info; info depth 8 score cp -195 nodes 45335 time 46 nullcut 53 lmr 2623/226 tthits 6506668 ttwrites 5898639 pv c6e7 g7g5 e7c6 h8g7 c6e7 g5f5 c5c4 d3c4
+Position; fen rnbqkb1r/pp1ppppp/5n2/2p5/2P5/5N2/PPQPPPPP/RNB1KB1R w KQkq - 0 4
+Moves; d2d3 b8c6 h2h3 e7e5 c1g5 h7h6 g5h4 g7g5 h4g3 d7d6 e2e3 f8e7 b1c3 c6b4 c2b3 g5g4 h3g4 c8g4 a2a3 d8a5 f3h2 g4f5 b3d1 b4c6 d1f3 f5e6 e1c1 a8d8 g3h4 f6d7 h4e7 e8e7 h2g4 h6h5 g4h2 f7f5 f1e2 h5h4 f3h3 d7f6 h2f1 d6d5 c4d5 f6d5 c3d5 d8d5 f1h2 a5b5 h2f3 f5f4 h3h2 f4e3 f2e3 h4h3 h2g3 h8g8 g3h4 e7d7 a3a4 b5b3 f3d2 b3b4 h4h7 c6e7 e2f3 h3g2 f3d5 e6d5 h1g1 b4a4 e3e4 a4a1 c1c2 a1a4 c2c1 d5b3 d2b3 a4b3 d1d2 g8g3 g1g2 g3g2 d2g2 b3e6 h7h8 a7a6 g2g5 e6d6 c1c2 e7c6 g5g7 c6e7 g7g5 e7c6 g5g7
+
+[WARN  ] [20:50:33.497266] <   > fastchess --- Warning; PV continues after threefold repetition - move c4d5 from Huginn_2.0
+Info; info depth 2 score cp -378 nodes 3700 time 1 nullcut 0 lmr 0/0 tthits 8486458 ttwrites 7034907 pv f6f8 c4d5
+Position; fen r1bqkbnr/ppp1pp1p/2n3p1/3p4/3P4/P6P/1PP1PPP1/RNBQKBNR w KQkq - 0 4
+Moves; c2c4 d5c4 g1f3 g8f6 b1c3 c8f5 e2e3 f5e6 f3g5 e6d5 e3e4 f6e4 g5e4 e7e6 c1e3 f8d6 g2g3 f7f5 c3d5 e6d5 e4c3 c6e7 e3g5 d8d7 f1e2 e8g8 b2b3 d7c6 b3b4 a8e8 e1g1 g8h8 f1e1 c6d7 d1d2 d7c6 d2c2 f8f7 e2f3 f5f4 g3g4 e8f8 a1b1 f8c8 b4b5 c6d7 c3d5 e7d5 f3d5 c8e8 e1e8 d7e8 d5c4 f7f8 g5h6 f8f6 h6g5 f6f8 g5h6 f8f6 h6g5
+
+[WARN  ] [20:50:33.497291] <   > fastchess --- Warning; PV continues after threefold repetition - move c4d5 from Huginn_2.0
+Info; info depth 3 score cp 0 nodes 17223 time 13 nullcut 0 lmr 0/0 tthits 8489708 ttwrites 7036126 pv f6f8 c4d5
+Position; fen r1bqkbnr/ppp1pp1p/2n3p1/3p4/3P4/P6P/1PP1PPP1/RNBQKBNR w KQkq - 0 4
+Moves; c2c4 d5c4 g1f3 g8f6 b1c3 c8f5 e2e3 f5e6 f3g5 e6d5 e3e4 f6e4 g5e4 e7e6 c1e3 f8d6 g2g3 f7f5 c3d5 e6d5 e4c3 c6e7 e3g5 d8d7 f1e2 e8g8 b2b3 d7c6 b3b4 a8e8 e1g1 g8h8 f1e1 c6d7 d1d2 d7c6 d2c2 f8f7 e2f3 f5f4 g3g4 e8f8 a1b1 f8c8 b4b5 c6d7 c3d5 e7d5 f3d5 c8e8 e1e8 d7e8 d5c4 f7f8 g5h6 f8f6 h6g5 f6f8 g5h6 f8f6 h6g5
+
+[WARN  ] [20:50:33.497308] <   > fastchess --- Warning; PV continues after threefold repetition - move c4d5 from Huginn_2.0
+Info; info depth 4 score cp -483 nodes 33453 time 29 nullcut 0 lmr 1379/43 tthits 8493727 ttwrites 7037885 pv f6f8 c4d5 f8f7 d5f7
+Position; fen r1bqkbnr/ppp1pp1p/2n3p1/3p4/3P4/P6P/1PP1PPP1/RNBQKBNR w KQkq - 0 4
+Moves; c2c4 d5c4 g1f3 g8f6 b1c3 c8f5 e2e3 f5e6 f3g5 e6d5 e3e4 f6e4 g5e4 e7e6 c1e3 f8d6 g2g3 f7f5 c3d5 e6d5 e4c3 c6e7 e3g5 d8d7 f1e2 e8g8 b2b3 d7c6 b3b4 a8e8 e1g1 g8h8 f1e1 c6d7 d1d2 d7c6 d2c2 f8f7 e2f3 f5f4 g3g4 e8f8 a1b1 f8c8 b4b5 c6d7 c3d5 e7d5 f3d5 c8e8 e1e8 d7e8 d5c4 f7f8 g5h6 f8f6 h6g5 f6f8 g5h6 f8f6 h6g5
+
+[WARN  ] [20:51:06.590894] <   > fastchess --- Warning; PV continues after threefold repetition - move b8a6 from Huginn_2.0
+Info; info depth 3 score cp 260 nodes 42801 time 33 nullcut 0 lmr 0/0 tthits 7646342 ttwrites 6949248 pv d6c5 b8a6 c5b6
+Position; fen rnbqk1nr/pp1pppbp/2p3p1/8/8/1PP1P3/P2P1PPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 d7d5 g1f3 g8f6 f1e2 e8g8 c3c4 c8g4 b1c3 d8a5 c1d2 d5c4 e2c4 f8d8 c3d5 a5a3 d2b4 g4f3 g2f3 a3b2 d5e7 g8h8 c4f7 a7a5 b4c5 b8d7 c5d6 d7b8 d6c5 b8d7 c5d6 d7b8
+
+[WARN  ] [20:51:36.517114] <   > fastchess --- Warning; PV continues after threefold repetition - move e6f8 from Huginn_2.0
+Info; info depth 5 score cp 0 nodes 44853 time 43 nullcut 0 lmr 1803/185 tthits 10236224 ttwrites 8294850 pv e6f8 d7d8 f8e6 d8d7 e6f8
+Position; fen rnbqkbnr/1p1p1ppp/p1p5/4p3/2P5/2NP4/PP2PPPP/R1BQKBNR w KQkq - 0 4
+Moves; g1f3 d7d6 e2e4 g7g6 d3d4 d8a5 c1e3 g8f6 f1d3 f6g4 e3d2 e5d4 c3a4 a5d8 f3d4 b7b5 a4c3 d8f6 d4f3 f8h6 d2h6 g4h6 c4b5 a6b5 d1d2 h6g8 d2e3 b5b4 c3d1 g8e7 e3d4 f6d4 f3d4 c8a6 d3a6 b8a6 d1e3 a6c5 e3c2 c5e4 f2f3 e4f6 a2a3 b4a3 a1a3 e8d7 f3f4 c6c5 d4f3 a8a3 c2a3 h8b8 a3c4 d7c7 e1g1 b8b4 f1c1 f6e4 f3g5 f7f5 g5e6 c7d7 e6f8 d7c7 f8e6 c7d7
+
+[WARN  ] [20:51:36.908132] <   > fastchess --- Warning; PV continues after threefold repetition - move c7c8 from Huginn_2.0
+Info; info depth 3 score cp -125 nodes 7826 time 6 nullcut 0 lmr 0/0 tthits 10240351 ttwrites 8296339 pv f8e6 c7c8 g1h1
+Position; fen rnbqkbnr/1p1p1ppp/p1p5/4p3/2P5/2NP4/PP2PPPP/R1BQKBNR w KQkq - 0 4
+Moves; g1f3 d7d6 e2e4 g7g6 d3d4 d8a5 c1e3 g8f6 f1d3 f6g4 e3d2 e5d4 c3a4 a5d8 f3d4 b7b5 a4c3 d8f6 d4f3 f8h6 d2h6 g4h6 c4b5 a6b5 d1d2 h6g8 d2e3 b5b4 c3d1 g8e7 e3d4 f6d4 f3d4 c8a6 d3a6 b8a6 d1e3 a6c5 e3c2 c5e4 f2f3 e4f6 a2a3 b4a3 a1a3 e8d7 f3f4 c6c5 d4f3 a8a3 c2a3 h8b8 a3c4 d7c7 e1g1 b8b4 f1c1 f6e4 f3g5 f7f5 g5e6 c7d7 e6f8 d7c7 f8e6 c7d7 e6f8 d7c7
+
+[WARN  ] [20:51:36.908159] <   > fastchess --- Warning; PV continues after threefold repetition - move c7c8 from Huginn_2.0
+Info; info depth 4 score cp 0 nodes 18833 time 16 nullcut 0 lmr 568/17 tthits 10243706 ttwrites 8297419 pv f8e6 c7c8 g1h1 d6d5
+Position; fen rnbqkbnr/1p1p1ppp/p1p5/4p3/2P5/2NP4/PP2PPPP/R1BQKBNR w KQkq - 0 4
+Moves; g1f3 d7d6 e2e4 g7g6 d3d4 d8a5 c1e3 g8f6 f1d3 f6g4 e3d2 e5d4 c3a4 a5d8 f3d4 b7b5 a4c3 d8f6 d4f3 f8h6 d2h6 g4h6 c4b5 a6b5 d1d2 h6g8 d2e3 b5b4 c3d1 g8e7 e3d4 f6d4 f3d4 c8a6 d3a6 b8a6 d1e3 a6c5 e3c2 c5e4 f2f3 e4f6 a2a3 b4a3 a1a3 e8d7 f3f4 c6c5 d4f3 a8a3 c2a3 h8b8 a3c4 d7c7 e1g1 b8b4 f1c1 f6e4 f3g5 f7f5 g5e6 c7d7 e6f8 d7c7 f8e6 c7d7 e6f8 d7c7
+
+[WARN  ] [20:51:46.746221] <   > fastchess --- Warning; PV continues after threefold repetition - move e5f6 from Huginn_2.0
+Info; info depth 8 score cp 0 nodes 6657 time 6 nullcut 2 lmr 789/94 tthits 12565625 ttwrites 8877731 pv c1d2 f6e5 d2c1 e5f6 c1d2 f6e5 d2c1 e5f6
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6
+
+[WARN  ] [20:51:46.746256] <   > fastchess --- Warning; PV continues after threefold repetition - move e5f6 from Huginn_2.0
+Info; info depth 9 score cp 0 nodes 13099 time 13 nullcut 7 lmr 1507/204 tthits 12571860 ttwrites 8879665 pv c1d2 f6e5 d2c1 e5f6 c1d2 f6e5 d2c1 e5f6 c1d2
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6
+
+[WARN  ] [20:51:46.746274] <   > fastchess --- Warning; PV continues after threefold repetition - move e5f6 from Huginn_2.0
+Info; info depth 10 score cp 0 nodes 15650 time 15 nullcut 14 lmr 2147/226 tthits 12574914 ttwrites 8880656 pv c1d2 f6e5 d2c1 e5f6 c1d2 f6e5 d2c1 e5f6 c1d2 f6e5
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6
+
+[WARN  ] [20:51:46.746338] <   > fastchess --- Warning; PV continues after threefold repetition - move e5f6 from Huginn_2.0
+Info; info depth 11 score cp 0 nodes 56736 time 38 nullcut 27 lmr 4489/504 tthits 12595864 ttwrites 8886704 pv c1d2 f6e5 d2c1 e5f6 c1d2 f6e5 d2c1 e5f6 c1d2 f6e5 d2c1
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6
+
+[WARN  ] [20:51:47.711661] <   > fastchess --- Warning; PV continues after threefold repetition - move c1b1 from Huginn_2.0
+Info; info depth 7 score cp 0 nodes 10871 time 11 nullcut 0 lmr 711/104 tthits 12771472 ttwrites 8941269 pv c1b1 d4c5 b1c1 c5d4 c1b1 d4c5 b1c1
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6 c1d2 f6a1 d2c1 a1d4 c1b1 d4c3 b1c1 c3d4
+
+[WARN  ] [20:51:47.711697] <   > fastchess --- Warning; PV continues after threefold repetition - move c1b1 from Huginn_2.0
+Info; info depth 8 score cp 0 nodes 14193 time 14 nullcut 3 lmr 1368/184 tthits 12775248 ttwrites 8942422 pv c1b1 d4c5 b1c1 c5d4 c1b1 d4c5 b1c1 c5d4
+Position; fen rnbqk1nr/pppp1pbp/4p1p1/8/1PP5/B7/P2PPPPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 c7c5 e2e3 c5d4 e3d4 b8c6 g1f3 d8f6 f1d3 c6d4 f3d2 d4b5 d2b3 b5a3 b1a3 f6b2 a3b5 b2e5 e1f1 a7a5 b4a5 g8f6 d1e1 e5f4 b3d4 f6g4 g2g3 f4e5 h2h3 e5c5 h3g4 g7d4 a1d1 d4g7 f2f4 d7d6 g4g5 e8g8 e1d2 f7f6 d2h2 f6f5 h2h7 g8f7 h1h6 f8h8 h7g6 f7f8 h6h8 g7h8 g6h5 h8g7 g5g6 a8a5 d1d2 c8d7 h5f3 d6d5 d3e2 d7e8 c4d5 e8b5 e2b5 c5b5 f1g2 e6d5 g3g4 d5d4 g4f5 b5f5 g2h2 f5g6 a2a3 a5h5 f3h5 g6h5 h2g3 d4d3 a3a4 g7c3 d2h2 h5h2 g3h2 d3d2 h2h3 d2d1q h3g3 d1a4 g3f3 a4f4 f3f4 b7b5 f4e3 f8e7 e3d3 c3e5 d3e4 b5b4 e4e3 b4b3 e3d2 e5d4 d2c1 d4a1 c1b1 a1c3 b1c1 c3a1 c1d2 a1d4 d2d3 d4a1 d3d2 a1b2 d2d1 b2f6 d1c1 f6e5 c1b1 e5c3 b1c1 c3e5 c1b1 e7d6 b1c1 e5f6 c1d2 f6a1 d2c1 a1d4 c1b1 d4c3 b1c1 c3d4
+
+[WARN  ] [20:52:01.798548] <   > fastchess --- Warning; PV continues after threefold repetition - move h4g3 from Huginn_2.0
+Info; info depth 5 score cp 2190 nodes 25510 time 17 nullcut 0 lmr 1241/209 tthits 8796573 ttwrites 7940236 pv h2f2 h4g3 f2g2 g3h4 g2g4
+Position; fen r1bqkb1r/pppp1ppp/2n2n2/4p1B1/8/2NP4/PPP1PPPP/R2QKBNR w KQkq - 0 4
+Moves; c3d5 c6b4 d5f6 g7f6 g5d2 d7d5 e2e4 c8e6 f1e2 d5e4 d3e4 b4a2 c2c3 c7c6 b2b3 d8a5 c3c4 f8b4 a1a2 a5a2 d2b4 a8d8 b4d6 h8g8 e1f1 c6c5 e2f3 a2a6 f3e2 d8d6 d1b1 a6a5 g1f3 e8e7 b1b2 g8d8 f3e1 d6d2 b2b1 a5c3 h1g1 d2b2 b1a1 c3d2 a1d1 d2d1 e2d1 d8d1 f2f3 d1d2 g1h1 b2b3 h2h4 b3b1 h1h3 e6c4 f1g1 b1e1 g1h2 c4f1 h3g3 e1e2 h2h3 e2f2 h4h5 f1g2 h3g4 h7h6 g4h4 g2f3 g3h3 d2d3 h3g3 f2h2 g3h3 h2f2 h3g3 f2h2 g3h3
+
+[WARN  ] [20:52:53.969706] <   > fastchess --- Warning; Last info string with score not found from Huginn_2.0
+
+[WARN  ] [20:52:54.162189] <   > fastchess --- Warning; Last info string with score not found from Huginn_2.0
+
+[WARN  ] [20:54:08.030379] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 7 score cp 90 nodes 36465 time 30 nullcut 4 lmr 2345/566 tthits 13142656 ttwrites 10971550 pv e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1
+
+[WARN  ] [20:54:08.490897] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 7 score cp 90 nodes 23262 time 18 nullcut 5 lmr 1922/385 tthits 13155091 ttwrites 10977378 pv e2e1 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2 b1b2
+
+[WARN  ] [20:54:08.892376] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 2 score cp 187 nodes 376 time 0 nullcut 0 lmr 0/0 tthits 13160773 ttwrites 10981545 pv e1e2 b1b2
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1 b2b1
+
+[WARN  ] [20:54:08.892408] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 5 score cp 90 nodes 6919 time 6 nullcut 0 lmr 390/96 tthits 13163399 ttwrites 10982459 pv e1e2 b1b2 e2e1 b2b1 e1e2
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1 b2b1
+
+[WARN  ] [20:54:08.892426] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 6 score cp 90 nodes 10186 time 9 nullcut 0 lmr 859/188 tthits 13165075 ttwrites 10983097 pv e1e2 b1b2 e2e1 b2b1 e1e2 b1b2
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1 b2b1
+
+[WARN  ] [20:54:08.892445] <   > fastchess --- Warning; PV continues after threefold repetition - move b1b2 from Huginn_2.0
+Info; info depth 8 score cp 80 nodes 61187 time 51 nullcut 46 lmr 4253/778 tthits 13173452 ttwrites 10987916 pv e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1 b2b1
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; c3d5 g8f6 d5e7 d8e7 g1f3 e8g8 d2d4 e5d4 d1d4 b8c6 d4d3 d7d6 c1e3 c6b4 d3c3 b4c6 a1d1 c8f5 f3d4 c6d4 c3d4 f5c2 d1d2 c2f5 d4f4 f5g6 e3d4 f8e8 e2e3 f6e4 d2d3 e4c5 d3d2 c5e6 f4g4 h6h5 g4f3 e6d4 d2d4 e7e5 f3b7 a8b8 b7c7 b8b2 c7d6 b2b1 e1e2 b1b2 e2e1 b2b1 e1e2 b1b2 e2e1 b2b1
+
+[WARN  ] [20:54:11.375357] <   > fastchess --- Warning; PV continues after threefold repetition - move e8e7 from Huginn_2.0
+Info; info depth 5 score cp 0 nodes 11279 time 10 nullcut 0 lmr 712/63 tthits 12142978 ttwrites 10494582 pv e8e7 f5f6 e7e8 f6f5 e8e7
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; e2e3 e7h4 g1f3 h4f6 d2d4 d7d6 d4e5 d6e5 d1d8 e8d8 a2a4 c8f5 e3e4 f5d7 c3d5 b8c6 c1e3 f6e7 e1c1 e7d6 c4c5 d6f8 f3g5 d8c8 g5f7 h8h7 f1b5 g8e7 f2f4 e5f4 d5f4 g7g6 f7d6 c7d6 c5d6 e7g8 f4g6 f8g7 g6e7 g8e7 d6e7 g7f6 e7e8q d7e8 d1d6 f6g7 h1d1 e8h5 d1d5 g7f8 d6c6 b7c6 b5a6 c8c7 d5h5 a8e8 e3f4 c7d8 h5f5 f8b4 e4e5 h7g7 f4h6 g7g2 h6e3 b4d6 a6f1 g2g4 b2b3 e8e5 f5e5 d6e5 e3a7 e5d4 a7d4 g4d4 a4a5 d4d7 a5a6 c6c5 c1c2 d8e7 f1b5 d7a7 c2d3 e7d6 d3e4 a7a8 b5d3 d6c6 e4e5 a8e8 e5f4 c6b6 f4f5 e8e1 d3c4 e1e8 c4d3
+
+[WARN  ] [20:54:11.375391] <   > fastchess --- Warning; PV continues after threefold repetition - move e8e7 from Huginn_2.0
+Info; info depth 6 score cp 0 nodes 28487 time 25 nullcut 9 lmr 1822/226 tthits 12152337 ttwrites 10497790 pv e8e7 f5f6 e7e8 f6f5 e8e7 f5f6
+Position; fen rnbqk1nr/ppppbpp1/7p/4p3/2P4P/2N5/PP1PPPP1/R1BQKBNR w KQkq - 0 4
+Moves; e2e3 e7h4 g1f3 h4f6 d2d4 d7d6 d4e5 d6e5 d1d8 e8d8 a2a4 c8f5 e3e4 f5d7 c3d5 b8c6 c1e3 f6e7 e1c1 e7d6 c4c5 d6f8 f3g5 d8c8 g5f7 h8h7 f1b5 g8e7 f2f4 e5f4 d5f4 g7g6 f7d6 c7d6 c5d6 e7g8 f4g6 f8g7 g6e7 g8e7 d6e7 g7f6 e7e8q d7e8 d1d6 f6g7 h1d1 e8h5 d1d5 g7f8 d6c6 b7c6 b5a6 c8c7 d5h5 a8e8 e3f4 c7d8 h5f5 f8b4 e4e5 h7g7 f4h6 g7g2 h6e3 b4d6 a6f1 g2g4 b2b3 e8e5 f5e5 d6e5 e3a7 e5d4 a7d4 g4d4 a4a5 d4d7 a5a6 c6c5 c1c2 d8e7 f1b5 d7a7 c2d3 e7d6 d3e4 a7a8 b5d3 d6c6 e4e5 a8e8 e5f4 c6b6 f4f5 e8e1 d3c4 e1e8 c4d3
+
+[WARN  ] [20:54:36.365244] <   > fastchess --- Warning; PV continues after threefold repetition - move d8b8 from Huginn_2.0
+Info; info depth 3 score cp 107 nodes 19709 time 16 nullcut 0 lmr 0/0 tthits 17085887 ttwrites 12355357 pv b3a4 d8b8 e3c1
+Position; fen rn1qkbnr/1bpppppp/pp6/8/5P2/2P2N2/PP1PP1PP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 g8f6 c1e3 e7e6 c3c4 b6b5 d1b3 b8c6 c4b5 c6a5 b3a4 a6b5 a4b5 b7c6 b5d3 c6e4 d3b5 e4c6 b5d3 c6e4 d3b5 c7c6 b5a4 a5b7 a4b3 b7a5 b3a4 a5b7 a4b3 b7a5
+
+[WARN  ] [20:54:36.365270] <   > fastchess --- Warning; PV continues after threefold repetition - move d8b8 from Huginn_2.0
+Info; info depth 4 score cp 77 nodes 39451 time 36 nullcut 0 lmr 1270/41 tthits 17089782 ttwrites 12357016 pv b3a4 d8b8 e3c1 d7d5
+Position; fen rn1qkbnr/1bpppppp/pp6/8/5P2/2P2N2/PP1PP1PP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 g8f6 c1e3 e7e6 c3c4 b6b5 d1b3 b8c6 c4b5 c6a5 b3a4 a6b5 a4b5 b7c6 b5d3 c6e4 d3b5 e4c6 b5d3 c6e4 d3b5 c7c6 b5a4 a5b7 a4b3 b7a5 b3a4 a5b7 a4b3 b7a5
+
+[WARN  ] [20:54:57.526650] <   > fastchess --- Warning; PV continues after threefold repetition - move a2a1 from Huginn_2.0
+Info; info depth 5 score cp -420 nodes 7818 time 6 nullcut 0 lmr 330/71 tthits 13543521 ttwrites 11325392 pv a2a1 c4d4 a1a2 d4c4 a2a1
+Position; fen rn1qkbnr/pbpp1ppp/4p3/1p6/1P6/2P2N2/P2PPPPP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 a7a5 c1d2 a5b4 c3b4 g8f6 e2e3 h7h6 f1b5 f6e4 d1b3 e4g5 b5e2 f8d6 b1c3 g5f3 g2f3 d8g5 c3e4 b7e4 f3e4 g5g2 h1f1 g2e4 f1g1 e8g8 f2f4 d6e7 e2d3 e4f3 d3e2 f3h3 e1c1 f8c8 g1h1 h3g2 e2c4 h6h5 d1g1 g2c6 b4b5 c6e4 c4d3 e4b7 d3e2 a8a3 b3b2 b7d5 c1b1 d5e4 b1a1 c7c6 e2h5 e4d5 h5e2 c6b5 e2b5 f7f6 g1c1 b8c6 b5c4 d5g2 b2b7 c8b8 b7d7 a3e3 c4e6 g8f8 h1d1 c6d8 e6d5 g2e2 d7c7 e2b5 c7b8 b5b8 d2e3 b8b5 d5c4 b5h5 d1d2 h5f3 c1e1 e7b4 a2a4 d8c6 d2f2 f3e4 e1e2 c6d4 c4b5 d4e2 f2e2 f8g8 a1b2 b4d6 e3d2 e4f3 e2e3 f3f2 b5c4 g8h7 e3h3 h7g6 h3g3 g6h6 g3h3 h6g6 h3g3 g6h6 g3d3 d6b4 d3h3 h6g6 h3g3 g6h6 g3h3 h6g6 h3g3 g6f5 c4d3 f5e6 g3e3 e6d5 d3e2 b4d2 e3d3 d5e4 d3d2 e4f4 b2c2 f4e3 c2d1 f2g1 d1c2 g1e1 d2d7 e1e2 c2b3 e2h2 d7g7 h2b8 b3a2 e3f3 g7d7 b8b4 d7d3 f3f2 d3a3 b4c4 a2a1 c4c1 a1a2 c1c2 a2a1 c2c1 a1a2 c1c4
+
+[WARN  ] [20:54:57.778778] <   > fastchess --- Warning; PV continues after threefold repetition - move a2b2 from Huginn_2.0
+Info; info depth 3 score cp -420 nodes 947 time 0 nullcut 0 lmr 0/0 tthits 13562521 ttwrites 11332029 pv b2a2 b4c4 a2b2
+Position; fen rn1qkbnr/pbpp1ppp/4p3/1p6/1P6/2P2N2/P2PPPPP/RNBQKB1R w KQkq - 0 4
+Moves; d2d4 a7a5 c1d2 a5b4 c3b4 g8f6 e2e3 h7h6 f1b5 f6e4 d1b3 e4g5 b5e2 f8d6 b1c3 g5f3 g2f3 d8g5 c3e4 b7e4 f3e4 g5g2 h1f1 g2e4 f1g1 e8g8 f2f4 d6e7 e2d3 e4f3 d3e2 f3h3 e1c1 f8c8 g1h1 h3g2 e2c4 h6h5 d1g1 g2c6 b4b5 c6e4 c4d3 e4b7 d3e2 a8a3 b3b2 b7d5 c1b1 d5e4 b1a1 c7c6 e2h5 e4d5 h5e2 c6b5 e2b5 f7f6 g1c1 b8c6 b5c4 d5g2 b2b7 c8b8 b7d7 a3e3 c4e6 g8f8 h1d1 c6d8 e6d5 g2e2 d7c7 e2b5 c7b8 b5b8 d2e3 b8b5 d5c4 b5h5 d1d2 h5f3 c1e1 e7b4 a2a4 d8c6 d2f2 f3e4 e1e2 c6d4 c4b5 d4e2 f2e2 f8g8 a1b2 b4d6 e3d2 e4f3 e2e3 f3f2 b5c4 g8h7 e3h3 h7g6 h3g3 g6h6 g3h3 h6g6 h3g3 g6h6 g3d3 d6b4 d3h3 h6g6 h3g3 g6h6 g3h3 h6g6 h3g3 g6f5 c4d3 f5e6 g3e3 e6d5 d3e2 b4d2 e3d3 d5e4 d3d2 e4f4 b2c2 f4e3 c2d1 f2g1 d1c2 g1e1 d2d7 e1e2 c2b3 e2h2 d7g7 h2b8 b3a2 e3f3 g7d7 b8b4 d7d3 f3f2 d3a3 b4c4 a2a1 c4c1 a1a2 c1c2 a2a1 c2c1 a1a2 c1c4 a2b2 c4b4
+
+[WARN  ] [20:55:05.075258] <   > fastchess --- Warning; PV continues after threefold repetition - move c1d1 from Huginn_2.0
+Info; info depth 2 score cp 355 nodes 4369 time 2 nullcut 0 lmr 0/0 tthits 14943057 ttwrites 12086934 pv a4a3 c1d1
+Position; fen r1bqkbnr/ppp1ppp1/2np3p/8/8/PPP5/3PPPPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8f5 b1d2 g8f6 b3b4 e7e5 e2e3 f8e7 b4b5 c6a5 h2h3 c7c5 d1f3 d8d7 c1b2 a8d8 e1c1 c5d4 e3d4 e5e4 f3g3 e8g8 c3c4 f8e8 b2c3 d7c7 d1e1 f5e6 d4d5 f6h5 g3h2 e6d5 g2g4 e4e3 e1e3 d5h1 h2h1 h5f4 c3a5 c7a5 h1h2 e7g5 h3h4 e8e3 f2e3 a5a3 c1d1 a3a1 d1c2 a1a4 c2c1 a4a3 c1d1 a3a1 d1c2 a1a4 c2c1
+
+[WARN  ] [20:55:05.075285] <   > fastchess --- Warning; PV continues after threefold repetition - move c1d1 from Huginn_2.0
+Info; info depth 3 score cp 340 nodes 15565 time 12 nullcut 0 lmr 0/0 tthits 14945788 ttwrites 12087685 pv a4a3 c1d1 a3a4
+Position; fen r1bqkbnr/ppp1ppp1/2np3p/8/8/PPP5/3PPPPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8f5 b1d2 g8f6 b3b4 e7e5 e2e3 f8e7 b4b5 c6a5 h2h3 c7c5 d1f3 d8d7 c1b2 a8d8 e1c1 c5d4 e3d4 e5e4 f3g3 e8g8 c3c4 f8e8 b2c3 d7c7 d1e1 f5e6 d4d5 f6h5 g3h2 e6d5 g2g4 e4e3 e1e3 d5h1 h2h1 h5f4 c3a5 c7a5 h1h2 e7g5 h3h4 e8e3 f2e3 a5a3 c1d1 a3a1 d1c2 a1a4 c2c1 a4a3 c1d1 a3a1 d1c2 a1a4 c2c1
+
+[WARN  ] [20:55:05.075305] <   > fastchess --- Warning; PV continues after threefold repetition - move c1d1 from Huginn_2.0
+Info; info depth 4 score cp 335 nodes 43045 time 33 nullcut 0 lmr 908/256 tthits 14950513 ttwrites 12089326 pv a4a3 c1d1 a3a4 d1e1
+Position; fen r1bqkbnr/ppp1ppp1/2np3p/8/8/PPP5/3PPPPP/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8f5 b1d2 g8f6 b3b4 e7e5 e2e3 f8e7 b4b5 c6a5 h2h3 c7c5 d1f3 d8d7 c1b2 a8d8 e1c1 c5d4 e3d4 e5e4 f3g3 e8g8 c3c4 f8e8 b2c3 d7c7 d1e1 f5e6 d4d5 f6h5 g3h2 e6d5 g2g4 e4e3 e1e3 d5h1 h2h1 h5f4 c3a5 c7a5 h1h2 e7g5 h3h4 e8e3 f2e3 a5a3 c1d1 a3a1 d1c2 a1a4 c2c1 a4a3 c1d1 a3a1 d1c2 a1a4 c2c1
+
+[WARN  ] [20:56:23.654306] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 10 score cp 0 nodes 5899 time 6 nullcut 0 lmr 137/0 tthits 15387119 ttwrites 12919718 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:56:23.654333] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 11 score cp 0 nodes 5902 time 6 nullcut 0 lmr 137/0 tthits 15387123 ttwrites 12919719 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:56:23.654353] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 12 score cp 0 nodes 5923 time 6 nullcut 3 lmr 137/0 tthits 15387131 ttwrites 12919721 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:56:23.654372] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 13 score cp 0 nodes 5926 time 6 nullcut 3 lmr 137/0 tthits 15387135 ttwrites 12919722 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:56:23.654432] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 14 score cp 0 nodes 5935 time 6 nullcut 6 lmr 137/0 tthits 15387143 ttwrites 12919724 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:56:23.654450] <   > fastchess --- Warning; PV continues after threefold repetition - move d6e5 from Huginn_2.0
+Info; info depth 15 score cp 0 nodes 5938 time 6 nullcut 6 lmr 137/0 tthits 15387147 ttwrites 12919725 pv d8c8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7 e5d6 e7e8 d6e5 e8e7
+Position; fen rnbqkbnr/pp2pppp/8/3p4/8/6P1/PPPP1P1P/RNBQKBNR w KQkq - 0 4
+Moves; d2d4 c8e6 b1c3 b8c6 f1g2 g8f6 g1f3 d8b6 e1g1 e6f5 f3h4 f5e6 h4f3 e6f5 a1b1 c6b4 d1d2 b4c2 f3h4 b6e6 b2b3 a8c8 c3b5 c2e3 f2e3 f5b1 b5c3 f6e4 g2e4 b1e4 c1b2 f7f5 c3e4 e6e4 f1c1 c8c1 d2c1 e8d8 g1f2 e7e6 h4f3 f8e7 h2h3 h8e8 b2a3 e7a3 c1a3 e4c2 f2e1 c2c7 e1f2 c7c2 f2e1 c2c3 e1e2 c3c2 f3d2 a7a6 a3d6
+
+[WARN  ] [20:57:20.786384] <   > fastchess --- Warning; PV continues after threefold repetition - move h3h2 from Huginn_2.0
+Info; info depth 5 score cp 0 nodes 1611 time 1 nullcut 0 lmr 36/8 tthits 21074455 ttwrites 15234417 pv h2g1 h3h2
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786414] <   > fastchess --- Warning; PV continues after threefold repetition - move h3h2 from Huginn_2.0
+Info; info depth 6 score cp 0 nodes 2499 time 2 nullcut 0 lmr 150/17 tthits 21075211 ttwrites 15234607 pv h2g1 h3h2
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786468] <   > fastchess --- Warning; PV continues after threefold repetition - move h3h2 from Huginn_2.0
+Info; info depth 7 score cp 0 nodes 4069 time 4 nullcut 0 lmr 278/41 tthits 21076682 ttwrites 15235014 pv h2g1 h3h2
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786487] <   > fastchess --- Warning; PV continues after threefold repetition - move h3h2 from Huginn_2.0
+Info; info depth 8 score cp -1305 nodes 5487 time 6 nullcut 2 lmr 734/104 tthits 21078672 ttwrites 15235668 pv h2g1 h3h2 g1h1 e5d6 h1g2 d6e5 g2f2 h2h1q
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786506] <   > fastchess --- Warning; PV continues after threefold repetition - move g4g3 from Huginn_2.0
+Info; info depth 9 score cp -1410 nodes 8488 time 9 nullcut 7 lmr 1488/146 tthits 21082169 ttwrites 15236814 pv h2g1 g4g3 g1f1 g3g2 f1f2 e5d4 f2e2 g2g1q e2d2
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786525] <   > fastchess --- Warning; PV continues after threefold repetition - move g4g3 from Huginn_2.0
+Info; info depth 10 score cp -1410 nodes 12492 time 14 nullcut 13 lmr 2564/193 tthits 21086609 ttwrites 15238352 pv h2g1 g4g3 g1f1 g3g2 f1f2 e5d4 f2e2 g2g1q e2d2 g1e3
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786543] <   > fastchess --- Warning; PV continues after threefold repetition - move g4g3 from Huginn_2.0
+Info; info depth 11 score cp -2085 nodes 20187 time 24 nullcut 19 lmr 5246/284 tthits 21096580 ttwrites 15242055 pv h2g1 g4g3 g1f1 g3g2 f1f2 e5d4 f2e2 g2g1q e2d2 g1e3 d2d1
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[WARN  ] [20:57:20.786561] <   > fastchess --- Warning; PV continues after threefold repetition - move g4g3 from Huginn_2.0
+Info; info depth 12 score cp -2110 nodes 33940 time 43 nullcut 24 lmr 10112/338 tthits 21113016 ttwrites 15248429 pv h2g1 g4g3 g1f1 g3g2 f1f2 e5d4 f2e2 g2g1q e2d2 h3h2 d2e2 h2h1q
+Position; fen rnbqkb1r/pp1ppp1p/2p2np1/8/8/BP2P3/P1PP1PPP/RN1QKBNR w KQkq - 0 4
+Moves; d2d4 f6e4 f2f3 e4f6 f1d3 f8h6 e3e4 d7d6 b1d2 d8a5 a3b2 e8g8 g1e2 h6e3 b2c3 a5c7 d2c4 e3h6 c3a5 b7b6 a5d2 h6g7 e4e5 f6d5 f3f4 c8g4 c4e3 d5e3 d2e3 d6e5 f4e5 c6c5 c2c3 e7e6 h1f1 f7f6 d3e4 b8d7 e4a8 f8a8 e5f6 d7f6 e3f4 c7e7 d1d3 a8d8 a1d1 f6h5 f4e3 a7a5 d3e4 g4e2 e1e2 c5d4 c3d4 h5f6 e4h4 b6b5 e3g5 d8f8 h4g3 e7b7 g5e3 f6e4 f1f8 g7f8 g3e1 f8b4 e1f1 e4c3 e2f2 b7f7 f2g1 c3d1 f1d1 f7f5 d1e2 b4c3 e2f2 f5e4 a2a4 b5a4 b3a4 g8g7 g1h1 e4b1 f2g1 b1c2 e3f4 c2a4 f4e5 g7g8 e5f6 a4c2 g1e3 g8f7 f6e5 c2d1 e3g1 d1g1 h1g1 a5a4 e5d6 c3d4 g1f1 d4b2 h2h4 a4a3 d6a3 b2a3 f1e2 e6e5 e2d3 h7h5 d3c4 f7e6 c4c3 a3e7 g2g3 e7d6 c3d3 e5e4 d3e3 d6g3 e3e4 g3h4 e4f3 g6g5 f3e3 g5g4 e3e2 e6d5 e2f1 h4g3 f1g1 h5h4 g1g2 g3e5 g2f2 h4h3 f2e2 e5g3 e2e3 d5e5 e3e2 e5d5 e2f1 g3e5 f1g1 e5a1 g1h2 a1e5 h2g1 e5a1 g1h2 a1e5
+
+[INFO  ] [20:57:42.088119] <   > fastchess --- Finished match
+
+[INFO  ] [20:57:42.088168] <   > fastchess --- Total Time: 00:12:09 (hours:minutes:seconds)
+
+
