@@ -281,6 +281,59 @@ MLE (~1818).
   and/or broaden to non-MTL anchors (MORA ~2189, rebuild CDrill/Snowy) for a
   multi-point MLE.
 
+**Stash calibration ladder (2026-06-14) — the preferred fix for the anchor
+problem.** The current external anchors (MTLChess/CDrill/Snowy/MORA) are
+sparse and *style-non-transitive* (CDrill −7.5pp bogey, MTL +9pp favorable),
+so the transitive MLE smears across ~1820–1850. **Stash** removes that
+confound: one actively-maintained, UCI-clean engine family with ~30 CCRL-rated
+releases (v8 ≈1090 → v36 ≈3399), giving a *dense, same-author, monotonic*
+ladder. Bracket Huginn (~1820) tightly and fit a local slope instead of
+extrapolating across unrelated engines. CCRL-Blitz table (★ = CCRL estimate,
+prefer ranked versions as primary anchors): v11 **1690**, v12 1886, v13
+**1972**, v14 2060, v17 2298, v19 2473, v21 2714 …
+
+- **Have on disk + wired into the gauntlet (3-anchor bracket):** `stash11`
+  (Stash 11.0, **1690**), `stash12` (Stash 12.0, **1886** — closest, ~+66 over
+  Huginn), `stash13` (Stash 13.0, **1972**). All three in the
+  `test_huginn_gauntlet.bat` calib table and UCI-verified (real games, no
+  stalls). **Stash is the calibration instrument going forward; CPW-engine was
+  evaluated and rejected** (2014 hobby engine, init access-violation +
+  first-search hang under UCI — forfeits every game; see the dropped entry in
+  the gauntlet bat).
+
+**Stash-anchored round-robin (2026-06-15, Intel, 10+0.1, cc=4) — Huginn ≈ 1770
+CCRL.** 4-engine RR (Huginn 2.1 fresh build `6787430` + Stash 11/12/13), planned
+2400g, **2049 games completed** (~342 per pairing) before the box slept and the
+run stalled (all engines flagged on time at once = system suspend, not an engine
+bug; orphaned processes were killed and the partial result kept). Artifacts:
+`gauntlet/roundrobin_huginn_stash_calib_2026-06-15_intel.{pgn,log,standings.log}`.
+
+| Engine | CCRL | RR Elo (±) | Score |
+|---|---|---|---|
+| Stash 13.0 | 1972 | +157 ± 22 | 71.2% |
+| Stash 12.0 | 1886 | +51 ± 21 | 57.4% |
+| **Huginn 2.1** | **~1770** | **−70 ± 19** | **40.1%** |
+| Stash 11.0 | 1690 | −135 ± 21 | 31.4% |
+
+Huginn head-to-head (342g each): vs Stash 11.0 **52.2%** (+15 → 1705), vs Stash
+12.0 **36.0%** (−100 → 1786), vs Stash 13.0 **31.3%** (−137 → 1835).
+- **Estimate: Huginn ≈ 1770 CCRL-Blitz** (direct-H2H 3-anchor mean ~1775;
+  fastchess global MLE ~1755; band 1755–1786). **~45 below the old ~1818** —
+  expected and healthier: the old number leaned on MTL (+9pp favorable). Stash
+  is a clean neutral ladder; its internal RR spacing (v11→v13 = 297) matched
+  CCRL (282, ~5% stretch), validating the ladder.
+- **Finding — score compression / monotonic anchor drift.** The per-anchor
+  estimate *climbs* with opponent strength (1705 → 1786 → 1835): Huginn
+  over-performs a flat Elo model vs strong Stash (31.3% vs ~22% predicted) and
+  under-performs vs weak Stash (52.2% vs ~59%). Reads as a **conversion
+  weakness** — solid vs stronger engines but doesn't convert wins vs weaker
+  ones (99 draws vs Stash 11.0). A more actionable lead than the raw rating;
+  points at the drawishness-scaling / 50-move-conversion items already in the
+  roadmap. The PGN holds the Huginn-vs-Stash-11 draws for a conversion audit.
+- **Next:** re-run to full 2400g with sleep disabled (`powercfg /change
+  standby-timeout-ac 0`) to tighten CIs; `stash14` (2060) optional for headroom.
+  Then fold ~1770 into CLAUDE.md (replacing the ~1818 figure).
+
 ### #17: Aspiration windows at the root — REJECTED @ t15 (2026-06-14)
 
 Implemented (`228817b`, MTLChess-guided): ±50cp window around the previous
@@ -391,7 +444,21 @@ One-liners; full detail + evidence in [the archive](BACKLOG-archive-2.0.md).
 - **#7 — LMP (late move pruning) fix.** Deferred (`experiment/lmp-quiet-count`).
 - **#8 — Aspiration step (b), narrow-window search.** Deferred; folds into #17.
 - **#20 — Trapped-bishop eval pattern** (a7/h7/a2/h2 + enemy pawn locks).
-  Deferred (`experiment/trapped-bishop`).
+  Deferred (`experiment/trapped-bishop`). **Scoped (2026-06-14) from the
+  CPW-engine `EvalBishop` reference:** six square+enemy-pawn locks per side —
+  A7/H7 (b6/g6), B8/G8 (c7/f7), A6/H6 (b5/g5, lighter penalty) and the a2/h2
+  mirrors. Real signal mobility *can't* capture: a cornered bishop is lost for a
+  pawn, but Huginn's mobility (`bishop_attacks(sq,occ) & ~own`) still credits it
+  for "seeing" enemy squares. **Port as direct bitboard mask tests** (six `if`s
+  per side, no per-square switch / no piece loop) + two tapered `EVAL_PARAM`s
+  (`P_BISHOP_TRAPPED_A7`, `..._A6`) so the tuner fits them like the pawn terms.
+  **Skip CPW's `RETURNING_BISHOP`** (bonus for a bishop on f1/c1 with own king on
+  g1/b1) — it rewards an *undeveloped* bishop and fights `DEVELOP_BONUS`; if ever
+  tried, SPRT it standalone, never bundled with the trapped block.
+  **Expectation: small (~1–3 Elo, SF-class), needs large SPRT N** — batch with
+  another eval change or run after the higher-leverage round-8 terms. Lowest
+  priority of the bishop work; the higher-ROI bishop term is a "bishop-pawns /
+  bad-bishop" penalty (own pawns on the bishop's colour), not the corner trap.
 - **#26 — `board64[64]` piece-on-square cache.** Deferred (a prior sign-split;
   perf/cache changes carry more downside risk than gated eval terms).
 - **#27 — Unorthodox early-queen PV** (d1d3 / d8d6). Deferred (evaluation).

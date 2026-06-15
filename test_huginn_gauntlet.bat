@@ -77,8 +77,20 @@ if /I "%OPP%"=="mtl06" set OPPONENT=mtlchess_v06.exe
 if /I "%OPP%"=="mtl06" set OPP_NAME=MTLChess_v0.6
 if /I "%OPP%"=="cdrill" set OPPONENT=cdrill_2000.exe
 if /I "%OPP%"=="cdrill" set OPP_NAME=CDrill_2000
+REM Stash calibration ladder (CCRL-Blitz, UCI-clean): dense same-author bracket
+REM around Huginn's ~1820 -> removes the mixed-engine non-transitivity in #5.
+if /I "%OPP%"=="stash11" set OPPONENT=stash-11.0-windows-x86_64-bmi2.exe
+if /I "%OPP%"=="stash11" set OPP_NAME=Stash_11.0
+if /I "%OPP%"=="stash12" set OPPONENT=stash-12.0-windows-x86_64-bmi2.exe
+if /I "%OPP%"=="stash12" set OPP_NAME=Stash_12.0
+if /I "%OPP%"=="stash13" set OPPONENT=stash-13.0-windows-x86_64-bmi2.exe
+if /I "%OPP%"=="stash13" set OPP_NAME=Stash_13.0
 if /I "%OPP%"=="snowy" set OPPONENT=snowy_0_2_x64.exe
 if /I "%OPP%"=="snowy" set OPP_NAME=Snowy_0.2
+REM CPW-engine dropped (2026-06-14): 2014 hobby engine, two UCI-play bugs
+REM (init book-loader access-violation + first-search hang under UCI time
+REM control). Forfeits every game on a stall -> no chess signal. Use Stash
+REM (CCRL-rated, UCI-clean, dense version ladder) for calibration instead.
 REM NuclearChess 1.0 dropped: emits non-UCI pawn-promotion moves (fastchess
 REM flags them illegal), so its games are contaminated. Do not re-add.
 
