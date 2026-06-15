@@ -1,3 +1,22 @@
+/**
+ * @file search.hpp
+ * @brief Search engine interface — the Engine class and its runtime state.
+ *
+ * Declares the alpha-beta search and everything it needs: the Engine (which owns
+ * the transposition table, PV table, opening book, tablebase handle, and the
+ * move-ordering tables), the per-search ::SearchInfo state/statistics block, and
+ * the ::MinimalLimits configuration passed in from UCI.
+ *
+ * The search is negamax alpha-beta with PVS, iterative deepening, a full pruning
+ * stack (null-move, RFP, futility, razoring, LMR), check extensions, IID, and
+ * quiescence with SEE pruning. Move ordering blends TT/PV/IID hints, MVV-LVA
+ * captures, killers, the butterfly history table, and the counter-move heuristic.
+ * The hand-crafted evaluation (`evaluate`) lives in search.cpp alongside the
+ * search. See [SEARCH_AND_EVAL.md] for the audited technique inventory.
+ *
+ * @see position.hpp for the board representation the search operates on.
+ * @see transposition_table.hpp, pvtable.hpp for the search-owned tables.
+ */
 #pragma once
 
 #include "position.hpp"
@@ -59,8 +78,16 @@ const int INFINITE = 30000;
 const int MATE = 29000;
 // MAX_DEPTH is defined in pvtable.hpp
 
-// Search info structure - equivalent to S_SEARCHINFO from VICE tutorial (0:19)
-// Contains runtime search state and statistics
+/**
+ * @brief Per-search runtime state, limits, statistics, and the collected PV.
+ *
+ * One instance lives for the duration of a `searchPosition` call. It carries the
+ * time-control window, depth/ply counters, the node/tbhit tallies, the move-
+ * ordering diagnostic counters (fail-high, null/futility/LMR/razoring cuts), the
+ * per-ply search stack used by the counter-move heuristic, and the triangular PV
+ * table that records the exact principal variation. Equivalent to VICE's
+ * `S_SEARCHINFO`.
+ */
 struct SearchInfo {
     std::chrono::steady_clock::time_point start_time;  // When search started
     std::chrono::steady_clock::time_point stop_time;   // When to stop search
@@ -133,17 +160,34 @@ struct SearchInfo {
     }
 };
 
-// Search limits structure - external interface for setting search parameters
-// Used by UCI and main interface to configure search behavior
+/**
+ * @brief Caller-facing search configuration (depth / time / infinite).
+ *
+ * The external interface UCI and tests use to bound a search; copied into the
+ * ::SearchInfo at the start of `searchPosition`.
+ */
 struct MinimalLimits {
-    int max_depth = 25;  // Maximum search depth (copied to SearchInfo.max_depth)
-    int max_time_ms = 5000;
-    bool infinite = false;
+    int max_depth = 25;     ///< Maximum search depth (copied to SearchInfo::max_depth).
+    int max_time_ms = 5000; ///< Soft time budget for the move, in milliseconds.
+    bool infinite = false;  ///< If true, search until explicitly stopped (ignore the time budget).
 };
 
+/**
+ * @brief The search engine: owns the search tables and runs alpha-beta.
+ *
+ * A single Engine drives one search position at a time. It owns the
+ * transposition table, PV table, opening book, optional Syzygy tablebase handle,
+ * and the per-search learning tables (history, killers, counter-moves, MVV-LVA).
+ * `searchPosition` is the top-level entry point; `AlphaBeta`/`quiescence` are the
+ * recursive core; `evaluate` is the hand-crafted leaf evaluation. Members are
+ * public for test access.
+ */
 class Engine {
 public:  // Make members public for easier access
-    // Constructor
+    /**
+     * @brief Constructs the engine and initializes its tables.
+     * @param tb Optional Syzygy tablebase handle (nullptr = tablebases disabled).
+     */
     Engine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
         // Initialize MVV-LVA table
         init_mvv_lva();
@@ -209,17 +253,30 @@ public:  // Make members public for easier access
     // Higher scores = better captures (e.g., pawn takes queen = high score)
     int mvv_lva_scores[7][7];  // 7 piece types (None=0, Pawn=1, Knight=2, Bishop=3, Rook=4, Queen=5, King=6)
     
-    // Clear search tables
+    /// Ages (history) and clears (killers/counters) the per-search ordering tables.
     void clear_search_tables();
-    
-    // Simple material evaluation
+
+    /**
+     * @brief Hand-crafted static evaluation of a position.
+     * @param pos Position to score.
+     * @return Score in centipawns from the side-to-move's perspective (+ = better
+     *         for the side to move). Tapered material+PSTs plus pawn structure,
+     *         mobility, threats, king safety, etc. (definition in search.cpp).
+     */
     int evaluate(const Position& pos);
-    
-    // VICE Part 82: Material draw detection (2:03)
+
+    /**
+     * @brief Tests for an insufficient-material draw (e.g. K vs K, K+minor vs K).
+     * @return true if neither side can possibly mate. (VICE Part 82)
+     */
     static bool MaterialDraw(const Position& pos);
-    
-    // VICE Tutorial: Mirror Board function for evaluation testing
-    // Creates a mirrored copy of the position for symmetry testing
+
+    /**
+     * @brief Returns a color-mirrored copy of a position (for eval-symmetry tests).
+     * @param pos Position to mirror.
+     * @return The vertically-flipped, color-swapped position; `evaluate` of it must
+     *         equal `evaluate` of the original for a symmetric eval.
+     */
     Position mirrorBoard(const Position& pos);
 
 
@@ -275,21 +332,66 @@ public:  // Make members public for easier access
     bool load_opening_book(const std::string& book_path);
     S_MOVE get_book_move(const Position& pos) const;
     
-    // VICE Part 55 - Search Function Definitions
-    void checkup(SearchInfo& info);                            // Check time limits and GUI interrupts (1:34)
-    static void clearForSearch(Engine& engine, SearchInfo& info);  // Clear search tables and PV (2:25) - VICE Part 57
-    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);  // Core search (2:58)
-    int quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth = 0);  // Quiescence search with depth limit
-    int evalPosition(const Position& pos);                   // Position evaluation (0:34)
-    
-    // Internal Iterative Deepening for PV nodes without hash move
+    // ---- VICE Part 55: core search ----
+
+    /// Polls the clock and GUI input; sets `info.stopped` when the budget is hit. (1:34)
+    void checkup(SearchInfo& info);
+    /// Resets per-search tables, counters, and the PV before a fresh search. (VICE Part 57)
+    static void clearForSearch(Engine& engine, SearchInfo& info);
+
+    /**
+     * @brief The recursive negamax alpha-beta search (the core of the engine).
+     * @param pos Position to search (mutated and restored in place).
+     * @param alpha Lower bound of the search window.
+     * @param beta Upper bound of the search window.
+     * @param depth Remaining depth in plies.
+     * @param info Shared per-search state/statistics.
+     * @param doNull Whether null-move pruning is permitted at this node.
+     * @param isRoot True at the root (enables root-specific handling).
+     * @return The negamax score from the side-to-move's perspective.
+     */
+    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);
+
+    /**
+     * @brief Quiescence search — extends the leaf with captures/checks until quiet.
+     * @param pos Position to search.
+     * @param alpha Lower window bound.
+     * @param beta Upper window bound.
+     * @param info Shared per-search state.
+     * @param q_depth Current quiescence depth (capped at MAX_QUIESCENCE_DEPTH).
+     * @return The stabilized (stand-pat or capture-refined) score.
+     */
+    int quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth = 0);
+
+    /// Thin wrapper around evaluate() used as the search leaf evaluation. (0:34)
+    int evalPosition(const Position& pos);
+
+    /**
+     * @brief Internal Iterative Deepening: derive an ordering move for a PV node
+     *        that has no TT/hash move, via a shallow search.
+     * @return The best move from the reduced-depth search, used only for ordering.
+     */
     S_MOVE internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info);
-    
-    // VICE-style search function that demonstrates clearForSearch usage (Part 57)
+
+    /**
+     * @brief Top-level search entry point: iterative deepening from the root.
+     * @param pos Position to search from.
+     * @param info Limits in / statistics and best move out.
+     * @return The best move found (also left in `info.best_move`). (VICE Part 57)
+     */
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
-    
-    // Syzygy tablebase functions
+
+    /**
+     * @brief Probes Syzygy WDL tablebases at a leaf.
+     * @param[out] wdl_score Win/draw/loss score on Huginn's scale, if a hit.
+     * @return true if the position was found in the tablebases.
+     */
     bool probe_tablebase_wdl(const Position& pos, int& wdl_score) const;
+
+    /**
+     * @brief Probes Syzygy tablebases at the root for the best move.
+     * @return The tablebase-optimal move, or an empty move if no hit.
+     */
     S_MOVE probe_tablebase_root(const Position& pos) const;
 };
 
