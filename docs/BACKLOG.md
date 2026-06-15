@@ -49,6 +49,7 @@
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
+| 42 | TT aging (dates) + clusters (Fruit/Toga design) | **OPEN** — idea, pairs with #31 | feature/search | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
@@ -303,12 +304,33 @@ the re-search tax from score swings exceeds the pruning saved at d~10. **Lesson:
 search-efficiency levers are the wrong track for an eval-bound engine at this
 TC.** Related: #8 (aspiration step b, parked).
 
-### #31 / #32 / #34: Speed / research (OPEN, low)
+### #31 / #32 / #34 / #42: Speed / research (OPEN, low)
 
 - **#31** — SPRT sweep of `Hash` (64 vs 128 vs 256 MB) at the current strength.
 - **#32** — PEXT slider attacks, build-gated with a magic fallback (BMI2 boxes).
 - **#34** — SF-style `blockersForKing` pin/blocker-aware legal movegen (drop the
   per-move `MakeMove` legality filter for pinned-piece fast paths).
+- **#42 — TT aging + clusters (Fruit/Toga design).** Huginn's TT
+  (`transposition_table.hpp`) is **single-entry-per-index, depth-preferred
+  replacement, NO aging**. It persists across searches (`clearForSearch` clears
+  the PV table, not the TT), so with depth-preferred-only replacement a deep
+  entry stored early in a game can squat in its slot indefinitely — new shallow
+  stores can't evict it (`depth >=` fails) — crowding out fresh results. Two
+  portable ideas from the Fruit/Toga TT:
+  1. **Date-based aging** *(the main win)* — each entry carries a `date`; a global
+     date bumps once per search; `age` = searches-elapsed. Replace by value
+     `age*256 - depth` (prefer old + shallow), so stale-but-deep entries become
+     cheap to evict while still usable until overwritten. Fixes the squat problem
+     without ever clearing the table.
+  2. **Clusters** — each index addresses an N-way contiguous cluster (probe scans
+     for a lock match; store replaces the least-valuable slot). Fewer collision
+     evictions → higher hit rate, at the cost of a small per-probe scan.
+  **Priority/caveat:** search-quality lever, and those have washed out lately
+  (#17 aspiration −34, #26). Counter-point: the #23 TT *bound-fix* was +24, so TT
+  isn't a dead lever — but a replacement-policy *refinement* is more marginal than
+  a correctness bug. #41 says the gap is eval, not search, so this sits behind the
+  eval roadmap. Good "search-quality round" candidate; pairs naturally with #31's
+  Hash sweep (test aging + size together). Needs two-machine SPRT like any ship.
 
 ### #19: Two-machine gauntlet workflow (ESTABLISHED — reference)
 

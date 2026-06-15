@@ -28,7 +28,8 @@ Mark items `[x]` when done, with the date.
 
 ## Tier 2 — supporting subsystems
 
-- [ ] `transposition_table.hpp`
+- [x] `transposition_table.hpp` — rationale-first @file (replacement/aging gap),
+      store/probe @brief (2026-06-14; prompted by the Fruit/Toga TT example → #42)
 - [ ] `magic_bitboards.hpp` / `magic_bitboards.cpp`
 - [ ] `bitboard.hpp` / `bitboard.cpp`
 - [ ] `see.hpp` / `see.cpp`

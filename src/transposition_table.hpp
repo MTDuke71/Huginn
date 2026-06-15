@@ -10,10 +10,23 @@
  * ## Architecture Overview
  * 
  * **Hash Table Design:**
- * - Power-of-2 sizing for fast modulo operations via bit masking
- * - Depth-preferred replacement strategy for optimal cache utilization
- * - 16-byte entries optimized for cache line efficiency
- * - Collision handling through key verification (Zobrist hash comparison)
+ * - Power-of-2 sizing so the table index is `zobrist_key & (size-1)` — a single
+ *   AND replaces a modulo on the hot path.
+ * - **One entry per index** (no clusters): a store collides directly with
+ *   whatever shares its index. Verification stores the *full* 64-bit Zobrist key
+ *   and compares it on probe, so a wrong-position hit is effectively impossible
+ *   (no separate index/lock split).
+ * - 16-byte entries (8 key + 2 score + 1 depth + 1 type + 4 move) for cache-line
+ *   friendliness.
+ *
+ * @par Replacement (and the aging gap)
+ * Slots are scarce, so a store must sometimes evict. The policy is
+ * **depth-preferred**: overwrite on an empty slot, the same position, or a new
+ * search at `depth >= stored depth`; otherwise keep the existing (deeper) entry.
+ * Note the table is **not cleared between searches** within a game, and there is
+ * **no aging** — so a deep entry stored early can squat in its slot for the rest
+ * of the game, blocking fresher shallow results. A date/age scheme (replace by
+ * `age*256 - depth`) plus N-way clusters would fix this; see BACKLOG #42.
  * 
  * **Entry Structure (16 bytes):**
  * - Zobrist Key (8 bytes): Position identifier for collision detection
@@ -132,27 +145,35 @@ public:
         hits = misses = writes = 0;
     }
     
-    // Store position in transposition table with depth-preferred replacement
+    /**
+     * @brief Stores a search result, using depth-preferred replacement.
+     * @param zobrist_key Position hash (also the verification key).
+     * @param score Score to store (mate-distance-adjusted by the caller).
+     * @param depth Search depth that produced the score.
+     * @param node_type ::TTEntry EXACT / LOWER_BOUND / UPPER_BOUND.
+     * @param best_move Best move found, for ordering future probes.
+     *
+     * Replaces the slot when it is empty, holds the same position (refresh), or
+     * the incoming search is at least as deep. A strictly-shallower store into a
+     * different deep entry is dropped — see the @ref TranspositionTable "aging
+     * gap" note: without aging, that deep entry is never evicted by depth alone
+     * (BACKLOG #42).
+     */
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
-        
-        // Depth-preferred replacement strategy:
-        // Replace if: 1) Empty slot, 2) Same position, 3) New search is deeper, or 4) Significantly older entry
+
+        // Depth-preferred replacement: empty | same position | deeper-or-equal.
         bool should_replace = false;
-        
+
         if (entry.zobrist_key == 0) {
-            // Empty slot - always replace
-            should_replace = true;
+            should_replace = true;          // empty slot
         } else if (entry.zobrist_key == zobrist_key) {
-            // Same position - always update with new information
-            should_replace = true;
+            should_replace = true;          // same position — refresh with newer info
         } else if (depth >= entry.depth) {
-            // New search is deeper or equal - prefer deeper searches
-            should_replace = true;
+            should_replace = true;          // collision, but ours is at least as deep
         } else {
-            // Keep existing deeper entry, but could add aging logic here in future
-            should_replace = false;
+            should_replace = false;         // keep the deeper resident (no aging — see #42)
         }
         
         if (should_replace) {
@@ -167,7 +188,15 @@ public:
         }
     }
 
-    // Probe transposition table for position
+    /**
+     * @brief Looks up a position; on a key match, returns its stored result.
+     * @param zobrist_key Position hash to look up.
+     * @param[out] score Stored score (caller un-adjusts mate distance).
+     * @param[out] depth Stored search depth.
+     * @param[out] node_type Stored bound type (EXACT / LOWER / UPPER).
+     * @param[out] best_move Stored best move (for ordering).
+     * @return true on a full-key match (hit); false otherwise (out-params untouched).
+     */
     bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
         size_t index = zobrist_key & size_mask;
         const TTEntry& entry = table[index];
