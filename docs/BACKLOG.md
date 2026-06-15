@@ -470,6 +470,31 @@ One-liners; full detail + evidence in [the archive](BACKLOG-archive-2.0.md).
 - **Ship bar:** same-sign two-machine SPRT H1-accept (AMD + Intel), or tight
   cross-machine agreement for a small effect. Sign-splits are parked by default
   (t14 rook-on-7th was a logged exception, not the rule).
+- **Complexity gate (fixed-depth vs fixed-time + ablation) — run BEFORE each new
+  eval/search round.** Guards against over-engineering: eval terms that don't
+  earn their noise, and pruning that trims real tactics ("trim the tree in
+  vain"). *Context:* Huginn is NOT depth-starved by eval — it runs ~3.55 Mnps vs
+  MTLChess's ~2.33 and prunes harder (R=4 + futility/razoring/IID vs their R=2/3,
+  none), yet loses. So MTLChess's simpler-but-stronger eval is **correlation, not
+  causation**: the gap is term *quality*/search *shape*, not eval *cost*. The
+  failure modes that ARE real here: (a) mis-tuned/correlated terms add eval noise
+  that also degrades move ordering + LMR/futility margins; (b) over-aggressive
+  pruning reaches more depth on a tree missing the move that mattered. Diagnose,
+  don't guess:
+  1. **Fixed-depth vs fixed-time SPRT — the key test.** Gains at fixed-depth but
+     loses at fixed-time → costs more speed than it returns (true over-engineering).
+     Loses at both → the term is just wrong/noisy. Neutral at fixed-depth → adds
+     nothing but risk. Buckets every change cleanly.
+  2. **Periodic ablation sweep** — before adding term N+1, SPRT-disable an existing
+     cluster (mobility, all pawn-structure). MTLChess proves these *can* be
+     near-neutral; if removing one doesn't hurt, it's dead weight adding noise.
+  3. **nps-per-term regression + average-depth telemetry** at the test TC — if
+     breadth creeps up and depth drifts down with no Elo, the line is crossed.
+  - **Pruning-soundness audit** (the "trim in vain" lever): periodically test a
+    sound-lean config (R=3, lighter razoring) at fixed time. A gain means the
+    tree-trimming is over-aggressive — likely worth more than any new eval term.
+  - **Principle: fewer, better, sound > many, noisy, fighting.** "Demote breadth"
+    (#41 + the MTLChess comparison) is this gate applied.
 - **Commit directly to `main`** (no feature branch unless asked); push only when
   asked. Gauntlet results: `gauntlet/*_<machine>.{log,pgn}` + a BACKLOG/commit
   summary carrying Elo/LOS/Ptnml.
