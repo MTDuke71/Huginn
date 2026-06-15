@@ -42,6 +42,7 @@
 |---|-------|--------|------|----------|
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped (t16 = king safety, #2); round 8 next | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
+| 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -213,7 +214,53 @@ from both studies, and the #17 result removes aspiration from contention. The
 search track is demoted: aspiration rejected; **SEE capture ordering (#6)** is the
 one remaining search lever worth a look (different mechanism — move-ordering
 quality, not window efficiency — but its own history is only ~neutral, so treat
-it as low-priority after king safety, not parallel to it).
+it as low-priority after king safety, not parallel to it). **Update (2026-06-15):
+the Stash v12/v13 changelog re-opens the search track with a higher-confidence
+lever — `NMP soundness/refinement` (#43).** Unlike aspiration/SEE (efficiency &
+ordering, mixed record), #43 is a *soundness/adaptive-pruning* class: Huginn's
+flat R=4 with no verification is a genuine over-pruning smell, and Stash bought
++282 CCRL across v11→v13 almost entirely from NMP+LMR and their refinements.
+
+### #43: NMP soundness/refinement round (OPEN, 2026-06-15)
+
+**Highest-confidence search lever — pointed at by three independent sources:**
+#41 (gap is "depth, not eval" — 73% of misses), the MTLChess comparison (their
+strength is well-tuned simple search, not eval breadth), and the **Stash v12/v13
+changelog** (+196 CCRL from *adding* NMP+LMR, then +86 from *refining* them —
++282 total, zero new eval). The lesson: Huginn already carries the techniques
+(NMP, LMR, futility, razoring, IID) yet sits ~200 Elo under Stash v13 — so the
+gap is search **calibration/soundness**, not missing features. This round audits
+Huginn's null-move pruning, the prime over-pruning suspect.
+
+**Current Huginn NMP (audited 2026-06-15):** flat `R=4`
+([search.cpp:1502](../src/search.cpp#L1502)), min depth 5, `has_non_pawn_material`
+guard, **no verification search**, **no eval/depth scaling**, returns `beta` on
+cutoff ([search.cpp:1535](../src/search.cpp#L1535)). Aggressive *and*
+uncalibrated. (LMR, by contrast, is already *ahead* of Stash v13 — `log·log`
+table, depth-gated ≥3, exempts checks/captures/promotions
+[search.cpp:1655](../src/search.cpp#L1655) — so LMR is **not** part of this round.)
+
+**Three sub-levers, each its own fixed-depth + fixed-time SPRT (per the
+complexity gate):**
+1. **NMP verification search** *(lead — the soundness fix)*. Huginn has none;
+   Stash had one since v12 (re-search without null at high depth on a fail-high),
+   v13 added a `beta > 5000` zugzwang-mate recheck. Flat-R=4 + no-verification is
+   the genuine tactical-leak smell. Fixed-depth gain here = "plugged a leak"
+   (the most valuable outcome); a fixed-time-only gain = pure speed.
+2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
+   (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
+   is way above beta").
+3. **Mate-distance pruning** — clamp α/β to mate bounds at node entry, cut if
+   α≥β. Cheap, sound, free; Huginn does TT mate-score adjustment but no
+   node-entry MDP. Bonus: faster mate-finding helps the **conversion weakness**
+   the #5 Stash RR exposed (Huginn under-converts won positions vs weaker
+   engines).
+
+**Caveat (why this isn't a slam dunk):** search levers have a mixed Huginn record
+— #17 aspiration −34, #6 SEE ~neutral. But those were *efficiency/ordering*
+levers; #43 is *soundness/adaptive*. The R=3 pruning-soundness test the
+complexity gate already calls for folds in here naturally. Two-machine SPRT to
+ship, like any change.
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
