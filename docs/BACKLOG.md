@@ -256,10 +256,18 @@ complexity gate):**
      node count):** the material gate was essential — *ungated* it cost **+53%
      nodes** in a middlegame; **phase-gated it's 0% in the middlegame and −19%
      (node-negative, TT-warming) in a rook endgame**, same best moves. Now
-     genuinely SPRT-worthy. **NEXT: fixed-depth + fixed-time two-machine SPRT;
-     ship → flip the default to 1.** Tunables if neutral: the depth-10 / phase-96
+     genuinely SPRT-worthy. Tunables if neutral: the depth-10 / phase-96
      gates, the `depth − R` verify depth. Build the test arm with
      `-DENABLE_NMP_VERIFICATION=1` (see `build/msvc-nmpon`).
+   - **Fixed-time SPRT vs t16 (AMD, 10+0.1, 2026-06-15): +11.82 ± 15.16,
+     51.7% (269W/235L/496D), LOS 93.7%, LLR 0.98 (inconclusive @1000g).**
+     Positive lean, not a regression — strong for a pure-soundness term that
+     only fires in low-material endgames (49.6% draws). Point estimate sits
+     *above* the elo1=10 target but the CI is wide; SPRT didn't resolve.
+     Ptnml [25,123,178,141,33]. PGN `gauntlet/huginn_nmpver_vs_t16_amd.pgn`.
+   - **NEXT:** (a) fixed-depth-12 arm on AMD (running 2026-06-16 — does it win
+     on move quality, not just non-regression?); (b) **Intel leg** for the
+     two-machine ship bar. If both confirm → flip the default to 1 and ship.
 2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
    (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
    is way above beta").
