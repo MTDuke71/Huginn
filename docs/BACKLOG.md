@@ -43,7 +43,7 @@
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped (t16 = king safety, #2); round 8 next | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
-| 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16), pending gauntlet — deterministic repro saved | bug | high |
+| 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -315,10 +315,18 @@ current path is exactly `move_history[0 .. pos.ply)`. One line + the `< 6` guard
 Verified: the warm-TT repro now plays the winning `h6h7` at both rep points
 (was `Kg6`→draw); 197/197 tests pass.
 
-**Status:** FIXED in-tree. Changes rep detection used throughout search (root
-draw-avoidance, in-tree single-rep/threefold, PV truncation), so it is NOT
-byte-identical — **needs a two-machine gauntlet** before tagging a baseline.
-Expect a small but real Elo gain (stops throwing won games) plus cleaner PVs.
+**Status:** FIXED in-tree, **gauntlet-confirmed (AMD)**. Changes rep detection
+used throughout search (root draw-avoidance, in-tree single-rep/threefold, PV
+truncation), so it is NOT byte-identical.
+- **SPRT vs t16 (AMD, 10+0.1) — bundled with #43 NMP-on: +61.92 ± 23.32,
+  58.82% (180W/95L/207D), LOS 100%, LLR 2.99 → H1 ACCEPTED @482g.** Ptnml
+  [9,37,91,68,36]. PGN `gauntlet/huginn_fix_nmpon_vs_t16_amd.pgn`. The package
+  was #44 + #43-NMP together; since NMP-alone was only +11.8 (inconclusive),
+  **#44 carries ~+50 of the +62** — by far the bigger lever. One of the largest
+  jumps in the program, and it resolved in <½ the game cap.
+- **NEXT:** Intel leg (two-machine ship bar), then tag a new baseline. If clean
+  attribution is wanted, a #44-alone (NMP-off) gauntlet isolates the bug-fix
+  Elo from the NMP term.
 
 **Related:** #28 (TT-safe repetition handling — this is the missing piece: the
 detector it relies on was miscounting), #5 (conversion weakness — one concrete
