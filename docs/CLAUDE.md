@@ -13,7 +13,20 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t16 = 533d0b9` (= t15 + BACKLOG #9 round 7 / #2:
+- ✅ **Baseline tag**: `baseline-t17 = 9906fec` (= t16 + BACKLOG #44:
+  **repetition-detector bug fix**. `repetition_count_in_history` used the
+  grow-only `move_history` buffer *size* instead of the current path length
+  `pos.ply`; during deep search the buffer over-counts, sliding the scan window
+  off the real predecessors, so a true 3-fold read as a non-repetition at the
+  deepest iteration — and with a warm TT serving a stale winning score the
+  engine drew won games (a concrete cause of the #5 conversion weakness). The
+  board never desynced; only the rep counter. Fix: `history_len = pos.ply`.
+  **+62 Elo self-play vs t16 (AMD, LOS 100%, H1 @482g)**; **+48 external
+  (42.58% vs Stash 12.0 → Huginn ≈ 1834 CCRL**, gap to Stash 12 ~halved). NMP
+  verification (#43) was bundled then **rejected** by an isolation test (NMP-off
+  ahead +14.6 — no benefit). Single-machine shipped — clean bug fix. Deterministic
+  repro: `tools/repro_repetition_44.py`. Prior:
+  `baseline-t16 = 533d0b9` (= t15 + BACKLOG #9 round 7 / #2:
   **king safety, finally converted** — reformulated the in-tree term to be
   Texel-tunable (removed the ≥2-attacker gate that made it zero on quiet
   positions and stalled hand-tuning at ~0 Elo; MTLChess-recipe king-zone units²/4,
@@ -74,7 +87,10 @@ location is derived from the bitboards via `Position::at_sq64()`.
   (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
   fix + magic bitboards).
 - ✅ **Comprehensive test suite**: 197 GoogleTest cases
-- ✅ **Strength**: **~1818 ± 30 Elo** (10+0.1, no book, CCRL-Blitz scale) as of
+- ✅ **Strength**: **~1834 CCRL-Blitz** as of `baseline-t17` (2026-06-16) —
+  t17 vs Stash 12.0 (1886) = 42.58% / −51.92 ± 24.5 (600g, AMD), single-anchor
+  estimate; the #44 fix added ~+48 external Elo (gap to Stash 12 ~halved). The
+  earlier 3-anchor MLE was **~1818 ± 30 Elo** (10+0.1, no book) as of
   baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
   (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old
   "~1500-1700" (that figure predates the t5→t11 stack: magic bitboards, TT-bound

@@ -6,8 +6,16 @@
 > [BACKLOG-archive-2.0.md](BACKLOG-archive-2.0.md). Issue numbers are preserved
 > so cross-references into the archive still resolve.
 
-## Current state (2026-06-13)
+## Current state (2026-06-16)
 
+- **Baseline:** `baseline-t17 = 9906fec` — the **#44 repetition fix** (rep
+  detector used the grow-only `move_history` buffer size instead of `pos.ply`,
+  so deep iterations miscounted 3-folds and the engine drew won games). **+62
+  self-play vs t16 (AMD, H1 @482g)**; externally **+48 Elo / 42.58% vs Stash
+  12.0 → Huginn ≈ 1834 CCRL** (gap to Stash 12 ~halved). Biggest single fix
+  since the early Texel rounds. NMP verification (#43) was bundled then rejected
+  by an isolation test (no benefit). Single-machine shipped (clean bug fix).
+  Prior: `baseline-t16 = 533d0b9` (round-7 king safety, +10.1 pooled).
 - **Release: Huginn 2.1** (`v2.1`) = baseline-t15 content. **~+490 Elo over
   Huginn 2.0** — pooled two-machine advertising gauntlet (10+0.1, no book,
   600 games): Intel +517.7 ± 70 / AMD +468.0 ± 54, combined **536W / 3L / 61D
@@ -338,9 +346,12 @@ truncation), so it is NOT byte-identical.
   + 14.6 NMP drag) — by far the largest single fix in the program. NMP
   verification was dragging it down and is rejected (#43).
 - **baseline-t17 = the #44 fix alone (NMP off).** AMD-confirmed via the +62
-  bundle and the isolation test. **NEXT:** Intel leg for the formal two-machine
-  bar (a #44-only-vs-t16 Intel run, or accept the inferred ~+76); then t17 is a
-  clean ship.
+  bundle, the isolation test, AND an **external anchor**: t17 vs **Stash 12.0
+  (1886)** scored **42.58% / −51.92 ± 24.5 (600g, AMD)** → Huginn ≈ **1834
+  CCRL**, up from 36.0% / ~1786 pre-#44 (June RR). **+6.6pp = ~+48 external
+  Elo**, gap to Stash 12 ~halved (100→52). The external +48 vs the +62/+76
+  self-play is the usual self-play inflation (#5) — **+48 is the honest gain.**
+  Single-machine accepted (clean bug fix); t17 is the shipped baseline.
 
 **Related:** #28 (TT-safe repetition handling — this is the missing piece: the
 detector it relies on was miscounting), #5 (conversion weakness — one concrete
