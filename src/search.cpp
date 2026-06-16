@@ -727,7 +727,7 @@ static int repetition_count_in_history(const Position& pos) {
     // Only check for repetition in actual game positions, not during deep search
 
     // Don't check for repetition if move history is too short
-    if (pos.move_history.size() < 6) {
+    if (pos.ply < 6) {
         return 1; // Need at least 6 plies for meaningful repetition check
     }
 
@@ -743,7 +743,15 @@ static int repetition_count_in_history(const Position& pos) {
     // false positive. The old fixed 12-ply window silently missed slow
     // long-period shuffles (e.g. a K+Q vs K cycle 16-22 plies wide, which
     // let the engine draw a won game; see BACKLOG #28 case intel-R8).
-    const int history_len = static_cast<int>(pos.move_history.size());
+    // BUG FIX (#44): use the CURRENT path length (pos.ply), NOT
+    // move_history.size(). move_history is a reusable buffer grown to the
+    // deepest ply the search ever reached (MakeMove resize-grows it, TakeMove
+    // never shrinks it), so its size over-counts during search — entries past
+    // pos.ply are stale undos from deeper/sibling lines. Using size() slid the
+    // scan window off the real predecessors, so a true 3-fold read as a
+    // non-repetition at deep iterations and the engine drew won games. The
+    // current path is exactly move_history[0 .. pos.ply).
+    const int history_len = pos.ply;
     const int scan_plies = std::min(history_len,
                                     static_cast<int>(pos.halfmove_clock));
     int start_check = std::max(0, history_len - scan_plies);

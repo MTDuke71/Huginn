@@ -43,6 +43,7 @@
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped (t16 = king safety, #2); round 8 next | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
+| 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16), pending gauntlet — deterministic repro saved | bug | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -282,6 +283,49 @@ complexity gate):**
 levers; #43 is *soundness/adaptive*. The R=3 pruning-soundness test the
 complexity gate already calls for folds in here naturally. Two-machine SPRT to
 ship, like any change.
+
+### #44: Repetition detector used buffer size, not ply — FIXED (2026-06-16)
+
+**Symptom:** Huginn drew clearly-won games by 3-fold repetition — shuffling in a
++6.8 (or rook-up) position into a draw, often playing the repeating move in
+~0.001s. A concrete mechanism behind the #5 conversion weakness; surfaced in two
+Stash-RR games. **Now has a deterministic repro** (`tools/repro_repetition_44.py`)
+— a first for this bug family (#37 was never reproducible).
+
+**Root cause (one line).** `repetition_count_in_history` used
+`move_history.size()` as the history length. But `move_history` is a *reusable
+high-water-mark buffer*: `MakeMove` does `resize(ply+1)` (grow-only) and
+`TakeMove` never shrinks it ([position.cpp:266](../src/position.cpp#L266)). So
+during deep search its size exceeds the current path length `pos.ply`, and the
+entries past `pos.ply` are **stale undos from deeper/sibling lines**. The
+`halfmove_clock`-bounded scan window was computed from the inflated size, so it
+slid off the real predecessors — a *true* 3-fold read as a non-repetition at the
+deepest iteration (the one that picks the move). The board itself never desynced
+(zobrist key constant across iterations) — only the rep counter was wrong.
+
+**Trigger:** only with a **warm TT** — a stale *winning* score is cached for the
+position before it became a 3-fold, and with detection failing nothing overrides
+it. Cold (single search) the engine finds the win; replaying the moves in one
+process (as any GUI does) reproduces the draw. The instrumentation nailed it:
+`repcnt` was correct (2/3) at shallow iterations and collapsed to 1 as `hist`
+inflated (116→128) while the root key stayed constant.
+
+**Fix:** `const int history_len = pos.ply;` (was `move_history.size()`) — the
+current path is exactly `move_history[0 .. pos.ply)`. One line + the `< 6` guard.
+Verified: the warm-TT repro now plays the winning `h6h7` at both rep points
+(was `Kg6`→draw); 197/197 tests pass.
+
+**Status:** FIXED in-tree. Changes rep detection used throughout search (root
+draw-avoidance, in-tree single-rep/threefold, PV truncation), so it is NOT
+byte-identical — **needs a two-machine gauntlet** before tagging a baseline.
+Expect a small but real Elo gain (stops throwing won games) plus cleaner PVs.
+
+**Related:** #28 (TT-safe repetition handling — this is the missing piece: the
+detector it relies on was miscounting), #5 (conversion weakness — one concrete
+cause), #37 (also a make/unmake-buffer subtlety, but that one *does* desync the
+board; distinct bug). **Follow-up idea (separate SPRT):** extend the root
+draw-avoidance to a winning *single* repetition (2-fold), not just 3-fold, so a
+won engine routes around the shuffle one move earlier.
 
 ### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
 
