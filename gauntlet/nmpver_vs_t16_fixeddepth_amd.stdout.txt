@@ -1,0 +1,283 @@
+Indexing opening suite...
+Started game 4 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Started game 1 of 1000 (Huginn_nmpver vs Huginn_t16)
+Started game 2 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Started game 3 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 2 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 5 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 1 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 6 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 3 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 7 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 4 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 8 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 6 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 9 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 5 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 10 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 8 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 11 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 7 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 12 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 10 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 13 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 9 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 14 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 11 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 15 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 12 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 16 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 13 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 17 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 14 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 18 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 15 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 19 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 16 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 20 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 18 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 21 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 17 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 22 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 20 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 23 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 19 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 24 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 21 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 25 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 23 (Huginn_nmpver vs Huginn_t16): 1-0 {White mates}
+Started game 26 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 25 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 27 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 26 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 28 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 24 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 29 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 22 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 30 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 27 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 31 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 29 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 32 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 30 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 33 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 33 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 34 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 28 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 35 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 31 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 36 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 32 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 37 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 34 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 38 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 35 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 39 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 37 (Huginn_nmpver vs Huginn_t16): 1-0 {White mates}
+Started game 40 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 36 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 41 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 41 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 42 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 40 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 43 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 39 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_nmpver vs Huginn_t16 (12 plies, 1t, 64MB, noob_3moves.epd):
+Elo: -18.30 +/- 35.10, nElo: -57.91 +/- 110.47
+LOS: 15.21 %, DrawRatio: 78.95 %, PairsRatio: 0.33
+Games: 38, Wins: 2, Losses: 4, Draws: 32, Points: 18.0 (47.37 %)
+Ptnml(0-2): [0, 3, 15, 1, 0], WL/DD Ratio: 0.07
+LLR: -0.19 (-6.4%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 44 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 38 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 45 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 42 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 46 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 43 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 47 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 45 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 48 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 44 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 49 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 46 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 50 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 47 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 51 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 49 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 52 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 50 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 53 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 53 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 54 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 48 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 55 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 52 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 56 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 54 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 57 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 55 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 58 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 57 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 59 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 56 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 60 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 59 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 61 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 58 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 62 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 60 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 63 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 63 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 64 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 62 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 65 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 61 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 66 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 66 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 67 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 65 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 68 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 64 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 69 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 68 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 70 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 69 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 71 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 67 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 72 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 72 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 73 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 70 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 74 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 71 (Huginn_nmpver vs Huginn_t16): 1-0 {White mates}
+Started game 75 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 73 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 76 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 74 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 77 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 51 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 78 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 76 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 79 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 75 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 80 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 77 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 81 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 80 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 82 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 79 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_nmpver vs Huginn_t16 (12 plies, 1t, 64MB, noob_3moves.epd):
+Elo: -17.83 +/- 32.36, nElo: -42.69 +/- 77.10
+LOS: 13.89 %, DrawRatio: 71.79 %, PairsRatio: 0.57
+Games: 78, Wins: 7, Losses: 11, Draws: 60, Points: 37.0 (47.44 %)
+Ptnml(0-2): [1, 6, 28, 4, 0], WL/DD Ratio: 0.12
+LLR: -0.31 (-10.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 83 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 81 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 84 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 82 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 85 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 78 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by insufficient mating material}
+Started game 86 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 83 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 87 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 84 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 88 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 87 (Huginn_nmpver vs Huginn_t16): 1-0 {White mates}
+Started game 89 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 86 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 90 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 88 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 91 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 89 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 92 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 92 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 93 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 91 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 94 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 90 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 95 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 93 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 96 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 94 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 97 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 95 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 98 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 96 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 99 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 97 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 100 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 99 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 101 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 98 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 102 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 100 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 103 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 102 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 104 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 101 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 105 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 103 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 106 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 104 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 107 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 105 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 108 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 106 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 109 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 107 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 110 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 108 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 111 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 109 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 112 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 110 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 113 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 111 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 114 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 112 (Huginn_t16 vs Huginn_nmpver): 1-0 {White mates}
+Started game 115 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 114 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 116 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 113 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 117 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 115 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 118 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 117 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 119 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 116 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 120 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 119 (Huginn_nmpver vs Huginn_t16): 0-1 {Black mates}
+Started game 121 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 120 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_nmpver vs Huginn_t16 (12 plies, 1t, 64MB, noob_3moves.epd):
+Elo: -30.03 +/- 29.21, nElo: -65.47 +/- 63.23
+LOS: 2.12 %, DrawRatio: 65.52 %, PairsRatio: 0.43
+Games: 116, Wins: 9, Losses: 19, Draws: 88, Points: 53.0 (45.69 %)
+Ptnml(0-2): [2, 12, 38, 6, 0], WL/DD Ratio: 0.09
+LLR: -0.69 (-23.4%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 122 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 118 (Huginn_t16 vs Huginn_nmpver): 0-1 {Black mates}
+Started game 123 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 122 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 124 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 123 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 125 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 121 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 126 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 126 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 127 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 124 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 128 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 125 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 129 of 1000 (Huginn_nmpver vs Huginn_t16)
+Finished game 127 (Huginn_nmpver vs Huginn_t16): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 130 of 1000 (Huginn_t16 vs Huginn_nmpver)
+Finished game 128 (Huginn_t16 vs Huginn_nmpver): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 131 of 1000 (Huginn_nmpver vs Huginn_t16)
