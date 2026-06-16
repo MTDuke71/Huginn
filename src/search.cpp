@@ -73,6 +73,21 @@
 #define ENABLE_KING_SAFETY 1
 #endif
 
+// ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
+// against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
+// verification — a genuine over-pruning / tactical-leak suspect (the Stash
+// v12/v13 changelog added exactly this). On a null fail-high at high depth AND
+// low non-pawn material (zugzwang is an endgame phenomenon — the material gate
+// keeps the re-search off the middlegame, where an unconditional version cost
+// +53% nodes), re-search the actual position (null undone) at reduced depth
+// with null pruning disabled; only take the cutoff if it ALSO fails high.
+// DEFAULT OFF (unproven) so `main` stays byte-identical; build the test arm
+// with -DENABLE_NMP_VERIFICATION=1 and ship only after a fixed-depth +
+// fixed-time SPRT clears it (per the complexity-gate convention).
+#ifndef ENABLE_NMP_VERIFICATION
+#define ENABLE_NMP_VERIFICATION 0
+#endif
+
 namespace Huginn {
 
 // Contempt — penalty applied to draw scores from the side-to-move's
@@ -1501,6 +1516,15 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // 5. Side to move has non-pawn material (big pieces)
     const int NULL_MOVE_REDUCTION = 4;  // R = 4, more aggressive pruning
     const int MIN_NULL_MOVE_DEPTH = 5;  // Minimum depth to try null move (increased for R=4)
+#if ENABLE_NMP_VERIFICATION
+    // #43: gate verification on (a) high depth — keep the re-search on the thin
+    // upper slice of the tree, and (b) low non-pawn material — zugzwang only
+    // happens with few pieces, so the gate skips the middlegame entirely (where
+    // an ungated version cost +53% nodes). game_phase_256: 256 = opening,
+    // 0 = bare kings; <= 96 ≈ entering the endgame. Both tunable.
+    const int NMP_VERIFICATION_MIN_DEPTH = 10;
+    const int NMP_VERIFICATION_MAX_PHASE = 96;
+#endif
     
     if (doNull && !in_check && !isRoot && depth >= MIN_NULL_MOVE_DEPTH && 
         pos.has_non_pawn_material(pos.side_to_move)) {
@@ -1530,14 +1554,37 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             return 0;
         }
         
-        // If null move search shows position is already too good (>= beta), 
+        // If null move search shows position is already too good (>= beta),
         // then our actual moves should easily beat beta - prune this node
         if (null_score >= beta) {
-            // Null move cutoff - this position is too good for the opponent
-#if ENABLE_INFO_DIAGNOSTICS
-            info.null_cut++;
+            bool verified = true;
+#if ENABLE_NMP_VERIFICATION
+            // #43: verification search. The null move has been undone above, so
+            // `pos` is this node's actual position. Re-search it at reduced
+            // depth with null pruning disabled — same node, so NO ply bump.
+            // Confirm the cutoff only if this also fails high; otherwise the
+            // null fail-high was a zugzwang illusion and we fall through to the
+            // normal move search instead of pruning.
+            if (depth >= NMP_VERIFICATION_MIN_DEPTH &&
+                game_phase_256(pos) <= NMP_VERIFICATION_MAX_PHASE) {
+                int verify_score = AlphaBeta(pos, beta - 1, beta,
+                                             depth - NULL_MOVE_REDUCTION,
+                                             info, false, false);
+                if (info.stopped || info.quit) {
+                    return 0;
+                }
+                verified = (verify_score >= beta);
+            }
 #endif
-            return beta;
+            if (verified) {
+                // Null move cutoff - this position is too good for the opponent
+#if ENABLE_INFO_DIAGNOSTICS
+                info.null_cut++;
+#endif
+                return beta;
+            }
+            // else (#43): zugzwang false-positive — do not prune; fall through
+            // to the normal move search below.
         }
     }
 

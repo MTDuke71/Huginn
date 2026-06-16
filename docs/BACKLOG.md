@@ -247,6 +247,19 @@ complexity gate):**
    v13 added a `beta > 5000` zugzwang-mate recheck. Flat-R=4 + no-verification is
    the genuine tactical-leak smell. Fixed-depth gain here = "plugged a leak"
    (the most valuable outcome); a fixed-time-only gain = pure speed.
+   - **IMPLEMENTED 2026-06-15 — `ENABLE_NMP_VERIFICATION`, default OFF
+     (`main` byte-identical).** On a null fail-high, if `depth >= 10` **and**
+     `game_phase_256(pos) <= 96` (low non-pawn material — zugzwang is an endgame
+     thing), re-search the actual position at `depth − R` with null disabled
+     (same node, no ply bump); confirm the cutoff only if it also fails high,
+     else fall through. 197/197 tests pass on the ON build. **Cost (fixed-depth
+     node count):** the material gate was essential — *ungated* it cost **+53%
+     nodes** in a middlegame; **phase-gated it's 0% in the middlegame and −19%
+     (node-negative, TT-warming) in a rook endgame**, same best moves. Now
+     genuinely SPRT-worthy. **NEXT: fixed-depth + fixed-time two-machine SPRT;
+     ship → flip the default to 1.** Tunables if neutral: the depth-10 / phase-96
+     gates, the `depth − R` verify depth. Build the test arm with
+     `-DENABLE_NMP_VERIFICATION=1` (see `build/msvc-nmpon`).
 2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
    (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
    is way above beta").
