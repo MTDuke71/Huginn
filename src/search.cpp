@@ -9,11 +9,13 @@
 #include "msvc_optimizations.hpp"
 #include "see.hpp"
 #include <cassert>
+#include <cstdlib>
 #include <cmath>     // for std::log used by the LMR-table initializer
 #include <array>
 #include <iostream>
 #include <algorithm>
 #include <iomanip>  // For std::setw
+#include <string>
 #include <unordered_set>  // For PV repetition truncation in searchPosition
 
 // Backlog #13 bisection result (2026-05-06): ply tracking + TT-mate is
@@ -91,8 +93,85 @@
 #ifndef ENABLE_NMP_VERIFICATION
 #define ENABLE_NMP_VERIFICATION 0
 #endif
+// ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
+// explicitly-instrumented builds, assert after search make/unmake operations
+// that the Position caches still agree with the per-piece bitboards and full
+// Zobrist recomputation. Release default is OFF: no Elo/NPS or behavior change.
+#ifndef ENABLE_SEARCH_INTEGRITY_ASSERTS
+#ifdef DEBUG
+#define ENABLE_SEARCH_INTEGRITY_ASSERTS 1
+#else
+#define ENABLE_SEARCH_INTEGRITY_ASSERTS 0
+#endif
+#endif
 
 namespace Huginn {
+
+static inline void assert_search_position_integrity(const Position& pos, const char* context) {
+#if ENABLE_SEARCH_INTEGRITY_ASSERTS
+    std::string reason;
+    if (!pos.is_consistent(&reason)) {
+        std::cerr << "Position integrity failure";
+        if (context && *context) std::cerr << " (" << context << ")";
+        std::cerr << ": " << reason << "\nFEN: " << pos.to_fen() << std::endl;
+        std::abort();
+    }
+#else
+    (void)pos;
+    (void)context;
+#endif
+}
+
+#if ENABLE_SEARCH_INTEGRITY_ASSERTS
+struct SearchPositionSnapshot {
+    Color side_to_move;
+    int ep_square;
+    uint8_t castling_rights;
+    uint16_t halfmove_clock;
+    uint16_t fullmove_number;
+    std::array<int, 2> king_sq;
+    std::array<std::array<Bitboard, int(PieceType::_Count)>, 2> piece_bitboards;
+    std::array<Bitboard, 2> color_bitboards;
+    Bitboard occupied_bitboard;
+    uint64_t zobrist_key;
+    std::array<int, 2> material_score;
+    int ply;
+};
+
+static inline SearchPositionSnapshot capture_search_position(const Position& pos) {
+    return {pos.side_to_move, pos.ep_square, pos.castling_rights,
+            pos.halfmove_clock, pos.fullmove_number, pos.king_sq,
+            pos.piece_bitboards, pos.color_bitboards, pos.occupied_bitboard,
+            pos.zobrist_key, pos.material_score, pos.ply};
+}
+
+static inline void assert_search_position_unchanged(
+        const Position& pos, const SearchPositionSnapshot& before, const char* context) {
+    if (pos.side_to_move != before.side_to_move ||
+        pos.ep_square != before.ep_square ||
+        pos.castling_rights != before.castling_rights ||
+        pos.halfmove_clock != before.halfmove_clock ||
+        pos.fullmove_number != before.fullmove_number ||
+        pos.king_sq != before.king_sq ||
+        pos.piece_bitboards != before.piece_bitboards ||
+        pos.color_bitboards != before.color_bitboards ||
+        pos.occupied_bitboard != before.occupied_bitboard ||
+        pos.zobrist_key != before.zobrist_key ||
+        pos.material_score != before.material_score ||
+        pos.ply != before.ply) {
+        std::cerr << "Position changed across search boundary";
+        if (context && *context) std::cerr << " (" << context << ")";
+        std::cerr << "\nFEN: " << pos.to_fen() << std::endl;
+        std::abort();
+    }
+    assert_search_position_integrity(pos, context);
+}
+#else
+struct SearchPositionSnapshot {};
+static inline SearchPositionSnapshot capture_search_position(const Position&) { return {}; }
+static inline void assert_search_position_unchanged(
+        const Position&, const SearchPositionSnapshot&, const char*) {}
+#endif
 
 // Contempt — penalty applied to draw scores from the side-to-move's
 // perspective. Biases the search away from drawing lines: when the
@@ -1546,6 +1625,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         
         // Make null move (give opponent a free move)
         pos.MakeNullMove();
+        assert_search_position_integrity(pos, "after MakeNullMove");
 
         // Record null marker so the child's counter-move guard
         // (previous_move.move != 0) skips lookup over a null parent move.
@@ -1554,12 +1634,15 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
 
         // Search with reduced depth and narrow window around beta
+        const auto null_child = capture_search_position(pos);
         ++info.ply;
         int null_score = -AlphaBeta(pos, -beta, -beta + 1, depth - 1 - NULL_MOVE_REDUCTION, info, false, false);
         --info.ply;
+        assert_search_position_unchanged(pos, null_child, "after null-move search");
 
         // Undo null move
         pos.TakeNullMove();
+        assert_search_position_integrity(pos, "after TakeNullMove");
         
         // Check if we should stop
         if (info.stopped || info.quit) {
@@ -1579,9 +1662,11 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             // normal move search instead of pruning.
             if (depth >= NMP_VERIFICATION_MIN_DEPTH &&
                 game_phase_256(pos) <= NMP_VERIFICATION_MAX_PHASE) {
+                const auto verify_position = capture_search_position(pos);
                 int verify_score = AlphaBeta(pos, beta - 1, beta,
                                              depth - NULL_MOVE_REDUCTION,
                                              info, false, false);
+                assert_search_position_unchanged(pos, verify_position, "after NMP verification search");
                 if (info.stopped || info.quit) {
                     return 0;
                 }
@@ -1682,7 +1767,11 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, depth, iid_move);
 
-        if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+        if (pos.MakeMove(move_list.moves[i]) != 1) {
+            assert_search_position_integrity(pos, "after illegal AlphaBeta MakeMove rollback");
+            continue; // Skip illegal moves
+        }
+        assert_search_position_integrity(pos, "after AlphaBeta MakeMove");
         ++legal_count;
 
         // Track move in search stack for counter-move heuristic
@@ -1733,8 +1822,10 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 info.lmr_attempts++;
 #endif
                 ++info.ply;
+                const auto child = capture_search_position(pos);
                 score = -AlphaBeta(pos, -alpha - 1, -alpha, reduced_depth, info, true, false);
                 --info.ply;
+                assert_search_position_unchanged(pos, child, "after reduced LMR search");
 
                 // If reduced search fails high, we need full search
                 if (score > alpha) {
@@ -1753,23 +1844,30 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             if (i == 0 || alpha == best_score) {
                 // First move or no improvement yet - use full window
                 ++info.ply;
+                const auto child = capture_search_position(pos);
                 score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
                 --info.ply;
+                assert_search_position_unchanged(pos, child, "after full-window child search");
             } else {
                 // PVS: Try null window first, then re-search if it fails high
                 ++info.ply;
+                const auto child = capture_search_position(pos);
                 score = -AlphaBeta(pos, -alpha - 1, -alpha, depth - 1, info, true, false);
                 --info.ply;
+                assert_search_position_unchanged(pos, child, "after PVS null-window child search");
                 if (score > alpha && score < beta) {
                     // Null window search failed high, re-search with full window
                     ++info.ply;
+                    const auto research_child = capture_search_position(pos);
                     score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
                     --info.ply;
+                    assert_search_position_unchanged(pos, research_child, "after PVS re-search child search");
                 }
             }
         }
         
         pos.TakeMove();
+        assert_search_position_integrity(pos, "after AlphaBeta TakeMove");
         
         if (info.stopped || info.quit) {
             return 0;
@@ -1943,7 +2041,11 @@ S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, 
         
         // Try moves in IID search
         for (int i = 0; i < iid_move_list.count; ++i) {
-            if (pos.MakeMove(iid_move_list.moves[i]) != 1) continue;
+            if (pos.MakeMove(iid_move_list.moves[i]) != 1) {
+                assert_search_position_integrity(pos, "after illegal IID MakeMove rollback");
+                continue;
+            }
+            assert_search_position_integrity(pos, "after IID MakeMove");
 
             // Track move in search stack for counter-move heuristic
             if (info.ply >= 0 && info.ply < 64) {
@@ -1951,10 +2053,13 @@ S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, 
             }
 
             ++info.ply;
+            const auto child = capture_search_position(pos);
             int score = -AlphaBeta(pos, -beta, -alpha, iid_depth, info, true, false);
             --info.ply;
+            assert_search_position_unchanged(pos, child, "after IID child search");
 
             pos.TakeMove();
+            assert_search_position_integrity(pos, "after IID TakeMove");
             
             // Check for early termination
             if (info.stopped || info.quit) {
@@ -2054,10 +2159,17 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
             continue;
         }
 
-        if (pos.MakeMove(move) != 1) continue; // Skip illegal moves
+        if (pos.MakeMove(move) != 1) {
+            assert_search_position_integrity(pos, "after illegal quiescence MakeMove rollback");
+            continue; // Skip illegal moves
+        }
+        assert_search_position_integrity(pos, "after quiescence MakeMove");
 
+        const auto child = capture_search_position(pos);
         int score = -quiescence(pos, -beta, -alpha, info, q_depth + 1);
+        assert_search_position_unchanged(pos, child, "after quiescence child search");
         pos.TakeMove();
+        assert_search_position_integrity(pos, "after quiescence TakeMove");
         
         if (info.stopped || info.quit) {
             return 0;
@@ -2204,7 +2316,11 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         for (int i = 0; i < move_list.count; ++i) {
             if (info.stopped || info.quit) break;
 
-            if (pos.MakeMove(move_list.moves[i]) != 1) continue; // Skip illegal moves
+            if (pos.MakeMove(move_list.moves[i]) != 1) {
+                assert_search_position_integrity(pos, "after illegal root MakeMove rollback");
+                continue; // Skip illegal moves
+            }
+            assert_search_position_integrity(pos, "after root MakeMove");
             ++legal_count;
             const bool immediate_repetition = isRepetition(pos);
 
@@ -2215,14 +2331,17 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             }
 
             ++info.ply;
+            const auto child = capture_search_position(pos);
             int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
             --info.ply;
+            assert_search_position_unchanged(pos, child, "after root child search");
 
             if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
                 score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
             }
 
             pos.TakeMove();
+            assert_search_position_integrity(pos, "after root TakeMove");
 
             if (info.stopped || info.quit) break;
 
@@ -2312,7 +2431,12 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             const S_MOVE* tri_pv = info.pv_line[0];
             const int tri_len = info.pv_length[0];
             for (int i = 0; i < tri_len && pv_moves < pv_cap; ++i) {
-                if (pos.MakeMove(tri_pv[i]) != 1) { stop = true; break; }
+                if (pos.MakeMove(tri_pv[i]) != 1) {
+                    assert_search_position_integrity(pos, "after illegal PV-prefix MakeMove rollback");
+                    stop = true;
+                    break;
+                }
+                assert_search_position_integrity(pos, "after PV-prefix MakeMove");
                 ++made;
                 display_pv[pv_moves++] = tri_pv[i];
                 if (pos.halfmove_clock >= 100) {
@@ -2360,14 +2484,21 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                 }
                 if (!tt_move_legal) break;
 
-                if (pos.MakeMove(tt_move) != 1) break;
+                if (pos.MakeMove(tt_move) != 1) {
+                    assert_search_position_integrity(pos, "after illegal PV TT-walk MakeMove rollback");
+                    break;
+                }
+                assert_search_position_integrity(pos, "after PV TT-walk MakeMove");
                 ++made;
                 display_pv[pv_moves++] = tt_move;
                 if (pos.halfmove_clock >= 100) break;  // fifty-move rule
                 if (!seen.insert(pos.zobrist_key).second) break;  // rep
             }
 
-            for (int i = 0; i < made; ++i) pos.TakeMove();
+            for (int i = 0; i < made; ++i) {
+                pos.TakeMove();
+                assert_search_position_integrity(pos, "after PV display TakeMove");
+            }
         }
         const S_MOVE* pv_array = display_pv;
 

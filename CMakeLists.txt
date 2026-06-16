@@ -169,10 +169,16 @@ endif()
 # ---- Debug Mode Configuration ----
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
+option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
     message(STATUS "Debug assertions enabled")
+endif()
+
+if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
+    add_compile_definitions(ENABLE_SEARCH_INTEGRITY_ASSERTS=1)
+    message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
@@ -468,6 +474,7 @@ if(GTEST_FOUND)
     test/test_see.cpp
     test/test_search_determinism.cpp
     test/test_pv_display.cpp
+    test/test_position_integrity.cpp
     )
 
     add_executable(huginn_tests

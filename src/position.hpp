@@ -148,6 +148,9 @@ public:
     /// Recomputes derived caches (color/occupancy bitboards, material, king_sq) from the per-piece bitboards.
     void rebuild_counts();
 
+    /// Validates derived caches, material, king squares, and Zobrist against the per-piece bitboards.
+    bool is_consistent(std::string* reason = nullptr) const;
+
     /// Sets the standard chess starting position.
     void set_startpos();
 

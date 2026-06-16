@@ -52,7 +52,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
+| 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
 | 17 | Aspiration windows at the root | **REJECTED** @ t15 (−33.8 Elo, H0) — reverted, parked | feature | low |
@@ -360,7 +360,7 @@ board; distinct bug). **Follow-up idea (separate SPRT):** extend the root
 draw-avoidance to a winning *single* repetition (2-fold), not just 3-fold, so a
 won engine routes around the shuffle one move earlier.
 
-### #37: Board-desync illegal bestmove — GUARDED, root cause OPEN
+### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
 A rare, **time-dependent** make/unmake imbalance can leave the engine's internal
 board desynced from the real root position, so the search can return a move that
@@ -372,12 +372,18 @@ Intel; fastchess forfeits on it).
   substitutes a legal move (never forfeit), restores the clean board, and logs
   the exact FEN + offending move. So the engine can no longer *emit* an illegal
   move. (#36, the cosmetic PV-display variant, closed separately at `a9173ad`.)
+- **Instrumented** (2026-06-16): `Position::is_consistent()` validates derived
+  caches, material, king squares, `at_sq64()` agreement, and full Zobrist
+  recomputation against the per-piece bitboards. Search now has optional
+  `ENABLE_SEARCH_INTEGRITY_ASSERTS` diagnostics that assert after make/unmake
+  boundaries and verify recursive child searches return the position unchanged.
+  Default Release builds keep this OFF (no Elo/NPS impact); enable with
+  `-DENABLE_SEARCH_INTEGRITY_ASSERTS=ON` for repro runs.
 - **Root cause still open.** Not reproducible cold / warm-TT / faithful replay —
   only under real time pressure. Audited every make/unmake site + the primitives;
-  all balanced on inspection. **Next:** instrument a debug build with a per-node
-  board-integrity assertion (bitboard self-consistency + `at_sq64` agreement),
-  run self-play until it trips, then bisect from the captured FEN/move. The
-  shipped diagnostic will hand us a deterministic repro the next time it fires.
+  all balanced on inspection. **Next:** run an instrumented self-play / fastchess
+  repro until it trips, then bisect from the captured context. The diagnostic
+  should hand us a deterministic repro the next time the imbalance occurs.
 
 ### #38: Displayed PV continues past the fifty-move rule (FIXED 2026-06-16)
 

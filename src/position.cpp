@@ -61,6 +61,89 @@ void Position::update_zobrist_key() {
     zobrist_key = Zobrist::compute(*this);
 }
 
+bool Position::is_consistent(std::string* reason) const {
+    auto fail = [&](const std::string& why) {
+        if (reason) *reason = why;
+        return false;
+    };
+
+    if (castling_rights & ~CASTLE_ALL) return fail("castling rights contain invalid bits");
+    if (ep_square != -1 && (ep_square < 0 || ep_square >= 64)) return fail("ep square out of range");
+
+    std::array<Bitboard, 2> expected_color{0ULL, 0ULL};
+    Bitboard expected_occupied = 0ULL;
+    std::array<int, 2> expected_material{0, 0};
+    std::array<int, 2> expected_king_sq{-1, -1};
+
+    if (piece_bitboards[0][int(PieceType::None)] != 0ULL ||
+        piece_bitboards[1][int(PieceType::None)] != 0ULL) {
+        return fail("None piece bitboard is non-empty");
+    }
+
+    for (int color = 0; color < 2; ++color) {
+        for (int type = int(PieceType::Pawn); type <= int(PieceType::King); ++type) {
+            const Bitboard bb = piece_bitboards[color][type];
+            if (bb & expected_occupied) return fail("piece bitboards overlap");
+
+            expected_color[color] |= bb;
+            expected_occupied |= bb;
+
+            if (type == int(PieceType::King)) {
+                const int king_count = popcount(bb);
+                if (king_count > 1) return fail("multiple kings for one side");
+                if (king_count == 1) expected_king_sq[color] = get_lsb(bb);
+            } else {
+                expected_material[color] +=
+                    popcount(bb) * value_of(make_piece(Color(color), PieceType(type)));
+            }
+        }
+    }
+
+    if (expected_color[0] != color_bitboards[0]) return fail("white color bitboard cache mismatch");
+    if (expected_color[1] != color_bitboards[1]) return fail("black color bitboard cache mismatch");
+    if ((color_bitboards[0] & color_bitboards[1]) != 0ULL) return fail("color bitboards overlap");
+    if (expected_occupied != occupied_bitboard) return fail("occupied bitboard cache mismatch");
+    if (expected_king_sq != king_sq) return fail("king square cache mismatch");
+    if (expected_material != material_score) return fail("material cache mismatch");
+
+    auto piece_from_piece_bitboards = [&](int sq) {
+        const Bitboard bit = 1ULL << sq;
+        for (int color = 0; color < 2; ++color) {
+            for (int type = int(PieceType::Pawn); type <= int(PieceType::King); ++type) {
+                if (piece_bitboards[color][type] & bit) {
+                    return make_piece(Color(color), PieceType(type));
+                }
+            }
+        }
+        return Piece::None;
+    };
+
+    for (int sq = 0; sq < 64; ++sq) {
+        if (at_sq64(sq) != piece_from_piece_bitboards(sq)) {
+            return fail("at_sq64 disagrees with per-piece bitboards");
+        }
+    }
+
+    uint64_t expected_key = 0ULL;
+    for (int color = 0; color < 2; ++color) {
+        for (int type = int(PieceType::Pawn); type <= int(PieceType::King); ++type) {
+            Bitboard bb = piece_bitboards[color][type];
+            const int zpiece = type + (color == int(Color::Black) ? 6 : 0);
+            while (bb) {
+                const int sq = pop_lsb(bb);
+                expected_key ^= Zobrist::Piece[zpiece][sq];
+            }
+        }
+    }
+    if (side_to_move == Color::Black) expected_key ^= Zobrist::Side;
+    expected_key ^= Zobrist::Castle[castling_rights & 0xF];
+    if (ep_square != -1) expected_key ^= Zobrist::EpFile[ep_square & 7];
+    if (expected_key != zobrist_key) return fail("zobrist key mismatch");
+
+    if (reason) reason->clear();
+    return true;
+}
+
 void Position::reset() {
     material_score[0] = 0;
     material_score[1] = 0;
