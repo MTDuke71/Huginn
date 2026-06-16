@@ -53,7 +53,7 @@
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
 | 37 | Board-desync illegal bestmove | **GUARDED**; root cause OPEN (needs repro) | bug | high |
-| 38 | Displayed PV continues past fifty-move rule | **OPEN** — cosmetic | bug | low |
+| 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
 | 17 | Aspiration windows at the root | **REJECTED** @ t15 (−33.8 Elo, H0) — reverted, parked | feature | low |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
@@ -379,20 +379,16 @@ Intel; fastchess forfeits on it).
   run self-play until it trips, then bisect from the captured FEN/move. The
   shipped diagnostic will hand us a deterministic repro the next time it fires.
 
-### #38: Displayed PV continues past the fifty-move rule (cosmetic)
+### #38: Displayed PV continues past the fifty-move rule (FIXED 2026-06-16)
 
-- status: **OPEN** — cosmetic (display-only; `bestmove` is always legal, zero
-  Elo impact). Exact analogue of the closed #21 (threefold-rep PV truncation).
-- **Symptom:** the PV-display walk truncates at *repetition* (the seen-set) but
-  not at the *50-move-rule* horizon, so a PV that runs into a 50-move draw still
-  prints past it (fastchess: `Warning; PV continues after fifty-move rule`).
-- **Evidence:** in the t15/2.1 vs MTLChess v0.3 calibration (300 games), this
-  was Huginn's **only** remaining warning class — 7 occurrences across 2 games
-  (0 illegal-move, 0 illegal-PV, 0 threefold-PV; #37/#36/#21 all clean).
-- **Fix (~3 lines):** in the PV-display loop ([search.cpp](../src/search.cpp)),
-  stop appending once `halfmove_clock` would reach 100 along the walk, mirroring
-  the repetition seen-set truncation. Pure display change — batch with the next
-  baseline build (don't rebuild mid-gauntlet).
+- **Status:** fixed as a pure display change (zero Elo impact): the PV-display
+  walk now keeps the move that reaches `halfmove_clock >= 100`, then truncates
+  any triangular-PV or TT-walk tail after it. This mirrors the repetition
+  truncation logic and prevents fastchess warnings like `PV continues after
+  fifty-move rule`.
+- **Regression guard:** `PVDisplay.TruncatesTTHorizonAtFiftyMoveRule` seeds a
+  stale same-key TT continuation behind a forced halfmove-99 root move and
+  verifies the emitted UCI `info ... pv` line stops after the draw-creating move.
 
 ### #5: Recalibrate vs external opponents (OPEN)
 

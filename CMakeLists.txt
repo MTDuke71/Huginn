@@ -467,6 +467,7 @@ if(GTEST_FOUND)
     test/test_input_checking.cpp
     test/test_see.cpp
     test/test_search_determinism.cpp
+    test/test_pv_display.cpp
     )
 
     add_executable(huginn_tests

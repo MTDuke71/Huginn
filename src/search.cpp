@@ -2269,9 +2269,10 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // bottoms out via a TT cutoff, the child never populates its own
         // pv_line and the triangular array truncates to length 1 — but the
         // deeper line still lives in the TT, so pull it out for the GUI.
-        // Repetition truncation runs across both phases: the *displayed* PV
-        // stops at the first position that revisits a prior game position or
-        // one earlier in the line (GUI validators reject repeating tails).
+        // Repetition / rule-50 truncation runs across both phases: the
+        // *displayed* PV stops at the first position that revisits a prior game
+        // position or reaches the fifty-move draw horizon (GUI validators
+        // reject tails that continue after either terminal condition).
         // One make/unmake walk paid once per depth, not per node.
         constexpr int PV_DISPLAY_CAP = 32;  // array bound (deeper than Huginn ever reaches)
         // BACKLOG #36: never display a PV longer than the depth actually
@@ -2314,6 +2315,10 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                 if (pos.MakeMove(tri_pv[i]) != 1) { stop = true; break; }
                 ++made;
                 display_pv[pv_moves++] = tri_pv[i];
+                if (pos.halfmove_clock >= 100) {
+                    stop = true;  // keep the draw-creating move, drop the tail
+                    break;
+                }
                 if (!seen.insert(pos.zobrist_key).second) {
                     stop = true;  // keep the rep-creating move, drop the tail
                     break;
@@ -2358,6 +2363,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                 if (pos.MakeMove(tt_move) != 1) break;
                 ++made;
                 display_pv[pv_moves++] = tt_move;
+                if (pos.halfmove_clock >= 100) break;  // fifty-move rule
                 if (!seen.insert(pos.zobrist_key).second) break;  // rep
             }
 
