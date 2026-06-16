@@ -81,11 +81,12 @@
 // keeps the re-search off the middlegame, where an unconditional version cost
 // +53% nodes), re-search the actual position (null undone) at reduced depth
 // with null pruning disabled; only take the cutoff if it ALSO fails high.
-// DEFAULT OFF (unproven) so `main` stays byte-identical; build the test arm
-// with -DENABLE_NMP_VERIFICATION=1 and ship only after a fixed-depth +
-// fixed-time SPRT clears it (per the complexity-gate convention).
+// DEFAULT ON as of baseline-t17 (2026-06-16): bundled with the #44 repetition
+// fix it cleared a decisive AMD SPRT vs t16 (+61.92, LOS 100%, H1 @482g). Build
+// the OFF arm with -DENABLE_NMP_VERIFICATION=0 to isolate the NMP delta against
+// this baseline (both arms keep the #44 fix). Intel leg still pending.
 #ifndef ENABLE_NMP_VERIFICATION
-#define ENABLE_NMP_VERIFICATION 0
+#define ENABLE_NMP_VERIFICATION 1
 #endif
 
 namespace Huginn {
