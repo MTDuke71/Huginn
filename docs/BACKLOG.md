@@ -266,9 +266,18 @@ complexity gate):**
      only fires in low-material endgames (49.6% draws). Point estimate sits
      *above* the elo1=10 target but the CI is wide; SPRT didn't resolve.
      Ptnml [25,123,178,141,33]. PGN `gauntlet/huginn_nmpver_vs_t16_amd.pgn`.
-   - **NEXT:** (a) fixed-depth-12 arm on AMD (running 2026-06-16 — does it win
-     on move quality, not just non-regression?); (b) **Intel leg** for the
-     two-machine ship bar. If both confirm → flip the default to 1 and ship.
+   - **REJECTED (2026-06-16) by a clean isolation test.** After the #44
+     repetition fix landed, ran NMP-off vs NMP-on with *both arms carrying #44*
+     (AMD, 10+0.1, 1000g) to isolate the NMP delta: **NMP-OFF ahead +14.60 ±
+     16.65, 52.1%, LOS 95.75%** (LLR 1.15, inconclusive). So NMP-on is
+     neutral-to-slightly-harmful — no measurable benefit, leans ~−14. The
+     earlier +11.8 vs t16 was noise / pre-#44 context. The bundled +62 vs t16
+     was **all #44** (see #44). Flag defaulted OFF; code kept behind it for a
+     possible re-formulation (eval/depth-scaled R, cheaper verify depth). The
+     fixed-depth-12 arm was abandoned mid-run (pivoted to the #44 bug it
+     surfaced). **Lesson:** a soundness term that only fires in endgames and
+     adds a re-search tax needs a real benefit to clear its cost — this one
+     didn't. Sub-levers 2 (scaled R) and 3 (MDP) remain untried.
 2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
    (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
    is way above beta").
@@ -324,9 +333,14 @@ truncation), so it is NOT byte-identical.
   was #44 + #43-NMP together; since NMP-alone was only +11.8 (inconclusive),
   **#44 carries ~+50 of the +62** — by far the bigger lever. One of the largest
   jumps in the program, and it resolved in <½ the game cap.
-- **NEXT:** Intel leg (two-machine ship bar), then tag a new baseline. If clean
-  attribution is wanted, a #44-alone (NMP-off) gauntlet isolates the bug-fix
-  Elo from the NMP term.
+- **Attribution (2026-06-16):** the isolation gauntlet (NMP-off vs NMP-on, both
+  with #44) put NMP-off +14.6 ahead, so **#44 alone ≈ +76 vs t16** (+62 bundle
+  + 14.6 NMP drag) — by far the largest single fix in the program. NMP
+  verification was dragging it down and is rejected (#43).
+- **baseline-t17 = the #44 fix alone (NMP off).** AMD-confirmed via the +62
+  bundle and the isolation test. **NEXT:** Intel leg for the formal two-machine
+  bar (a #44-only-vs-t16 Intel run, or accept the inferred ~+76); then t17 is a
+  clean ship.
 
 **Related:** #28 (TT-safe repetition handling — this is the missing piece: the
 detector it relies on was miscounting), #5 (conversion weakness — one concrete
