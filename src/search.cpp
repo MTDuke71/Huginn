@@ -81,12 +81,15 @@
 // keeps the re-search off the middlegame, where an unconditional version cost
 // +53% nodes), re-search the actual position (null undone) at reduced depth
 // with null pruning disabled; only take the cutoff if it ALSO fails high.
-// DEFAULT ON as of baseline-t17 (2026-06-16): bundled with the #44 repetition
-// fix it cleared a decisive AMD SPRT vs t16 (+61.92, LOS 100%, H1 @482g). Build
-// the OFF arm with -DENABLE_NMP_VERIFICATION=0 to isolate the NMP delta against
-// this baseline (both arms keep the #44 fix). Intel leg still pending.
+// DEFAULT OFF — REJECTED (2026-06-16). The bundled +62 vs t16 was all the #44
+// repetition fix: the clean isolation test (NMP-off vs NMP-on, both carrying
+// #44) put NMP-off AHEAD at +14.6 ± 16.6, LOS ~96% — i.e. NMP-on is
+// neutral-to-slightly-harmful, no measurable benefit. Per the complexity gate
+// (don't ship unproven complexity), the verification stays OFF; the code is
+// kept behind the flag for reference / a future re-formulation. baseline-t17 is
+// the #44 fix alone. Build the ON arm with -DENABLE_NMP_VERIFICATION=1.
 #ifndef ENABLE_NMP_VERIFICATION
-#define ENABLE_NMP_VERIFICATION 1
+#define ENABLE_NMP_VERIFICATION 0
 #endif
 
 namespace Huginn {
