@@ -32,8 +32,9 @@
 - **Architecture:** pure bitboard; magic-bitboard sliders; tapered eval
   (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats/
   **king safety**. ~3.55 Mnps single-thread.
-- **Active thread:** the **#9 / #35 eval program** — round 8 is next (threats
-  round 2 or safe mobility, per the #41 roadmap).
+- **Active thread:** the **#9 / #35 eval program** — round 8 (outposts) KEPT on
+  a sign-split (logged exception); round 9 next (threats round 2 or safe
+  mobility, per the #41 roadmap).
 - **Direction (2026-06-13): push pure HCE as far as it goes before reaching for
   multithreading or NNUE.** The +490 over 2.0 was mostly foundational repair
   (structural bugs, a never-tuned eval) and won't recur — but pure-HCE engines
@@ -48,7 +49,7 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts under gauntlet (Intel +9.0 ± 16.9, too close; AMD running) | feature/eval | high |
+| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts KEPT on a sign-split (Intel +9.0 / AMD −6.25, logged exception) | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
@@ -126,7 +127,7 @@ is the bigger lever.
   go per-piece-type and restrict the area to *safe* squares (exclude enemy-pawn-
   attacked). #41 ties the Queen-error cluster to this (stop crediting a queen on
   a square enemy minors attack).
-- **Outposts** *(implemented+tuned 2026-06-16; SPRT running; #41 Knight-error cluster)* —
+- **Outposts** *(KEPT 2026-06-17 on a sign-split — logged exception; #41 Knight-error cluster)* —
   knight/bishop on an advanced square supported by an own pawn that enemy
   adjacent-file pawns can no longer challenge by advancing. Added tapered,
   Texel-exposed bonuses (`KNIGHT_OUTPOST_BONUS_MG/EG`,
@@ -134,13 +135,24 @@ is the bigger lever.
   plus color symmetry. Full 833-param tune on `tools/texel/fens_quiet.txt`
   (725k, K=1.520) moved MSE 0.057119 -> 0.057102; fitted values:
   knight 33/11, bishop 28/7.
-  - **Intel gauntlet vs t17 (2026-06-17, 10+0.1, 1t, 64MB, noob_3moves.epd,
-    1000g): inconclusive / too close to call.** Current scored **+9.04 ± 16.88
-    Elo** (nElo +11.54 ± 21.53), LOS 85.32%, W336/L310/D354 = 51.30%,
-    DrawRatio 36.00%, Ptnml [40,116,180,106,58], LLR 0.54 (18.4%) on
-    [-2.94, 2.94] for [0,10]. Positive lean, but CI crosses zero and SPRT did
-    not resolve. **AMD gauntlet still running; do not ship/reject until pooled
-    evidence or same-sign AMD result arrives.**
+  - **Two-machine gauntlet vs t17 (2026-06-17, 10+0.1, 1t, 64MB,
+    noob_3moves.epd, 1000g each) — SIGN-SPLIT, KEPT as a logged exception.**
+    - Intel: **+9.04 ± 16.88** (nElo +11.54), 51.30%, LOS 85.32%, W336/L310/D354,
+      Ptnml [40,116,180,106,58], LLR 0.54 — positive lean, CI crosses zero.
+    - AMD: **−6.25 ± 17.61** (nElo −7.66), 49.10%, LOS 24.30%, W321/L339/D340,
+      Ptnml [60,110,171,106,53], LLR −1.05 — negative lean, also unresolved.
+    - **Pooled ≈ neutral (~+1.4).** Does NOT meet the same-sign two-machine bar —
+      an opposite-sign split, like the t14 rook-on-7th exception.
+    - **Decision (2026-06-17): KEEP** — code reviewed correct (support + rank
+      gate + adjacent-file hole check, all colour-symmetric; the dedicated
+      symmetry test + the 8-case mirror suite pass), near-zero downside, and it
+      targets the #41 Knight-error cluster. Logged as a deliberate exception,
+      **not a clean ship**. The marginal magnitude corroborates #41 / MTLChess:
+      eval *breadth* is not Huginn's gap. Lives on `main` atop t17 (not separately
+      tagged); fold into the next baseline tag.
+    - Artifacts: `gauntlet/huginn_vs_t17_amd.pgn` + `gauntlet/fastchess_t17_amd.log`
+      — the log also validates the #38 PV fix (289 fifty-move-PV warnings from
+      t17, **0 from current**; that warning was the run's only warning class).
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. Endgame Elo — **deprioritized**: #41 shows
   balanced-endgame play is already solid (fair-fight cp-loss 13.3).
