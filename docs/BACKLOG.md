@@ -48,7 +48,7 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped (t16 = king safety, #2); round 8 next | feature/eval | high |
+| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts under gauntlet (Intel +9.0 ± 16.9, too close; AMD running) | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
@@ -126,14 +126,21 @@ is the bigger lever.
   go per-piece-type and restrict the area to *safe* squares (exclude enemy-pawn-
   attacked). #41 ties the Queen-error cluster to this (stop crediting a queen on
   a square enemy minors attack).
-- **Outposts** *(implemented+tuned 2026-06-16; pending SPRT; #41 Knight-error cluster)* —
+- **Outposts** *(implemented+tuned 2026-06-16; SPRT running; #41 Knight-error cluster)* —
   knight/bishop on an advanced square supported by an own pawn that enemy
   adjacent-file pawns can no longer challenge by advancing. Added tapered,
   Texel-exposed bonuses (`KNIGHT_OUTPOST_BONUS_MG/EG`,
   `BISHOP_OUTPOST_BONUS_MG/EG`) with coverage for challengeable-vs-true holes
   plus color symmetry. Full 833-param tune on `tools/texel/fens_quiet.txt`
   (725k, K=1.520) moved MSE 0.057119 -> 0.057102; fitted values:
-  knight 33/11, bishop 28/7. Next step: SPRT.
+  knight 33/11, bishop 28/7.
+  - **Intel gauntlet vs t17 (2026-06-17, 10+0.1, 1t, 64MB, noob_3moves.epd,
+    1000g): inconclusive / too close to call.** Current scored **+9.04 ± 16.88
+    Elo** (nElo +11.54 ± 21.53), LOS 85.32%, W336/L310/D354 = 51.30%,
+    DrawRatio 36.00%, Ptnml [40,116,180,106,58], LLR 0.54 (18.4%) on
+    [-2.94, 2.94] for [0,10]. Positive lean, but CI crosses zero and SPRT did
+    not resolve. **AMD gauntlet still running; do not ship/reject until pooled
+    evidence or same-sign AMD result arrives.**
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. Endgame Elo — **deprioritized**: #41 shows
   balanced-endgame play is already solid (fair-fight cp-loss 13.3).
