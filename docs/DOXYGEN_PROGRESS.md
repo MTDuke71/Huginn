@@ -25,7 +25,10 @@ Mark items `[x]` when done, with the date.
       contract (castling the legal exception), special-move coverage, file-local
       castling helper; replaced stale pre-rewrite @file blocks (2026-06-17)
 - [ ] `chess_types.hpp` / `chess_types.cpp`
-- [ ] `evaluation.hpp` (constants/masks/PSTs — already 12 briefs; finish the rest)
+- [x] `evaluation.hpp` — finished: tapered-eval @file rewrite (was stale
+      3-bucket), GamePhase enum + init/extern masks, and Doxygen on every
+      EVAL_PARAM group (outposts/pawns/threats/KS), all 12 PSTs, and the
+      structure masks (2026-06-17)
 - [ ] `move.hpp` (already 27 briefs — audit/finish)
 
 ## Tier 2 — supporting subsystems
@@ -56,4 +59,4 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-17 — documented production bitboard movegen (movegen_bb)._
+_Last updated: 2026-06-17 — finished evaluation.hpp (params/PSTs/masks)._

@@ -7,35 +7,35 @@
  * tactical bonuses, and positional factors. The evaluation provides the foundation for the
  * engine's search algorithm to distinguish between chess positions.
  * 
+ * @note This header holds only the **parameters** — piece-square tables, the
+ *       tunable `EVAL_PARAM` bonuses/penalties, and the pawn-structure masks.
+ *       The evaluation itself (`evaluate()`) lives in search.cpp.
+ *
  * ## Architecture Overview
- * 
- * **Game Phase Detection:**
- * - Opening: High piece count (28+ points), development-focused evaluation
- * - Middlegame: Medium piece count (16-27 points), tactical pattern emphasis  
- * - Endgame: Low piece count (<16 points), king activity and pawn promotion focus
- * 
- * **Evaluation Components:**
- * - **Material Balance**: Piece values with phase-dependent adjustments
- * - **Piece-Square Tables**: Positional bonuses for optimal piece placement
- * - **Tactical Patterns**: Outposts, open files, bishop pairs, king safety
- * - **Pawn Structure**: Passed pawns, isolated pawns, pawn chains
- * - **King Safety**: Attack patterns, shelter evaluation, exposure penalties
- * 
- * **Performance Characteristics:**
- * - Speed: ~50,000 evaluations per second on modern hardware
- * - CPU Usage: ~2% of total engine time during search
- * - Precision: Centipawn granularity with smooth phase transitions
- * 
- * **Design Philosophy:**
- * Based on VICE tutorial evaluation principles with Huginn-specific enhancements:
- * - Incremental evaluation updates during move making/unmaking
- * - Cache-friendly data structures for rapid position assessment
- * - Tuned parameters from game analysis and engine testing
- * 
- * @author MTDuke71  
+ *
+ * **Game phase — tapered.** The production eval blends midgame and endgame
+ * scores smoothly via `game_phase_256()` (256 = opening … 0 = bare kings), so
+ * most terms below carry separate `_MG` / `_EG` values. The coarse 3-bucket
+ * @ref Huginn::GamePhase enum and its `GAME_PHASE_*_THRESHOLD` constants are
+ * legacy from the pre-tapered design and are largely superseded.
+ *
+ * **Evaluation components (parameterised here):**
+ * - **Material + Piece-Square Tables** — separate MG/EG tables per piece;
+ *   king has its own opening and endgame tables.
+ * - **Pawn structure** — isolated / doubled / connected / backward / passed.
+ * - **Piece activity** — mobility, bishop pair, rook/queen on open files,
+ *   rook on the 7th, outposts.
+ * - **Threats** — bonus per enemy piece attacked by a cheaper attacker.
+ * - **King safety** — king-ring attacker pressure + open-file shelter (MG-only).
+ *
+ * **Tuning:** values marked `EVAL_PARAM` are exposed to the Texel tuner
+ * (`tools/texel/`) and fitted on the 725k Zurichess quiet-labeled corpus;
+ * `inline constexpr` values are fixed structure, not tuned.
+ *
+ * @author MTDuke71
  * @version 1.2
- * @see evalPosition() for main evaluation entry point
- * @see docs/EVALUATION_DESIGN.md for detailed algorithm documentation
+ * @see evaluate() in search.cpp for the evaluation entry point.
+ * @see docs/EVALUATION_DESIGN.md for detailed algorithm documentation.
  */
 #pragma once
 
@@ -85,13 +85,16 @@ inline constexpr int WHITE_KNIGHT_OUTPOST_MIN_RANK = 3;
 /** @brief Maximum rank for black knight outpost consideration (5th rank+) */
 inline constexpr int BLACK_KNIGHT_OUTPOST_MAX_RANK = 4;
 
-// Outposts (#9 round 8 candidate): knight/bishop on an advanced square,
-// supported by an own pawn, that enemy pawns on adjacent files cannot
-// challenge by advancing. Tapered MG/EG and Texel-tunable.
-EVAL_PARAM int KNIGHT_OUTPOST_BONUS_MG = 33;
-EVAL_PARAM int KNIGHT_OUTPOST_BONUS_EG = 11;
-EVAL_PARAM int BISHOP_OUTPOST_BONUS_MG = 28;
-EVAL_PARAM int BISHOP_OUTPOST_BONUS_EG = 7;
+/**
+ * @brief Outpost bonuses (#9 round 8): a knight/bishop on an advanced square,
+ *        supported by an own pawn, that enemy pawns on adjacent files can no
+ *        longer challenge by advancing. Tapered MG/EG, colour-symmetric,
+ *        Texel-tunable. Kept on a sign-split (Intel +9 / AMD −6.25).
+ */
+EVAL_PARAM int KNIGHT_OUTPOST_BONUS_MG = 33;  ///< Knight outpost, midgame.
+EVAL_PARAM int KNIGHT_OUTPOST_BONUS_EG = 11;  ///< Knight outpost, endgame.
+EVAL_PARAM int BISHOP_OUTPOST_BONUS_MG = 28;  ///< Bishop outpost, midgame.
+EVAL_PARAM int BISHOP_OUTPOST_BONUS_EG = 7;   ///< Bishop outpost, endgame.
 
 /** @brief Bonus for having both bishops (bishop pair advantage) */
 EVAL_PARAM int BISHOP_PAIR_BONUS = 45;   // #9 round 3, Texel-tunable
@@ -113,60 +116,67 @@ EVAL_PARAM int ROOK_SEMI_OPEN_FILE_BONUS = 16;
 EVAL_PARAM int QUEEN_OPEN_FILE_BONUS = 3;
 EVAL_PARAM int QUEEN_SEMI_OPEN_FILE_BONUS = 5; // VICE value: QueenSemiOpenFile = 3
 
-EVAL_PARAM int ISOLATED_PAWN_PENALTY = 10;  // #9 round 3, Texel-tunable
-EVAL_PARAM int DOUBLED_PAWN_PENALTY = 10;
+EVAL_PARAM int ISOLATED_PAWN_PENALTY = 10;  ///< Per pawn with no own pawn on an adjacent file (#9 r3).
+EVAL_PARAM int DOUBLED_PAWN_PENALTY = 10;   ///< Per extra own pawn on the same file.
 
-// Connected pawns (#9 round 4): bonus per pawn that is phalanx (own pawn on an
-// adjacent file, same rank) or supported (defended by an own pawn), indexed by
-// relative rank (White POV; Black mirrors). Ranks 1/8 can't hold pawns, so
-// those entries stay pinned at 0. Tapered MG/EG, Texel-tunable.
-EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_MG = { 0, 2, 8, 14, 19, 37, 56, 0 };
-EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_EG = { 0, -5, 2, 3, 10, 32, 28, 0 };
+/**
+ * @brief Connected-pawn bonus (#9 round 4): per pawn that is phalanx (own pawn
+ *        on an adjacent file, same rank) or supported (defended by an own
+ *        pawn), indexed by relative rank (White POV; Black mirrors). Ranks 1/8
+ *        can't hold pawns so those entries stay 0. Tapered, Texel-tunable.
+ */
+EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_MG = { 0, 2, 8, 14, 19, 37, 56, 0 }; ///< Midgame, by rank.
+EVAL_PARAM std::array<int, 8> CONNECTED_PAWN_BONUS_EG = { 0, -5, 2, 3, 10, 32, 28, 0 }; ///< Endgame, by rank.
 
-// Backward pawn (#9 round 4): no own pawn on an adjacent file at the same rank
-// or behind (so it can never be supported by one), and its stop square is
-// controlled by an enemy pawn. Isolated pawns are excluded — they already pay
-// ISOLATED_PAWN_PENALTY. Tapered MG/EG, Texel-tunable.
-EVAL_PARAM int BACKWARD_PAWN_PENALTY_MG = 16;
-EVAL_PARAM int BACKWARD_PAWN_PENALTY_EG = 11;
+/**
+ * @brief Backward-pawn penalty (#9 round 4): a pawn with no own pawn on an
+ *        adjacent file at or behind its rank (so it can never be supported)
+ *        whose stop square an enemy pawn controls. Isolated pawns are excluded
+ *        (they already pay ISOLATED_PAWN_PENALTY). Tapered, Texel-tunable.
+ */
+EVAL_PARAM int BACKWARD_PAWN_PENALTY_MG = 16;  ///< Backward pawn, midgame.
+EVAL_PARAM int BACKWARD_PAWN_PENALTY_EG = 11;  ///< Backward pawn, endgame.
 
-// Rook on the relative 7th rank (#9 round 5): bonus per rook on the enemy's
-// 2nd rank, gated on a target — the enemy king confined to its back rank OR
-// enemy pawns stuck on that rank. The classic "rook on the 7th" pattern;
-// gating avoids rewarding a pointless rook-on-7th in a bare endgame. Tapered
-// MG/EG (stronger in the endgame), colour-symmetric, Texel-tunable.
-EVAL_PARAM int ROOK_ON_7TH_MG = 20;
-EVAL_PARAM int ROOK_ON_7TH_EG = 22;
+/**
+ * @brief Rook-on-the-relative-7th bonus (#9 round 5): per rook on the enemy's
+ *        2nd rank, gated on a target (enemy king confined to its back rank OR
+ *        enemy pawns stuck on that rank) so a pointless rook-on-7th in a bare
+ *        endgame isn't rewarded. Tapered (stronger EG), symmetric, tunable.
+ */
+EVAL_PARAM int ROOK_ON_7TH_MG = 20;  ///< Rook on relative 7th, midgame.
+EVAL_PARAM int ROOK_ON_7TH_EG = 22;  ///< Rook on relative 7th, endgame.
 
-// Threats (#9 round 6): bonus per enemy piece attacked by a cheaper / more
-// dangerous attacker — the side to move usually wins material or forces a
-// concession. Indexed by attacker→target class (pawn→minor/rook/queen,
-// minor→rook/queen, rook→queen). Tapered MG/EG, colour-symmetric, Texel-
-// tunable. Less constrained by quiet data than pawn structure (threats fire
-// less often in quiet positions) — watch the fitted magnitudes for sanity.
-EVAL_PARAM int THREAT_PAWN_ON_MINOR_MG  = 67;
-EVAL_PARAM int THREAT_PAWN_ON_MINOR_EG  = 44;
-EVAL_PARAM int THREAT_PAWN_ON_ROOK_MG   = 89;
-EVAL_PARAM int THREAT_PAWN_ON_ROOK_EG   = 12;
-EVAL_PARAM int THREAT_PAWN_ON_QUEEN_MG  = 66;
-EVAL_PARAM int THREAT_PAWN_ON_QUEEN_EG  = 30;
-EVAL_PARAM int THREAT_MINOR_ON_ROOK_MG  = 50;
-EVAL_PARAM int THREAT_MINOR_ON_ROOK_EG  = 30;
-EVAL_PARAM int THREAT_MINOR_ON_QUEEN_MG = 52;
-EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 24;
-EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 83;
-EVAL_PARAM int THREAT_ROOK_ON_QUEEN_EG  = 27;
+/**
+ * @brief Threat bonuses (#9 round 6): per enemy piece attacked by a cheaper /
+ *        more dangerous attacker (the side to move usually wins material or
+ *        forces a concession). Named `THREAT_<attacker>_ON_<target>_<phase>`,
+ *        tapered MG/EG, colour-symmetric, Texel-tunable. Threats fire less
+ *        often in quiet positions, so they are less constrained by the
+ *        quiet-labeled corpus — watch the fitted magnitudes for sanity.
+ */
+EVAL_PARAM int THREAT_PAWN_ON_MINOR_MG  = 67; ///< Pawn attacks minor, MG.
+EVAL_PARAM int THREAT_PAWN_ON_MINOR_EG  = 44; ///< Pawn attacks minor, EG.
+EVAL_PARAM int THREAT_PAWN_ON_ROOK_MG   = 89; ///< Pawn attacks rook, MG.
+EVAL_PARAM int THREAT_PAWN_ON_ROOK_EG   = 12; ///< Pawn attacks rook, EG.
+EVAL_PARAM int THREAT_PAWN_ON_QUEEN_MG  = 66; ///< Pawn attacks queen, MG.
+EVAL_PARAM int THREAT_PAWN_ON_QUEEN_EG  = 30; ///< Pawn attacks queen, EG.
+EVAL_PARAM int THREAT_MINOR_ON_ROOK_MG  = 50; ///< Minor attacks rook, MG.
+EVAL_PARAM int THREAT_MINOR_ON_ROOK_EG  = 30; ///< Minor attacks rook, EG.
+EVAL_PARAM int THREAT_MINOR_ON_QUEEN_MG = 52; ///< Minor attacks queen, MG.
+EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 24; ///< Minor attacks queen, EG.
+EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 83; ///< Rook attacks queen, MG.
+EVAL_PARAM int THREAT_ROOK_ON_QUEEN_EG  = 27; ///< Rook attacks queen, EG.
 
-EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   // mg, Texel-tunable (#9 round 2)
-EVAL_PARAM int MOBILITY_WEIGHT_ENDGAME = 2;   // eg, Texel-tunable
+EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   ///< Per safe-mobility square, MG (#9 r2, tunable).
+EVAL_PARAM int MOBILITY_WEIGHT_ENDGAME = 2;   ///< Per safe-mobility square, EG (tunable).
 
-inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     // Much higher penalty for undevelopment
-inline constexpr int DEVELOP_BONUS_OPENING = 60;     // Strong opening development bonus
-inline constexpr int DEVELOP_BONUS_ENDGAME = 0;
+inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     ///< Undevelopment penalty (non-opening).
+inline constexpr int DEVELOP_BONUS_OPENING = 60;     ///< Opening development bonus.
+inline constexpr int DEVELOP_BONUS_ENDGAME = 0;      ///< No development term in the endgame.
 
-// VICE Part 82/83: Material draw detection and king evaluation 
-// Endgame threshold: approximately equivalent to Rook + Knight + Bishop (about 1150)
-// Lowered from 1300 to prevent engine from sacrificing material to force draws
+/// @brief Material below which the king-activity / material-draw endgame logic
+///        kicks in (~R+N+B = 1150; lowered from 1300 so the engine doesn't
+///        sacrifice material to force draws). VICE Part 82/83.
 inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 
 // ============================================================================
@@ -178,30 +188,35 @@ inline constexpr int ENDGAME_MATERIAL_THRESHOLD = 1150;
 // CASTLE_BONUS / STUCK_PENALTY) that were defined but never referenced.
 // ============================================================================
 
-// Per-attacker weight, per king-ring square attacked, indexed by PieceType
-// (None, Pawn, Knight, Bishop, Rook, Queen, King). Heavy pieces weigh more.
-// #9 round 7: reformulated to be Texel-tunable. The previous design gated on
-// >= 2 distinct attackers, which made the term ZERO on most quiet positions —
-// so the tuner couldn't constrain it and hand-tuning stalled at ~0 Elo (#35
-// Exp 3). The gate is now removed (danger fires on >= 1 attacker, like the
-// MTLChess recipe that scored +116 there), and these weights + the shelter
-// penalty are EVAL_PARAM so the harness fits them. Seeded at the MTLChess
-// values (N/B=2, R=3, Q=5).
+/**
+ * @brief King-ring attacker weight per attacking PieceType (None, Pawn,
+ *        Knight, Bishop, Rook, Queen, King) — "attack units" summed per
+ *        attacked ring square; heavier pieces weigh more.
+ *
+ * #9 round 7 reformulation: the prior design gated on ≥2 distinct attackers,
+ * which made the term zero on most quiet positions so the tuner couldn't
+ * constrain it (hand-tuning stalled at ~0 Elo, #35 Exp 3). The gate was removed
+ * (danger fires on ≥1 attacker, like the MTLChess recipe that scored +116), and
+ * these weights + the shelter penalty are `EVAL_PARAM` so the harness fits them.
+ * Seeded at the MTLChess values (N/B=2, R=3, Q=5).
+ */
 EVAL_PARAM std::array<int, size_t(PieceType::_Count)> KS_ATTACK_WEIGHT = { 0, 0, 3, 4, 3, 5, 0 };
 
-// Non-linear danger conversion: danger = min(units*units / DIVISOR, CAP),
-// applied whenever ANY enemy piece attacks the king ring (no min-attacker gate
-// — that gate is what made the term untunable). DIVISOR/CAP are fixed structure
-// (only the ratio weight^2/DIVISOR matters, and the weights are tunable, so the
-// tuner has full freedom without a tunable divisor). DIVISOR=4 matches MTLChess.
+/// @brief Non-linear danger divisor: `danger = min(units²/DIVISOR, CAP)`, applied
+///        whenever any enemy piece attacks the king ring. Fixed structure (only
+///        weight²/DIVISOR matters and the weights are tunable). DIVISOR=4 matches MTLChess.
 inline constexpr int KS_ATTACK_DIVISOR = 4;
+/// @brief Upper clamp on the per-king danger score (centipawns).
 inline constexpr int KS_ATTACK_CAP     = 500;
 
-// Shelter: penalty per open file on or adjacent to the king's file (no own pawn
-// anywhere on that file). Fires very often → aids tunability. Texel-tunable.
+/// @brief Shelter penalty per open file on or adjacent to the king's file (no own
+///        pawn anywhere on it). Fires often → aids tunability. Texel-tunable.
 EVAL_PARAM int KS_OPEN_FILE_PENALTY = 21;
 
-// Texel-tuned on Zurichess quiet-labeled (725k pos), #9. rank1 top -> rank8 bottom.
+// Midgame piece-square tables (White POV; Black mirrors via square flip),
+// Texel-tuned on the 725k Zurichess quiet-labeled corpus (#9). Indexed by sq64
+// but laid out rank1 (top) -> rank8 (bottom) for readability.
+/// @brief Midgame pawn PST.
 EVAL_PARAM std::array<int, 64> PAWN_TABLE = {
        0,   0,   0,   0,   0,   0,   0,   0,
      -15,   1,  -5,  -1,   1,  33,  39,  -8,
@@ -212,6 +227,7 @@ EVAL_PARAM std::array<int, 64> PAWN_TABLE = {
       30,  50,   9,  61,  50,  78, -76,-110,
        0,   0,   0,   0,   0,   0,   0,   0,};;
 
+/// @brief Midgame knight PST.
 EVAL_PARAM std::array<int, 64> KNIGHT_TABLE = {
     -107, -10, -37, -14,   8,  -5,  -8, -13,
      -20, -29,   5,  19,  23,  27,  -2,  -1,
@@ -222,6 +238,7 @@ EVAL_PARAM std::array<int, 64> KNIGHT_TABLE = {
      -94, -61,  51,  15,  12,  39,  -4, -25,
     -194, -83, -52, -35,  23,-119, -46,-112,};;
 
+/// @brief Midgame bishop PST.
 EVAL_PARAM std::array<int, 64> BISHOP_TABLE = {
      -19,  11,   3,   7,  10,  -3, -18, -12,
       16,  30,  26,  15,  25,  26,  47,  15,
@@ -232,6 +249,7 @@ EVAL_PARAM std::array<int, 64> BISHOP_TABLE = {
      -37, -13, -37, -45,   4,  55,  -8, -58,
      -36, -23,-115, -90, -38, -49, -18,   1,};;
 
+/// @brief Midgame rook PST.
 EVAL_PARAM std::array<int, 64> ROOK_TABLE = {
        1,   6,  21,  25,  28,  22, -14,   5,
      -27,   1,   2,   9,  16,  16,   7, -50,
@@ -242,6 +260,7 @@ EVAL_PARAM std::array<int, 64> ROOK_TABLE = {
      -13,  -1,  19,  12,  49,  44,  -2,   3,
       28,  20,  25,  33,  39,   9,  21,  17,};;
 
+/// @brief Midgame queen PST.
 EVAL_PARAM std::array<int, 64> QUEEN_TABLE = {
       14,  17,  27,  38,  13,  -1,  -2, -35,
      -15,   4,  22,  24,  32,  31,   8,  26,
@@ -252,8 +271,8 @@ EVAL_PARAM std::array<int, 64> QUEEN_TABLE = {
      -29, -52, -21,   4, -54,  18,   5,  37,
      -27,  -7,   0, -11,  47,  40,  29,  38,};;
 
-// VICE Part 82: King position evaluation tables
-// KingO[64] - Opening/middlegame king table (encourages castling and back rank safety)
+/// @brief Opening/middlegame king PST — rewards castling and back-rank safety
+///        (VICE Part 82's KingO). Blended out toward the endgame by the taper.
 EVAL_PARAM std::array<int, 64> KING_TABLE = {
      -34,  30,   8, -88, -15, -55,  26,   6,
      -18,  -6, -32, -93, -68, -50,  -5,   0,
@@ -264,7 +283,7 @@ EVAL_PARAM std::array<int, 64> KING_TABLE = {
       51,  45,  17,  74,   8,  23, -12, -68,
      -51,  71,  85,  19, -35, -16,  11,   3,};;
 
-// KingE[64] - Endgame king table (encourages centralization)
+/// @brief Endgame king PST — rewards centralization (VICE Part 82's KingE).
 EVAL_PARAM std::array<int, 64> KING_TABLE_ENDGAME = {
      -62, -41, -16,  11, -15,   6, -35, -61,
      -26,  -2,  24,  39,  38,  28,   4, -21,
@@ -275,10 +294,14 @@ EVAL_PARAM std::array<int, 64> KING_TABLE_ENDGAME = {
      -23,  18,  21,  16,  27,  48,  37,  20,
      -90, -48, -31, -20,  -3,  17,   5, -25,};;
 
-// Endgame PSTs for the non-king pieces (#9 round 2 — tapered PSTs). Initialized
-// as copies of the MG tables, so the eval is byte-identical to baseline-t11
-// until the Texel tuner differentiates them. The eval uses these for the eg
-// accumulator (search.cpp); the king already has MG + EG tables above.
+/**
+ * @brief Endgame piece-square tables for the non-king pieces (#9 round 2 —
+ *        tapered PSTs). Originally seeded as copies of the MG tables (so the
+ *        eval was byte-identical to baseline-t11 until the tuner differentiated
+ *        them); feed the EG accumulator in search.cpp. The king already has its
+ *        own MG/EG tables above.
+ */
+/// @brief Endgame pawn PST.
 EVAL_PARAM std::array<int, 64> PAWN_TABLE_EG   = {
        0,   0,   0,   0,   0,   0,   0,   0,
       20,  12,  18,   9,  17,   6,  -2,  -1,
@@ -288,6 +311,7 @@ EVAL_PARAM std::array<int, 64> PAWN_TABLE_EG   = {
       73,  70,  42,  10, -11,   2,  37,  54,
      158, 136, 115,  80,  87,  78, 142, 179,
        0,   0,   0,   0,   0,   0,   0,   0,};;
+/// @brief Endgame knight PST.
 EVAL_PARAM std::array<int, 64> KNIGHT_TABLE_EG = {
       13, -25,   5,  15,   2,   4, -19, -43,
      -10,   3,  14,  13,  16,   4,   5, -26,
@@ -297,6 +321,7 @@ EVAL_PARAM std::array<int, 64> KNIGHT_TABLE_EG = {
        1,   0,  32,  22,   7,   0,  -6, -25,
        3,  22,  -8,  20,  11, -13,  -4, -30,
      -25, -19,  11, -11,  -6,  -7, -45, -77,};;
+/// @brief Endgame bishop PST.
 EVAL_PARAM std::array<int, 64> BISHOP_TABLE_EG = {
        0,  12,   2,  13,  12,   6,  17,   5,
        4,  -2,   6,  14,  13,  12,   1, -15,
@@ -306,6 +331,7 @@ EVAL_PARAM std::array<int, 64> BISHOP_TABLE_EG = {
       16,  11,  13,   7,   6,  10,  15,  13,
       16,  17,  26,   9,  12,   3,  12,   8,
        1,  -1,  13,  16,  16,   7,   2, -11,};;
+/// @brief Endgame rook PST.
 EVAL_PARAM std::array<int, 64> ROOK_TABLE_EG   = {
        7,  10,   8,   7,   1,   3,  10, -13,
       13,   5,   7,  10,   1,   3,  -3,  17,
@@ -315,6 +341,7 @@ EVAL_PARAM std::array<int, 64> ROOK_TABLE_EG   = {
       22,  20,  16,  15,  15,  10,   8,  13,
       18,  14,   9,   9, -14,   4,  17,  16,
       20,  19,  18,  18,  17,  22,  18,  20,};;
+/// @brief Endgame queen PST.
 EVAL_PARAM std::array<int, 64> QUEEN_TABLE_EG  = {
      -40, -61, -51, -68, -24, -41, -31, -45,
      -23, -31, -41, -41, -41, -33, -45, -27,
@@ -325,12 +352,14 @@ EVAL_PARAM std::array<int, 64> QUEEN_TABLE_EG  = {
      -19,  16,  22,  22,  56,  25,  23,  -5,
      -23,  14,  16,  13,  -1,   1,  -8,  11,};;
 
+/// @brief Passed-pawn bonus indexed by the pawn's relative rank (White POV;
+///        Black mirrors). Steeply increasing toward promotion.
 EVAL_PARAM std::array<int, 8> PASSED_PAWN_BONUS = { 0, 2, 4, 21, 44, 89, 104, 200 };
 
-// VICE Part 77: Evaluation masks for pawn structure analysis (2:00)
-// These bitboards help identify passed pawns and isolated pawns
+// Pawn-structure bitboard masks (VICE Part 77) — used to detect passed,
+// isolated, and doubled pawns. All are `constexpr` (compile-time fixed).
 
-// File masks: represent all squares on a specific file (A-H)
+/// @brief Per-file mask: every square on file 0 (A) … 7 (H).
 inline constexpr std::array<uint64_t, 8> FILE_MASKS = {
     0x0101010101010101ULL, // A-file
     0x0202020202020202ULL, // B-file  
@@ -342,7 +371,7 @@ inline constexpr std::array<uint64_t, 8> FILE_MASKS = {
     0x8080808080808080ULL  // H-file
 };
 
-// Rank masks: represent all squares on a specific rank (1-8)
+/// @brief Per-rank mask: every square on rank 1 (index 0) … rank 8 (index 7).
 inline constexpr std::array<uint64_t, 8> RANK_MASKS = {
     0x00000000000000FFULL, // Rank 1
     0x000000000000FF00ULL, // Rank 2
@@ -354,7 +383,8 @@ inline constexpr std::array<uint64_t, 8> RANK_MASKS = {
     0xFF00000000000000ULL  // Rank 8
 };
 
-// Isolated pawn masks: adjacent files to check for supporting pawns
+/// @brief Per-file mask of the adjacent files — a pawn is isolated when its
+///        side has no pawn on these files. Indexed by the pawn's file (0–7).
 inline constexpr std::array<uint64_t, 8> ISOLATED_PAWN_MASKS = {
     0x0202020202020202ULL, // A-file: only B-file adjacent
     0x0505050505050505ULL, // B-file: A and C files
@@ -366,23 +396,35 @@ inline constexpr std::array<uint64_t, 8> ISOLATED_PAWN_MASKS = {
     0x4040404040404040ULL  // H-file: only G-file adjacent
 };
 
-// White passed pawn masks: squares that must be clear for a white pawn to be passed
-// These will be initialized at runtime by init_evaluation_masks()
+/// @brief Per-square mask of the squares that must be empty of enemy pawns for
+///        a White pawn on that square to be passed (own + adjacent files, ahead).
+///        Built at startup by init_evaluation_masks().
 extern std::array<uint64_t, 64> WHITE_PASSED_PAWN_MASKS;
 
-// Black passed pawn masks: squares that must be clear for a black pawn to be passed  
-// These will be initialized at runtime by init_evaluation_masks()
+/// @brief Black counterpart of WHITE_PASSED_PAWN_MASKS (squares ahead toward rank 1).
 extern std::array<uint64_t, 64> BLACK_PASSED_PAWN_MASKS;
 
-// VICE Part 78: Initialize evaluation masks (2:19)
+/**
+ * @brief Populate the runtime passed-pawn masks (VICE Part 78).
+ *
+ * Fills WHITE_/BLACK_PASSED_PAWN_MASKS. Call once at startup before any
+ * evaluation; the constexpr file/rank/isolated masks need no initialization.
+ */
 void init_evaluation_masks();
 
 } // namespace EvalParams
 
+/**
+ * @enum Huginn::GamePhase
+ * @brief Coarse 3-bucket game phase (legacy — see the @file note).
+ *
+ * Superseded for scoring by the smooth `game_phase_256()` taper; retained for
+ * the few call sites that still want a discrete opening/middlegame/endgame tag.
+ */
 enum class GamePhase {
-    Opening,
-    Middlegame,
-    Endgame
+    Opening,     ///< High material — development-focused.
+    Middlegame,  ///< Medium material — tactical/positional emphasis.
+    Endgame      ///< Low material — king activity and promotion focus.
 };
 // HybridEvaluator removed: keep EvalParams and GamePhase for Engine
 
