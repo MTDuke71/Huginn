@@ -126,12 +126,14 @@ is the bigger lever.
   go per-piece-type and restrict the area to *safe* squares (exclude enemy-pawn-
   attacked). #41 ties the Queen-error cluster to this (stop crediting a queen on
   a square enemy minors attack).
-- **Outposts** *(implemented 2026-06-16; pending tune/SPRT; #41 Knight-error cluster)* —
+- **Outposts** *(implemented+tuned 2026-06-16; pending SPRT; #41 Knight-error cluster)* —
   knight/bishop on an advanced square supported by an own pawn that enemy
   adjacent-file pawns can no longer challenge by advancing. Added tapered,
   Texel-exposed bonuses (`KNIGHT_OUTPOST_BONUS_MG/EG`,
-  `BISHOP_OUTPOST_BONUS_MG/EG`) with conservative seeds and coverage for
-  challengeable-vs-true holes plus color symmetry. Next step: tune, then SPRT.
+  `BISHOP_OUTPOST_BONUS_MG/EG`) with coverage for challengeable-vs-true holes
+  plus color symmetry. Full 833-param tune on `tools/texel/fens_quiet.txt`
+  (725k, K=1.520) moved MSE 0.057119 -> 0.057102; fitted values:
+  knight 33/11, bishop 28/7. Next step: SPRT.
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. Endgame Elo — **deprioritized**: #41 shows
   balanced-endgame play is already solid (fair-fight cp-loss 13.3).
