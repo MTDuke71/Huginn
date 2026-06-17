@@ -21,7 +21,9 @@ Mark items `[x]` when done, with the date.
 - [ ] `search.cpp` (2410 lines — **special: split across several days** — `@file`
       header + `evaluate`/`AlphaBeta`/`quiescence`/`searchPosition` first, then
       the pruning/ordering helpers in later sittings)
-- [ ] `movegen_bb.hpp` / `movegen_bb.cpp` (production movegen)
+- [x] `movegen_bb.hpp` / `movegen_bb.cpp` — production movegen: pseudo-legal
+      contract (castling the legal exception), special-move coverage, file-local
+      castling helper; replaced stale pre-rewrite @file blocks (2026-06-17)
 - [ ] `chess_types.hpp` / `chess_types.cpp`
 - [ ] `evaluation.hpp` (constants/masks/PSTs — already 12 briefs; finish the rest)
 - [ ] `move.hpp` (already 27 briefs — audit/finish)
@@ -54,4 +56,4 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-17 — documented attack detection and legacy movegen facade._
+_Last updated: 2026-06-17 — documented production bitboard movegen (movegen_bb)._

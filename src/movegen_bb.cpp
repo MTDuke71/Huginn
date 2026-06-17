@@ -1,11 +1,14 @@
 /**
  * @file movegen_bb.cpp
- * @brief Implementation of true bitboard move generation
+ * @brief Bitboard move-generation implementation (see movegen_bb.hpp).
  *
- * This demonstrates the actual bitboard approach that should show
- * dramatic performance improvements over piece lists.
- *
- * Moves are encoded with 64-square indices; generators work natively in sq64.
+ * Per-piece generators read the side's piece bitboard, derive targets from the
+ * attack tables / magic sliders, mask off friendly occupancy, and split each
+ * target into a quiet or capture move. Pawns additionally handle pushes,
+ * promotions, and en passant; castling is a file-local helper. Output is
+ * pseudo-legal except castling — full legality is the caller's job (see the
+ * legality contract in movegen_bb.hpp). Moves use 64-square indices; the
+ * generators work natively in sq64.
  *
  * @author MTDuke71
  * @version 1.0
@@ -329,8 +332,19 @@ void generate_queen_moves_bitboard(const Position& pos, S_MOVELIST& list, Color 
     }
 }
 
-// File-local castling generator (moved from the deleted
-// king_lookup_tables module — only caller is generate_all_moves_bitboard).
+/**
+ * @brief Append fully-legal castling moves for @p us (file-local).
+ * @param pos Source position.
+ * @param[in,out] list List to append to.
+ * @param us Side to generate castling for.
+ *
+ * The one generator that emits **legal**, not pseudo-legal, moves: it requires
+ * the castling right, the king on its start square, an empty path, the correct
+ * rook present, and (via Huginn::SqAttackedBB) that the king's start,
+ * transit, and destination squares are all unattacked. Moved here from the
+ * removed king_lookup_tables module; the sole caller is
+ * generate_all_moves_bitboard.
+ */
 static void generate_castling_moves_optimized(const Position& pos, S_MOVELIST& list, Color us) {
     // Calculate castle squares using the same logic as CastlingSquares
     constexpr int WHITE_KING_START = sq64(File::E, Rank::R1);
