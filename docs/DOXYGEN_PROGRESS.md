@@ -24,7 +24,11 @@ Mark items `[x]` when done, with the date.
 - [x] `movegen_bb.hpp` / `movegen_bb.cpp` — production movegen: pseudo-legal
       contract (castling the legal exception), special-move coverage, file-local
       castling helper; replaced stale pre-rewrite @file blocks (2026-06-17)
-- [ ] `chess_types.hpp` / `chess_types.cpp`
+- [x] `chess_types.hpp` / `chess_types.cpp` — Color/PieceType/Piece enums +
+      enumerators, pack/unpack + type predicates, castling flags, the EVAL_PARAM
+      tuning macro + the three material-value tables (MG/EG/canonical) and their
+      independence rationale, PieceTypeIter; legacy bits (PieceList, Offboard)
+      tagged @deprecated. (.cpp was already complete.) (2026-06-17)
 - [x] `evaluation.hpp` — finished: tapered-eval @file rewrite (was stale
       3-bucket), GamePhase enum + init/extern masks, and Doxygen on every
       EVAL_PARAM group (outposts/pawns/threats/KS), all 12 PSTs, and the
@@ -59,4 +63,4 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-17 — finished evaluation.hpp (params/PSTs/masks)._
+_Last updated: 2026-06-17 — documented chess_types (core enums + value tables)._
