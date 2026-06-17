@@ -41,8 +41,10 @@ Mark items `[x]` when done, with the date.
 - [ ] `pvtable.hpp` / `pvtable.cpp`
 - [ ] `input_checking.hpp` / `input_checking.cpp`
 - [ ] `attack_tables.hpp` / `attack_tables.cpp`
-- [ ] `attack_detection.hpp` / `attack_detection.cpp`
-- [ ] `movegen.hpp` / `movegen.cpp` (legacy S_MOVELIST shim)
+- [x] `attack_detection.hpp` / `attack_detection.cpp` — square semantics,
+      target-side pawn lookup, params/return/precondition (2026-06-17)
+- [x] `movegen.hpp` / `movegen.cpp` — S_MOVELIST facade, scoring bands,
+      legality/capture-filter contracts (2026-06-17)
 
 ## Tier 3 — small / leaf files
 
@@ -52,4 +54,4 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-14 — Day 1 done (position.hpp, search.hpp)._
+_Last updated: 2026-06-17 — documented attack detection and legacy movegen facade._

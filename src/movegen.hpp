@@ -1,4 +1,13 @@
 #pragma once
+/**
+ * @file movegen.hpp
+ * @brief Legacy move-list facade over the production bitboard move generator.
+ *
+ * The engine's actual pseudo-legal generation lives in BitboardMoveGen
+ * (movegen_bb.hpp). This header keeps the VICE-style S_MOVELIST interface used
+ * by search, tests, and UCI helpers, adding move-ordering scores and optional
+ * legality filtering around the bitboard core.
+ */
 
 #include "position.hpp"
 #include "move.hpp"
@@ -9,20 +18,32 @@
 #include <algorithm>
 #include <vector>
 
-// Enhanced move generation with performance optimizations
+/// Maximum number of pseudo-legal moves Huginn stores for one position.
 #define MAX_POSITION_MOVES 256
 
+/**
+ * @brief Fixed-capacity move list with search-ordering scores.
+ *
+ * S_MOVELIST is intentionally stack-allocated and cache-friendly. The bitboard
+ * generator appends pseudo-legal moves into it, and search later sorts or filters
+ * the same entries. The add_* helpers assign the coarse ordering bands used by
+ * alpha-beta: promotions, captures, castles, then quiet moves.
+ */
 struct S_MOVELIST {
-    S_MOVE moves[MAX_POSITION_MOVES];  // Fixed-size array for better cache performance
-    int count;
+    S_MOVE moves[MAX_POSITION_MOVES];  ///< Fixed-size storage for generated moves.
+    int count;                         ///< Number of valid entries in moves[].
     
-    // Constructor
+    /// Constructs an empty move list.
     S_MOVELIST() : count(0) {}
     
-    // Clear the move list
+    /// Clears the list without touching existing storage.
     void clear() { count = 0; }
     
-    // Add methods for different move types with optimized scoring
+    /**
+     * @brief Appends a quiet move with the base quiet ordering score.
+     * @param move Non-capture, non-promotion move to append.
+     * @pre count < MAX_POSITION_MOVES.
+     */
     FORCE_INLINE void add_quiet_move(const S_MOVE& move) {
         // MSVC optimization: Tell compiler array bounds are safe
         __assume(count < MAX_POSITION_MOVES);
@@ -31,6 +52,12 @@ struct S_MOVELIST {
         count++;
     }
     
+    /**
+     * @brief Appends a capture and assigns MVV-LVA ordering score.
+     * @param move Capture move to append.
+     * @param pos Pre-move position, used to identify the attacking piece.
+     * @pre count < MAX_POSITION_MOVES.
+     */
     FORCE_INLINE void add_capture_move(const S_MOVE& move, const Position& pos) {
         __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
@@ -41,6 +68,11 @@ struct S_MOVELIST {
         count++;
     }
     
+    /**
+     * @brief Appends an en-passant capture in the capture ordering band.
+     * @param move En-passant move to append.
+     * @pre count < MAX_POSITION_MOVES.
+     */
     FORCE_INLINE void add_en_passant_move(const S_MOVE& move) {
         __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
@@ -48,6 +80,11 @@ struct S_MOVELIST {
         count++;
     }
     
+    /**
+     * @brief Appends a promotion with a promotion-piece-based ordering score.
+     * @param move Promotion move to append; captures receive an extra bonus.
+     * @pre count < MAX_POSITION_MOVES.
+     */
     FORCE_INLINE void add_promotion_move(const S_MOVE& move) {
         __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
@@ -63,6 +100,11 @@ struct S_MOVELIST {
         count++;
     }
     
+    /**
+     * @brief Appends a castling move in the quiet-but-useful ordering band.
+     * @param move Castling move to append.
+     * @pre count < MAX_POSITION_MOVES.
+     */
     FORCE_INLINE void add_castle_move(const S_MOVE& move) {
         __assume(count < MAX_POSITION_MOVES);
         moves[count] = move;
@@ -70,41 +112,69 @@ struct S_MOVELIST {
         count++;
     }
     
-    // Sort moves by score (highest first)
+    /// Sorts moves in descending ordering-score order.
     void sort_by_score() {
         std::sort(moves, moves + count, [](const S_MOVE& a, const S_MOVE& b) {
             return a.score > b.score;
         });
     }
     
-    // Access operators
+    /// Mutable indexed access to a generated move.
     S_MOVE& operator[](int index) { return moves[index]; }
+    /// Const indexed access to a generated move.
     const S_MOVE& operator[](int index) const { return moves[index]; }
     
-    // Size accessor
+    /// Returns the number of valid generated moves.
     int size() const { return count; }
     
-    // Iterator support for range-based loops
+    /// Iterator to the first generated move.
     S_MOVE* begin() { return moves; }
+    /// Iterator one past the last generated move.
     S_MOVE* end() { return moves + count; }
+    /// Const iterator to the first generated move.
     const S_MOVE* begin() const { return moves; }
+    /// Const iterator one past the last generated move.
     const S_MOVE* end() const { return moves + count; }
 };
 
-// Move generation entry points (delegate to BitboardMoveGen for the bitboard core).
+/**
+ * @brief Generates all pseudo-legal moves for the side to move.
+ * @param pos Position to generate from; not modified.
+ * @param[out] list Destination move list, overwritten with generated moves.
+ *
+ * Delegates to BitboardMoveGen. The result can include moves that leave the own
+ * king in check; callers that need legal moves should use generate_legal_moves()
+ * or validate via Position::MakeMove().
+ */
 void generate_all_moves(const Position& pos, S_MOVELIST& list);
 
-// Pseudo-legal moves filtered by Position::MakeMove legality check.
+/**
+ * @brief Generates legal moves by filtering pseudo-legal moves with MakeMove.
+ * @param pos Position to generate from; temporarily mutated and restored.
+ * @param[out] list Destination move list, overwritten with legal moves.
+ *
+ * Capture/quiet classification is preserved so MVV-LVA scores from the bitboard
+ * generator survive the legality pass.
+ */
 void generate_legal_moves(Position& pos, S_MOVELIST& list);
 
-// Quiescence (lazy filter): pseudo-legal captures only — no MakeMove/Unmake.
-// Caller must check legality via `pos.MakeMove(...) == 1` before recursing.
-// Captures keep their pre-move MVV-LVA scoring set by the bitboard generator
-// (which is more accurate than re-scoring on the post-move position, where
-// pos.at_sq64(from)==None zeroes out the attacker-value LVA term).
+/**
+ * @brief Generates pseudo-legal captures only for quiescence search.
+ * @param pos Position to generate from; not modified.
+ * @param[out] list Destination list containing only capture moves.
+ *
+ * This is a lazy filter: it does not MakeMove/TakeMove. Quiescence must still
+ * reject illegal captures with Position::MakeMove() before recursing. Captures
+ * keep their pre-move MVV-LVA score, which is more accurate than re-scoring on
+ * the post-move board where the attacker has already left its source square.
+ */
 void generate_all_caps_pseudo(const Position& pos, S_MOVELIST& list);
 
-// Helper functions
+/**
+ * @brief Tests whether the side to move is currently in check.
+ * @param pos Position to inspect.
+ * @return true if the side-to-move king exists and is attacked by the opponent.
+ */
 inline bool in_check(const Position& pos) {
     Color current_color = pos.side_to_move;
     int king_sq = pos.king_sq[int(current_color)];
@@ -115,7 +185,15 @@ inline bool in_check(const Position& pos) {
     return Huginn::SqAttackedBB(king_sq, pos, opponent_color);
 }
 
-// Check if a move is legal (doesn't leave own king in check)
+/**
+ * @brief Tests one pseudo-legal move for king safety.
+ * @param pos Position to test from; temporarily mutated and restored.
+ * @param move Pseudo-legal move to validate.
+ * @return true if the move is legal and leaves the moving side's king safe.
+ *
+ * Castling is checked explicitly for "from", transit, and destination attacks.
+ * Other moves are delegated to Position::MakeMove()/TakeMove().
+ */
 inline bool is_legal_move(Position& pos, const S_MOVE& move) {
     // Special handling for castling
     if (move.is_castle()) {
