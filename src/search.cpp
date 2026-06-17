@@ -507,6 +507,59 @@ int Engine::evaluate(const Position& pos) {
                                    EvalParams::QUEEN_OPEN_FILE_BONUS, EvalParams::QUEEN_SEMI_OPEN_FILE_BONUS);
 
     score += file_bonus_score;
+
+    // Outposts (#9 round 8 candidate): knights/bishops on advanced holes,
+    // supported by own pawns, where enemy pawns on adjacent files cannot
+    // advance to challenge the square. Tapered and colour-symmetric.
+    {
+        auto outpost_count = [&](Color us, PieceType pt) -> int {
+            const bool white = (us == Color::White);
+            const int color = int(us);
+            const uint64_t own_pawn_attacks = white ? w_pawn_attacks : b_pawn_attacks;
+            const uint64_t enemy_pawns = white ? black_pawns : white_pawns;
+
+            int count = 0;
+            uint64_t pieces = pos.piece_bitboards[color][int(pt)];
+            while (pieces) {
+                const int sq64 = pop_lsb(pieces);
+                const int file = sq64 & 7;
+                const int rank = sq64 >> 3;
+                const uint64_t bit = 1ULL << sq64;
+
+                if ((own_pawn_attacks & bit) == 0) continue;
+                if (white) {
+                    if (rank < EvalParams::WHITE_KNIGHT_OUTPOST_MIN_RANK) continue;
+                } else {
+                    if (rank > EvalParams::BLACK_KNIGHT_OUTPOST_MAX_RANK) continue;
+                }
+
+                uint64_t adjacent_files = 0ULL;
+                if (file > 0) adjacent_files |= EvalParams::FILE_MASKS[file - 1];
+                if (file < 7) adjacent_files |= EvalParams::FILE_MASKS[file + 1];
+
+                uint64_t challenge_ranks = 0ULL;
+                if (white) {
+                    challenge_ranks = (rank < 7) ? (~0ULL << (8 * (rank + 1))) : 0ULL;
+                } else {
+                    challenge_ranks = (rank > 0) ? ((1ULL << (8 * rank)) - 1ULL) : 0ULL;
+                }
+                if (enemy_pawns & adjacent_files & challenge_ranks) continue;
+
+                ++count;
+            }
+            return count;
+        };
+
+        const int white_knight_outposts = outpost_count(Color::White, PieceType::Knight);
+        const int black_knight_outposts = outpost_count(Color::Black, PieceType::Knight);
+        const int white_bishop_outposts = outpost_count(Color::White, PieceType::Bishop);
+        const int black_bishop_outposts = outpost_count(Color::Black, PieceType::Bishop);
+
+        mg_pst += (white_knight_outposts - black_knight_outposts) * EvalParams::KNIGHT_OUTPOST_BONUS_MG;
+        eg_pst += (white_knight_outposts - black_knight_outposts) * EvalParams::KNIGHT_OUTPOST_BONUS_EG;
+        mg_pst += (white_bishop_outposts - black_bishop_outposts) * EvalParams::BISHOP_OUTPOST_BONUS_MG;
+        eg_pst += (white_bishop_outposts - black_bishop_outposts) * EvalParams::BISHOP_OUTPOST_BONUS_EG;
+    }
     
     // VICE Part 83: Bishop pair bonus
     int white_bishops = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Bishop)]);

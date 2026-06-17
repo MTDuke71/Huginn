@@ -475,6 +475,7 @@ if(GTEST_FOUND)
     test/test_search_determinism.cpp
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
+    test/test_eval_outposts.cpp
     )
 
     add_executable(huginn_tests

@@ -142,6 +142,11 @@ std::vector<int*> collect_params() {
     // #9 round 5: rook on the relative 7th rank (tapered MG/EG).
     p.push_back(&Huginn::EvalParams::ROOK_ON_7TH_MG);
     p.push_back(&Huginn::EvalParams::ROOK_ON_7TH_EG);
+    // #9 round 8 candidate: knight/bishop outposts (tapered MG/EG).
+    p.push_back(&Huginn::EvalParams::KNIGHT_OUTPOST_BONUS_MG);
+    p.push_back(&Huginn::EvalParams::KNIGHT_OUTPOST_BONUS_EG);
+    p.push_back(&Huginn::EvalParams::BISHOP_OUTPOST_BONUS_MG);
+    p.push_back(&Huginn::EvalParams::BISHOP_OUTPOST_BONUS_EG);
     // #9 round 6: threats (tapered MG/EG per attacker->target class).
     p.push_back(&Huginn::EvalParams::THREAT_PAWN_ON_MINOR_MG);
     p.push_back(&Huginn::EvalParams::THREAT_PAWN_ON_MINOR_EG);
@@ -257,6 +262,10 @@ void dump_results() {
     std::printf("BACKWARD_PAWN_PENALTY_EG = %d;\n", Huginn::EvalParams::BACKWARD_PAWN_PENALTY_EG);
     std::printf("ROOK_ON_7TH_MG = %d;\n", Huginn::EvalParams::ROOK_ON_7TH_MG);
     std::printf("ROOK_ON_7TH_EG = %d;\n", Huginn::EvalParams::ROOK_ON_7TH_EG);
+    std::printf("KNIGHT_OUTPOST_BONUS_MG = %d;\n", Huginn::EvalParams::KNIGHT_OUTPOST_BONUS_MG);
+    std::printf("KNIGHT_OUTPOST_BONUS_EG = %d;\n", Huginn::EvalParams::KNIGHT_OUTPOST_BONUS_EG);
+    std::printf("BISHOP_OUTPOST_BONUS_MG = %d;\n", Huginn::EvalParams::BISHOP_OUTPOST_BONUS_MG);
+    std::printf("BISHOP_OUTPOST_BONUS_EG = %d;\n", Huginn::EvalParams::BISHOP_OUTPOST_BONUS_EG);
     std::printf("THREAT_PAWN_ON_MINOR_MG = %d;\n",  Huginn::EvalParams::THREAT_PAWN_ON_MINOR_MG);
     std::printf("THREAT_PAWN_ON_MINOR_EG = %d;\n",  Huginn::EvalParams::THREAT_PAWN_ON_MINOR_EG);
     std::printf("THREAT_PAWN_ON_ROOK_MG = %d;\n",   Huginn::EvalParams::THREAT_PAWN_ON_ROOK_MG);

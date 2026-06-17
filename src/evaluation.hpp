@@ -85,8 +85,13 @@ inline constexpr int WHITE_KNIGHT_OUTPOST_MIN_RANK = 3;
 /** @brief Maximum rank for black knight outpost consideration (5th rank+) */
 inline constexpr int BLACK_KNIGHT_OUTPOST_MAX_RANK = 4;
 
-/** @brief Bonus for knights on strong outpost squares (protected, can't be attacked by pawns) */
-inline constexpr int KNIGHT_OUTPOST_BONUS = 25;
+// Outposts (#9 round 8 candidate): knight/bishop on an advanced square,
+// supported by an own pawn, that enemy pawns on adjacent files cannot
+// challenge by advancing. Tapered MG/EG and Texel-tunable.
+EVAL_PARAM int KNIGHT_OUTPOST_BONUS_MG = 25;
+EVAL_PARAM int KNIGHT_OUTPOST_BONUS_EG = 10;
+EVAL_PARAM int BISHOP_OUTPOST_BONUS_MG = 15;
+EVAL_PARAM int BISHOP_OUTPOST_BONUS_EG = 6;
 
 /** @brief Bonus for having both bishops (bishop pair advantage) */
 EVAL_PARAM int BISHOP_PAIR_BONUS = 44;   // #9 round 3, Texel-tunable
