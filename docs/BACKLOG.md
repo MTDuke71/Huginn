@@ -253,7 +253,7 @@ ordering, mixed record), #43 is a *soundness/adaptive-pruning* class: Huginn's
 flat R=4 with no verification is a genuine over-pruning smell, and Stash bought
 +282 CCRL across v11→v13 almost entirely from NMP+LMR and their refinements.
 
-### #43: NMP soundness/refinement round (OPEN, 2026-06-15)
+### #43: NMP soundness/refinement round (sub-lever 3 SHIPPED t18; #1 rejected, #2 open — 2026-06-15)
 
 **Highest-confidence search lever — pointed at by three independent sources:**
 #41 (gap is "depth, not eval" — 73% of misses), the MTLChess comparison (their
@@ -317,6 +317,13 @@ complexity gate):**
    node-entry MDP. Bonus: faster mate-finding helps the **conversion weakness**
    the #5 Stash RR exposed (Huginn under-converts won positions vs weaker
    engines).
+   - **SHIPPED as `baseline-t18 = ab37a0d` (2026-06-17).** Implemented behind
+     `ENABLE_MATE_DISTANCE_PRUNING` (a36bb96, default OFF), then the complexity-gate
+     two-machine SPRT vs t17 **passed**: **Intel +10.08 ± 17.17, LOS 87.5%** (1000g,
+     W346/L317/D337, Ptnml [41,117,177,102,63], LLR 0.64, WL/DD 2.00); **AMD
+     positive, SPRT H1**. Default flipped ON (ab37a0d). The first #43 sub-lever to
+     ship — sub-lever 1 (NMP verification) was rejected; sub-lever 2 (scaled R)
+     remains untried.
 
 **Caveat (why this isn't a slam dunk):** search levers have a mixed Huginn record
 — #17 aspiration −34, #6 SEE ~neutral. But those were *efficiency/ordering*

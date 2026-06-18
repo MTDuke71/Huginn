@@ -13,7 +13,15 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t17 = 9906fec` (= t16 + BACKLOG #44:
+- ✅ **Baseline tag**: `baseline-t18 = ab37a0d` (= t17 + BACKLOG #43 sub-lever 3:
+  **mate-distance pruning** — at node entry clamp [alpha,beta] to the mate
+  envelope (best = MATE−ply, worst = −MATE+ply); if it collapses the node can't
+  beat a known mate, so cut. Sound, cheap, move-for-move identical to t17 outside
+  mate lines (where it steers to shorter mates, saves nodes). Added behind a
+  default-OFF flag (a36bb96), then the complexity-gate SPRT vs t17 **passed**:
+  **Intel +10.08 Elo, LOS 87.5%** (1000g, W346/L317/D337, Ptnml [41,117,177,102,63],
+  LLR 0.64); **AMD positive, SPRT H1**. Default flipped ON. Prior:
+  `baseline-t17 = 9906fec` (= t16 + BACKLOG #44:
   **repetition-detector bug fix**. `repetition_count_in_history` used the
   grow-only `move_history` buffer *size* instead of the current path length
   `pos.ply`; during deep search the buffer over-counts, sliding the scan window
