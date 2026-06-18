@@ -18,9 +18,10 @@ location is derived from the bitboards via `Position::at_sq64()`.
   envelope (best = MATE−ply, worst = −MATE+ply); if it collapses the node can't
   beat a known mate, so cut. Sound, cheap, move-for-move identical to t17 outside
   mate lines (where it steers to shorter mates, saves nodes). Added behind a
-  default-OFF flag (a36bb96), then the complexity-gate SPRT vs t17 **passed**:
-  **Intel +10.08 Elo, LOS 87.5%** (1000g, W346/L317/D337, Ptnml [41,117,177,102,63],
-  LLR 0.64); **AMD positive, SPRT H1**. Default flipped ON. Prior:
+  default-OFF flag (a36bb96), then the complexity-gate two-machine SPRT vs t17
+  **passed**: **AMD +14.95 ± 17.56, LOS 95.3%** and **Intel +10.08 ± 17.17, LOS
+  87.5%** (1000g, W346/L317/D337, Ptnml [41,117,177,102,63], LLR 0.64) — both
+  positive, tight cross-machine agreement. Default flipped ON. Prior:
   `baseline-t17 = 9906fec` (= t16 + BACKLOG #44:
   **repetition-detector bug fix**. `repetition_count_in_history` used the
   grow-only `move_history` buffer *size* instead of the current path length

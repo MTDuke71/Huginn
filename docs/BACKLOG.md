@@ -6,15 +6,20 @@
 > [BACKLOG-archive-2.0.md](BACKLOG-archive-2.0.md). Issue numbers are preserved
 > so cross-references into the archive still resolve.
 
-## Current state (2026-06-16)
+## Current state (2026-06-17)
 
-- **Baseline:** `baseline-t17 = 9906fec` — the **#44 repetition fix** (rep
-  detector used the grow-only `move_history` buffer size instead of `pos.ply`,
-  so deep iterations miscounted 3-folds and the engine drew won games). **+62
-  self-play vs t16 (AMD, H1 @482g)**; externally **+48 Elo / 42.58% vs Stash
-  12.0 → Huginn ≈ 1834 CCRL** (gap to Stash 12 ~halved). Biggest single fix
-  since the early Texel rounds. NMP verification (#43) was bundled then rejected
-  by an isolation test (no benefit). Single-machine shipped (clean bug fix).
+- **Baseline:** `baseline-t18 = ab37a0d` — **mate-distance pruning** (#43
+  sub-lever 3): at node entry clamp [α,β] to the mate envelope and cut if it
+  collapses. Sound, cheap, move-for-move identical to t17 outside mate lines.
+  Two-machine SPRT vs t17 **passed**: **AMD +14.95 ± 17.56, LOS 95.3%** and
+  **Intel +10.08 ± 17.17, LOS 87.5%** (1000g, W346/L317/D337, Ptnml
+  [41,117,177,102,63], WL/DD 2.00) — both positive. First #43 sub-lever to ship.
+  Prior: `baseline-t17 = 9906fec` — the **#44
+  repetition fix** (rep detector used the grow-only `move_history` buffer size
+  instead of `pos.ply`, so deep iterations miscounted 3-folds and the engine drew
+  won games). **+62 self-play vs t16 (AMD, H1 @482g)**; externally **+48 Elo /
+  42.58% vs Stash 12.0 → Huginn ≈ 1834 CCRL** (gap to Stash 12 ~halved). NMP
+  verification (#43) was bundled then rejected by an isolation test (no benefit).
   Prior: `baseline-t16 = 533d0b9` (round-7 king safety, +10.1 pooled).
 - **Release: Huginn 2.1** (`v2.1`) = baseline-t15 content. **~+490 Elo over
   Huginn 2.0** — pooled two-machine advertising gauntlet (10+0.1, no book,
@@ -51,7 +56,7 @@
 |---|-------|--------|------|----------|
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts KEPT on a sign-split (Intel +9.0 / AMD −6.25, logged exception) | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
-| 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
+| 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **IN-PROGRESS** — sub-lever 3 (MDP) **SHIPPED t18** (AMD +15.0 LOS 95.3% / Intel +10.1 LOS 87.5%); #1 NMP-verify rejected; #2 scaled-R open | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
 | 45 | Move-level (Fruit-style) futility vs current node-level | **OPEN** (2026-06-17) — pruning-soundness experiment; node-level may leak tactics | feature/search | medium |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
@@ -308,22 +313,23 @@ complexity gate):**
      fixed-depth-12 arm was abandoned mid-run (pivoted to the #44 bug it
      surfaced). **Lesson:** a soundness term that only fires in endgames and
      adds a re-search tax needs a real benefit to clear its cost — this one
-     didn't. Sub-levers 2 (scaled R) and 3 (MDP) remain untried.
+     didn't. Sub-lever 3 (MDP) shipped (t18); sub-lever 2 (scaled R) untried.
 2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
    (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
    is way above beta").
-3. **Mate-distance pruning** — clamp α/β to mate bounds at node entry, cut if
-   α≥β. Cheap, sound, free; Huginn does TT mate-score adjustment but no
-   node-entry MDP. Bonus: faster mate-finding helps the **conversion weakness**
-   the #5 Stash RR exposed (Huginn under-converts won positions vs weaker
-   engines).
-   - **SHIPPED as `baseline-t18 = ab37a0d` (2026-06-17).** Implemented behind
-     `ENABLE_MATE_DISTANCE_PRUNING` (a36bb96, default OFF), then the complexity-gate
-     two-machine SPRT vs t17 **passed**: **Intel +10.08 ± 17.17, LOS 87.5%** (1000g,
-     W346/L317/D337, Ptnml [41,117,177,102,63], LLR 0.64, WL/DD 2.00); **AMD
-     positive, SPRT H1**. Default flipped ON (ab37a0d). The first #43 sub-lever to
-     ship — sub-lever 1 (NMP verification) was rejected; sub-lever 2 (scaled R)
-     remains untried.
+3. **Mate-distance pruning** — *SHIPPED as `baseline-t18 = ab37a0d` (2026-06-17),
+   `ENABLE_MATE_DISTANCE_PRUNING` default ON.* Clamp α/β to the mate envelope
+   (`MATE − ply` / `−MATE + ply`) at node entry (after the draw checks, before the
+   TT probe), cut if it collapses. Provably sound — verified identical moves/scores
+   on/off (mate-in-1: 215 vs 377 nodes; quiet d12: same move/score, ~1.7% fewer
+   nodes); 203/203 tests pass. Added behind the flag (a36bb96, default OFF), then
+   the complexity-gate **two-machine SPRT vs t17 passed**: **AMD +14.95 ± 17.56,
+   52.15%, LOS 95.28%** (LLR 1.10) and **Intel +10.08 ± 17.17, 51.45%, LOS 87.5%**
+   (1000g, W346/L317/D337, Ptnml [41,117,177,102,63], WL/DD 2.00, LLR 0.64) — both
+   inconclusive at cap but clearly positive, tight cross-machine agreement. Shipped
+   on soundness + positive lean (zero downside — cannot change a non-mate result).
+   The **first #43 sub-lever to ship**: sub-lever 1 (NMP verification) was rejected,
+   sub-lever 2 (scaled R) remains untried.
 
 **Caveat (why this isn't a slam dunk):** search levers have a mixed Huginn record
 — #17 aspiration −34, #6 SEE ~neutral. But those were *efficiency/ordering*
