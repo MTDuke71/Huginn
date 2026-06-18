@@ -93,6 +93,18 @@
 #ifndef ENABLE_NMP_VERIFICATION
 #define ENABLE_NMP_VERIFICATION 0
 #endif
+
+// ENABLE_MATE_DISTANCE_PRUNING: BACKLOG #43 sub-lever 3. At node entry, clamp
+// the [alpha,beta] window to the mate envelope: we can do no better than
+// mating immediately (MATE - ply) nor worse than being mated immediately
+// (-MATE + ply). If the window collapses, this node can't beat an already-known
+// mate, so cut. Standard, sound, and cheap — never changes the chosen move in a
+// non-mate search; in mate searches it steers toward shorter mates and saves
+// nodes. DEFAULT OFF pending the fixed-depth + fixed-time SPRT (complexity
+// gate); build the ON arm with -DENABLE_MATE_DISTANCE_PRUNING=1.
+#ifndef ENABLE_MATE_DISTANCE_PRUNING
+#define ENABLE_MATE_DISTANCE_PRUNING 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1567,6 +1579,25 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             return -CONTEMPT; // Fifty-move-rule draw — contempt-biased (BACKLOG #16)
         }
     }
+
+#if ENABLE_MATE_DISTANCE_PRUNING
+    // BACKLOG #43 sub-lever 3: mate-distance pruning. A mate found elsewhere in
+    // the tree bounds what THIS node can return. Clamp the window to the mate
+    // envelope and cut if it collapses; placed before the TT probe so a TT
+    // cutoff respects the tightened bounds. Mate scores use MATE - info.ply.
+    if (!isRoot) {
+        const int mating_value = MATE - info.ply;   // best case: we deliver mate now
+        if (mating_value < beta) {
+            beta = mating_value;
+            if (alpha >= beta) return mating_value; // can't beat a known faster mate
+        }
+        const int mated_value = -MATE + info.ply;   // worst case: we are mated now
+        if (mated_value > alpha) {
+            alpha = mated_value;
+            if (alpha >= beta) return mated_value;
+        }
+    }
+#endif
 
     // VICE Part 84: Transposition Table Probe
     // Check if we've already searched this position to sufficient depth
