@@ -100,10 +100,11 @@
 // (-MATE + ply). If the window collapses, this node can't beat an already-known
 // mate, so cut. Standard, sound, and cheap — never changes the chosen move in a
 // non-mate search; in mate searches it steers toward shorter mates and saves
-// nodes. DEFAULT OFF pending the fixed-depth + fixed-time SPRT (complexity
-// gate); build the ON arm with -DENABLE_MATE_DISTANCE_PRUNING=1.
+// nodes. DEFAULT ON (2026-06-17): provably sound (verified identical moves/
+// scores, on/off) and the AMD isolation SPRT vs t17 leaned +14.95 ± 17.6 (LOS
+// 95.3%, 1000g). Build the OFF arm with -DENABLE_MATE_DISTANCE_PRUNING=0.
 #ifndef ENABLE_MATE_DISTANCE_PRUNING
-#define ENABLE_MATE_DISTANCE_PRUNING 0
+#define ENABLE_MATE_DISTANCE_PRUNING 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

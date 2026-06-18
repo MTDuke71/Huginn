@@ -312,11 +312,15 @@ complexity gate):**
 2. **Eval/depth-scaled R** — replace flat 4 with e.g. `R = 4 + (eval−beta)/200`
    (capped) and/or `+ depth/6` (Stash v13: "more aggressive reductions when eval
    is way above beta").
-3. **Mate-distance pruning** — clamp α/β to mate bounds at node entry, cut if
-   α≥β. Cheap, sound, free; Huginn does TT mate-score adjustment but no
-   node-entry MDP. Bonus: faster mate-finding helps the **conversion weakness**
-   the #5 Stash RR exposed (Huginn under-converts won positions vs weaker
-   engines).
+3. **Mate-distance pruning** — *SHIPPED 2026-06-17, `ENABLE_MATE_DISTANCE_PRUNING`
+   default ON.* Clamp α/β to the mate envelope (`MATE − ply` / `−MATE + ply`) at
+   node entry (after the draw checks, before the TT probe), cut if it collapses.
+   Provably sound — verified identical moves/scores on/off (mate-in-1: 215 vs
+   377 nodes; quiet d12: same move/score, ~1.7% fewer nodes); 203/203 tests
+   pass. **AMD isolation SPRT vs t17: +14.95 ± 17.56, 52.15%, LOS 95.28%** (LLR
+   1.10, inconclusive but clearly positive-leaning). Shipped on soundness +
+   positive lean (zero downside — it cannot change a non-mate result). On `main`
+   atop t17 alongside outposts; fold into the next baseline tag.
 
 **Caveat (why this isn't a slam dunk):** search levers have a mixed Huginn record
 — #17 aspiration −34, #6 SEE ~neutral. But those were *efficiency/ordering*
