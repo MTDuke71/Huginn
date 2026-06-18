@@ -114,10 +114,14 @@
 // "safe area" — squares not occupied by own pieces and not attacked by an enemy
 // pawn; the queen additionally excludes squares attacked by an enemy minor (so
 // a queen on a square a minor covers isn't credited — the #41 Queen-error
-// cluster). DEFAULT OFF so main stays byte-identical to t18; build the ON arm
-// with -DENABLE_SAFE_MOBILITY=1, Texel-tune the 8 weights, then two-machine SPRT.
+// cluster). DEFAULT ON as a CANDIDATE (2026-06-18, #9 round 9): full 841-param
+// re-tune dropped MSE 0.057102→0.056857, but the AMD SPRT vs t18 was NEUTRAL
+// (+5.91 ± 17.81, LOS 74.2%, 1000g, inconclusive) — the MSE didn't convert.
+// Flag flipped ON only so the gauntlet bat builds the candidate for the Intel
+// leg; **NOT yet shipped**. If Intel is also neutral, revert this round (flag
+// back to 0, restore t18 params). Build the OFF arm with -DENABLE_SAFE_MOBILITY=0.
 #ifndef ENABLE_SAFE_MOBILITY
-#define ENABLE_SAFE_MOBILITY 0
+#define ENABLE_SAFE_MOBILITY 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

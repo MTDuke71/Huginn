@@ -197,7 +197,7 @@ Piece from_char(char ch);
  * and break MVV-LVA's king=0 special case. @see PIECE_VALUES for the fixed
  * ordering/material table.
  */
-EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 88, 396, 391, 532, 1188, 20000 };
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 80, 397, 392, 542, 1231, 20000 };
 
 /**
  * @brief Endgame material values, indexed by PieceType (BACKLOG #35 Exp 2;
@@ -209,7 +209,7 @@ EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_MG = { 0, 88,
  * wings), bishop up (long diagonals). EVAL-ONLY — SEE / MVV-LVA keep their own
  * MG-based tables.
  */
-EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 93, 291, 313, 566, 1065, 20000 };
+EVAL_PARAM std::array<int, size_t(PieceType::_Count)> PIECE_VALUES_EG = { 0, 93, 288, 304, 566, 1072, 20000 };
 
 /**
  * @brief Fixed canonical piece values for move ordering + incremental material

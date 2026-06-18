@@ -129,10 +129,20 @@ is the bigger lever.
     are natural KS extensions if a later round wants more.
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
-- **Mobility refinement (safe mobility)** — currently flat square-count × weight;
-  go per-piece-type and restrict the area to *safe* squares (exclude enemy-pawn-
-  attacked). #41 ties the Queen-error cluster to this (stop crediting a queen on
-  a square enemy minors attack).
+- **Mobility refinement (safe mobility)** *(round 9, 2026-06-18 — CANDIDATE,
+  AMD-neutral; Intel leg pending)* — replaced flat square-count × weight with
+  per-piece-type weights over a safe area (exclude own + enemy-pawn-attacked
+  squares; queen also excludes enemy-minor-attacked, the #41 Queen-error
+  cluster). 8 tunable weights (`{KNIGHT,BISHOP,ROOK,QUEEN}_MOBILITY_{MG,EG}`),
+  `ENABLE_SAFE_MOBILITY`. Full 841-param re-tune (K=1.520) **MSE
+  0.057102→0.056857** (−0.000245, ~10× the outpost round; bake verified exact).
+  Symmetric, 203/203 tests pass.
+  - **AMD SPRT vs t18 (10+0.1, 1000g): +5.91 ± 17.81, 50.85%, LOS 74.2%, LLR
+    0.18 — NEUTRAL/inconclusive.** The MSE drop did NOT convert (the gain was the
+    flat joint re-fit, not the mobility term) — another datapoint that eval
+    *breadth* isn't the gap (#41 / MTLChess). Flag flipped ON only so the
+    gauntlet bat builds the candidate for the **Intel leg**; if Intel is also
+    neutral, **revert** (flag→0, restore t18 params). `gauntlet/safemob_vs_t18_amd.pgn`.
 - **Outposts** *(KEPT 2026-06-17 on a sign-split — logged exception; #41 Knight-error cluster)* —
   knight/bishop on an advanced square supported by an own pawn that enemy
   adjacent-file pawns can no longer challenge by advancing. Added tapered,
