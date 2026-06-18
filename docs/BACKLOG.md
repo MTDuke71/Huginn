@@ -6,10 +6,24 @@
 > [BACKLOG-archive-2.0.md](BACKLOG-archive-2.0.md). Issue numbers are preserved
 > so cross-references into the archive still resolve.
 
-## Current state (2026-06-17)
+## Current state (2026-06-18)
 
-- **Baseline:** `baseline-t18 = ab37a0d` — **mate-distance pruning** (#43
-  sub-lever 3): at node entry clamp [α,β] to the mate envelope and cut if it
+- **Baseline:** `baseline-t19` — **safe mobility** (#9 round 9): replaced the
+  flat square-count × weight with per-piece-type weights over a *safe* area
+  (exclude own-occupied + enemy-pawn-attacked squares; queen also excludes
+  enemy-minor-attacked, the #41 Queen-error cluster), 8 tunable weights
+  (`{KNIGHT,BISHOP,ROOK,QUEEN}_MOBILITY_{MG,EG}`) under `ENABLE_SAFE_MOBILITY`.
+  Full 841-param re-tune (K=1.520) MSE 0.057102→0.056857. Two-machine SPRT vs
+  t18 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g each) — both legs same-sign
+  positive: **AMD +5.91 ± 17.81, LOS 74.2%** (W349/L332/D319) and **Intel
+  +10.43 ± 17.39, LOS 88.0%** (W338/L308/D354, Ptnml [50,106,163,126,55],
+  PairsRatio 1.16). Pooled W687/L640/D673 = **51.18% / 2000g**. Neither leg
+  clears the 95% bar, but tight cross-machine agreement (both positive, +6 to
+  +10) clears the cross-machine-agreement ship bar — a small keeper, like the
+  #15 ship at 91%. The MSE drop did *not* fully convert (the bulk was the joint
+  re-fit, not the term) — another datapoint that eval *breadth* isn't the gap
+  (#41 / MTLChess). Prior: `baseline-t18 = ab37a0d` — **mate-distance pruning**
+  (#43 sub-lever 3): at node entry clamp [α,β] to the mate envelope and cut if it
   collapses. Sound, cheap, move-for-move identical to t17 outside mate lines.
   Two-machine SPRT vs t17 **passed**: **AMD +14.95 ± 17.56, LOS 95.3%** and
   **Intel +10.08 ± 17.17, LOS 87.5%** (1000g, W346/L317/D337, Ptnml
@@ -37,9 +51,10 @@
 - **Architecture:** pure bitboard; magic-bitboard sliders; tapered eval
   (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats/
   **king safety**. ~3.55 Mnps single-thread.
-- **Active thread:** the **#9 / #35 eval program** — round 8 (outposts) KEPT on
-  a sign-split (logged exception); round 9 next (threats round 2 or safe
-  mobility, per the #41 roadmap).
+- **Active thread:** the **#9 / #35 eval program** — round 9 (**safe mobility**)
+  SHIPPED → baseline-t19 (both legs same-sign positive, pooled +~8); round 8
+  (outposts) KEPT on a sign-split (logged exception). Round 10 next: threats
+  round 2 (per the #41 roadmap) is the strongest remaining eval lever.
 - **Direction (2026-06-13): push pure HCE as far as it goes before reaching for
   multithreading or NNUE.** The +490 over 2.0 was mostly foundational repair
   (structural bugs, a never-tuned eval) and won't recur — but pure-HCE engines
@@ -54,7 +69,7 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts KEPT on a sign-split (Intel +9.0 / AMD −6.25, logged exception) | feature/eval | high |
+| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts KEPT on a sign-split; round-9 **safe mobility SHIPPED t19** (AMD +5.9 / Intel +10.4, both positive, cross-machine-agreement ship) | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **IN-PROGRESS** — sub-lever 3 (MDP) **SHIPPED t18** (AMD +15.0 LOS 95.3% / Intel +10.1 LOS 87.5%); #1 NMP-verify rejected; #2 scaled-R open | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
@@ -86,6 +101,8 @@ the 725k Zurichess quiet-labeled corpus. Shipped ladder:
 - t15: **threats** (+54.2 pooled vs t14 — largest eval-term ship)
 - t16: **king safety** (+10.1 pooled vs t15 [AMD +20.5 LOS 99.6% / Intel −0.35] —
   first KS ship; converted far above its MSE drop)
+- t19: **safe mobility** (round 9 — pooled +~8 vs t18 [AMD +5.9 LOS 74% / Intel
+  +10.4 LOS 88%], both legs same-sign positive, cross-machine-agreement ship)
 
 Method note (learned across rounds): **new-feature MSE converts to Elo better
 than re-fit MSE** (re-fitting existing terms hit a floor at round 3, flat);
@@ -129,20 +146,28 @@ is the bigger lever.
     are natural KS extensions if a later round wants more.
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery, proven.
-- **Mobility refinement (safe mobility)** *(round 9, 2026-06-18 — CANDIDATE,
-  AMD-neutral; Intel leg pending)* — replaced flat square-count × weight with
+- **Mobility refinement (safe mobility)** *(SHIPPED → baseline-t19,
+  2026-06-18)* — replaced flat square-count × weight with
   per-piece-type weights over a safe area (exclude own + enemy-pawn-attacked
   squares; queen also excludes enemy-minor-attacked, the #41 Queen-error
   cluster). 8 tunable weights (`{KNIGHT,BISHOP,ROOK,QUEEN}_MOBILITY_{MG,EG}`),
-  `ENABLE_SAFE_MOBILITY`. Full 841-param re-tune (K=1.520) **MSE
+  `ENABLE_SAFE_MOBILITY` (default ON). Full 841-param re-tune (K=1.520) **MSE
   0.057102→0.056857** (−0.000245, ~10× the outpost round; bake verified exact).
   Symmetric, 203/203 tests pass.
-  - **AMD SPRT vs t18 (10+0.1, 1000g): +5.91 ± 17.81, 50.85%, LOS 74.2%, LLR
-    0.18 — NEUTRAL/inconclusive.** The MSE drop did NOT convert (the gain was the
+  - **Two-machine SPRT vs t18 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g each) —
+    SHIPPED, both legs same-sign positive (cross-machine-agreement bar).**
+    - AMD: **+5.91 ± 17.81**, 50.85%, LOS 74.2%, W349/L332/D319, LLR 0.18 —
+      positive lean, CI crosses zero. `gauntlet/safemob_vs_t18_amd.pgn`.
+    - Intel: **+10.43 ± 17.39** (nElo +12.93), 51.50%, LOS 88.0%, W338/L308/D354,
+      Ptnml [50,106,163,126,55], PairsRatio 1.16, LLR 0.65.
+      `gauntlet/huginn_vs_t18_intel.pgn`.
+    - Pooled W687/L640/D673 = **51.18% / 2000g**. Neither leg clears 95% LOS, but
+      tight cross-machine agreement (both positive, +6 to +10) clears the
+      cross-machine-agreement ship bar — a small keeper, like the #15 ship at 91%.
+  - **The MSE drop did NOT fully convert** (the bulk of the −0.000245 was the
     flat joint re-fit, not the mobility term) — another datapoint that eval
-    *breadth* isn't the gap (#41 / MTLChess). Flag flipped ON only so the
-    gauntlet bat builds the candidate for the **Intel leg**; if Intel is also
-    neutral, **revert** (flag→0, restore t18 params). `gauntlet/safemob_vs_t18_amd.pgn`.
+    *breadth* isn't Huginn's gap (#41 / MTLChess). Flag stays ON; t18 params
+    superseded.
 - **Outposts** *(KEPT 2026-06-17 on a sign-split — logged exception; #41 Knight-error cluster)* —
   knight/bishop on an advanced square supported by an own pawn that enemy
   adjacent-file pawns can no longer challenge by advancing. Added tapered,

@@ -13,7 +13,20 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t18 = ab37a0d` (= t17 + BACKLOG #43 sub-lever 3:
+- ✅ **Baseline tag**: `baseline-t19` (= t18 + BACKLOG #9 round 9:
+  **safe mobility** — replace the flat square-count × weight with per-piece-type
+  weights over a *safe* area (exclude own-occupied + enemy-pawn-attacked squares;
+  the queen also excludes enemy-minor-attacked squares, the #41 Queen-error
+  cluster). 8 tunable weights `{KNIGHT,BISHOP,ROOK,QUEEN}_MOBILITY_{MG,EG}` under
+  `ENABLE_SAFE_MOBILITY` (default ON); full 841-param re-tune (K=1.520) MSE
+  0.057102→0.056857. **Two-machine SPRT vs t18 — both legs same-sign positive**:
+  **AMD +5.91 ± 17.81, LOS 74.2%** (W349/L332/D319) and **Intel +10.43 ± 17.39,
+  LOS 88.0%** (W338/L308/D354, Ptnml [50,106,163,126,55]); pooled W687/L640/D673
+  = 51.18% / 2000g. Neither leg clears 95%, but tight cross-machine agreement
+  clears the cross-machine-agreement ship bar (cf. the #15 ship at 91%). The MSE
+  drop did not fully convert — the bulk was the joint re-fit, not the term —
+  corroborating #41 that eval breadth isn't Huginn's gap. Prior:
+  `baseline-t18 = ab37a0d` (= t17 + BACKLOG #43 sub-lever 3:
   **mate-distance pruning** — at node entry clamp [alpha,beta] to the mate
   envelope (best = MATE−ply, worst = −MATE+ply); if it collapses the node can't
   beat a known mate, so cut. Sound, cheap, move-for-move identical to t17 outside
