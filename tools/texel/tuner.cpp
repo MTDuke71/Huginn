@@ -119,6 +119,15 @@ std::vector<int*> collect_params() {
     // Mobility weights (mg / eg).
     p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT);
     p.push_back(&Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
+    // Safe-mobility per-piece weights (#9 round 9).
+    p.push_back(&Huginn::EvalParams::KNIGHT_MOBILITY_MG);
+    p.push_back(&Huginn::EvalParams::KNIGHT_MOBILITY_EG);
+    p.push_back(&Huginn::EvalParams::BISHOP_MOBILITY_MG);
+    p.push_back(&Huginn::EvalParams::BISHOP_MOBILITY_EG);
+    p.push_back(&Huginn::EvalParams::ROOK_MOBILITY_MG);
+    p.push_back(&Huginn::EvalParams::ROOK_MOBILITY_EG);
+    p.push_back(&Huginn::EvalParams::QUEEN_MOBILITY_MG);
+    p.push_back(&Huginn::EvalParams::QUEEN_MOBILITY_EG);
     // #9 round 3: positional scalars (well-constrained by quiet data) + the
     // passed-pawn rank bonus. KS is deliberately excluded — its non-linear
     // attacker term fires too rarely in quiet positions to tune reliably.
@@ -241,6 +250,14 @@ void dump_results() {
     print_array("QUEEN_TABLE_EG", Huginn::EvalParams::QUEEN_TABLE_EG);
     std::printf("MOBILITY_WEIGHT_DEFAULT = %d;\n", Huginn::EvalParams::MOBILITY_WEIGHT_DEFAULT);
     std::printf("MOBILITY_WEIGHT_ENDGAME = %d;\n", Huginn::EvalParams::MOBILITY_WEIGHT_ENDGAME);
+    std::printf("KNIGHT_MOBILITY_MG = %d;\n", Huginn::EvalParams::KNIGHT_MOBILITY_MG);
+    std::printf("KNIGHT_MOBILITY_EG = %d;\n", Huginn::EvalParams::KNIGHT_MOBILITY_EG);
+    std::printf("BISHOP_MOBILITY_MG = %d;\n", Huginn::EvalParams::BISHOP_MOBILITY_MG);
+    std::printf("BISHOP_MOBILITY_EG = %d;\n", Huginn::EvalParams::BISHOP_MOBILITY_EG);
+    std::printf("ROOK_MOBILITY_MG = %d;\n", Huginn::EvalParams::ROOK_MOBILITY_MG);
+    std::printf("ROOK_MOBILITY_EG = %d;\n", Huginn::EvalParams::ROOK_MOBILITY_EG);
+    std::printf("QUEEN_MOBILITY_MG = %d;\n", Huginn::EvalParams::QUEEN_MOBILITY_MG);
+    std::printf("QUEEN_MOBILITY_EG = %d;\n", Huginn::EvalParams::QUEEN_MOBILITY_EG);
     std::printf("PASSED_PAWN_BONUS = {");
     for (int i = 0; i < 8; ++i) std::printf(" %d,", Huginn::EvalParams::PASSED_PAWN_BONUS[i]);
     std::printf(" };\n");

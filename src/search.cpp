@@ -108,6 +108,17 @@
 #ifndef ENABLE_MATE_DISTANCE_PRUNING
 #define ENABLE_MATE_DISTANCE_PRUNING 1
 #endif
+
+// ENABLE_SAFE_MOBILITY: BACKLOG #9 round 9. Replace the flat square-count
+// mobility (one weight on white−black total) with per-piece-type weights over a
+// "safe area" — squares not occupied by own pieces and not attacked by an enemy
+// pawn; the queen additionally excludes squares attacked by an enemy minor (so
+// a queen on a square a minor covers isn't credited — the #41 Queen-error
+// cluster). DEFAULT OFF so main stays byte-identical to t18; build the ON arm
+// with -DENABLE_SAFE_MOBILITY=1, Texel-tune the 8 weights, then two-machine SPRT.
+#ifndef ENABLE_SAFE_MOBILITY
+#define ENABLE_SAFE_MOBILITY 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -657,52 +668,74 @@ int Engine::evaluate(const Position& pos) {
     // Pawns are excluded (their move semantics aren't "attack squares")
     // and kings are excluded (their squares are evaluated elsewhere).
     // -----------------------------------------------------------------
-    // Signed mobility "units" (white count − black count); the per-phase weight
-    // is applied at the mg/eg combine below so mobility tapers smoothly too.
-    int mobility_units = 0;
+    // Per-phase mobility score (white-positive). Computed here, added to the
+    // mg/eg accumulators at the combine below so it tapers smoothly.
+    int mg_mob = 0, eg_mob = 0;
     {
         const uint64_t occ = pos.occupied_bitboard;
+#if ENABLE_SAFE_MOBILITY
+        // Safe mobility (#9 round 9): per-piece counts over a "safe area" —
+        // squares not occupied by own pieces and not attacked by an enemy pawn.
+        // The queen additionally excludes squares an enemy MINOR attacks (a
+        // queen there isn't safe — #41 Queen-error cluster). Signed W−B per
+        // piece type, then per-piece tapered weights.
+        int kn = 0, bi = 0, rk = 0, qn = 0;
+        for (int color = 0; color <= 1; ++color) {
+            const uint64_t own = pos.color_bitboards[color];
+            const int them = color ^ 1;
+            const uint64_t enemy_pawn_att =
+                (color == int(Color::White)) ? b_pawn_attacks : w_pawn_attacks;
+            const uint64_t safe = ~own & ~enemy_pawn_att;
+            uint64_t enemy_minor_att = 0, b;
+            b = pos.piece_bitboards[them][int(PieceType::Knight)];
+            while (b) enemy_minor_att |= knight_attacks[pop_lsb(b)];
+            b = pos.piece_bitboards[them][int(PieceType::Bishop)];
+            while (b) enemy_minor_att |= bishop_attacks(pop_lsb(b), occ);
+            const uint64_t queen_safe = safe & ~enemy_minor_att;
+            const int sign = (color == int(Color::White)) ? 1 : -1;
 
+            b = pos.piece_bitboards[color][int(PieceType::Knight)];
+            while (b) { int sq = pop_lsb(b); kn += sign * popcount(knight_attacks[sq] & safe); }
+            b = pos.piece_bitboards[color][int(PieceType::Bishop)];
+            while (b) { int sq = pop_lsb(b); bi += sign * popcount(bishop_attacks(sq, occ) & safe); }
+            b = pos.piece_bitboards[color][int(PieceType::Rook)];
+            while (b) { int sq = pop_lsb(b); rk += sign * popcount(rook_attacks(sq, occ) & safe); }
+            b = pos.piece_bitboards[color][int(PieceType::Queen)];
+            while (b) { int sq = pop_lsb(b); qn += sign * popcount(queen_attacks(sq, occ) & queen_safe); }
+        }
+        mg_mob = kn * EvalParams::KNIGHT_MOBILITY_MG + bi * EvalParams::BISHOP_MOBILITY_MG
+               + rk * EvalParams::ROOK_MOBILITY_MG   + qn * EvalParams::QUEEN_MOBILITY_MG;
+        eg_mob = kn * EvalParams::KNIGHT_MOBILITY_EG + bi * EvalParams::BISHOP_MOBILITY_EG
+               + rk * EvalParams::ROOK_MOBILITY_EG   + qn * EvalParams::QUEEN_MOBILITY_EG;
+#else
+        // Flat mobility (t18 and earlier): signed square count (white − black,
+        // own pieces excluded) times one weight per phase.
+        int mobility_units = 0;
         for (int color = 0; color <= 1; ++color) {
             const uint64_t own = pos.color_bitboards[color];
             int count = 0;
-
-            // Knights
             uint64_t bb = pos.piece_bitboards[color][int(PieceType::Knight)];
-            while (bb) {
-                int sq = pop_lsb(bb);
-                count += popcount(knight_attacks[sq] & ~own);
-            }
-            // Bishops
+            while (bb) { int sq = pop_lsb(bb); count += popcount(knight_attacks[sq] & ~own); }
             bb = pos.piece_bitboards[color][int(PieceType::Bishop)];
-            while (bb) {
-                int sq = pop_lsb(bb);
-                count += popcount(bishop_attacks(sq, occ) & ~own);
-            }
-            // Rooks
+            while (bb) { int sq = pop_lsb(bb); count += popcount(bishop_attacks(sq, occ) & ~own); }
             bb = pos.piece_bitboards[color][int(PieceType::Rook)];
-            while (bb) {
-                int sq = pop_lsb(bb);
-                count += popcount(rook_attacks(sq, occ) & ~own);
-            }
-            // Queens
+            while (bb) { int sq = pop_lsb(bb); count += popcount(rook_attacks(sq, occ) & ~own); }
             bb = pos.piece_bitboards[color][int(PieceType::Queen)];
-            while (bb) {
-                int sq = pop_lsb(bb);
-                count += popcount(queen_attacks(sq, occ) & ~own);
-            }
-
+            while (bb) { int sq = pop_lsb(bb); count += popcount(queen_attacks(sq, occ) & ~own); }
             if (color == int(Color::White)) mobility_units += count;
             else                            mobility_units -= count;
         }
+        mg_mob = mobility_units * EvalParams::MOBILITY_WEIGHT_DEFAULT;
+        eg_mob = mobility_units * EvalParams::MOBILITY_WEIGHT_ENDGAME;
+#endif
     }
 
     // Combine the phase-dependent material+PST+mobility sums. `score` already
     // holds the phase-neutral terms (pawn structure, file bonuses, bishop pair).
 #if ENABLE_TAPERED_EVAL
     // Smooth blend: mg at full opening (phase=256), eg at bare kings (phase=0).
-    int mg_total = mg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_DEFAULT;
-    int eg_total = eg_pst + mobility_units * EvalParams::MOBILITY_WEIGHT_ENDGAME;
+    int mg_total = mg_pst + mg_mob;
+    int eg_total = eg_pst + eg_mob;
 #if ENABLE_KING_SAFETY
     // MG-only: added before the blend so it fades to 0 as phase -> 0 (#35 Exp 3).
     mg_total += king_safety_white_mg(pos);
@@ -710,9 +743,7 @@ int Engine::evaluate(const Position& pos) {
     score += (mg_total * phase + eg_total * (256 - phase)) / 256;
 #else
     // Legacy hard boolean: pick one side of the blend at the 1150 threshold.
-    const int mob_weight = is_endgame ? EvalParams::MOBILITY_WEIGHT_ENDGAME
-                                      : EvalParams::MOBILITY_WEIGHT_DEFAULT;
-    score += (is_endgame ? eg_pst : mg_pst) + mobility_units * mob_weight;
+    score += (is_endgame ? (eg_pst + eg_mob) : (mg_pst + mg_mob));
 #endif
 
     // Return from current side's perspective (negate if black to move),

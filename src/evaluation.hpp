@@ -167,8 +167,25 @@ EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 24; ///< Minor attacks queen, EG.
 EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 83; ///< Rook attacks queen, MG.
 EVAL_PARAM int THREAT_ROOK_ON_QUEEN_EG  = 27; ///< Rook attacks queen, EG.
 
-EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   ///< Per safe-mobility square, MG (#9 r2, tunable).
-EVAL_PARAM int MOBILITY_WEIGHT_ENDGAME = 2;   ///< Per safe-mobility square, EG (tunable).
+EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   ///< Flat mobility, MG (#9 r2). Used when ENABLE_SAFE_MOBILITY is OFF.
+EVAL_PARAM int MOBILITY_WEIGHT_ENDGAME = 2;   ///< Flat mobility, EG. Used when ENABLE_SAFE_MOBILITY is OFF.
+
+/**
+ * @brief Safe-mobility per-piece weights (#9 round 9; ENABLE_SAFE_MOBILITY).
+ *        Per square the piece can move to within its "safe area" — squares not
+ *        occupied by own pieces and not attacked by an enemy pawn; the queen
+ *        additionally excludes squares attacked by an enemy minor (#41
+ *        Queen-error cluster). Signed (White − Black), tapered MG/EG,
+ *        Texel-tunable. Replaces the flat MOBILITY_WEIGHT_* when the flag is on.
+ */
+EVAL_PARAM int KNIGHT_MOBILITY_MG = 4;  ///< Knight safe-mobility, MG.
+EVAL_PARAM int KNIGHT_MOBILITY_EG = 4;  ///< Knight safe-mobility, EG.
+EVAL_PARAM int BISHOP_MOBILITY_MG = 4;  ///< Bishop safe-mobility, MG.
+EVAL_PARAM int BISHOP_MOBILITY_EG = 4;  ///< Bishop safe-mobility, EG.
+EVAL_PARAM int ROOK_MOBILITY_MG   = 2;  ///< Rook safe-mobility, MG.
+EVAL_PARAM int ROOK_MOBILITY_EG   = 4;  ///< Rook safe-mobility, EG.
+EVAL_PARAM int QUEEN_MOBILITY_MG  = 1;  ///< Queen safe-mobility, MG.
+EVAL_PARAM int QUEEN_MOBILITY_EG  = 2;  ///< Queen safe-mobility, EG.
 
 inline constexpr int DEVELOP_BONUS_DEFAULT = 40;     ///< Undevelopment penalty (non-opening).
 inline constexpr int DEVELOP_BONUS_OPENING = 60;     ///< Opening development bonus.
