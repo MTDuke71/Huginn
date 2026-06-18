@@ -53,6 +53,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **OPEN** (2026-06-15) — Stash-v13 + #41 + complexity-gate all point here | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **OPEN** (2026-06-17) — pruning-soundness experiment; node-level may leak tactics | feature/search | medium |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -381,6 +382,43 @@ cause), #37 (also a make/unmake-buffer subtlety, but that one *does* desync the
 board; distinct bug). **Follow-up idea (separate SPRT):** extend the root
 draw-avoidance to a winning *single* repetition (2-fold), not just 3-fold, so a
 won engine routes around the shuffle one move earlier.
+
+### #45: Move-level (Fruit-style) futility vs current node-level (OPEN, 2026-06-17)
+
+A pruning-soundness experiment (sibling to #43), prompted by comparing Huginn's
+futility against the Fruit 2.1 reference (`Repos/fruit_21/src/search_full.cpp`).
+
+**Current Huginn futility ([search.cpp:1741](../src/search.cpp#L1741)):**
+`depth <= 3 && !in_check && !isRoot`; if `static_eval + (100 + 50*depth) <=
+alpha`, **`return alpha`** — prunes the WHOLE node *before* the move loop. So it
+skips **every** reply, including captures, promotions, and checks; quiescence at
+the leaf is the only backstop.
+
+**Fruit 2.1 futility (`search_full.cpp:697`):** **move-level** — inside the move
+loop, `continue` (skip just that move) when `depth == 1 && node_type != NodePV
+&& !in_check && new_depth == 0 && !move_is_tactical && !move_is_dangerous &&
+!move_is_check`. Margin a flat **100cp**. So it prunes only *quiet,
+non-near-promotion, non-checking* moves and still searches all tactics. (Notable:
+Fruit ships it **disabled by default**, `UseFutility = false`.)
+
+**Three ways Huginn's is more aggressive / riskier:**
+1. **Node-level vs move-level** — Huginn's `return alpha` drops the node incl.
+   tactical replies; a depth-3 node with a low static eval but a rook-winning
+   capture or a check available is pruned unseen. *The tactical-leak risk, and
+   the one that matters* (same class as #44).
+2. **depth ≤ 3 vs depth 1** — Fruit only trusts futility at the frontier (one
+   ply from qsearch); Huginn extends two plies deeper under a bigger margin.
+3. **No PV-node guard** — Huginn excludes only `isRoot`; Fruit excludes all PV
+   nodes (`node_type != NodePV`; PVS equivalent here is `beta > alpha + 1`).
+
+**Experiment:** behind a flag, replace the node-level early-return with
+Fruit-style move-level pruning — skip a quiet move when `depth == 1` (test ≤2),
+non-PV, not in check, the move is not a capture/promotion/near-promotion-push,
+and doesn't give check; keep `best_value`/fail-low bookkeeping. Sounder
+structure could *gain* by not leaking tactics, or wash. **Gate with the
+complexity-gate pair (fixed-depth + fixed-time SPRT), two-machine to ship.**
+Caveat per #17/#6: search-efficiency tweaks have a mixed record here — but this
+is a *soundness* change (stop pruning tactics), a different class, like #44.
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
