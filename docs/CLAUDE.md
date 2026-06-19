@@ -124,9 +124,12 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 For the **live inventory** of which search and evaluation techniques are
 implemented, see [SEARCH_AND_EVAL.md "Current state" sections](SEARCH_AND_EVAL.md#current-state--search).
-For **what to work on next**, see [BACKLOG.md](BACKLOG.md). This file is
-the orientation guide for new sessions; the other two are the source of
-truth for state and priorities.
+For **what to work on next**, see [BACKLOG.md](BACKLOG.md). **Before changing
+search, eval, or make/unmake, read [INVARIANTS.md](INVARIANTS.md)** — the
+load-bearing contracts that span functions (colour symmetry, `pos.ply` vs
+`move_history.size()`, TT path-independence, the three value tables, flag/ship
+discipline). This file is the orientation guide for new sessions; the other
+three are the source of truth for state, priorities, and contracts.
 
 ## Common Commands
 
@@ -222,9 +225,9 @@ cmake --build build/msvc-x64-release-asm --config Release --target generate_asse
   killers + history + MVV-LVA + counter-move (on @1500, BACKLOG #15),
   polyglot book.
 - **Evaluation**: definitions in [src/evaluation.hpp](../src/evaluation.hpp)
-  (constants + masks + PSTs); the actual `evaluate()` lives in
-  [search.cpp:88](../src/search.cpp#L88). Hand-crafted,
-  no NNUE. Phase-aware via 3-bucket switch (no smooth taper). Terms:
+  (constants + masks + PSTs); the actual `Engine::evaluate()` lives in
+  [src/search.cpp](../src/search.cpp). Hand-crafted, no NNUE. **Tapered** via
+  `game_phase_256()` (smooth MG/EG blend, not the legacy 3-bucket switch). Terms:
   material + PSTs (separate MG/EG king table), isolated/doubled/passed
   pawns, bishop pair, rook/queen on open/semi-open files, mobility,
   tempo, insufficient-material draw. See
