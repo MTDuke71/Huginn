@@ -13,102 +13,13 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t19` (= t18 + BACKLOG #9 round 9:
-  **safe mobility** — replace the flat square-count × weight with per-piece-type
-  weights over a *safe* area (exclude own-occupied + enemy-pawn-attacked squares;
-  the queen also excludes enemy-minor-attacked squares, the #41 Queen-error
-  cluster). 8 tunable weights `{KNIGHT,BISHOP,ROOK,QUEEN}_MOBILITY_{MG,EG}` under
-  `ENABLE_SAFE_MOBILITY` (default ON); full 841-param re-tune (K=1.520) MSE
-  0.057102→0.056857. **Two-machine SPRT vs t18 — both legs same-sign positive**:
-  **AMD +5.91 ± 17.81, LOS 74.2%** (W349/L332/D319) and **Intel +10.43 ± 17.39,
-  LOS 88.0%** (W338/L308/D354, Ptnml [50,106,163,126,55]); pooled W687/L640/D673
-  = 51.18% / 2000g. Neither leg clears 95%, but tight cross-machine agreement
-  clears the cross-machine-agreement ship bar (cf. the #15 ship at 91%). The MSE
-  drop did not fully convert — the bulk was the joint re-fit, not the term —
-  corroborating #41 that eval breadth isn't Huginn's gap. Prior:
-  `baseline-t18 = ab37a0d` (= t17 + BACKLOG #43 sub-lever 3:
-  **mate-distance pruning** — at node entry clamp [alpha,beta] to the mate
-  envelope (best = MATE−ply, worst = −MATE+ply); if it collapses the node can't
-  beat a known mate, so cut. Sound, cheap, move-for-move identical to t17 outside
-  mate lines (where it steers to shorter mates, saves nodes). Added behind a
-  default-OFF flag (a36bb96), then the complexity-gate two-machine SPRT vs t17
-  **passed**: **AMD +14.95 ± 17.56, LOS 95.3%** and **Intel +10.08 ± 17.17, LOS
-  87.5%** (1000g, W346/L317/D337, Ptnml [41,117,177,102,63], LLR 0.64) — both
-  positive, tight cross-machine agreement. Default flipped ON. Prior:
-  `baseline-t17 = 9906fec` (= t16 + BACKLOG #44:
-  **repetition-detector bug fix**. `repetition_count_in_history` used the
-  grow-only `move_history` buffer *size* instead of the current path length
-  `pos.ply`; during deep search the buffer over-counts, sliding the scan window
-  off the real predecessors, so a true 3-fold read as a non-repetition at the
-  deepest iteration — and with a warm TT serving a stale winning score the
-  engine drew won games (a concrete cause of the #5 conversion weakness). The
-  board never desynced; only the rep counter. Fix: `history_len = pos.ply`.
-  **+62 Elo self-play vs t16 (AMD, LOS 100%, H1 @482g)**; **+48 external
-  (42.58% vs Stash 12.0 → Huginn ≈ 1834 CCRL**, gap to Stash 12 ~halved). NMP
-  verification (#43) was bundled then **rejected** by an isolation test (NMP-off
-  ahead +14.6 — no benefit). Single-machine shipped — clean bug fix. Deterministic
-  repro: `tools/repro_repetition_44.py`. Prior:
-  `baseline-t16 = 533d0b9` (= t15 + BACKLOG #9 round 7 / #2:
-  **king safety, finally converted** — reformulated the in-tree term to be
-  Texel-tunable (removed the ≥2-attacker gate that made it zero on quiet
-  positions and stalled hand-tuning at ~0 Elo; MTLChess-recipe king-zone units²/4,
-  MG-only; weights + shelter now EVAL_PARAM). The KS weights moved off their seeds
-  under tuning (N 2→3, B 2→4, shelter 18→21) = genuinely tunable at last; full
-  829-param tune, MSE 0.05732→0.05717. **+10.1 Elo pooled 2000g vs t15** [AMD
-  +20.52@1000g LOS 99.6% / Intel −0.35@1000g neutral] — AMD-strong, Intel
-  non-regressive; the first king-safety ship in the program's history (the #41
-  calibration study had pegged KS as the #1 lever). Converted far above its MSE
-  drop — quiet-corpus MSE under-states KS. Prior: `baseline-t15 = cdcd31f`
-  (= t14 + BACKLOG #9 round 6:
-  NEW feature — threats (bonus per enemy piece attacked by a cheaper/more-
-  dangerous attacker, by attacker→target class, tapered); full 824-param tune
-  on the 725k corpus, MSE 0.05799→0.05732 (strongest new-term signal since the
-  early rounds). **+54.2 ± 14.9 Elo pooled ~1018g vs t14** [AMD +50.26@536g
-  LOS 100% / Intel +58.95@482g LOS 100%], both legs same-sign positive, both
-  SPRT H1-accept — the largest eval-*term* ship of the program, a clean two-
-  machine decision. **Also includes the #37 illegal-bestmove guard + #36
-  PV-display fix** (so t15 won't forfeit on the board-desync bug during round-7
-  gauntlets). Prior: `baseline-t14 = db3f1ef` (= t13 + BACKLOG #9 round 5:
-  NEW feature — rook on the relative 7th rank, gated tapered bonus (enemy king
-  on back rank OR enemy pawns on the rank); full 812-param tune on the 725k
-  corpus, MSE 0.05806→0.05799, fitted MG 20 / EG 24. **Shipped on a sign-split
-  as a deliberate methodology exception** [AMD +17.73@1000g LOS 99.0% / Intel
-  −4.52@1000g LOS 27.7%, pooled +6.6 ± 10.6] — does NOT meet the usual same-
-  sign two-machine bar, taken on the strong AMD leg + theoretical soundness +
-  near-zero downside of a small gated eval term; see BACKLOG #9 round 5.
-  Prior: `baseline-t13 = f90fd54` (= t12 + BACKLOG #9 round 4:
-  NEW features — connected (phalanx/supported) + backward pawn terms, both
-  tapered; full 810-param tune on the 725k corpus, MSE 0.0583→0.0580.
-  **+18.9 ± 10.7 Elo pooled 2000g vs t12** [AMD +11.82@1000g LOS 93.9% /
-  Intel +26.11@1000g LOS 99.96%], both legs same-sign positive — two-machine
-  ship). Prior: `baseline-t12 = 1a0b3a1` (= t11 + BACKLOG #9 round 2:
-  tapered (endgame) PSTs for the 5 non-king pieces + tunable mobility, full
-  ~780-param re-tune on the 725k corpus, MSE 0.0596→0.0587. **+37.4 ± 17.9 Elo
-  vs t11, LOS 100%, SPRT H1-accept @764g (AMD)** — single-machine decisive
-  freeze; Intel leg skipped (sign-flip impossible at this magnitude). Prior:
-  `baseline-t11 = 4f091c1` (= t10 + BACKLOG #9 first Texel
-  tune: material MG/EG + all 6 PSTs + king-EG fit on the Zurichess quiet-labeled
-  725k corpus, MSE 0.0642→0.0596; the hand-set VICE PSTs had never been tuned.
-  `value_of()` decoupled onto a fixed canonical table so ordering/material don't
-  drift. **+71.4 Elo pooled 863g vs t10** [AMD +88.2@350g / Intel +59.6@512g],
-  both LOS 100%, both SPRT H1-accept — the largest single ship of the program).
-  Prior: `baseline-t10 = 476d33c` (= t9 + BACKLOG #35 tapered-eval
-  foundation: smooth `game_phase_256()` blend replaces the hard `is_endgame`
-  boolean — mg/eg sums diverge only on the king PST, flag-off byte-identical to
-  t9. No new tuned values. +39.5 Elo pooled 1448g vs t9 [AMD +45.86@602g /
-  Intel +35.03@846g], both LOS 100%, both SPRT H1-accept — first eval-quality
-  ship of the #35 program). Prior: `baseline-t9 = ca335c2` (= t8 + perf trio
-  [triangular PV + input-poll throttle + eval mirror→XOR] + PV
-  repetition truncate + Priority 6 static-eval cache + Priority 7 dead
-  undo-state drop; +13.90 Elo pooled vs t8, LOS 99.6%, both machines
-  clear 95% — pure-speed ship, byte-identical search at equal depth).
-  Prior: `baseline-t8 = b9d63f8` (= t7 + BACKLOG #15 ply-tracked
-  counter-move @1500; +7.1 Elo vs t7, LOS 91%, soft ship),
-  `baseline-t7 = 304f2b7` (#28 repetition fixes: halfmove-clock lookback
-  + TT-safe Zarkov single-rep draw; +7.6 Elo vs t6), `baseline-t6`
-  (#27 winning-rep avoidance), `baseline-t5 = 3eab266` (P1a + TT-bound
-  fix + magic bitboards).
-- ✅ **Comprehensive test suite**: 197 GoogleTest cases
+- ✅ **Baseline tag**: `baseline-t19` — **safe mobility** (#9 round 9), the
+  latest ship on the t5→t19 ladder, two-machine confirmed (AMD +5.9 / Intel
+  +10.4 vs t18). **The full baseline history — every tag, what it added, and
+  its SPRT result — is in [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent:
+  t19 safe mobility · t18 mate-distance pruning · t17 the #44 repetition fix
+  (~+48 external Elo, ≈1834 CCRL) · t16 king safety · t15 threats.
+- ✅ **Comprehensive test suite**: 203 GoogleTest cases
 - ✅ **Strength**: **~1834 CCRL-Blitz** as of `baseline-t17` (2026-06-16) —
   t17 vs Stash 12.0 (1886) = 42.58% / −51.92 ± 24.5 (600g, AMD), single-anchor
   estimate; the #44 fix added ~+48 external Elo (gap to Stash 12 ~halved). The
@@ -269,7 +180,7 @@ the per-piece bitboards, Zobrist key, and material counts.
 
 ### Testing Requirements
 - All new functionality must have corresponding tests in `test/` directory
-- **Current size**: ~197 GoogleTest cases across 34 files (verify the
+- **Current size**: ~203 GoogleTest cases across 34 files (verify the
   pass count by running the suite — it changes as features land)
 - Perft tests for move generation validation
 - Position validation with FEN round-trip testing
@@ -335,7 +246,7 @@ shim removed). Sub-phases 4.3-4.10 remain on the plan.
    (`±(MATE-1000)` = ±28000, inside `INFINITE`=30000), not Fathom's
    `TB_VALUE_*` constants. TB scores are deliberately **not** stored in
    the TT (rule50 isn't in the zobrist key)
-5. **Test suite**: ~197 GoogleTest cases + WAC300 / LCT2 EPD sweeps
+5. **Test suite**: ~203 GoogleTest cases + WAC300 / LCT2 EPD sweeps
 
 ### Where we are vs target strength
 - Calibration baseline: ~1500-1700 Elo at 10+0.1 (huginn current vs
