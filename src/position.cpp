@@ -28,8 +28,9 @@
 #include "movegen.hpp"  // For in_check function
 #include "attack_detection.hpp"  // For Huginn::SqAttacked function
 
-// Update Zobrist key incrementally for side/castling/en passant changes only
-// (Piece position changes are handled by atomic operations)
+/// @brief Incrementally fold the side-to-move, castling-rights, and en-passant
+///        changes of a move into the Zobrist key. Piece add/remove XORs are done
+///        by the make/unmake primitives; this handles only the state bits.
 void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece captured, uint8_t old_castling_rights, int old_ep_square) {
     // XOR side to move flag to match full computation logic
     // Full computation: if (side_to_move == Color::Black) key ^= Side;
@@ -56,11 +57,16 @@ void Position::update_zobrist_for_move(const S_MOVE& m, Piece moving, Piece capt
     }
 }
 
-// Compute and set the Zobrist key from current position
+/// @brief Recompute the Zobrist key from scratch over the whole position
+///        (full rebuild — use after non-incremental edits like FEN setup).
 void Position::update_zobrist_key() {
     zobrist_key = Zobrist::compute(*this);
 }
 
+/// @brief Self-check that the cached state agrees with the bitboards
+///        (occupancy, king squares, side, castling/ep validity, Zobrist).
+/// @param[out] reason If non-null, set to a description on the first failure.
+/// @return true if the position is internally consistent. Debug/test aid.
 bool Position::is_consistent(std::string* reason) const {
     auto fail = [&](const std::string& why) {
         if (reason) *reason = why;
@@ -144,6 +150,7 @@ bool Position::is_consistent(std::string* reason) const {
     return true;
 }
 
+/// @brief Clear the position to empty: no pieces, no rights, side None, ply 0.
 void Position::reset() {
     material_score[0] = 0;
     material_score[1] = 0;
@@ -166,6 +173,10 @@ void Position::reset() {
     zobrist_key = 0ULL;
     move_history.clear();
 }
+/// @brief Parse a FEN string into this position (board, side, castling, ep,
+///        clocks), rebuild the derived bitboards/counts and the Zobrist key.
+/// @param fen A FEN record.
+/// @return true on success; false (position left partially set) on malformed input.
 bool Position::set_from_fen(const std::string& fen) {
     reset();
     std::vector<std::string> tokens;
@@ -245,6 +256,7 @@ bool Position::set_from_fen(const std::string& fen) {
     return true;
 }
 
+/// @brief Serialise the current position to a FEN string (inverse of set_from_fen).
 std::string Position::to_fen() const {
     std::string fen;
     for (int rank = 7; rank >= 0; --rank) {
@@ -294,6 +306,8 @@ std::string Position::to_fen() const {
     return fen;
 }
 
+/// @brief Recompute derived state (occupancy, colour bitboards, king squares,
+///        material) from the per-piece bitboards after a non-incremental edit.
 void Position::rebuild_counts() {
     // Recompute color_bitboards / occupied_bitboard from piece_bitboards
     // (the per-piece-type bitboards are the source of truth — set() and
@@ -328,13 +342,18 @@ void Position::rebuild_counts() {
 }
 
 // Set up the standard chess starting position using FEN
+/// @brief Set the standard chess starting position (via the start FEN).
 void Position::set_startpos() {
     const std::string start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     set_from_fen(start_fen);
 }
 
-// VICE Tutorial Video #41: MakeMove function
-// Returns 1 if move is legal, 0 if illegal (leaves king in check)
+/// @brief Apply a pseudo-legal move with full incremental update (bitboards,
+///        Zobrist, castling/ep, clocks) and push an undo record, then test
+///        legality by checking whether the mover's king is left in check.
+/// @param move A pseudo-legal move from the generator.
+/// @return 1 if the move is legal (and stays applied); 0 if it left the king in
+///         check (the move is fully unmade before returning). VICE Part 41.
 int Position::MakeMove(const S_MOVE& move) {
     // Debug assertions for move validity (from/to are 64-square indices)
     DEBUG_ASSERT(move.get_from() >= 0 && move.get_from() < 64, "Move source square must be a valid sq64");
@@ -493,8 +512,9 @@ int Position::MakeMove(const S_MOVE& move) {
     return 1;  // Legal move
 }
 
-// VICE Tutorial Video #42: TakeMove function
-// Undoes the last move by retrieving information from the history array
+/// @brief Undo the most recent MakeMove, restoring the board, Zobrist key, and
+///        all state from the top undo record (the exact inverse of MakeMove).
+///        Precondition: at least one move has been made (ply > 0). VICE Part 42.
 void Position::TakeMove() {
     // Must have at least one move to undo
     DEBUG_ASSERT(ply > 0, "Cannot take move when ply is 0");
@@ -597,7 +617,10 @@ void Position::TakeMove() {
     zobrist_key = undo.zobrist_key;
 }
 
-// VICE Part 83: Null move functions for null move pruning
+/// @brief Make a "null move" — flip the side to move and clear en passant
+///        without moving a piece — for null-move pruning. Pushes an undo record
+///        and updates the Zobrist key. Caller must ensure the side to move is
+///        not in check. VICE Part 83. @see TakeNullMove.
 void Position::MakeNullMove() {
     // Create undo entry for null move
     if (ply >= static_cast<int>(move_history.size())) {
@@ -635,6 +658,7 @@ void Position::MakeNullMove() {
     }
 }
 
+/// @brief Undo the most recent MakeNullMove (restore side, en passant, Zobrist).
 void Position::TakeNullMove() {
     // Must have at least one move to undo
     DEBUG_ASSERT(ply > 0, "Cannot take null move when ply is 0");
@@ -660,7 +684,11 @@ void Position::TakeNullMove() {
     }
 }
 
-// Function definitions that use S_MOVELIST
+/// @brief Perft: count leaf nodes of the legal move tree to @p depth (the
+///        movegen correctness benchmark). Make/unmake recursion; only legal
+///        moves (MakeMove == 1) are counted.
+/// @param depth Plies to search; depth 0 returns 1.
+/// @return Number of leaf positions reachable in exactly @p depth plies.
 uint64_t Position::perft(int depth) {
     if (depth == 0) return 1;
 
@@ -678,6 +706,9 @@ uint64_t Position::perft(int depth) {
 }
 
 // Generate all moves for the current position
+/// @brief Generate all pseudo-legal moves for the side to move into @p list
+///        (thin wrapper over the bitboard generator; legality is filtered by
+///        MakeMove). @see BitboardMoveGen::generate_all_moves_bitboard.
 void Position::generate_all_moves(S_MOVELIST& list) const {
     list.clear();
     // Implement move generation logic here or leave empty if unnecessary

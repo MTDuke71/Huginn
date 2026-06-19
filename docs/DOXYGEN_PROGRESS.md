@@ -17,7 +17,10 @@ Mark items `[x]` when done, with the date.
 
 - [x] `position.hpp` — structs, Position class + members + methods (2026-06-14)
 - [x] `search.hpp` — Engine, SearchInfo, MinimalLimits + search-core methods (2026-06-14)
-- [ ] `position.cpp` (601 lines)
+- [x] `position.cpp` — @brief on all 14 Position methods (Zobrist incr/full,
+      is_consistent, FEN in/out, reset/startpos/rebuild_counts, MakeMove/TakeMove
+      with the legality-filter contract, null moves, perft, generate_all_moves)
+      (2026-06-18)
 - [ ] `search.cpp` (2410 lines — **special: split across several days** — `@file`
       header + `evaluate`/`AlphaBeta`/`quiescence`/`searchPosition` first, then
       the pruning/ordering helpers in later sittings)
@@ -33,7 +36,9 @@ Mark items `[x]` when done, with the date.
       3-bucket), GamePhase enum + init/extern masks, and Doxygen on every
       EVAL_PARAM group (outposts/pawns/threats/KS), all 12 PSTs, and the
       structure masks (2026-06-17)
-- [ ] `move.hpp` (already 27 briefs — audit/finish)
+- [x] `move.hpp` — audit/finish: documented the two string utilities +
+      debug_check_sq64_move, converted the MOVE_* mask/shift constants to `///<`,
+      fixed the get_from/get_to return range (sq64 0-63, was 0-127) (2026-06-18)
 
 ## Tier 2 — supporting subsystems
 
@@ -63,4 +68,5 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-17 — documented chess_types (core enums + value tables)._
+_Last updated: 2026-06-18 — finished move.hpp + position.cpp. Tier 1 now only
+search.cpp remains (the big multi-day one)._

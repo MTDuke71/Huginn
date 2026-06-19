@@ -15,13 +15,19 @@
 #include "square.hpp"
 #include "chess_types.hpp"
 
-// Utility functions for square and piece string conversion
+/// @brief Algebraic name of an sq64 index (e.g. 0 -> "a1", 63 -> "h8").
+/// @param square_64 Square index 0-63 (a1=0, h8=63).
+/// @return Two-char coordinate string (file letter + rank digit).
 inline std::string square_to_string(int square_64) {
     int file = square_64 % 8;
     int rank = square_64 / 8;
     return std::string(1, 'a' + file) + std::string(1, '1' + rank);
 }
 
+/// @brief FEN/UCI letter for a piece (uppercase White, lowercase Black).
+/// @param color 0 = White, 1 = Black.
+/// @param piece PieceType-1 index into {P,N,B,R,Q,K} (0 = pawn .. 5 = king).
+/// @return The piece's display character.
 inline char piece_to_char(int color, int piece) {
     static const char pieceChars[2][6] = {
         {'P', 'N', 'B', 'R', 'Q', 'K'}, // White pieces
@@ -45,30 +51,33 @@ inline char piece_to_char(int color, int piece) {
  * Bits 25-31:  Unused (reserved for future extensions)
  */
 
-// Bitmasks for move encoding/decoding - extract specific bit ranges
-constexpr int MOVE_FROM_MASK     = 0x0000007F;  // Bits 0-6:   source square
-constexpr int MOVE_TO_MASK       = 0x00003F80;  // Bits 7-13:  destination square
-constexpr int MOVE_CAPTURED_MASK = 0x0003C000;  // Bits 14-17: captured piece type
-constexpr int MOVE_ENPASSANT     = 0x00040000;  // Bit 18:     en passant flag
-constexpr int MOVE_PAWNSTART     = 0x00080000;  // Bit 19:     pawn double-push flag
-constexpr int MOVE_PROMOTED_MASK = 0x00F00000;  // Bits 20-23: promoted piece type
-constexpr int MOVE_CASTLE        = 0x01000000;  // Bit 24:     castle move flag
+// Bitmasks isolating each field of the packed move (see the encoding layout above).
+constexpr int MOVE_FROM_MASK     = 0x0000007F;  ///< Bits 0-6: source square.
+constexpr int MOVE_TO_MASK       = 0x00003F80;  ///< Bits 7-13: destination square.
+constexpr int MOVE_CAPTURED_MASK = 0x0003C000;  ///< Bits 14-17: captured piece type.
+constexpr int MOVE_ENPASSANT     = 0x00040000;  ///< Bit 18: en-passant flag.
+constexpr int MOVE_PAWNSTART     = 0x00080000;  ///< Bit 19: pawn double-push flag.
+constexpr int MOVE_PROMOTED_MASK = 0x00F00000;  ///< Bits 20-23: promoted piece type.
+constexpr int MOVE_CASTLE        = 0x01000000;  ///< Bit 24: castle flag.
 
-// Bit shift positions for encoding operations
-constexpr int MOVE_FROM_SHIFT       = 0;   // No shift needed for bits 0-6
-constexpr int MOVE_TO_SHIFT         = 7;   // Shift destination to bits 7-13
-constexpr int MOVE_CAPTURED_SHIFT   = 14;  // Shift captured type to bits 14-17
-constexpr int MOVE_ENPASSANT_SHIFT  = 18;  // Shift en passant flag to bit 18
-constexpr int MOVE_PAWNSTART_SHIFT  = 19;  // Shift pawn start flag to bit 19
-constexpr int MOVE_PROMOTED_SHIFT   = 20;  // Shift promoted type to bits 20-23
-constexpr int MOVE_CASTLE_SHIFT     = 24;  // Shift castle flag to bit 24
+// Right-shift amounts to move each field down to bit 0 after masking.
+constexpr int MOVE_FROM_SHIFT       = 0;   ///< Source square (bits 0-6).
+constexpr int MOVE_TO_SHIFT         = 7;   ///< Destination square (bits 7-13).
+constexpr int MOVE_CAPTURED_SHIFT   = 14;  ///< Captured type (bits 14-17).
+constexpr int MOVE_ENPASSANT_SHIFT  = 18;  ///< En-passant flag (bit 18).
+constexpr int MOVE_PAWNSTART_SHIFT  = 19;  ///< Pawn-start flag (bit 19).
+constexpr int MOVE_PROMOTED_SHIFT   = 20;  ///< Promoted type (bits 20-23).
+constexpr int MOVE_CASTLE_SHIFT     = 24;  ///< Castle flag (bit 24).
 
-// Validate that a move's from/to are sq64 indices (0-63). The 7-bit
-// from/to fields can physically hold 0-127, so a stale mailbox-120
-// index (or a -1 sentinel) would be silently masked into a plausible
-// wrong square instead of an obvious out-of-range value. This catches
-// such a leak at construction time. Compiles to nothing in Release
-// (DEBUG_ASSERT -> ((void)0)); active under -DDEBUG.
+/// @brief Debug guard: assert a move's @p from / @p to are valid sq64 (0-63).
+///
+/// The 7-bit from/to fields can physically hold 0-127, so a stale mailbox-120
+/// index (or a -1 sentinel) would be silently masked into a plausible wrong
+/// square instead of an obvious out-of-range value. This catches such a leak at
+/// construction time. Compiles to nothing in Release (DEBUG_ASSERT -> no-op);
+/// active under -DDEBUG.
+/// @param from Intended source square (expected 0-63).
+/// @param to   Intended destination square (expected 0-63).
 constexpr inline void debug_check_sq64_move(int from, int to) noexcept {
     DEBUG_ASSERT(from >= 0 && from < 64, "S_MOVE 'from' is not a valid sq64 (0-63)");
     DEBUG_ASSERT(to   >= 0 && to   < 64, "S_MOVE 'to' is not a valid sq64 (0-63)");
@@ -135,16 +144,16 @@ struct S_MOVE {
     
     /**
      * @brief Extract source square from encoded move
-     * @return Source square index (0-127)
+     * @return Source square index (sq64, 0-63)
      * @complexity O(1) - simple bitwise AND operation
      */
     [[nodiscard]] constexpr int get_from() const noexcept {
         return move & MOVE_FROM_MASK;
     }
-    
+
     /**
      * @brief Extract destination square from encoded move
-     * @return Destination square index (0-127)
+     * @return Destination square index (sq64, 0-63)
      * @complexity O(1) - bitwise AND + right shift
      */
     [[nodiscard]] constexpr int get_to() const noexcept {
