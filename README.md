@@ -1,20 +1,7 @@
-# Huginn 2.0
+# Huginn 2.1
 
 ## Huginn: Odin's Thought, in Every Move
 
-![Huginn Logo]### Option B: Use vcpkg for GoogleTest
-
-```powershell
-# Install vcpkg (if not already installed)
-vcpkg install gtest:x64-windows
-```
-
-Then in `CMakeLists.txt`:
-
-```cmake
-find_package(GTest CONFIG REQUIRED)
-target_link_libraries(huginn_tests PRIVATE GTest::gtest)  # or GTest::gtest_main if you omit test_main.cpp
-```uginn.png)
 
 ## Acknowledgments
 
