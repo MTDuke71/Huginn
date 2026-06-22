@@ -123,6 +123,17 @@
 #ifndef ENABLE_SAFE_MOBILITY
 #define ENABLE_SAFE_MOBILITY 1
 #endif
+
+// ENABLE_SCALED_NMP_R: BACKLOG #43 sub-lever 2. Replace the flat null-move
+// reduction R=4 with a depth-scaled R (+1 when the static eval is far above
+// beta). The MTLChess answer-key (+500) prunes LESS than our flat 4 (it uses
+// R=2/3, depth-scaled) yet is stronger, suggesting R=4 over-prunes / leaks
+// tactics near the leaf; depth-scaling prunes less low (sounder) and more deep
+// (efficient). DEFAULT OFF so main stays byte-identical to t19; build the ON
+// arm with -DENABLE_SCALED_NMP_R=1, two-machine SPRT vs t19.
+#ifndef ENABLE_SCALED_NMP_R
+#define ENABLE_SCALED_NMP_R 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1739,12 +1750,27 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     const int NMP_VERIFICATION_MAX_PHASE = 96;
 #endif
     
-    if (doNull && !in_check && !isRoot && depth >= MIN_NULL_MOVE_DEPTH && 
+    if (doNull && !in_check && !isRoot && depth >= MIN_NULL_MOVE_DEPTH &&
         pos.has_non_pawn_material(pos.side_to_move)) {
-        
+
+#if ENABLE_SCALED_NMP_R
+        // #43 s2: depth-scaled null reduction. Lower than flat 4 near the leaf
+        // (sounder, fewer tactical leaks), scaling up with depth (efficient);
+        // +1 when the static eval is far above beta (a null move there almost
+        // certainly fails high). Clamped to leave >= 0 child depth. Tunable.
+        const int NMP_R_BASE = 2;
+        const int NMP_R_DEPTH_DIV = 4;
+        const int NMP_R_EVAL_MARGIN = 200;
+        int R = NMP_R_BASE + depth / NMP_R_DEPTH_DIV;
+        if (get_static_eval() - beta >= NMP_R_EVAL_MARGIN) ++R;
+        if (R > depth - 1) R = depth - 1;
+#else
+        const int R = NULL_MOVE_REDUCTION;  // flat 4 (t19 and earlier)
+#endif
+
         // DEBUG: Uncomment to see null move attempts
         // std::cout << "Trying null move at depth " << depth << std::endl;
-        
+
         // Make null move (give opponent a free move)
         pos.MakeNullMove();
         assert_search_position_integrity(pos, "after MakeNullMove");
@@ -1758,7 +1784,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // Search with reduced depth and narrow window around beta
         const auto null_child = capture_search_position(pos);
         ++info.ply;
-        int null_score = -AlphaBeta(pos, -beta, -beta + 1, depth - 1 - NULL_MOVE_REDUCTION, info, false, false);
+        int null_score = -AlphaBeta(pos, -beta, -beta + 1, depth - 1 - R, info, false, false);
         --info.ply;
         assert_search_position_unchanged(pos, null_child, "after null-move search");
 
@@ -1786,7 +1812,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 game_phase_256(pos) <= NMP_VERIFICATION_MAX_PHASE) {
                 const auto verify_position = capture_search_position(pos);
                 int verify_score = AlphaBeta(pos, beta - 1, beta,
-                                             depth - NULL_MOVE_REDUCTION,
+                                             depth - R,
                                              info, false, false);
                 assert_search_position_unchanged(pos, verify_position, "after NMP verification search");
                 if (info.stopped || info.quit) {
