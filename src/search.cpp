@@ -124,13 +124,15 @@
 #define ENABLE_SAFE_MOBILITY 1
 #endif
 
-// ENABLE_SCALED_NMP_R: BACKLOG #43 sub-lever 2. Replace the flat null-move
-// reduction R=4 with a depth-scaled R (+1 when the static eval is far above
-// beta). The MTLChess answer-key (+500) prunes LESS than our flat 4 (it uses
-// R=2/3, depth-scaled) yet is stronger, suggesting R=4 over-prunes / leaks
-// tactics near the leaf; depth-scaling prunes less low (sounder) and more deep
-// (efficient). DEFAULT OFF so main stays byte-identical to t19; build the ON
-// arm with -DENABLE_SCALED_NMP_R=1, two-machine SPRT vs t19.
+// ENABLE_SCALED_NMP_R: BACKLOG #43 sub-lever 2 — PARKED (2026-06-18, neutral).
+// Replaces flat null-move R=4 with R = 2 + depth/4 (+1 when static eval >> beta).
+// Motivated by MTLChess (prunes less than our flat 4, R=2/3, yet stronger). It
+// works as designed — 27% fewer nodes at fixed depth — but the AMD SPRT vs t19
+// came back EXACTLY 0.00 (328W/328L/344D, LOS 50%): the extra depth the node
+// savings buy is exactly cancelled by the tactics the heavier deep-pruning
+// skips. Flat R=4 is already well-calibrated for Huginn. Kept behind the flag
+// (default OFF, main byte-identical) for a possible future re-formulation
+// (different base/div, or eval-only scaling). No Intel leg run (0.00 can't ship).
 #ifndef ENABLE_SCALED_NMP_R
 #define ENABLE_SCALED_NMP_R 0
 #endif
