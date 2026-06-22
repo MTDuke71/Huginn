@@ -132,7 +132,7 @@
 // (efficient). DEFAULT OFF so main stays byte-identical to t19; build the ON
 // arm with -DENABLE_SCALED_NMP_R=1, two-machine SPRT vs t19.
 #ifndef ENABLE_SCALED_NMP_R
-#define ENABLE_SCALED_NMP_R 0
+#define ENABLE_SCALED_NMP_R 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
