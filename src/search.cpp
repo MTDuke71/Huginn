@@ -124,17 +124,18 @@
 #define ENABLE_SAFE_MOBILITY 1
 #endif
 
-// ENABLE_SCALED_NMP_R: BACKLOG #43 sub-lever 2 — PARKED (2026-06-18, neutral).
-// Replaces flat null-move R=4 with R = 2 + depth/4 (+1 when static eval >> beta).
-// Motivated by MTLChess (prunes less than our flat 4, R=2/3, yet stronger). It
-// works as designed — 27% fewer nodes at fixed depth — but the AMD SPRT vs t19
-// came back EXACTLY 0.00 (328W/328L/344D, LOS 50%): the extra depth the node
-// savings buy is exactly cancelled by the tactics the heavier deep-pruning
-// skips. Flat R=4 is already well-calibrated for Huginn. Kept behind the flag
-// (default OFF, main byte-identical) for a possible future re-formulation
-// (different base/div, or eval-only scaling). No Intel leg run (0.00 can't ship).
+// ENABLE_SCALED_NMP_R: BACKLOG #43 sub-lever 2 — PARKED (2026-06-22, neutral on
+// BOTH machines). Replaces flat null-move R=4 with R = 2 + depth/4 (+1 when
+// static eval >> beta). Motivated by MTLChess (prunes less than our flat 4,
+// R=2/3, yet stronger). It works as designed — 27% fewer nodes at fixed depth —
+// but the two-machine SPRT vs t19 came back neutral: **AMD +0.00** (328/328/344,
+// LOS 50%) and **Intel +3.82 ± 17.5** (LOS 66.6%, LLR −0.02, 334/323/343). The
+// extra depth the savings buy is cancelled by the tactics the heavier deep
+// reduction skips — flat R=4 is already well-calibrated. Kept behind the flag
+// (default OFF, main byte-identical to t19) for a possible re-formulation
+// (different base/div, or eval-only scaling).
 #ifndef ENABLE_SCALED_NMP_R
-#define ENABLE_SCALED_NMP_R 1
+#define ENABLE_SCALED_NMP_R 0
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

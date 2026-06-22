@@ -71,7 +71,7 @@
 |---|-------|--------|------|----------|
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t16 shipped; round-8 outposts KEPT on a sign-split; round-9 **safe mobility SHIPPED t19** (AMD +5.9 / Intel +10.4, both positive, cross-machine-agreement ship) | feature/eval | high |
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
-| 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (AMD 0.00, neutral). Round closed. | feature/search | high |
+| 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
 | 45 | Move-level (Fruit-style) futility vs current node-level | **OPEN** (2026-06-17) — pruning-soundness experiment; node-level may leak tactics | feature/search | medium |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
@@ -349,18 +349,22 @@ complexity gate):**
      surfaced). **Lesson:** a soundness term that only fires in endgames and
      adds a re-search tax needs a real benefit to clear its cost — this one
      didn't. Sub-lever 3 (MDP) shipped (t18); sub-lever 2 (scaled R) untried.
-2. **Eval/depth-scaled R** — *PARKED 2026-06-18 (neutral), `ENABLE_SCALED_NMP_R`
-   default OFF.* Replaced flat R=4 with `R = 2 + depth/4` (+1 when static eval −
-   beta ≥ 200), clamped — prunes less near the leaf, more at depth, the MTLChess
-   profile. Works as designed (**27% fewer nodes at fixed depth d13**) but the
-   **AMD SPRT vs t19 was EXACTLY 0.00** (328W/328L/344D, LOS 50%, LLR −0.41): the
-   extra depth the savings buy is cancelled by the tactics the heavier deep
-   reduction skips. Flat R=4 is already well-calibrated; the MTLChess "prunes
-   less + wins" edge is elsewhere, not its NMP R. No Intel leg (0.00 can't ship).
-   Code kept behind the flag for a possible re-formulation (different base/div,
-   or eval-only scaling). **Lesson:** a cheap, data-backed search-param test that
-   came back cleanly neutral — the checkpoint working as intended (cost: one
-   constant + one gauntlet, not an eval round).
+2. **Eval/depth-scaled R** — *PARKED 2026-06-22 (neutral on both machines),
+   `ENABLE_SCALED_NMP_R` default OFF.* Replaced flat R=4 with `R = 2 + depth/4`
+   (+1 when static eval − beta ≥ 200), clamped — prunes less near the leaf, more
+   at depth, the MTLChess profile. Works as designed (**27% fewer nodes at fixed
+   depth d13**) but the two-machine SPRT vs t19 was neutral on both boxes:
+   **AMD +0.00** (328W/328L/344D, LOS 50%, LLR −0.41) and **Intel +3.82 ± 17.5**
+   (334W/323L/343D, LOS 66.6%, LLR −0.02, inconclusive); pooled ≈ +1.9 — no
+   benefit. The extra depth the savings buy is cancelled by the tactics the
+   heavier deep reduction skips. Flat R=4 is already well-calibrated; the
+   MTLChess "prunes less + wins" edge is elsewhere, not its NMP R. Code kept
+   behind the flag for a possible re-formulation (different base/div, eval-only
+   scaling). Artifacts: `gauntlet/nmpr_vs_t19_amd.pgn`,
+   `gauntlet/huginn_vs_t19_intel.pgn`. **Lesson:** a cheap, data-backed
+   search-param test that came back cleanly neutral on both machines — the
+   checkpoint working as intended (cost: one constant + two gauntlets, not an
+   eval round).
 3. **Mate-distance pruning** — *SHIPPED as `baseline-t18 = ab37a0d` (2026-06-17),
    `ENABLE_MATE_DISTANCE_PRUNING` default ON.* Clamp α/β to the mate envelope
    (`MATE − ply` / `−MATE + ply`) at node entry (after the draw checks, before the
