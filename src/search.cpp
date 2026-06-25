@@ -1,3 +1,32 @@
+/**
+ * @file search.cpp
+ * @brief The engine core: hand-crafted evaluation + the alpha-beta search.
+ *
+ * Despite the name, this translation unit holds BOTH `Engine::evaluate()` and
+ * the full search stack — the two hottest paths in Huginn. Major sections,
+ * top to bottom:
+ *
+ * - **Feature flags** (`ENABLE_*`): tapered eval/material, king safety, safe
+ *   mobility, mate-distance pruning, NMP verification + scaled-R (both parked),
+ *   search-integrity asserts. A flag-OFF build must be byte-identical to the
+ *   prior baseline.
+ * - **Eval helpers + `Engine::evaluate()`**: material + tapered PSTs + pawn
+ *   structure + threats + king safety + mobility, accumulated white-positive
+ *   then negated for the side to move; blended by `game_phase_256()`.
+ * - **Move ordering**: MVV-LVA / killers / history / counter-move (`init_mvv_lva`).
+ * - **`Engine::AlphaBeta()`**: negamax + PVS with the full pruning stack (TT,
+ *   null move, RFP, futility, razoring, LMR, IID, check extension) plus the
+ *   node-entry draw / mate-distance-pruning handling.
+ * - **`Engine::quiescence()`**: capture/check search with SEE + delta pruning.
+ * - **`Engine::searchPosition()`**: iterative-deepening root driver — time
+ *   management, PV extraction, UCI `info` output.
+ *
+ * @warning Search and eval carry cross-function contracts (colour symmetry,
+ *          `pos.ply` vs `move_history.size()`, TT path-independence vs
+ *          path-dependent draws, mate = `MATE − ply`, flag discipline). **Read
+ *          docs/INVARIANTS.md before changing anything in this file.**
+ * @see docs/SEARCH_AND_EVAL.md for the live search/eval technique inventory.
+ */
 #include "search.hpp"
 #include "evaluation.hpp"
 #include "chess_types.hpp"
@@ -353,6 +382,20 @@ Piece swapPieceColor(Piece piece) {
     return make_piece(new_color, type);
 }
 
+/**
+ * @brief Static evaluation of @p pos, from the side-to-move's perspective.
+ *
+ * Sums the eval terms **white-positive** — material, tapered PSTs (mg/eg
+ * accumulators), pawn structure (isolated/doubled/connected/backward/passed),
+ * rook/queen on open files, rook-on-7th, outposts, threats, bishop pair, king
+ * safety (MG-only), and mobility — blends mg/eg by `game_phase_256()`, then
+ * **negates for Black to move**. Insufficient-material positions short-circuit
+ * to a contempt-biased draw.
+ * @param pos Position to score (not modified).
+ * @return Centipawn score, positive = side to move is better. Must satisfy
+ *         `evaluate(pos) == -evaluate(mirror(pos))` (colour symmetry — see
+ *         INVARIANTS.md and the mirror test suite).
+ */
 int Engine::evaluate(const Position& pos) {
     // VICE Part 82: Check for material draw first (2:03)
     if (pos.get_white_pawns() == 0 && pos.get_black_pawns() == 0 && MaterialDraw(pos)) {
@@ -1544,7 +1587,25 @@ void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
     engine.nodes_searched = 0;      // Reset nodes count
 }
 
-// Core AlphaBeta search function (2:58)
+/**
+ * @brief Negamax alpha-beta search with PVS and the full pruning stack.
+ *
+ * Returns the best score for the side to move in `[alpha, beta]`. Node flow:
+ * draw checks (repetition / 50-move — returned **before** the TT, being
+ * path-dependent) → mate-distance pruning → TT probe → static-eval pruning
+ * (reverse futility, null move, futility, razoring) → move loop with PVS,
+ * LMR, check extension, and IID. Recurses into quiescence at the horizon.
+ *
+ * @param pos    Position to search (mutated via make/unmake, restored on return).
+ * @param alpha  Lower bound (best score the side to move is assured).
+ * @param beta   Upper bound (best the opponent will allow).
+ * @param depth  Remaining search depth in plies; ≤ 0 drops to quiescence.
+ * @param info   Per-search state (ply, nodes, killers/history, PV, stop flags).
+ * @param doNull Whether a null move is permitted here (false under a null parent).
+ * @param isRoot True only at the root — disables several prunings and the TT
+ *               cutoff, and enables the root draw-avoidance / move bookkeeping.
+ * @return Score from the side-to-move's perspective; mate scores as `MATE − ply`.
+ */
 int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot) {
     // Increment node count for every position visited (except root calls)
     if (!isRoot) {
@@ -2235,7 +2296,19 @@ S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, 
     return iid_move;
 }
 
-// Quiescence search to handle horizon effect (4:40)
+/**
+ * @brief Quiescence search — extend past the horizon over forcing moves only.
+ *
+ * Called at the AlphaBeta leaf to avoid the horizon effect: stand-pat on the
+ * static eval, then search captures (SEE- and delta-pruned) and checks until the
+ * position is quiet. Keeps the returned score free of dangling tactics.
+ * @param pos     Position to search (mutated via make/unmake, restored).
+ * @param alpha   Lower bound (seeded with the stand-pat eval).
+ * @param beta    Upper bound.
+ * @param info    Per-search state.
+ * @param q_depth Quiescence ply, capped at `MAX_QUIESCENCE_DEPTH` to bound recursion.
+ * @return Score from the side-to-move's perspective.
+ */
 int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth) {
     // Quiescence depth limit to prevent stack overflow and improve performance
     const int MAX_QUIESCENCE_DEPTH = 10;
@@ -2338,10 +2411,19 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
     return alpha;
 }
 
-// VICE-style iterative deepening search function (Part 58)
-// Implements the two main benefits of iterative deepening:
-// 1. Time Management: Return best move if time runs out (0:49)
-// 2. Move Ordering Efficiency: Use PV and heuristics from shallower searches (1:49)
+/**
+ * @brief Root search driver — iterative deepening + time management + UCI output.
+ *
+ * The public entry point for a search. Deepens one ply at a time, re-using each
+ * iteration's PV and heuristics to order the next (the two classic ID wins:
+ * graceful time cutoff and better move ordering). Owns the root move loop
+ * (including the winning-side repetition guard), PV extraction, and the per-depth
+ * UCI `info` lines.
+ * @param pos  Root position to search (mutated during the search, restored).
+ * @param info Search limits + per-search state; carries the time budget and
+ *             receives node counts, depth/seldepth, and the PV.
+ * @return The best move found (the move actually played by the engine).
+ */
 S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     S_MOVE best_move;
     best_move.move = 0;
