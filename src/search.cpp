@@ -180,6 +180,9 @@
 
 namespace Huginn {
 
+/// @brief #37 diagnostic: abort if @p pos fails its internal self-check
+///        (bitboards/caches/Zobrist), printing @p context + the FEN. No-op
+///        unless ENABLE_SEARCH_INTEGRITY_ASSERTS.
 static inline void assert_search_position_integrity(const Position& pos, const char* context) {
 #if ENABLE_SEARCH_INTEGRITY_ASSERTS
     std::string reason;
@@ -196,6 +199,8 @@ static inline void assert_search_position_integrity(const Position& pos, const c
 }
 
 #if ENABLE_SEARCH_INTEGRITY_ASSERTS
+/// @brief #37 diagnostic: a copy of the full Position state, taken before a
+///        make/unmake (or recursive search) to verify it is byte-restored after.
 struct SearchPositionSnapshot {
     Color side_to_move;
     int ep_square;
@@ -211,6 +216,7 @@ struct SearchPositionSnapshot {
     int ply;
 };
 
+/// @brief #37 diagnostic: snapshot @p pos for a later assert_search_position_unchanged.
 static inline SearchPositionSnapshot capture_search_position(const Position& pos) {
     return {pos.side_to_move, pos.ep_square, pos.castling_rights,
             pos.halfmove_clock, pos.fullmove_number, pos.king_sq,
@@ -218,6 +224,9 @@ static inline SearchPositionSnapshot capture_search_position(const Position& pos
             pos.zobrist_key, pos.material_score, pos.ply};
 }
 
+/// @brief #37 diagnostic: abort if @p pos differs from @p before (a make/unmake
+///        or recursive-search imbalance — the #37 bug class), else also run the
+///        integrity check. Catches the kind of `pos.ply` corruption behind #44.
 static inline void assert_search_position_unchanged(
         const Position& pos, const SearchPositionSnapshot& before, const char* context) {
     if (pos.side_to_move != before.side_to_move ||
@@ -246,29 +255,26 @@ static inline void assert_search_position_unchanged(
         const Position&, const SearchPositionSnapshot&, const char*) {}
 #endif
 
-// Contempt — penalty applied to draw scores from the side-to-move's
-// perspective. Biases the search away from drawing lines: when the
-// engine has a non-draw alternative, it'll prefer that alternative
-// over a draw if the alternative is within `CONTEMPT` cp of equal.
-// Filed as BACKLOG #16, motivated by 2026-05-08 game where Huginn
-// (losing) accepted a fragile 0.00 repetition that black escaped
-// from. Single static value is the standard simple implementation;
-// can be made asymmetric (only at root) or material-dependent
-// later if needed.
-constexpr int CONTEMPT = 25;  // cp — tunable; gauntlet to validate
+/**
+ * @brief Contempt — cp penalty applied to draw scores from the side-to-move's
+ *        view, biasing the search away from drawing lines (prefer a non-draw
+ *        within `CONTEMPT` of equal). BACKLOG #16 (a losing engine accepted a
+ *        fragile 0.00 repetition). Tunable; gauntlet to validate.
+ */
+constexpr int CONTEMPT = 25;
 
-// If the root side is already clearly ahead, do not let an immediate
-// threefold repetition score as a pleasant contempt draw. Losing and equal
-// positions keep the normal repetition behavior so the engine can still
-// rescue bad games.
+/// @brief When the root side's static eval is at least this far ahead (cp), a
+///        repetition it would enter is scored as a near-loss (see below) rather
+///        than a pleasant draw — so a won engine routes around shuffles. Losing/
+///        equal positions keep normal repetition behaviour (rescue resource).
 constexpr int WINNING_REPETITION_AVOID_THRESHOLD = 300;
+/// @brief The near-loss score a winning side assigns to a repetition it enters.
 constexpr int WINNING_REPETITION_DRAW_SCORE = -800;
 
-// LMR reduction table indexed by (depth, move-index). Reduction grows
-// with both depth and move number. Formula: R = log(d) * log(m) / 2,
-// truncated. Matches the MTLChess src/search.zig:63 table. Computed
-// once at static initialization via lambda IIFE so it lives in .data
-// (no per-call cost).
+/// @brief Late-move-reduction table indexed `[depth][move-index]`: reduction
+///        grows with both depth and move number, `R = log(d)·log(m)/2`
+///        (truncated; matches MTLChess). Built once at static init (IIFE) so
+///        it lives in `.data` with no per-call cost.
 static const std::array<std::array<int, 64>, 64> LMR_TABLE = []() {
     std::array<std::array<int, 64>, 64> t{};
     for (int d = 1; d < 64; ++d) {
@@ -279,8 +285,8 @@ static const std::array<std::array<int, 64>, 64> LMR_TABLE = []() {
     return t;
 }();
 
-// VICE Tutorial: Mirror arrays for evaluation symmetry testing
-// mirror64: maps 64-square indices to their vertical mirror (rank 1 <-> rank 8)
+/// @brief sq64 → vertical-mirror sq64 (rank 1 ↔ rank 8). Used by mirrorBoard()
+///        for the eval colour-symmetry tests.
 static const int mirror64[64] = {
     56, 57, 58, 59, 60, 61, 62, 63,  // rank 1 -> rank 8
     48, 49, 50, 51, 52, 53, 54, 55,  // rank 2 -> rank 7
@@ -292,10 +298,10 @@ static const int mirror64[64] = {
      0,  1,  2,  3,  4,  5,  6,  7   // rank 8 -> rank 1
 };
 
-// Game phase in [0,256]: 256 = full opening material, 0 = bare kings (+pawns).
-// Standard non-pawn phase weights (N=1, B=1, R=2, Q=4); start position sums to
-// 24. Used by the tapered eval (#35) to blend mg/eg term values smoothly
-// instead of the hard `is_endgame` boolean flip.
+/// @brief Game phase in [0,256] (256 = full opening material, 0 = bare kings).
+///        Non-pawn phase weights N=1/B=1/R=2/Q=4 (start sums to 24, scaled to
+///        256). Drives the tapered eval's smooth mg/eg blend (#35).
+/// @return Phase value; 256 = opening … 0 = endgame.
 static inline int game_phase_256(const Position& pos) {
     int npm =
         popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Knight)] |
@@ -311,13 +317,13 @@ static inline int game_phase_256(const Position& pos) {
 }
 
 #if ENABLE_KING_SAFETY
-// King-safety MG score, white-positive (#35 Experiment 3). For each side,
-// computes a "danger" = non-linear attacker pressure on the king ring
-// (fires on >= 1 attacker; #9 round 7 removed the old gate) plus an open-file shelter
-// penalty, then returns Black's danger minus White's (White gains when Black's
-// king is unsafe). The caller adds this to the MG accumulator ONLY, so the
-// tapered blend fades it to zero in the endgame. Fully colour-symmetric (ring
-// + file occupancy carry no rank direction), so eval mirror-symmetry holds.
+/// @brief King-safety score (white-positive, MG-only; #35 Exp 3 / #9 round 7).
+///
+/// Per side, a non-linear "danger" = attacker pressure on the king ring (fires
+/// on ≥1 attacker, units²/divisor capped) + an open-file shelter penalty; returns
+/// Black's danger − White's (White gains when Black's king is unsafe). The caller
+/// adds this to the **MG accumulator only**, so the taper fades it to 0 in the
+/// endgame (an untapered KS term regressed −126; see #2). Colour-symmetric.
 static int king_safety_white_mg(const Position& pos) {
     const uint64_t occ = pos.occupied_bitboard;
 
@@ -813,8 +819,8 @@ int Engine::evaluate(const Position& pos) {
     return sided_score + EvalParams::TEMPO_BONUS;
 }
 
-// VICE Part 82/83: Material draw detection - Fixed to be more conservative
-// Checks if the position is a theoretical draw based on insufficient material
+/// @brief True if @p pos is a theoretical draw by insufficient mating material
+///        (e.g. KvK, KNvK, KBvK). Conservative — only clear draws. VICE 82/83.
 bool Engine::MaterialDraw(const Position& pos) {
     int white_rooks   = popcount(pos.piece_bitboards[int(Color::White)][int(PieceType::Rook)]);
     int black_rooks   = popcount(pos.piece_bitboards[int(Color::Black)][int(PieceType::Rook)]);
@@ -856,8 +862,8 @@ bool Engine::MaterialDraw(const Position& pos) {
 // (mirror_square_64 retired — the PST lookup now mirrors Black squares inline
 // via `sq ^ 56`; see evaluate(). No other callers existed.)
 
-// VICE Tutorial: Mirror Board function for evaluation testing
-// Creates a mirrored copy of the position for symmetry testing
+/// @brief Vertically mirror @p pos (swap colours + flip ranks via mirror64).
+///        For the eval colour-symmetry tests: `eval(p) == -eval(mirrorBoard(p))`.
 Position Engine::mirrorBoard(const Position& pos) {
     Position mirrored_pos;
     mirrored_pos.reset();
@@ -898,6 +904,8 @@ Position Engine::mirrorBoard(const Position& pos) {
     return mirrored_pos;
 }
 
+/// @brief Format an internal score as a UCI `score` token — `mate N` for mate
+///        scores (≈ ±MATE), else `cp N`. @param side_to_move unused sign hook.
 std::string Engine::format_uci_score(int score, Color side_to_move) const {
     // Convert engine score to proper UCI format
     // UCI specification: 
@@ -925,6 +933,7 @@ std::string Engine::format_uci_score(int score, Color side_to_move) const {
     }
 }
 
+/// @brief Long-algebraic UCI string for a move (e.g. "e2e4", "e7e8q").
 std::string Engine::move_to_uci(const S_MOVE& move) {
     if (move.move == 0) return "0000";
     
@@ -962,9 +971,13 @@ std::string Engine::move_to_uci(const S_MOVE& move) {
     return result;
 }
 
-// Count how many times the current position key appears in the reachable
-// halfmove-clock-bounded history window (including the current position).
-// 1 = no prior match, 2 = one prior match (single repetition), 3+ = threefold.
+/// @brief How many times the current position has occurred along the path
+///        (including now): 1 = none prior, 2 = single repetition, 3+ = threefold.
+///
+/// Scans the `halfmove_clock`-bounded window of the move history. **Uses
+/// `pos.ply` for the path length, NOT `move_history.size()`** — the buffer is a
+/// grow-only high-water-mark, so `.size()` over-counts during deep search and
+/// reads a true 3-fold as a non-repetition (BACKLOG #44; see INVARIANTS.md).
 static int repetition_count_in_history(const Position& pos) {
     // Conservative repetition detection to avoid false positives in mate searches
     // Only check for repetition in actual game positions, not during deep search
@@ -1008,7 +1021,7 @@ static int repetition_count_in_history(const Position& pos) {
     return repetition_count;
 }
 
-// Simple repetition detection - VICE tutorial style (made static as per Part 55)
+/// @brief True iff @p pos is a threefold repetition (repetition_count ≥ 3).
 bool Engine::isRepetition(const Position& pos) {
     const int repetition_count = repetition_count_in_history(pos);
     
@@ -1016,7 +1029,8 @@ bool Engine::isRepetition(const Position& pos) {
     return repetition_count >= 3;
 }
 
-// Clear search tables - reset history and killers
+/// @brief Soft-reset the ordering heuristics between games: age history by 4×
+///        (keep 25% — recent learning), clear killers + counter-moves.
 void Engine::clear_search_tables() {
     // Age search history array instead of clearing completely
     // Aging preserves recent learning while gradually fading old patterns
@@ -1053,12 +1067,13 @@ void Engine::clear_search_tables() {
 #endif
 }
 
-// PV table helper functions
+/// @brief Store @p move as the PV/best move for @p position_key (move ordering).
 void Engine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
     pv_table.store_move(position_key, move);
 }
 
-// Update search history when move improves alpha (3:55)
+/// @brief Reward a quiet move that improved alpha: `history[piece][to] += depth²`
+///        (depth-weighted), to float it earlier in future orderings.
 void Engine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
     
@@ -1075,7 +1090,8 @@ void Engine::update_search_history(const Position& pos, const S_MOVE& move, int 
     search_history[piece_index][to] += depth * depth;  // Deeper moves get higher bonus
 }
 
-// Penalize history for moves that fail to improve alpha (negative history scoring)
+/// @brief Penalize a quiet move that was tried before a beta cutoff but failed
+///        to cause it (negative history) — demotes it in future orderings.
 void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
     
@@ -1092,7 +1108,8 @@ void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, in
     search_history[piece_index][to] -= depth * depth;  // Penalize with same magnitude as bonus
 }
 
-// Apply periodic aging to prevent history scores from becoming too large
+/// @brief Halve all history scores to cap their magnitude (keep them in a useful
+///        range so newer signal isn't drowned out by saturated old entries).
 void Engine::age_search_history() {
     for (int piece = 0; piece < 13; ++piece) {
         for (int sq = 0; sq < 64; ++sq) {
@@ -1102,7 +1119,9 @@ void Engine::age_search_history() {
     }
 }
 
-// Update killer moves when move causes beta cutoff (4:37)  
+/// @brief Record a quiet move that caused a beta cutoff as a killer at this
+///        depth (two slots, shifting the old first killer down). Killers are
+///        tried right after captures in ordering.
 void Engine::update_killer_moves(const S_MOVE& move, int depth) {
     if (move.move == 0 || depth < 0 || depth >= 64) return;
     
@@ -1116,7 +1135,8 @@ void Engine::update_killer_moves(const S_MOVE& move, int depth) {
     }
 }
 
-// Update counter-move table when move causes beta cutoff
+/// @brief Record @p counter_move as the refutation of @p previous_move (the
+///        counter-move heuristic; keyed by the prior move's from/to). BACKLOG #15.
 void Engine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& counter_move) {
     // Validate move parameters
     if (previous_move.move == 0 || counter_move.move == 0) return;
@@ -1132,7 +1152,8 @@ void Engine::update_counter_move(const S_MOVE& previous_move, const S_MOVE& coun
     counter_moves[from_sq][to_sq] = counter_move;
 }
 
-// Get counter-move for the opponent's last move
+/// @brief The stored counter-move (refutation) for @p previous_move, or a null
+///        move if none — used as an ordering bonus.
 S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
     // Validate move parameter
     if (previous_move.move == 0) return S_MOVE();
@@ -1162,6 +1183,8 @@ namespace {
 inline int ch_piece_index(Piece p) { return static_cast<int>(p) % 13; }
 }
 
+/// @brief Reward the (prev-move → this-move) pair on a cutoff — continuation
+///        history (BACKLOG #3, experimental: 1-ply additive was falsified, gated off).
 void Engine::update_continuation_history(const Position& pos, const S_MOVE& prev,
                                          const S_MOVE& move, int bonus) {
     if (prev.move == 0 || move.move == 0) return;
@@ -1181,6 +1204,7 @@ void Engine::update_continuation_history(const Position& pos, const S_MOVE& prev
     continuation_history[idx] = static_cast<int16_t>(updated);
 }
 
+/// @brief Continuation-history ordering bonus for the (prev → this) move pair (#3).
 int Engine::get_continuation_history(const Position& pos, const S_MOVE& prev,
                                      const S_MOVE& move) const {
     if (prev.move == 0 || move.move == 0) return 0;
@@ -1195,7 +1219,10 @@ int Engine::get_continuation_history(const Position& pos, const S_MOVE& prev,
 }
 #endif
 
-// Initialize MVV-LVA (Most Valuable Victim, Least Valuable Attacker) scoring table
+/// @brief Build the MVV-LVA capture-ordering table (Most Valuable Victim, Least
+///        Valuable Attacker): `victim·100 + (600 − attacker)`, so QxP-style
+///        wins sort above PxQ. Uses its OWN fixed piece values, independent of
+///        the tuned eval material (see INVARIANTS.md — three value tables).
 void Engine::init_mvv_lva() {
     // INDEPENDENT ordering values — not a view of eval's PIECE_VALUES_MG.
     // MVV-LVA only needs the relative victim>attacker ordering, so absolute
@@ -1232,7 +1259,7 @@ void Engine::init_mvv_lva() {
     }
 }
 
-// Get MVV-LVA score for a capture move
+/// @brief MVV-LVA ordering score for a capture of @p victim by @p attacker.
 int Engine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
     int victim_index = static_cast<int>(victim);
     int attacker_index = static_cast<int>(attacker);
@@ -1245,7 +1272,9 @@ int Engine::get_mvv_lva_score(PieceType victim, PieceType attacker) const {
     return mvv_lva_scores[victim_index][attacker_index];
 }
 
-// Order moves using MVV-LVA and other heuristics
+/// @brief Score every move in @p moves (MVV-LVA captures, killers, history) and
+///        sort best-first. `std::vector` overload (tests/legacy); the search
+///        hot path uses the S_MOVELIST overload + pick_next_move instead.
 void Engine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const {
     // Assign scores to each move for ordering
     for (auto& move : moves) {
@@ -1293,7 +1322,8 @@ void Engine::order_moves(std::vector<S_MOVE>& moves, const Position& pos) const 
     });
 }
 
-// Order moves in S_MOVELIST using MVV-LVA and other heuristics
+/// @brief Assign each move in @p move_list its ordering score (MVV-LVA, killers,
+///        history) for later selection-sort via pick_next_move.
 void Engine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
     // Assign scores to each move for ordering
     for (int i = 0; i < move_list.count; i++) {
@@ -1343,8 +1373,10 @@ void Engine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
               });
 }
 
-// VICE Part 62: Pick Next Move - Select best move from remaining moves
-// This is more efficient than sorting all moves upfront
+/// @brief Selection-sort step: score the unsearched moves (TT/IID move, captures
+///        by MVV-LVA, killers, counter-move, history) and swap the best into
+///        slot @p move_num, returning its score. Lazier than a full sort — a
+///        beta cutoff often means later moves never get scored. VICE Part 62.
 int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
@@ -1518,13 +1550,16 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
 // - AlphaBeta: Core recursive search with alpha-beta pruning
 // - quiescence: Search only captures to handle horizon effect
 
-// Position evaluation (0:34) - Returns score from current side's perspective
+/// @brief Thin wrapper over evaluate() (side-to-move perspective). Separate
+///        entry point retained for call-site clarity / instrumentation.
 int Engine::evalPosition(const Position& pos) {
     // For now, use the existing evaluate function
     return evaluate(pos);
 }
 
-// Check time limits and GUI interrupts (1:34)
+/// @brief Periodic search interrupt check: set the stop flag if the time budget
+///        is exceeded or a UCI `stop`/`quit` arrived on stdin. Called every few
+///        thousand nodes (not per node — it polls input).
 void Engine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
@@ -1564,8 +1599,9 @@ void Engine::checkup(SearchInfo& info) {
     // Note: Node counting is done in AlphaBeta and quiescence functions
 }
 
-// Clear search tables and PV before new search (2:25)
-// VICE Part 57 - Clear To Search: Prepare engine for clean search
+/// @brief Reset per-search state before a new `go`: PV table, node counts, stop
+///        flags, ply. **Does NOT clear the TT** (it persists across searches in
+///        a game — see #42 on aging). VICE Part 57.
 void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
     // Clear the history and killers arrays (0:57)
     engine.clear_search_tables();
@@ -2210,8 +2246,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     return best_score;
 }
 
-// Internal Iterative Deepening for PV nodes without hash move
-// Performs a shallow search to find a good move for ordering when no hash move is available
+/// @brief Internal iterative deepening: when a high node has no TT/hash move to
+///        order by, do a shallow search to discover a good first move (a bad
+///        first move at a high node is very costly). Returns that move.
 S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, int depth, SearchInfo& info) {
     S_MOVE iid_move;
     iid_move.move = 0;  // Initialize to null move
@@ -2793,16 +2830,19 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     return best_move;
 }
 
-// VICE Part 85: Opening book functions
+/// @brief Load a Polyglot opening book from @p book_path. @return true on success.
 bool Engine::load_opening_book(const std::string& book_path) {
     return opening_book.load_book(book_path);
 }
 
+/// @brief A book move for @p pos, or a null move if out of book / book disabled.
 S_MOVE Engine::get_book_move(const Position& pos) const {
     return opening_book.get_book_move(pos);
 }
 
-// Syzygy Tablebase functions
+/// @brief Probe Syzygy WDL for @p pos (≤ TB piece count). @param[out] wdl_score
+///        set to the win/draw/loss value (Huginn scale) on a hit. @return true
+///        on a successful probe; false if no TB, not probeable, or probe failed.
 bool Engine::probe_tablebase_wdl(const Position& pos, int& wdl_score) const {
     if (!tablebase || !tablebase->is_available()) {
         return false;  // No tablebase available
@@ -2821,6 +2861,8 @@ bool Engine::probe_tablebase_wdl(const Position& pos, int& wdl_score) const {
     return true;
 }
 
+/// @brief Root Syzygy probe: the TB-best move for @p pos, or a null move if no
+///        TB / not probeable. Lets the engine play perfect endgame moves directly.
 S_MOVE Engine::probe_tablebase_root(const Position& pos) const {
     S_MOVE null_move;
     null_move.move = 0;

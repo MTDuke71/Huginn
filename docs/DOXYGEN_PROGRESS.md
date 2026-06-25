@@ -21,13 +21,17 @@ Mark items `[x]` when done, with the date.
       is_consistent, FEN in/out, reset/startpos/rebuild_counts, MakeMove/TakeMove
       with the legality-filter contract, null moves, perft, generate_all_moves)
       (2026-06-18)
-- [~] `search.cpp` (2410 lines — **special: split across several days**)
-      - [x] sitting 1 (2026-06-22): `@file` header (sections + INVARIANTS pointer)
-            + @brief on the core four — `evaluate`, `AlphaBeta`, `quiescence`,
-            `searchPosition` (contracts: colour symmetry, path-dependent draws
-            before TT, mate = MATE−ply).
-      - [ ] sitting 2: the pruning/ordering helpers (move scoring, `init_mvv_lva`,
-            killers/history, the static-eval pruning blocks, IID, LMR table).
+- [x] `search.cpp` — DONE (2026-06-22, two sittings). Sitting 1: `@file` header
+      (section map + INVARIANTS pointer) + the core four (`evaluate`/`AlphaBeta`/
+      `quiescence`/`searchPosition`). Sitting 2: every remaining helper —
+      integrity asserts, LMR table, `game_phase_256`, `king_safety_white_mg`,
+      `repetition_count_in_history` (the #44 `pos.ply` note), the move-ordering
+      heuristics (MVV-LVA / killers / history / counter / continuation),
+      `pick_next_move`, IID, MaterialDraw/mirrorBoard, book + Syzygy probes.
+      Completeness-swept (no undocumented `Engine::` left); 203/203 tests pass.
+
+**Tier 1 COMPLETE** ✅ (position.hpp, search.hpp, position.cpp, search.cpp,
+movegen_bb, chess_types, evaluation.hpp, move.hpp).
 - [x] `movegen_bb.hpp` / `movegen_bb.cpp` — production movegen: pseudo-legal
       contract (castling the legal exception), special-move coverage, file-local
       castling helper; replaced stale pre-rewrite @file blocks (2026-06-17)
@@ -72,5 +76,5 @@ Mark items `[x]` when done, with the date.
 
 ---
 
-_Last updated: 2026-06-22 — search.cpp sitting 1 (@file + core-4 functions).
-Tier 1 finishes when search.cpp sitting 2 (helpers) lands._
+_Last updated: 2026-06-22 — search.cpp finished (sitting 2). **Tier 1 complete.**
+Next up: Tier 2 supporting subsystems (magic_bitboards, bitboard, see, uci, …)._
