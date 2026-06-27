@@ -16,8 +16,8 @@ namespace Huginn {
 
 namespace {
 
-// Identify the piece type sitting on a single-bit-bitboard `bit`. Caller
-// guarantees that bit is occupied (i.e. occupied_bitboard & bit != 0).
+/// @brief Piece type on the single set square @p bit (any colour). Precondition:
+///        the square is occupied. File-local SEE helper.
 inline PieceType piece_type_on(const Position& pos, uint64_t bit) {
     for (int c = 0; c < 2; ++c) {
         if ((pos.color_bitboards[c] & bit) == 0) continue;
@@ -29,9 +29,10 @@ inline PieceType piece_type_on(const Position& pos, uint64_t bit) {
     return PieceType::None;
 }
 
-// Bitboard of all attackers (any colour) attacking `sq64` given an
-// arbitrary occupancy `occ`. Mirrors SqAttackedBB but returns the full
-// attacker bitboard — needed so SEE can iterate attacker by attacker.
+/// @brief Bitboard of every piece (both colours) attacking @p sq64 under the
+///        given occupancy @p occ. Like SqAttackedBB but returns the full set so
+///        SEE can pull attackers off one at a time (and re-derive x-rays as the
+///        swap chain removes blockers). File-local SEE helper.
 inline uint64_t attackers_to(const Position& pos, int sq64, uint64_t occ) {
     uint64_t attackers = 0;
     constexpr int W = int(Color::White);

@@ -41,40 +41,46 @@ class Position;
 
 namespace Huginn {
 
-// MAX_DEPTH for PV line (tutorial uses 64)
+/// @brief Maximum PV line length (VICE uses 64).
 constexpr int MAX_DEPTH = 64;
 
-// Equivalent to PVENTRY from VICE tutorial (1:30)
+/// @brief One PV-table slot: the best move found for a position (VICE PVENTRY).
 struct PVEntry {
-    uint64_t position_key;  // Zobrist key for this position
-    S_MOVE move;           // Best move for this position
-    
+    uint64_t position_key;  ///< Zobrist key identifying the position.
+    S_MOVE move;            ///< Best move found for it.
+
     PVEntry() : position_key(0), move() {}
 };
 
-// Equivalent to PVTABLE from VICE tutorial (2:05) 
+/**
+ * @brief Hash table of best moves keyed by Zobrist position key (VICE PVTABLE).
+ *        Used to seed move ordering and to reconstruct the PV for UCI output.
+ *        Single-entry-per-index with replace-on-collision.
+ */
 class PVTable {
 private:
-    std::vector<PVEntry> entries;  // Dynamic array of PV entries
-    size_t table_size;             // Current size of table
-    
+    std::vector<PVEntry> entries;  ///< Slot array (power-of-two-ish, size_mb-derived).
+    size_t table_size;             ///< Number of slots.
+
 public:
-    // Constructor - initialize with default 2MB size (3:35 in tutorial)
+    /// @brief Construct with @p size_mb megabytes of slots (default 2 MB).
     PVTable(size_t size_mb = 2);
-    
-    // Clear the table - set all keys and moves to zero (6:04 in tutorial)
+
+    /// @brief Reset every slot to empty (key and move zeroed).
     void clear();
-    
-    // Get table size information
+
+    /// @brief Number of slots in the table.
     size_t size() const { return table_size; }
 
-    // Store a move in the PV table
+    /// @brief Store @p move as the best move for @p position_key (replace on collision).
     void store_move(uint64_t position_key, const S_MOVE& move);
-    
-    // Probe the PV table for a move
+
+    /// @brief Look up the stored move for @p position_key.
+    /// @param[out] move Set to the stored move on a key match.
+    /// @return true on a hit (key matches), false otherwise.
     bool probe_move(uint64_t position_key, S_MOVE& move) const;
-    
-    // Get index from position key (hash function)
+
+    /// @brief Map a Zobrist key to a slot index (`key % table_size`).
     size_t get_index(uint64_t position_key) const;
 };
 

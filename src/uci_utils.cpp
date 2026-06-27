@@ -1,3 +1,7 @@
+/**
+ * @file uci_utils.cpp
+ * @brief Implementation of the UCI helpers declared in uci_utils.hpp.
+ */
 #include "uci_utils.hpp"
 #include "position.hpp"
 #include "move.hpp"

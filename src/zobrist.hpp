@@ -38,12 +38,14 @@ constexpr int PIECE_NB = 12;
 class Position;
 
 namespace Zobrist {
-    inline U64 Piece[PIECE_NB][64];  // piece on 64-square index
-    inline U64 Side;                 // side to move
-    inline U64 Castle[16];           // castling rights mask (0..15)
-    inline U64 EpFile[8];            // en-passant file a..h
-    inline bool Initialized = false;
+    inline U64 Piece[PIECE_NB][64];  ///< Key per [piece-type][sq64] (12 × 64).
+    inline U64 Side;                 ///< Key XOR'd in when Black is to move.
+    inline U64 Castle[16];           ///< Key per castling-rights mask (0..15).
+    inline U64 EpFile[8];            ///< Key per en-passant file (a..h).
+    inline bool Initialized = false; ///< True once init_zobrist() has run.
 
+    /// @brief Fill the key tables with SplitMix64 pseudo-random values. Idempotent
+    ///        (no-op if already initialized). Call once at startup before hashing.
     inline void init_zobrist(std::uint64_t seed = 0x9E3779B97F4A7C15ULL) {
         if (Initialized) return;
         
@@ -73,5 +75,8 @@ namespace Zobrist {
         Initialized = true;
     }
 
+    /// @brief Compute the full Zobrist key for @p b from scratch (pieces + side
+    ///        + castling + ep). The search maintains the key incrementally; this
+    ///        is for setup/rebuild and as the incremental-update reference.
     U64 compute(const Position& b);
 } // namespace Zobrist

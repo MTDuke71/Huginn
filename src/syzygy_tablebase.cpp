@@ -1,3 +1,9 @@
+/**
+ * @file syzygy_tablebase.cpp
+ * @brief SyzygyTablebase implementation — Fathom init/shutdown, probeability
+ *        checks, and WDL/root probes translated to Huginn squares + scores.
+ *        Interface + the FATHOM_AVAILABLE gating live in syzygy_tablebase.hpp.
+ */
 #include "syzygy_tablebase.hpp"
 #include "position.hpp"
 #include "chess_types.hpp"

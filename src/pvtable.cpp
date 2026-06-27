@@ -1,3 +1,8 @@
+/**
+ * @file pvtable.cpp
+ * @brief PVTable implementation (sizing, clear, modulo-hash store/probe).
+ *        Interface + rationale in pvtable.hpp.
+ */
 #include "pvtable.hpp"
 #include "position.hpp"
 #include <iostream>

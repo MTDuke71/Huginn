@@ -15,13 +15,13 @@
 
 namespace Magic {
 
-// ---- Storage -------------------------------------------------------
-uint64_t ROOK_MASKS[64];
-uint64_t BISHOP_MASKS[64];
-uint64_t ROOK_MAGICS[64];
-uint64_t BISHOP_MAGICS[64];
-uint64_t ROOK_ATTACK_TABLE[64][ROOK_TABLE_SIZE_PER_SQ];
-uint64_t BISHOP_ATTACK_TABLE[64][BISHOP_TABLE_SIZE_PER_SQ];
+// ---- Storage (filled by init_magic_bitboards) ----------------------
+uint64_t ROOK_MASKS[64];     ///< Per-square rook relevant-occupancy mask.
+uint64_t BISHOP_MASKS[64];   ///< Per-square bishop relevant-occupancy mask.
+uint64_t ROOK_MAGICS[64];    ///< Per-square rook magic multiplier.
+uint64_t BISHOP_MAGICS[64];  ///< Per-square bishop magic multiplier.
+uint64_t ROOK_ATTACK_TABLE[64][ROOK_TABLE_SIZE_PER_SQ];     ///< Rook attacks indexed by magic hash.
+uint64_t BISHOP_ATTACK_TABLE[64][BISHOP_TABLE_SIZE_PER_SQ]; ///< Bishop attacks indexed by magic hash.
 
 namespace {
 
@@ -40,6 +40,8 @@ struct Step { int dr, df; };
 constexpr Step ROOK_STEPS[4]   = {{ 1, 0}, {-1, 0}, { 0, 1}, { 0,-1}};
 constexpr Step BISHOP_STEPS[4] = {{ 1, 1}, { 1,-1}, {-1, 1}, {-1,-1}};
 
+/// @brief Reference slider attacks from @p sq under @p occupied along @p steps
+///        (stop at the first blocker, inclusive). Ground truth for init + verify.
 uint64_t ray_attacks(int sq, uint64_t occupied, const Step (&steps)[4]) {
     uint64_t attacks = 0;
     const int r0 = sq / 8;
@@ -69,6 +71,7 @@ uint64_t ray_attacks(int sq, uint64_t occupied, const Step (&steps)[4]) {
 // on a8 vs leaving a8 empty both produce the same attack set
 // (a2..a8 — the rook attacks the edge square either way).
 
+/// @brief Rook relevant-occupancy mask for @p sq (ray squares excluding board edges).
 uint64_t compute_rook_mask(int sq) {
     uint64_t mask = 0;
     const int r0 = sq / 8, f0 = sq % 8;
@@ -79,6 +82,7 @@ uint64_t compute_rook_mask(int sq) {
     return mask;
 }
 
+/// @brief Bishop relevant-occupancy mask for @p sq (diagonal squares excluding edges).
 uint64_t compute_bishop_mask(int sq) {
     uint64_t mask = 0;
     const int r0 = sq / 8, f0 = sq % 8;
@@ -98,6 +102,8 @@ uint64_t compute_bishop_mask(int sq) {
 // The Nth subset (n = 0..2^bits-1) is obtained by bit-spreading n
 // into the bit positions set in mask.
 
+/// @brief The @p n-th subset of @p mask's set bits (spread @p n into mask's bit
+///        positions) — enumerates all 2^popcount(mask) blocker patterns.
 uint64_t nth_subset_of_mask(uint64_t mask, uint64_t n) {
     uint64_t result = 0;
     uint64_t m = mask;
@@ -157,6 +163,11 @@ constexpr uint64_t MAGIC_SEED = 0x12345678ABCDEFULL;
 // Writes the discovered magic to *out_magic and fills the per-square
 // attack table at *attack_table.
 
+/// @brief Search the PRNG stream for a magic multiplier that perfectly hashes
+///        every blocker subset of @p mask into `[0, table_size)` via
+///        `(subset*magic) >> shift` (collisions allowed only when the attack
+///        set matches). Writes the magic to @p out_magic and fills @p attack_table.
+/// @return true if a magic was found.
 template <typename StepArr>
 bool find_magic_for_square(int sq,
                            uint64_t mask,
@@ -275,6 +286,10 @@ void verify_or_die() {
 
 // ---- Public init ---------------------------------------------------
 
+/// @brief Build all per-square masks, find a magic for every rook and bishop
+///        square, and populate the attack tables. Call once at startup before
+///        magic_rook_attacks / magic_bishop_attacks. Aborts if any magic search
+///        fails (should never happen with the fixed seed).
 void init_magic_bitboards() {
     static bool done = false;
     if (done) return;

@@ -1,3 +1,13 @@
+/**
+ * @file syzygy_tablebase.hpp
+ * @brief Syzygy endgame-tablebase interface (wraps the Fathom library).
+ *
+ * Gives the search perfect WDL/DTZ results for low-piece-count endgames. The
+ * whole feature is compiled out unless `ENABLE_FATHOM` (→ `FATHOM_AVAILABLE`)
+ * is set, so non-TB builds pay nothing. Probe results are mapped to Huginn's
+ * own score scale by the search (see search.cpp); they are deliberately NOT
+ * stored in the TT (rule50 isn't in the Zobrist key).
+ */
 #pragma once
 
 #include <string>
@@ -31,10 +41,10 @@ namespace Huginn {
  */
 class SyzygyTablebase {
 private:
-    std::string tablebase_path;
-    bool is_initialized;
-    int max_pieces;  // Maximum pieces supported by loaded tablebases
-    
+    std::string tablebase_path;  ///< Directory the .rtbw/.rtbz files were loaded from.
+    bool is_initialized;         ///< True between a successful initialize() and shutdown().
+    int max_pieces;              ///< Largest piece count the loaded tablebases cover.
+
 public:
     SyzygyTablebase();
     ~SyzygyTablebase();

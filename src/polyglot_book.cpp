@@ -1,3 +1,11 @@
+/**
+ * @file polyglot_book.cpp
+ * @brief Polyglot opening-book implementation — load a `.bin` book, compute the
+ *        Polyglot Zobrist key for a position, and pick a weighted book move.
+ *        Interface + the entry format live in polyglot_book.hpp.
+ * @note Polyglot uses its OWN Zobrist keys (the standard published constants),
+ *       independent of the engine's internal Zobrist (zobrist.hpp).
+ */
 #include "polyglot_book.hpp"
 #include "chess_types.hpp"
 #include "square.hpp"

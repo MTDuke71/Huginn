@@ -52,15 +52,21 @@ movegen_bb, chess_types, evaluation.hpp, move.hpp).
 
 - [x] `transposition_table.hpp` — rationale-first @file (replacement/aging gap),
       store/probe @brief (2026-06-14; prompted by the Fruit/Toga TT example → #42)
-- [ ] `magic_bitboards.hpp` / `magic_bitboards.cpp`
-- [ ] `bitboard.hpp` / `bitboard.cpp`
-- [ ] `see.hpp` / `see.cpp`
-- [ ] `uci.hpp` / `uci.cpp`
-- [ ] `uci_utils.hpp` / `uci_utils.cpp`
-- [ ] `polyglot_book.hpp` / `polyglot_book.cpp`
-- [ ] `syzygy_tablebase.hpp` / `syzygy_tablebase.cpp`
-- [ ] `zobrist.hpp` / `zobrist.cpp`
-- [ ] `pvtable.hpp` / `pvtable.cpp`
+- [x] `magic_bitboards.hpp` / `magic_bitboards.cpp` — storage globals, ray-walker,
+      mask builders, subset enumeration, magic finder, init (2026-06-22)
+- [x] `bitboard.hpp` / `bitboard.cpp` — free bit ops (popcount/lsb/print) +
+      magic-slider delegates (2026-06-22)
+- [x] `see.hpp` / `see.cpp` — SEE_PIECE_VALUE independence rationale (Doxygen),
+      file-local helpers (piece_type_on, attackers_to) (2026-06-22)
+- [ ] `uci.hpp` / `uci.cpp` — already has @file + ~24 briefs; audit later
+- [x] `uci_utils.hpp` / `uci_utils.cpp` — @file + parse_uci_move contract (2026-06-22)
+- [x] `polyglot_book.hpp` / `polyglot_book.cpp` — .cpp @file (own-Zobrist note);
+      hpp already documented (2026-06-22)
+- [x] `syzygy_tablebase.hpp` / `syzygy_tablebase.cpp` — @file (FATHOM gating,
+      not-in-TT note) + member `///<`; class methods already documented (2026-06-22)
+- [x] `zobrist.hpp` / `zobrist.cpp` — globals `///<`, init/compute @brief,
+      .cpp @file + relocated compute() doc (2026-06-22)
+- [x] `pvtable.hpp` / `pvtable.cpp` — PVEntry/PVTable members + methods; .cpp @file (2026-06-22)
 - [ ] `input_checking.hpp` / `input_checking.cpp`
 - [ ] `attack_tables.hpp` / `attack_tables.cpp`
 - [x] `attack_detection.hpp` / `attack_detection.cpp` — square semantics,
@@ -76,5 +82,7 @@ movegen_bb, chess_types, evaluation.hpp, move.hpp).
 
 ---
 
-_Last updated: 2026-06-22 — search.cpp finished (sitting 2). **Tier 1 complete.**
-Next up: Tier 2 supporting subsystems (magic_bitboards, bitboard, see, uci, …)._
+_Last updated: 2026-06-22 — Tier 1 done + a Tier-2 batch (zobrist, see, pvtable,
+uci_utils, syzygy, polyglot_book, bitboard, magic_bitboards). Tier 2 remaining:
+uci (audit — already mostly done), input_checking, attack_tables (both decent),
+then Tier 3 leaf files._
