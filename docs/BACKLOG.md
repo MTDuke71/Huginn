@@ -73,7 +73,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 45 | Move-level (Fruit-style) futility vs current node-level | **IMPLEMENTED, READY FOR SPRT** (2026-06-26) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Fixed-depth WAC300 @ d10: **+41 solves (143→184) for +2% nodes** — confirms node-level was leaking tactics. Two-machine SPRT vs t19 next. | feature/search | high |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **INTEL SPRT H1-ACCEPT, MAGNITUDE ANOMALOUS** (2026-06-27) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Fixed-depth WAC300 @ d10: +41 solves (143→184) for +2% nodes. Intel SPRT vs t19 accepted H1 @170g but at **+355 Elo / 88.53%** — ~6× any prior ship and inconsistent with the +2%-node diagnostic; **suspect baseline/build mismatch — VERIFY before trusting.** AMD leg pending. | feature/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -502,11 +502,41 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
   arms so the **+41 delta is robust**. lct2 @ d10 is too shallow to read (1/35 both
   arms; +21% nodes, no solve signal). Diagnostic script + raw output in the session
   scratchpad.
-- **Status: READY FOR TWO-MACHINE SPRT vs t19.** Build the test arm with
-  `-DENABLE_MOVE_LEVEL_FUTILITY=1` (per-machine, like `build/msvc-nmpon`). The
-  fixed-depth gain is the largest local tactical signal since the #44 repro; the
-  game gauntlet decides whether the recovered tactics convert (the 14 OK→MISS show
-  it isn't strictly dominant). +2% nodes ⇒ fixed-time cost is negligible.
+- **Two-machine SPRT vs t19 (10+0.1, 1t, 64MB, noob_3moves.epd) — BOTH LEGS
+  H1-ACCEPT, but at an ANOMALOUSLY LARGE magnitude.**
+  - **Intel: H1 accepted @170g — +355.00 ± 71.85 Elo** (nElo +498.14 ± 52.23),
+    88.53% (W137/L6/D27, Points 150.5), LOS 100%, DrawRatio 9.41%, PairsRatio
+    37.50, Ptnml [0,2,8,17,58], WL/DD 1.00, LLR 2.97 (-2.94,2.94)[0,10]. 13:45
+    wall. Artifacts `gauntlet/huginn_vs_t19_intel.pgn` +
+    `gauntlet/fastchess_t19_intel.log`. All terminations `normal` (no
+    crashes/forfeits).
+  - **AMD: same result (reported same-sign H1-accept at ~the same magnitude).**
+    Exact numbers + artifact pending push (`gauntlet/*_t19_amd.*`).
+  - **⚠ DO NOT SHIP YET — the magnitude fails a sanity check.** +355 Elo is ~6×
+    the largest ship in the program's history (#44 at +62/+76) and is flatly
+    inconsistent with #45's own fixed-depth diagnostic (+41/299 WAC solves for
+    +2% nodes, **with 14 OK→MISS regressions — explicitly not strictly
+    dominant**). The complexity gate exists precisely to predict game-Elo from
+    that fixed-depth signal, and +41 solves does **not** predict +355. A change
+    this size would also have to mean t19 (and every baseline carrying the
+    node-level `return alpha`) hides a ~350-Elo self-play bug — which should show
+    up as a huge external jump too, but the last external anchor put t17 at only
+    42.58% vs Stash 12.
+  - **Cross-machine agreement does NOT clear it.** Both boxes build t19 from the
+    same `baseline-t19` tag with the same recipe, so a baseline/build artifact
+    (e.g. a mis-built t19 binary, or `current` accidentally bundling more than
+    the futility flag) reproduces *identically* on both — two-box agreement only
+    rules out per-box hardware flukes, not a systematic recipe bug.
+- **Status: VERIFY BEFORE TRUSTING (next actions, in order):**
+  1. **Audit the binaries.** Confirm `current` = t19 + *only*
+     `ENABLE_MOVE_LEVEL_FUTILITY=1` (no bundled flags — note the #43-s2 flag was
+     reconciled OFF in 65f19e8); confirm both boxes' `huginn_t19.exe` are clean
+     Release builds from the tag (bench/nps + a fixed-depth signature vs the tag).
+  2. **External anchor sanity check.** Run the `current` build vs **Stash 12.0**:
+     a real +355 must turn t17's 42.58% into a rout and challenge Stash 13+. If
+     it doesn't move much, the self-play +355 is an artifact.
+  3. Only if both hold, treat as a (huge) ship and re-baseline. Until then this
+     is logged as **measured-but-unverified.**
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
