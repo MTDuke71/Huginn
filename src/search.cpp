@@ -2565,14 +2565,17 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // Iteration-start time gate: if the next iteration likely won't fit in
         // the remaining budget, return the previous depth's best move instead
         // of wasting time on a partial iteration that we'll discard anyway.
-        // Heuristic: assume next iteration is ~3x the elapsed time so far;
-        // bail if elapsed > budget/4 (i.e. 4*elapsed > budget).
+        // Heuristic: with good move ordering the effective branching factor is
+        // ~2, so a new iteration roughly DOUBLES cumulative time — start it only
+        // while elapsed < budget/2 (i.e. 2*elapsed < budget). (#47: the old gate
+        // assumed next≈3x elapsed and bailed at budget/4, leaving ~75% of the
+        // clock unused — Huginn finished games with minutes to spare.)
         if (current_depth > 1 && !info.infinite && !info.depth_only
                 && info.stop_time != std::chrono::steady_clock::time_point{}) {
             auto now = std::chrono::steady_clock::now();
             auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time).count();
             auto budget_ms = std::chrono::duration_cast<std::chrono::milliseconds>(info.stop_time - info.start_time).count();
-            if (budget_ms > 0 && elapsed_ms * 4 > budget_ms) {
+            if (budget_ms > 0 && elapsed_ms * 2 > budget_ms) {
                 break;
             }
         }

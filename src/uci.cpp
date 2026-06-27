@@ -120,7 +120,14 @@ void UCIInterface::run() {
         else if (command == "ucinewgame") {
             position.set_startpos();
             search_engine->reset();
-            if (debug_mode) std::cout << "info string New game started" << std::endl;
+            // New game: wipe cross-game state so stale entries from the previous
+            // game can't be probed on a transposition (there is no TT aging yet,
+            // #42). This MUST live here, not in reset(): reset() also runs once
+            // per `go` (search_best_move), so clearing the TT there would destroy
+            // it every move. (#46)
+            search_engine->tt_table.clear();
+            search_engine->clear_search_tables();
+            if (debug_mode) std::cout << "info string New game started (TT + search tables cleared)" << std::endl;
         }
         else if (command == "position") {
             try {
@@ -450,8 +457,11 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
                 alloc += side_inc / 2;  // Add half the increment
                 if (debug_mode) std::cout << "info string Classical time control: " << side_time << "ms / " << movestogo << " moves" << std::endl;
             } else {
-                // Sudden death or increment-only time control
-                alloc = side_time / 20 + side_inc / 4;
+                // Sudden death or increment-only time control. Use half the
+                // increment (was a quarter) — with an increment you can safely
+                // spend ~the full increment each move plus a slice of the base.
+                // (#47, paired with the budget/2 iteration gate.)
+                alloc = side_time / 20 + side_inc / 2;
                 if (debug_mode) std::cout << "info string Sudden death time control: " << side_time << "ms base" << std::endl;
             }
 
