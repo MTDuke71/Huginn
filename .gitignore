@@ -90,7 +90,9 @@ config.json
 # .claude/settings.local.json (per-machine).
 .claude/*
 !.claude/settings.json
-test/__pycache__/
+# Python bytecode (any directory: test/, tools/, ...)
+__pycache__/
+*.pyc
 
 # WAC tactical-suite test artifacts (logs are large and timestamped per run;
 # the durable results are extracted into docs/SEARCH_AND_EVAL.md when they
