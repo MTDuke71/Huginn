@@ -629,6 +629,23 @@ TC.** Related: #8 (aspiration step b, parked).
 
 - **#31** — SPRT sweep of `Hash` (64 vs 128 vs 256 MB) at the current strength.
 - **#32** — PEXT slider attacks, build-gated with a magic fallback (BMI2 boxes).
+  - **AVX-512 assessment (2026-06-26): not a lever for the current HCE engine.**
+    The build already compiles `/arch:AVX2` (MSVC) + `-march=native -mtune=native`
+    (GCC/Clang), so AVX2 + per-CPU tuning is *on*; no free SIMD on the table. AVX-512
+    wins when you do the same op on 8+ independent 64-bit lanes at once — but Huginn's
+    hot paths (movegen, eval, search) are latency-bound and branchy: bitboard ops are
+    single scalar instructions, `popcount`/`ctz` (heavy in search.cpp/movegen_bb.cpp)
+    already map to one hardware instruction each and can't batch because each result
+    gates the next branch, and magic-slider lookups are single loads (AVX-512 gather
+    is *slower*). Verdict: the HCE engine doesn't vectorize; AVX-512's home run is
+    **NNUE inference** (int8/int16 dot products → `AVX512-VNNI` `VPDPBUSD`) — i.e. it's
+    an argument *for* #39, not a standalone speed item. **PEXT (this item) is the one
+    real modern-AMD speed lever**: BMI2, fast on Zen4 (the AVX-512 AMD box), can beat
+    magic-multiply — but speed isn't Huginn's bottleneck (parity reached; gap is
+    eval/search-shape per #41), so it stays low priority. **Caveat:** consumer Intel
+    12th–14th gen has AVX-512 fused off, so any AVX-512 build is AMD-leg-only;
+    per-machine builds already handle that. Determinism survives (pure-int SIMD is
+    bit-identical) — never introduce FP reassociation.
 - **#34** — SF-style `blockersForKing` pin/blocker-aware legal movegen (drop the
   per-move `MakeMove` legality filter for pinned-piece fast paths).
 - **#42 — TT aging + clusters (Fruit/Toga design).** Huginn's TT
@@ -677,6 +694,12 @@ the strategic picture is explicit.
 - **Cost:** a multi-session build — training-data generation (self-play at depth,
   labelled), the net + quantisation, and incremental-update integration into
   make/unmake. Highest conceptual lift of the options; lowest methodology cost.
+- **Hardware fit (2026-06-26):** this is also where the AMD box's **AVX-512** earns
+  its keep — accumulator updates + int8/int16 dot products map to `AVX512-VNNI`
+  (`VPDPBUSD`) for a big inference speedup. The current HCE engine doesn't vectorize
+  (see the AVX-512 note under #32), so NNUE is the project that justifies an AVX-512
+  code path. (Intel consumer 12–14th gen lacks AVX-512 → the fast path would be a
+  build-gated AMD variant with an AVX2 fallback.)
 
 ### #40: Lazy SMP / multithreading (deferred)
 
