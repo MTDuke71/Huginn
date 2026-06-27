@@ -61,7 +61,10 @@ private:
     int threads = 1; // Default to 1 thread to test for threading issues
     
     // Opening book settings
-    bool own_book = true;  // Enable opening book by default
+    bool own_book = false;  // Opening book OFF by default (set OwnBook=true to enable).
+                            // Prevents ad-hoc UCI/analysis runs from silently playing book
+                            // moves instead of searching; gauntlets pass OwnBook explicitly,
+                            // so this default does not affect measured strength.
     std::string book_file = "src/performance.bin";  // Default book file path
     
     // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format

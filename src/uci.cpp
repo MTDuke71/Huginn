@@ -227,7 +227,7 @@ void UCIInterface::send_options() {
     std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
-    std::cout << "option name OwnBook type check default true" << std::endl;
+    std::cout << "option name OwnBook type check default false" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
     std::cout << "option name SyzygyPath type string default c:\\TB\\" << std::endl;
 }
