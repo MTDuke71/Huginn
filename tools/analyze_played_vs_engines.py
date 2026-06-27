@@ -14,8 +14,16 @@ Usage:
       --sf-depth D  Stockfish ground-truth depth   (default 22)
       --hug-time T  Huginn seconds/move            (default 1.5)
       --out PATH    output CSV                      (default tools/cc_analysis.csv)
+      --hug PATH    override the Huginn binary      (default: HUG constant below)
+      --reuse-sf C  reuse a prior CSV's SF ground truth by FEN (~halves runtime;
+                    keeps ground truth identical for a clean t15-vs-t20 compare)
 Paths to the PGN / Stockfish / Huginn binaries are the constants below — edit if
 they differ on the machine you run this on.
+
+Re-diagnosis re-run (t20, reusing the 2026-06-14 t15 ground truth):
+    python analyze_played_vs_engines.py --hug <huginn_t20.exe> \
+        --reuse-sf tools/cc_analysis20260614.csv --out tools/cc_analysis_t20.csv
+then: python tools/compare_cc.py tools/cc_analysis20260614.csv tools/cc_analysis_t20.csv
 """
 import sys, os, csv, time, argparse
 import chess, chess.pgn, chess.engine
@@ -79,7 +87,24 @@ def main():
     ap.add_argument("--sf-depth", type=int, default=22)
     ap.add_argument("--hug-time", type=float, default=1.5)
     ap.add_argument("--out", default=os.path.join("tools","cc_analysis.csv"))
+    ap.add_argument("--hug", default=None,
+                    help="override the Huginn binary (default: the HUG constant above)")
+    ap.add_argument("--reuse-sf", default=None,
+                    help="a prior cc CSV: reuse its Stockfish ground truth (sf_best/eval/depth) "
+                         "keyed by FEN, skipping the ground-truth SF call (~halves runtime and "
+                         "keeps the ground truth IDENTICAL between runs). SF is still used to "
+                         "evaluate Huginn's move when it differs from sf_best.")
     a = ap.parse_args()
+
+    hug_path = a.hug or HUG
+
+    reuse = {}
+    if a.reuse_sf:
+        with open(a.reuse_sf, newline="") as rf:
+            for r in csv.DictReader(rf):
+                reuse[r["fen"]] = (r["sf_best"], int(r["sf_eval_cp"]), r.get("sf_depth") or "")
+        print(f"reuse-sf: loaded {len(reuse)} cached SF ground-truth positions from {a.reuse_sf}")
+    print(f"Huginn binary: {hug_path}")
 
     games, seen = [], set()
     with open(PGN, encoding="utf-8-sig") as f:
@@ -103,7 +128,7 @@ def main():
         print(f"resuming: {done} positions already done")
 
     sf  = chess.engine.SimpleEngine.popen_uci(SF)
-    hug = chess.engine.SimpleEngine.popen_uci(HUG)
+    hug = chess.engine.SimpleEngine.popen_uci(hug_path)
     for e in (sf, hug):
         try: e.configure({"OwnBook": False})
         except Exception: pass
@@ -116,8 +141,18 @@ def main():
     t0 = time.time()
     for idx in range(done, total):
         gi, b, played_mv, ply, line = positions[idx]
-        si = sf.analyse(b, chess.engine.Limit(depth=a.sf_depth))
-        sf_best = si["pv"][0]; sf_eval = cp(si["score"]); sf_depth = si.get("depth")
+        # SF ground truth: reuse from a prior CSV by FEN when available (the best
+        # move + eval don't depend on the Huginn version), else compute it.
+        sf_best = sf_eval = sf_depth = None
+        cached = reuse.get(b.fen()) if reuse else None
+        if cached:
+            try:
+                sf_best = b.parse_san(cached[0]); sf_eval = cached[1]; sf_depth = cached[2]
+            except Exception:
+                sf_best = None  # SAN didn't parse on this board -> recompute
+        if sf_best is None:
+            si = sf.analyse(b, chess.engine.Limit(depth=a.sf_depth))
+            sf_best = si["pv"][0]; sf_eval = cp(si["score"]); sf_depth = si.get("depth")
         hi = hug.analyse(b, chess.engine.Limit(time=a.hug_time))
         hug_best = hi["pv"][0]; hug_eval = cp(hi["score"]); hug_depth = hi.get("depth")
         if hug_best == sf_best:
