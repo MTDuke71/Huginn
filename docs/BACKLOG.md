@@ -51,10 +51,16 @@
 - **Architecture:** pure bitboard; magic-bitboard sliders; tapered eval
   (`game_phase_256`); Texel-tuned material/PSTs/mobility/pawn-structure/threats/
   **king safety**. ~3.55 Mnps single-thread.
-- **Active thread:** the **#9 / #35 eval program** — round 9 (**safe mobility**)
-  SHIPPED → baseline-t19 (both legs same-sign positive, pooled +~8); round 8
-  (outposts) KEPT on a sign-split (logged exception). Round 10 next: threats
-  round 2 (per the #41 roadmap) is the strongest remaining eval lever.
+- **Active thread (2026-06-27): the pruning-stack audit (#45 et seq).** #45
+  move-level futility passed SPRT on box 1 at **+345 Elo / 88% / LOS 100%** — a
+  latent search-correctness bug (node-level futility pruned PV + ≤3-ply tactical
+  nodes) invisible across the whole t5→t19 ladder. Pending 2nd-box confirm → flip
+  flag ON + tag **t20**. This redirects the active thread from eval to **auditing
+  the rest of the forward-pruning stack** (razoring, reverse futility, the #45
+  depth/PV knobs) — same era, same node-level style, now prime leak suspects (see
+  the pruning-stack audit thread under #45). The **#9/#35 eval program is paused**:
+  round 10 (threats round 2) remains the top *eval* lever but eval breadth was
+  already in diminishing returns, and a +345 search-correctness class dwarfs it.
 - **Direction (2026-06-13): push pure HCE as far as it goes before reaching for
   multithreading or NNUE.** The +490 over 2.0 was mostly foundational repair
   (structural bugs, a never-tuned eval) and won't recur — but pure-HCE engines
@@ -73,7 +79,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 45 | Move-level (Fruit-style) futility vs current node-level | **IMPLEMENTED, READY FOR SPRT** (2026-06-26) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Fixed-depth WAC300 @ d10: **+41 solves (143→184) for +2% nodes** — confirms node-level was leaking tactics. Two-machine SPRT vs t19 next. | feature/search | high |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **SPRT PASSED — box 1 (2026-06-27): +345.15 ± 60.79 Elo, LOS 100%, 87.94%/170g, Ptnml [0,0,9,23,53], LLR 2.95 H1 @170g.** Latent search-correctness bug fix (node-level `return alpha` pruned PV + tactical nodes ≤3-ply). `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). **Pending 2nd-box confirm → flip default ON + tag t20.** Largest single gain in the program. | bug/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -507,6 +513,40 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
   fixed-depth gain is the largest local tactical signal since the #44 repro; the
   game gauntlet decides whether the recovered tactics convert (the 14 OK→MISS show
   it isn't strictly dominant). +2% nodes ⇒ fixed-time cost is negligible.
+- **SPRT box 1 (2026-06-27, 10+0.1, 1t, 64MB, noob_3moves.epd) — H1 ACCEPTED @170g:
+  +345.15 ± 60.79 Elo, nElo +548.87, LOS 100%, 149.5/170 = 87.94%, DrawRatio 10.6%,
+  Ptnml [0,0,9,23,53] (zero pair losses, PairsRatio inf), LLR 2.95.** The SPRT
+  resolved in 170 games because the effect is enormous. **This reclassifies the item
+  from a "pruning refinement" to a LATENT SEARCH-CORRECTNESS BUG FIX** (hence the
+  bug/search type): the node-level `return alpha` was pruning interior **PV nodes**
+  (only `isRoot` excluded) and tactical nodes up to 3 ply from the leaf, returning
+  alpha without searching a single capture/promotion/check — corrupting move
+  selection tree-wide, not just at the frontier. Like #44, it was **invisible across
+  the entire t5→t19 ladder** because every baseline carried the identical node-level
+  futility, so it cancelled in every incremental A/B; it only surfaced when the
+  futility *structure* itself was A/B'd. Two independent signals agree (WAC +41,
+  game +345). Caveat: self-play inflates and a *systematic* edge is what self-play
+  most rewards, so the external/CCRL gain will be a fraction of +345 — but the floor
+  (~+285) is unambiguous and this is the largest single gain in program history.
+- **Next: 2nd-box confirm (formality at this magnitude, honors the two-machine bar),
+  then flip `ENABLE_MOVE_LEVEL_FUTILITY` default → ON and tag baseline-t20.** Then
+  see the new pruning-stack audit thread below — this finding makes the rest of the
+  forward-pruning stack the highest-ROI direction in the engine.
+
+**Pruning-stack audit (NEW high-priority thread, opened by the #45 +345 result).**
+If node-level futility leaked ~+345 self-play, the sibling forward-pruning levers —
+all written in the same era, same node-level style — are now prime suspects for the
+same latent-leak class. Audit each behind its own flag, complexity-gate + two-machine:
+  - **Razoring** ([search.cpp] `RAZORING_MARGIN=400`, depth 2–4, `!in_check`,
+    `!isRoot`): drops depth by 1 when `eval + 400 < alpha`. Node-level, no PV guard,
+    fires to depth 4 — same shape as the bug just fixed. Highest suspicion.
+  - **Reverse futility / static null** (`REVERSE_FUTILITY_MARGIN=80`/ply, depth ≤6,
+    returns `eval - margin` ≥ beta): returns beta-side; check it isn't pruning PV
+    nodes or interacting badly with the new move-level futility.
+  - **The two #45 knobs deliberately left ON the table** (now that the node→move
+    change alone won big): narrow the depth envelope (`<=3` → `==1`/`<=2`) and add a
+    **PV-node guard** (`beta > alpha + 1`, Fruit's exact recipe). Each its own SPRT
+    atop t20 — may add more, or may have already saturated. Test after t20 ships.
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
