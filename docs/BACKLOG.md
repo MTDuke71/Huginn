@@ -79,7 +79,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 45 | Move-level (Fruit-style) futility vs current node-level | **SPRT PASSED — box 1 (2026-06-27): +345.15 ± 60.79 Elo, LOS 100%, 87.94%/170g, Ptnml [0,0,9,23,53], LLR 2.95 H1 @170g.** Latent search-correctness bug fix (node-level `return alpha` pruned PV + tactical nodes ≤3-ply). `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). **Pending 2nd-box confirm → flip default ON + tag t20.** Largest single gain in the program. | bug/search | high |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **TWO-MACHINE H1-ACCEPT + AUDITED + EXTERNALLY VALIDATED → SHIP t20** (2026-06-27) — `ENABLE_MOVE_LEVEL_FUTILITY`. AMD +345 / Intel +355 vs t19 (both ~88%, LOS 100%). Magnitude ~6× any prior ship, so it was NOT shipped on the SPRT alone: Intel binary/source audit = clean isolation (not a build artifact); AMD external anchor = `current` 90.5% vs Stash 12.0 where t19 control holds 51.25% → real, not a self-play mirage. Latent search-correctness bug (node-level `return alpha` pruned PV + ≤3-ply tactical nodes). Largest gain in program history. Flip flag ON + tag t20. | bug/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -508,34 +508,72 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
   arms so the **+41 delta is robust**. lct2 @ d10 is too shallow to read (1/35 both
   arms; +21% nodes, no solve signal). Diagnostic script + raw output in the session
   scratchpad.
-- **Status: READY FOR TWO-MACHINE SPRT vs t19.** Build the test arm with
-  `-DENABLE_MOVE_LEVEL_FUTILITY=1` (per-machine, like `build/msvc-nmpon`). The
-  fixed-depth gain is the largest local tactical signal since the #44 repro; the
-  game gauntlet decides whether the recovered tactics convert (the 14 OK→MISS show
-  it isn't strictly dominant). +2% nodes ⇒ fixed-time cost is negligible.
-- **SPRT box 1 (2026-06-27, 10+0.1, 1t, 64MB, noob_3moves.epd) — H1 ACCEPTED @170g:
-  +345.15 ± 60.79 Elo, nElo +548.87, LOS 100%, 149.5/170 = 87.94%, DrawRatio 10.6%,
-  Ptnml [0,0,9,23,53] (zero pair losses, PairsRatio inf), LLR 2.95.** The SPRT
-  resolved in 170 games because the effect is enormous. **This reclassifies the item
-  from a "pruning refinement" to a LATENT SEARCH-CORRECTNESS BUG FIX** (hence the
-  bug/search type): the node-level `return alpha` was pruning interior **PV nodes**
-  (only `isRoot` excluded) and tactical nodes up to 3 ply from the leaf, returning
-  alpha without searching a single capture/promotion/check — corrupting move
-  selection tree-wide, not just at the frontier. Like #44, it was **invisible across
-  the entire t5→t19 ladder** because every baseline carried the identical node-level
-  futility, so it cancelled in every incremental A/B; it only surfaced when the
-  futility *structure* itself was A/B'd. Two independent signals agree (WAC +41,
-  game +345). Caveat: self-play inflates and a *systematic* edge is what self-play
-  most rewards, so the external/CCRL gain will be a fraction of +345 — but the floor
-  (~+285) is unambiguous and this is the largest single gain in program history.
-- **Next: 2nd-box confirm (formality at this magnitude, honors the two-machine bar),
-  then flip `ENABLE_MOVE_LEVEL_FUTILITY` default → ON and tag baseline-t20.** Then
-  see the new pruning-stack audit thread below — this finding makes the rest of the
-  forward-pruning stack the highest-ROI direction in the engine.
+- **Two-machine SPRT vs t19 (10+0.1, 1t, 64MB, noob_3moves.epd) — BOTH LEGS
+  H1-ACCEPT at an anomalously large magnitude (sanity-checked, then VALIDATED).**
+  - **AMD: H1 accepted @170g — +345.15 ± 60.79 Elo** (nElo +548.87), 87.94%
+    (149.5/170g, W136/L7/D27), LOS 100%, DrawRatio 10.6%, Ptnml [0,0,9,23,53]
+    (zero pair losses, PairsRatio inf), LLR 2.95.
+  - **Intel: H1 accepted @170g — +355.00 ± 71.85 Elo** (nElo +498.14 ± 52.23),
+    88.53% (W137/L6/D27, Points 150.5), LOS 100%, DrawRatio 9.41%, PairsRatio
+    37.50, Ptnml [0,2,8,17,58], LLR 2.97. Artifacts `gauntlet/mlf_vs_t19_intel.pgn`
+    (171g) + `gauntlet/mlf_fastchess_t19_intel.log` (renamed from the bat's generic
+    `huginn_vs_t19_intel.*`, which the #43-s2 scaled-NMP intel run also used — kept
+    distinct so neither clobbers the other). All terminations `normal`.
+  - **⚠ The magnitude failed a first-pass sanity check, so we did NOT ship on the
+    SPRT alone.** +350 Elo is ~6× the largest prior ship (#44 +62/+76) and exceeds
+    #45's own fixed-depth diagnostic (+41/299 WAC for +2% nodes, with 14 OK→MISS —
+    not strictly dominant). **Cross-machine agreement does NOT clear this:** both
+    boxes build t19 from the same tag/recipe, so a baseline/build artifact would
+    reproduce *identically* on both — two-box agreement only rules out per-box
+    hardware flukes, not a systematic recipe bug. Required two further checks
+    (both now PASSED).
+- **Check 1 — Binary + source audit (Intel, 2026-06-27): PASSED. Clean t19 vs
+  t19+move-level-futility isolation, NOT a build artifact.** Signature = `go depth
+  14` from startpos, 1t, `OwnBook=false`, default hash (deterministic node counts):
+  1. **`source current` (flags OFF) ≡ t19** — `git diff baseline-t19..HEAD -- src/`
+     is *only* Doxygen comments + two default-OFF flag guards (`ENABLE_SCALED_NMP_R=0`
+     → flat R=4 = t19; `ENABLE_MOVE_LEVEL_FUTILITY=0`); **0** non-comment code changes
+     elsewhere; the #43-s2 flag was reconciled OFF in `65f19e8`. The only behavioural
+     delta available to the test arm is the futility flag.
+  2. **fastchess `huginn_t19.exe` IS the tag** — byte-for-byte identical signature to
+     a fresh `baseline-t19` build: d12 4,683,084 / d13 6,833,542 / d14 10,357,442
+     nodes, cp 18/26/37, identical PVs, **~3.5 Mnps** (full-speed Release). The
+     "mis-built baseline" theory is dead.
+  3. **fastchess `current` genuinely carries the flag** — signature *diverges* from
+     t19 (d14 12,035,479 nodes = +16%, cp 27, PV `e2e4 e7e5 b1c3 b8c6 …`). Not an
+     accidental t19 rebuild (which would score ~0, not +355).
+- **Check 2 — External anchor (AMD, 2026-06-27): PASSED. The +350 is real, not a
+  self-play mirage.** `current` vs **Stash 12.0** (1886, the calibrated AMD anchor)
+  with a t19-vs-Stash-12 **control** alongside (200g each, same settings):
+  - **t19 control: 51.25% / +8.69 ± 47.6** (W83/L78/D39, Ptnml [18,17,30,12,23]) —
+    t19 plays Stash 12 dead even, exactly as a ~1834-class engine should (and sits
+    correctly above t17's 42.58% from the earlier anchor). So **Stash is NOT
+    crippled and the harness is sound** — kills the "Stash config broke" theory.
+  - **`current`: 90.50% / +391.57 ± 59.0** (W166/L4/D30, Ptnml [0,0,5,28,67]); all
+    200 terminations normal (Stash mated in 166). Same-box, same-opponent delta over
+    t19 ≈ **+383 Elo**, agreeing with the +345/+355 self-play. External Elo does NOT
+    self-inflate, so the corroboration is decisive. Stash 12 saturates at 90.5%;
+    `current` vs **Stash 13.0** (1972) running to bracket the actual rating.
+  - **Reconciliation of the WAC tension:** WAC +41 measured only whether the *final*
+    best move is found at fixed depth; it under-counts the bug's true cost because
+    node-level `return alpha` corrupts a large fraction of interior nodes *during
+    every move of* real games — pervasive damage WAC's single-best-move metric can't
+    see. So game-Elo ≫ WAC-predicted is *expected* for a pervasive correctness bug,
+    not a contradiction. (Corrects the earlier "self-play inflates → external will be
+    a fraction" caveat: WRONG for this class — a pervasive bug hurts vs every opponent
+    ~equally, so external ≈ self-play.)
+- **Status: ALL CHECKS PASSED → SHIP.** This *reclassifies the item from a "pruning
+  refinement" to a LATENT SEARCH-CORRECTNESS BUG FIX* (hence bug/search): node-level
+  `return alpha` pruned interior **PV nodes** (only `isRoot` excluded) + tactical
+  nodes ≤3-ply, without searching a single capture/promotion/check. Like #44, it was
+  **invisible across the entire t5→t19 ladder** (every baseline carried it, so it
+  cancelled in every incremental A/B) and only surfaced when the futility *structure*
+  was A/B'd. **Next: flip `ENABLE_MOVE_LEVEL_FUTILITY` default → ON and tag
+  baseline-t20** — the largest single gain in program history.
 
-**Pruning-stack audit (NEW high-priority thread, opened by the #45 +345 result).**
-If node-level futility leaked ~+345 self-play, the sibling forward-pruning levers —
-all written in the same era, same node-level style — are now prime suspects for the
+**Pruning-stack audit (NEW high-priority thread, opened by the #45 result).**
+If node-level futility leaked ~+350, the sibling forward-pruning levers — all
+written in the same era, same node-level style — are now prime suspects for the
 same latent-leak class. Audit each behind its own flag, complexity-gate + two-machine:
   - **Razoring** ([search.cpp] `RAZORING_MARGIN=400`, depth 2–4, `!in_check`,
     `!isRoot`): drops depth by 1 when `eval + 400 < alpha`. Node-level, no PV guard,
