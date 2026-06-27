@@ -9,6 +9,37 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t20 — move-level futility (#45): latent search-correctness bug fix
+= t19 + replaced node-level futility (`return alpha` before the move loop when
+`eval + (100+50·depth) ≤ alpha`, depth ≤3 — which bailed the WHOLE node incl.
+interior **PV nodes** and tactical replies) with **move-level** pruning: inside
+the loop skip only *quiet, non-promotion, non-checking* moves, still searching
+every tactic; raise `best_score` to the futility bound so the fail-low / TT
+upper-bound stays correct. One ~10-line change behind `ENABLE_MOVE_LEVEL_FUTILITY`
+(default flipped ON). **This was a latent search-correctness bug invisible across
+the entire t5→t19 ladder** — every baseline carried the identical node-level
+futility, so it cancelled in every incremental A/B and only surfaced when the
+futility *structure* itself was A/B'd (cf. #44).
+
+**The largest single gain in the program's history.**
+- **Two-machine SPRT vs t19 (10+0.1) — both legs H1-accept:** AMD **+345.15 ±
+  60.79**, 87.94%/170g, LOS 100%, Ptnml [0,0,9,23,53]; Intel **+355.00 ± 71.85**,
+  88.53%/171g, LOS 100%, Ptnml [0,2,8,17,58]. Magnitude (~6× any prior ship)
+  triggered a sanity gate, NOT shipped on the SPRT alone.
+- **Binary/source audit (Intel):** `huginn_t19.exe` byte-identical to the tag,
+  `current` carries only the flag, clean isolation — not a build artifact.
+- **External anchors (AMD, 200g each) — confirm it's real, not self-play:**
+  control t19 vs Stash 12.0 = 51.25% (Stash not crippled, harness sound); candidate
+  vs Stash 12.0 (1886) **90.5%**, Stash 13.0 (1972) **86.75%**, Stash 17.0 (2298)
+  **56.75% / +47** (clean, non-saturated pin → ~2345). Cross-family 3-way RR:
+  vs MTLChess v0.5 (2314) **61.0%** (~2392 on the MTL ladder, +9pp-favorable
+  non-transitivity), vs v0.3 (1984) **88.2%**, and v0.3–v0.5 landed 12.5% = exactly
+  its 330-Elo gap (anchors calibrated).
+- **Strength: ~2350–2390 CCRL-ladder (≈ +510 over t19's ~1834).** Crosses a
+  strength class. Artifacts: `gauntlet/mlf_vs_t19_*.pgn`, `mlf_vs_stash{12,13,17}.pgn`,
+  `t19_vs_stash12_control.pgn`, `rr_mlf_mtl03_mtl05.pgn`. Pending: LTC (60+0.6)
+  confirmation overnight → then the `v2.2` release.
+
 ### baseline-t19 — safe mobility (#9 round 9)
 = t18 + per-piece-type mobility weights over a *safe* area (exclude own-occupied
 + enemy-pawn-attacked squares; the queen also excludes enemy-minor-attacked, the

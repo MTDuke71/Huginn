@@ -13,17 +13,23 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t19` — **safe mobility** (#9 round 9), the
-  latest ship on the t5→t19 ladder, two-machine confirmed (AMD +5.9 / Intel
-  +10.4 vs t18). **The full baseline history — every tag, what it added, and
-  its SPRT result — is in [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent:
-  t19 safe mobility · t18 mate-distance pruning · t17 the #44 repetition fix
-  (~+48 external Elo, ≈1834 CCRL) · t16 king safety · t15 threats.
+- ✅ **Baseline tag**: `baseline-t20` — **move-level futility** (#45), a latent
+  search-correctness bug fix: the old node-level futility `return alpha` bailed
+  whole nodes (incl. PV + tactical replies); now only quiet non-checking moves are
+  skipped. **Two-machine confirmed (AMD +345 / Intel +355 vs t19, both ~88% / LOS
+  100%), audited (not a build artifact), and externally validated** (vs Stash 17.0
+  56.75%/+47 clean pin; vs MTLChess v0.5 61%). The largest single gain in the
+  program. **The full baseline history — every tag, what it added, and its SPRT
+  result — is in [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t20 move-level
+  futility · t19 safe mobility · t18 mate-distance pruning · t17 the #44 repetition
+  fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 203 GoogleTest cases
-- ✅ **Strength**: **~1834 CCRL-Blitz** as of `baseline-t17` (2026-06-16) —
-  t17 vs Stash 12.0 (1886) = 42.58% / −51.92 ± 24.5 (600g, AMD), single-anchor
-  estimate; the #44 fix added ~+48 external Elo (gap to Stash 12 ~halved). The
-  earlier 3-anchor MLE was **~1818 ± 30 Elo** (10+0.1, no book) as of
+- ✅ **Strength**: **~2350–2390 CCRL-ladder** as of `baseline-t20` (2026-06-27,
+  ≈ +510 over t19) — non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, and
+  MTLChess v0.5 (2314) 61% → ~2392 (the +9pp-favorable MTL non-transitivity). t19
+  itself was ~1834 (t17 vs Stash 12.0 42.58%, +48 from #44). LTC (60+0.6)
+  confirmation pending → `v2.2` release. The earlier 3-anchor MLE was **~1818 ±
+  30 Elo** (10+0.1, no book) as of
   baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
   (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old
   "~1500-1700" (that figure predates the t5→t11 stack: magic bitboards, TT-bound

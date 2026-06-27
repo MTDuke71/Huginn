@@ -178,7 +178,7 @@
 // the tactical-leak fix alone. Depth-narrowing (==1/<=2) and a PV-node guard are
 // follow-up knobs if this clears.
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
-#define ENABLE_MOVE_LEVEL_FUTILITY 0
+#define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
