@@ -166,6 +166,20 @@
 #ifndef ENABLE_SCALED_NMP_R
 #define ENABLE_SCALED_NMP_R 0
 #endif
+// ENABLE_MOVE_LEVEL_FUTILITY: BACKLOG #45 — replace the node-level futility
+// early-return (`return alpha` before the move loop, which skips EVERY reply
+// incl. captures/promotions/checks) with Fruit-style move-level pruning: inside
+// the loop skip only QUIET, non-promotion, non-checking moves, still searching
+// every tactic. Same soundness class as #44/MDP (stop pruning tactics), not a
+// speed lever. Default OFF → flag-off is byte-identical to t19 (the node-level
+// `return alpha` path is unchanged; the move-loop skip is compiled out). This
+// first cut isolates ONLY the node→move level change: it keeps the existing
+// depth<=3 envelope and the !isRoot (not full-PV) guard, so the SPRT measures
+// the tactical-leak fix alone. Depth-narrowing (==1/<=2) and a PV-node guard are
+// follow-up knobs if this clears.
+#ifndef ENABLE_MOVE_LEVEL_FUTILITY
+#define ENABLE_MOVE_LEVEL_FUTILITY 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1950,16 +1964,24 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // Calculate safety margin based on remaining depth
         futility_margin = FUTILITY_MARGIN_BASE + (FUTILITY_MARGIN_PER_PLY * depth);
         
-        // If even with the safety margin we can't reach alpha, prune this node
+        // If even with the safety margin we can't reach alpha, prune.
         if (eval + futility_margin <= alpha) {
             futility_prune = true;
 
 #if ENABLE_INFO_DIAGNOSTICS
             info.futility_cuts++;
 #endif
-            
-            // Return alpha (or slightly better) since no move can improve it significantly
+
+#if !ENABLE_MOVE_LEVEL_FUTILITY
+            // Node-level (default): bail the whole node before the move loop.
+            // Returns alpha since no move can lift eval to alpha. NOTE: this also
+            // skips tactical replies (captures/promotions/checks) — exactly the
+            // leak BACKLOG #45 (ENABLE_MOVE_LEVEL_FUTILITY) addresses.
             return alpha;
+#endif
+            // Move-level (#45, flag ON): keep futility_prune set and fall through.
+            // The move loop skips only quiet, non-checking, non-promotion moves,
+            // so every tactic is still searched.
         }
     }
 
@@ -2047,6 +2069,25 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             int opp_king = pos.king_sq[int(pos.side_to_move)];
             return opp_king >= 0 && SqAttackedBB(opp_king, pos, !pos.side_to_move);
         };
+
+#if ENABLE_MOVE_LEVEL_FUTILITY
+        // BACKLOG #45: move-level futility. The node-level test already proved
+        // eval + futility_margin <= alpha (futility_prune). Skip ONLY quiet,
+        // non-promotion, non-checking moves — tactics are still searched, unlike
+        // the node-level early-return. Raise best_score to the futility bound
+        // (<= alpha) so the node's fail-low / TT upper-bound stays correct even
+        // if every move is pruned. gives_check() reads the post-MakeMove position.
+        if (futility_prune &&
+            !move_list.moves[i].is_capture() &&
+            !move_list.moves[i].is_promotion() &&
+            !gives_check()) {
+            const int futility_value = get_static_eval() + futility_margin;
+            if (futility_value > best_score) best_score = futility_value;
+            pos.TakeMove();
+            assert_search_position_integrity(pos, "after move-level futility TakeMove");
+            continue;
+        }
+#endif
 
         if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES &&
             !in_check && !move_list.moves[i].is_capture() &&

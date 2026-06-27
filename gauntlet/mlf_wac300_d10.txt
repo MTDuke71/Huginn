@@ -1,0 +1,80 @@
+# WAC300.epd  depth=10  299 positions
+# elapsed 211s
+
+  OFF(node)  solved 143/299   nodes 8,719,716
+  ON(move)   solved 184/299   nodes 8,897,544
+
+  node delta ON-OFF: +177,828 (+2.0%)
+  solve delta ON-OFF: +41
+
+  solve-status flips (69):
+  ID           bm         OFF(node)              ON(move)              
+  WAC.013      Qxf8+      MISS Bf3               OK  Qxf8              
+  WAC.018      Rh8        OK  Rh8                MISS Kf1              
+  WAC.022      Ba2 Nxf7   MISS Be2               OK  Nxf7              
+  WAC.023      g4         MISS Rc1               OK  g4                
+  WAC.029      c6         MISS Qb5               OK  c6                
+  WAC.030      Nxd6       MISS Nd2               OK  Nxd6              
+  WAC.032      Qd8+       OK  Qd8                MISS Ne2              
+  WAC.035      Rxh7+      MISS Rf7               OK  Rxh7              
+  WAC.041      Ka5 Kc5 b7 OK  b7                 MISS Re7              
+  WAC.043      Be7 Qxa8   MISS Bd6               OK  Be7               
+  WAC.048      Rb4        MISS Re8               OK  Rb4               
+  WAC.052      Re7 c4     MISS Nc3               OK  Re7               
+  WAC.062      Rxg3+      MISS Rb8               OK  Rxg3              
+  WAC.063      Nxf7       MISS Rab1              OK  Nxf7              
+  WAC.066      Qxe5       MISS Rde8              OK  Qxe5              
+  WAC.069      f3 h3      MISS Re8               OK  f3                
+  WAC.073      Qd2        MISS Qg4               OK  Qd2               
+  WAC.074      Qf1+       MISS Qxe4              OK  Qf1               
+  WAC.077      Ng3        MISS c2                OK  Ng3               
+  WAC.079      Qxh2+      MISS O-O-O             OK  Qxh2              
+  WAC.081      Bd6        MISS Bxg2              OK  Bd6               
+  WAC.088      Rxg2+      MISS Qg5               OK  Rxg2              
+  WAC.098      Nxe4       MISS Nb3               OK  Nxe4              
+  WAC.100      Be3 b6+    MISS Kb3               OK  Be3               
+  WAC.101      Bc3        MISS Rf2               OK  Bc3               
+  WAC.103      Qxg6+      MISS Rxg6              OK  Qxg6              
+  WAC.106      Nf2+       MISS Rxf1              OK  Nf2               
+  WAC.111      Qf1+       MISS Qd1               OK  Qf1               
+  WAC.114      Bxh7+      MISS gxh5              OK  Bxh7              
+  WAC.119      Qxd3       MISS Nf2               OK  Qxd3              
+  WAC.125      Bxd4+      MISS Nf4               OK  Bxd4              
+  WAC.130      Qh6 Qh8    MISS Rh6               OK  Qh6               
+  WAC.134      Rd1+       MISS Rb8               OK  Rd1               
+  WAC.137      Rd7        MISS Ra7               OK  Rd7               
+  WAC.144      d3         MISS Bxe2              OK  d3                
+  WAC.152      Ne4        OK  Ne4                MISS Nd5              
+  WAC.157      Ne7+       MISS Nf4               OK  Ne7               
+  WAC.164      Rxc4+      MISS Rd2               OK  Rxc4              
+  WAC.165      Re2        OK  Re2                MISS Qd8              
+  WAC.166      d4         MISS Qc1               OK  d4                
+  WAC.168      Qd2+       MISS Rc8               OK  Qd2               
+  WAC.170      Qxc4       MISS Rf7               OK  Qxc4              
+  WAC.172      Qe1+       MISS Qf5               OK  Qe1               
+  WAC.174      Nxg2       OK  Nxg2               MISS g5               
+  WAC.179      Qg1+       MISS Bg4               OK  Qg1               
+  WAC.180      Nxd5       MISS Qc7               OK  Nxd5              
+  WAC.187      Nh3+       MISS Qxe4              OK  Nh3               
+  WAC.189      Re8+       MISS a4                OK  Re8               
+  WAC.201      Ra7        MISS Ra8               OK  Ra7               
+  WAC.209      Rxe5+      OK  Rxe5               MISS Bf6              
+  WAC.216      Nxf7 a4    OK  a4                 MISS Ng5              
+  WAC.225      Qh4+       OK  Qh4                MISS Qc7              
+  WAC.233      Nb3        MISS h6                OK  Nb3               
+  WAC.234      Rb3        MISS Qg4               OK  Rb3               
+  WAC.236      Rc1        MISS Qxe1              OK  Rc1               
+  WAC.248      Qc5+       MISS Qxd5              OK  Qc5               
+  WAC.249      c5 d5      OK  d5                 MISS Ne5              
+  WAC.251      Qe5 Qf4    OK  Qf4                MISS Qb2              
+  WAC.261      Nd4        MISS Qxg2              OK  Nd4               
+  WAC.262      Rh6        OK  Rh6                MISS Bf6              
+  WAC.264      Qe5 Rab8   MISS Rxd4              OK  Rab8              
+  WAC.267      Nc7+       MISS a3                OK  Nc7               
+  WAC.270      Qg4        OK  Qg4                MISS Rxe8             
+  WAC.273      Ng3+ g3    MISS Qe6               OK  Ng3               
+  WAC.282      Rh8+       MISS Re1               OK  Rh8               
+  WAC.284      Nf5        MISS Qf2               OK  Nf5               
+  WAC.286      Rxd5+      MISS c4                OK  Rxd5              
+  WAC.296      Rd4+ Rf8   MISS Rd6               OK  Rf8               
+  WAC.298      Qh8+       OK  Qh8                MISS Qc8              

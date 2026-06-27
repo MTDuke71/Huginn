@@ -73,7 +73,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 45 | Move-level (Fruit-style) futility vs current node-level | **OPEN** (2026-06-17) — pruning-soundness experiment; node-level may leak tactics | feature/search | medium |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **IMPLEMENTED, READY FOR SPRT** (2026-06-26) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Fixed-depth WAC300 @ d10: **+41 solves (143→184) for +2% nodes** — confirms node-level was leaking tactics. Two-machine SPRT vs t19 next. | feature/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -480,6 +480,33 @@ structure could *gain* by not leaking tactics, or wash. **Gate with the
 complexity-gate pair (fixed-depth + fixed-time SPRT), two-machine to ship.**
 Caveat per #17/#6: search-efficiency tweaks have a mixed record here — but this
 is a *soundness* change (stop pruning tactics), a different class, like #44.
+
+**IMPLEMENTED 2026-06-26 — `ENABLE_MOVE_LEVEL_FUTILITY`, default OFF (`main`
+byte-identical to t19).** First cut isolates *only* the node→move change: when the
+node-level test fires (`eval + (100+50·depth) <= alpha`, `depth<=3`, `!in_check`,
+`!isRoot`) it no longer `return alpha`s; instead the move loop skips a move only
+when it is quiet (`!capture && !promotion`) **and** `!gives_check()` (the same
+post-MakeMove check the LMR exemption uses), raising `best_score` to the futility
+bound so the fail-low / TT upper-bound stays correct. **Kept the existing
+`depth<=3` envelope and `!isRoot` (not full-PV) guard** so the SPRT measures the
+tactical-leak fix alone; depth-narrowing (`==1`/`<=2`) and a PV-node guard are
+follow-up knobs if this clears. 203/203 tests pass on both arms.
+
+- **Fixed-depth tactical diagnostic (complexity gate, local) — strongly positive.**
+  WAC300 @ depth 10, both arms scored by SAN-match (`tools`-style harness):
+  **OFF(node) 143/299 → ON(move) 184/299 = +41 solves** (55 MISS→OK, 14 OK→MISS)
+  for **+2.0% nodes** (8.72M→8.90M). The MISS→OK set is overwhelmingly the
+  captures/checks node-level futility was pruning unseen (Qxf8+, Nxf7, Rxh7+,
+  Qxh2+, Rxg2+, Bxh7+, Qxg6+, Nxe4 …) — direct confirmation of the leak. Absolute
+  counts are deflated by SAN-format false-negatives, but the same scoring hits both
+  arms so the **+41 delta is robust**. lct2 @ d10 is too shallow to read (1/35 both
+  arms; +21% nodes, no solve signal). Diagnostic script + raw output in the session
+  scratchpad.
+- **Status: READY FOR TWO-MACHINE SPRT vs t19.** Build the test arm with
+  `-DENABLE_MOVE_LEVEL_FUTILITY=1` (per-machine, like `build/msvc-nmpon`). The
+  fixed-depth gain is the largest local tactical signal since the #44 repro; the
+  game gauntlet decides whether the recovered tactics convert (the 14 OK→MISS show
+  it isn't strictly dominant). +2% nodes ⇒ fixed-time cost is negligible.
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
