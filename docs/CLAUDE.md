@@ -13,22 +13,24 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t20` — **move-level futility** (#45), a latent
-  search-correctness bug fix: the old node-level futility `return alpha` bailed
-  whole nodes (incl. PV + tactical replies); now only quiet non-checking moves are
-  skipped. **Two-machine confirmed (AMD +345 / Intel +355 vs t19, both ~88% / LOS
-  100%), audited (not a build artifact), and externally validated** (vs Stash 17.0
-  56.75%/+47 clean pin; vs MTLChess v0.5 61%). The largest single gain in the
-  program. **The full baseline history — every tag, what it added, and its SPRT
-  result — is in [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t20 move-level
-  futility · t19 safe mobility · t18 mate-distance pruning · t17 the #44 repetition
-  fix · t16 king safety · t15 threats.
+- ✅ **Baseline tag**: `baseline-t21` — **TT-clear-on-newgame (#46) + time-management
+  fix (#47)**, both surfaced by watching a real 5+2 game. t20 left ~half its clock
+  unused (iteration gate bailed at budget/4) and never cleared the TT between games;
+  t21 fixes both. **+126.97 ± 24.60 vs t20 (10+0.1, 400g, LOS 100%, zero
+  time-forfeits)** — single-machine decisive (Intel confirms on push). Prior:
+  `baseline-t20` — **move-level futility** (#45), a latent search-correctness bug
+  fix (node-level `return alpha` bailed whole nodes incl. PV + tactics); two-machine
+  +345/+355 vs t19, audited, externally validated (~2350–2390). **Full history in
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t21 TT-clear + time-mgmt · t20
+  move-level futility · t19 safe mobility · t18 mate-distance pruning · t17 #44
+  repetition fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 203 GoogleTest cases
-- ✅ **Strength**: **~2350–2390 CCRL-ladder** as of `baseline-t20` (2026-06-27,
-  ≈ +510 over t19) — non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, and
-  MTLChess v0.5 (2314) 61% → ~2392 (the +9pp-favorable MTL non-transitivity). t19
-  itself was ~1834 (t17 vs Stash 12.0 42.58%, +48 from #44). LTC (60+0.6)
-  confirmation pending → `v2.2` release. The earlier 3-anchor MLE was **~1818 ±
+- ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
+  non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, MTLChess v0.5 (2314)
+  61% → ~2392 (+9pp-favorable MTL non-transitivity). **t21 adds +127 self-play over
+  t20** (clock-usage fix), so it is materially stronger again in real play; its
+  external LTC (60+0.6) rating is pending → feeds the `v2.2` release. t19 was ~1834
+  (t17 vs Stash 12.0 42.58%, +48 from #44). The earlier 3-anchor MLE was **~1818 ±
   30 Elo** (10+0.1, no book) as of
   baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
   (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old

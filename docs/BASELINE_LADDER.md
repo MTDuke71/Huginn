@@ -9,6 +9,29 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t21 — TT-clear-on-newgame (#46) + time-management fix (#47)
+= t20 + two fixes surfaced by watching a 5+2 Arena game (t20 vs MTLChess v0.5):
+the TT was 100% full from game 2 on, and Huginn finished 50 moves with **2:48
+unused** while the opponent had 0:40.
+- **#46 — clear TT + search tables on `ucinewgame`.** `reset()` (the only prior
+  newgame action) just reset two flags; it also runs per-`go`, so the clear lives
+  in the ucinewgame handler, not reset(). Stops stale prior-game entries being
+  probed on a transposition (the #44 warm-TT hazard, across games; no aging yet).
+- **#47 — use the clock.** The iteration-start gate bailed at `budget/4` (assumed
+  the next iteration costs 3× cumulative elapsed), leaving ~75% of the clock
+  unused → now `budget/2` (EBF≈2: a new iteration ≈ doubles cumulative time).
+  Sudden-death/increment allocation uses `inc/2` not `inc/4`. The per-move
+  `0.6×remaining` cap + checkup hard-stop still prevent flagging.
+- Both were **invisible to the blitz A/B ladder** (they hit t19/t20 equally, so
+  they cancelled) — same blind spot as #44/#45; caught only by watching real play.
+- **Validation — t21 vs t20 (10+0.1, 400g): +126.97 ± 24.60 Elo, 67.5%, LOS 100%**
+  (186W/46L/168D, Ptnml [1,17,62,81,39]), **zero time-forfeits** (all terminations
+  normal). Single-machine decisive freeze (sign-flip impossible at this magnitude;
+  precedent t12) — Intel confirms on push. 203/203 tests pass. The +127 at *blitz*
+  is mostly #47: the gate bug was TC-independent, so reclaiming the unused clock
+  buys a deeper search every move at every TC. LTC (60+0.6) rating pending →
+  feeds the v2.2 release. Artifact: `gauntlet/t21_vs_t20.pgn`.
+
 ### baseline-t20 — move-level futility (#45): latent search-correctness bug fix
 = t19 + replaced node-level futility (`return alpha` before the move loop when
 `eval + (100+50·depth) ≤ alpha`, depth ≤3 — which bailed the WHOLE node incl.
