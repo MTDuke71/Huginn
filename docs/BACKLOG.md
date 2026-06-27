@@ -251,6 +251,27 @@ Passed-pawn / drawishness drop in priority. See the round-7+ roadmap under
 #9/#35. **Validation hook:** a shipped KS term should measurably shrink the
 middlegame over-rating — re-run the harness on a larger game set to confirm.
 
+**RE-DIAGNOSIS vs t21 (2026-06-27) — the conclusion PARTIALLY FLIPS: search
+soundness, not eval, was the bigger lever.** Re-ran the harness on the same 6649
+positions (`run_cc_analysis_t21.bat`, reusing the t15 SF ground truth by FEN;
+`tools/cc_analysis_t21.csv` vs the saved `cc_analysis20260614.csv`). t15→t21 deltas:
+- **Huginn==SF 42.8%→48.5% (+5.6)**; middlegame 40.4→47.7 (+7.3), quiet 33.6→39.2
+  (+5.7), tactical 70.7→76.2 (+5.5); **fair cp-loss 23.9→15.6 (−8.3)**.
+- **Over-optimism (the #41 fingerprint): middlegame 44.2→29.0cp (−15.1)**, opening
+  29.6→17.9, endgame 21.3→15.6. **Mean depth only +0.6 ply.**
+- **Reading:** t15→t21 is overwhelmingly *search* (#45 futility +510, #47 clock
+  +127 dwarf the ~+30 from the t16–t19 eval ships), yet it cut the middlegame
+  over-optimism #41 had labelled an *eval* hole by a third, and lifted *quiet*-move
+  match — at near-constant depth (so it's soundness/recovered-tactics, not deeper
+  search). **So a large share of what #41 attributed to eval quality was actually
+  the broken search.** This is the data behind re-prioritising the **pruning-stack
+  audit + deferred-fix re-tests over threats-round-2** — #41's "lead with eval"
+  order was set on the buggy search. **Not a full flip:** quiet (39%) still trails
+  tactical (76%) and middlegame optimism is still 29cp, so positional eval retains
+  *some* headroom — just less than #41 implied. Caveat: cumulative t15→t21, not an
+  isolated search-only delta (no t19 cc-baseline exists), but the eval ships were
+  tiny vs the search fixes, so the attribution holds.
+
 ### MTLChess v0.6 source comparison (2026-06-14) — adds a *search* track to #41
 
 Read MTLChess v0.6's `search.zig` + `eval.zig` as an answer key (it's the same
