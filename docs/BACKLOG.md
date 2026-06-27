@@ -562,6 +562,15 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
     not a contradiction. (Corrects the earlier "self-play inflates → external will be
     a fraction" caveat: WRONG for this class — a pervasive bug hurts vs every opponent
     ~equally, so external ≈ self-play.)
+  - **Rating bracket (AMD, 200g each) — two anchors AGREE at ~2285 Stash-ladder Elo:**
+    vs **Stash 12.0** (1886) 90.50% / +391.57 → ~2277; vs **Stash 13.0** (1972)
+    86.75% / +326.42 ± 55.05 (156W/9L/35D, all normal) → ~2298. Both saturate, but
+    the two estimates agreeing within ~20 (despite the anchors being 86 apart) is the
+    real check — not score-saturation noise. ≈ **+450 over t19's ~1834**. Caveat:
+    saturated score% has wide CCRL error and the Stash-ladder→official-CCRL
+    calibration isn't pinned (would need a stronger anchor than Stash 13, e.g. Stash
+    14 = 2060, not on disk; or a full round-robin). Artifacts `gauntlet/mlf_vs_stash12.pgn`,
+    `gauntlet/mlf_vs_stash13.pgn`, `gauntlet/t19_vs_stash12_control.pgn`.
 - **Status: ALL CHECKS PASSED → SHIP.** This *reclassifies the item from a "pruning
   refinement" to a LATENT SEARCH-CORRECTNESS BUG FIX* (hence bug/search): node-level
   `return alpha` pruned interior **PV nodes** (only `isRoot` excluded) + tactical

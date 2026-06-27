@@ -1,0 +1,423 @@
+[INFO  ] [08:23:16.247600] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [08:23:16.247705] <   > fastchess --- Setting seed to: 3778854008605330296
+[INFO  ] [08:23:16.276940] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [08:23:16.286925] <   > fastchess --- Starting tournament...
+[WARN  ] [08:23:16.676065] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:16.682771] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:16.682856] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:16.697757] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:36.271459] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:38.246001] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:42.488888] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:46.044199] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:56.914778] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:23:58.010683] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:04.377288] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:16.748384] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:17.878296] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:18.181409] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:30.296031] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:30.923179] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:38.285059] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:40.417450] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:49.283194] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:24:56.116983] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:04.820782] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:07.864785] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:08.664317] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:16.665636] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:21.158672] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:23.747173] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:29.306452] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:34.942004] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:42.641616] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:46.893389] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:48.468195] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:25:53.502437] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:03.872987] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:09.250058] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:11.442064] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:12.257762] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:25.911211] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:26.740939] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:29.885307] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:39.055428] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:40.042090] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:43.326554] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:45.956946] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:54.826879] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:26:55.841482] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:04.839842] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:14.459197] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:14.799138] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:14.989727] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:28.753603] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:29.349488] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:35.336276] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:37.727360] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:48.163190] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:51.835578] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:27:54.959627] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:03.930737] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:06.132714] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:12.139267] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:19.363342] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:23.484526] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:29.720451] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:31.354544] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:38.664646] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:41.843446] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:44.848546] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:47.219644] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:28:52.057818] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:00.067159] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:09.103068] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:11.858746] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:13.071365] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:14.565050] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:20.480171] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:37.930143] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:41.456883] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:42.961839] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:43.616283] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:53.822003] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:29:58.010167] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:03.097680] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:08.522255] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:13.326293] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:16.496853] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:26.286172] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:26.299917] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:30.241828] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:33.290406] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:37.913018] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:48.906661] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:50.517823] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:51.608015] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:57.124828] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:30:58.838984] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:06.115572] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:06.205979] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:16.548670] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:19.340324] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:22.763387] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:23.272967] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:37.125694] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:42.563257] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:51.590252] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:53.253393] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:31:55.019975] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:03.655175] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:06.172930] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:11.931028] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:28.461064] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:30.272878] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:41.213143] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:47.516032] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:50.558421] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:32:53.306073] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:05.021042] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:06.183035] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:09.731876] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:13.936833] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:30.184923] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:31.782374] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:34.236399] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:34.621915] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:53.052429] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:56.279890] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:33:56.791159] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:02.485129] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:13.413935] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:16.955759] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:17.566082] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:24.851451] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:28.055262] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:31.505906] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:32.361678] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:46.064016] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:48.902575] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:51.901988] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:34:59.105469] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:05.928191] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:14.924556] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:15.107376] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:15.623568] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:27.979365] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:30.265563] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:30.528171] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:32.981925] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:45.585942] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:45.855223] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:48.196947] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:35:58.450103] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:04.283332] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:08.900795] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:17.323046] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:21.626418] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:25.263017] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:25.300469] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:28.952811] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:41.926117] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:48.270208] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:49.211348] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:36:49.819387] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:04.010499] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:08.459065] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:11.226540] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:11.264220] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:24.691849] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:24.961478] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:32.332966] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:32.592820] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:35.932588] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:36.366169] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:57.867470] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:59.633111] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:37:59.883905] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:10.134105] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:15.576466] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:16.560979] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:17.207969] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:29.273498] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:34.198776] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:34.525795] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:36.510149] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:41.052680] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:38:52.042277] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:09.131053] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:14.408865] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:24.239131] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:26.316293] <   > fastchess --- Warning; No bestmove found in the last line from Stash_13.0 because: Element 'bestmove' not found
+
+[WARN  ] [08:39:26.317306] <  6> fastchess --- Engine Stash_13.0 loses on time
+[WARN  ] [08:39:26.329783] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:27.641115] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:37.792814] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:39.076431] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:40.288037] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:50.851692] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:39:56.749338] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:02.787949] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:04.423809] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:17.262577] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:20.040699] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:24.567022] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:26.038424] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[WARN  ] [08:40:32.076626] <   > fastchess --- Warning; Stash_13.0 doesn't have option OwnBook
+
+[INFO  ] [08:40:58.336753] <   > fastchess --- 
+
+[INFO  ] [08:40:58.336811] <   > fastchess --- Player: Stash_13.0
+
+[INFO  ] [08:40:58.337535] <   > fastchess ---   Timeouts: 1
+
+[INFO  ] [08:40:58.337563] <   > fastchess ---   Crashed: 0
+
+[INFO  ] [08:40:58.337581] <   > fastchess --- 
+
+[INFO  ] [08:40:59.209396] <   > fastchess --- Finished match
+
+[INFO  ] [08:40:59.209467] <   > fastchess --- Total Time: 00:17:42 (hours:minutes:seconds)
+
+
