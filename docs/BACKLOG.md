@@ -73,7 +73,7 @@
 | 41 | Played-game calibration study (round-7 evidence + harness) | **DONE** (2026-06-14) — sets round-7 order | research/eval | high |
 | 43 | NMP soundness/refinement round (verification + scaled R + MDP) | **DONE** — sub-lever 3 (MDP) **SHIPPED t18**; #1 NMP-verify rejected; #2 scaled-R **PARKED** (two-machine neutral: AMD 0.00 / Intel +3.82). Round closed. | feature/search | high |
 | 44 | Repetition detector used buffer size, not ply → won games drawn | **FIXED** (2026-06-16) — AMD gauntlet +62 H1 (bundled w/ #43); Intel leg next | bug | high |
-| 45 | Move-level (Fruit-style) futility vs current node-level | **INTEL SPRT H1-ACCEPT, MAGNITUDE ANOMALOUS** (2026-06-27) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Fixed-depth WAC300 @ d10: +41 solves (143→184) for +2% nodes. Intel SPRT vs t19 accepted H1 @170g but at **+355 Elo / 88.53%** — ~6× any prior ship and inconsistent with the +2%-node diagnostic; **suspect baseline/build mismatch — VERIFY before trusting.** AMD leg pending. | feature/search | high |
+| 45 | Move-level (Fruit-style) futility vs current node-level | **TWO-MACHINE H1-ACCEPT @ +355, AUDITED — AWAITING EXTERNAL ANCHOR** (2026-06-27) — `ENABLE_MOVE_LEVEL_FUTILITY` (default OFF). Intel SPRT vs t19 H1 @170g at **+355 / 88.53%**; AMD same-sign. Magnitude is ~6× any prior ship, so **Intel binary/source audit done: t19 binary == tag (full-speed), `current` carries the flag, clean isolation — NOT a build artifact.** Decider now running: `current` + control vs **Stash 12** on AMD (prelim 90.5% / +391). Measured-but-unverified until the anchor lands. | feature/search | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 38 | Displayed PV continues past fifty-move rule | **FIXED** (2026-06-16) — cosmetic display truncation | bug | low |
 | 5  | Recalibrate vs external opponents (CCRL scale) | **OPEN** | maintenance | medium |
@@ -507,8 +507,10 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
   - **Intel: H1 accepted @170g — +355.00 ± 71.85 Elo** (nElo +498.14 ± 52.23),
     88.53% (W137/L6/D27, Points 150.5), LOS 100%, DrawRatio 9.41%, PairsRatio
     37.50, Ptnml [0,2,8,17,58], WL/DD 1.00, LLR 2.97 (-2.94,2.94)[0,10]. 13:45
-    wall. Artifacts `gauntlet/huginn_vs_t19_intel.pgn` +
-    `gauntlet/fastchess_t19_intel.log`. All terminations `normal` (no
+    wall. Artifacts `gauntlet/mlf_vs_t19_intel.pgn` (171g) +
+    `gauntlet/mlf_fastchess_t19_intel.log` (renamed from the bat's generic
+    `huginn_vs_t19_intel.*`, which the #43-s2 scaled-NMP intel run also used —
+    kept distinct so neither clobbers the other). All terminations `normal` (no
     crashes/forfeits).
   - **AMD: same result (reported same-sign H1-accept at ~the same magnitude).**
     Exact numbers + artifact pending push (`gauntlet/*_t19_amd.*`).
@@ -527,16 +529,39 @@ follow-up knobs if this clears. 203/203 tests pass on both arms.
     (e.g. a mis-built t19 binary, or `current` accidentally bundling more than
     the futility flag) reproduces *identically* on both — two-box agreement only
     rules out per-box hardware flukes, not a systematic recipe bug.
-- **Status: VERIFY BEFORE TRUSTING (next actions, in order):**
-  1. **Audit the binaries.** Confirm `current` = t19 + *only*
-     `ENABLE_MOVE_LEVEL_FUTILITY=1` (no bundled flags — note the #43-s2 flag was
-     reconciled OFF in 65f19e8); confirm both boxes' `huginn_t19.exe` are clean
-     Release builds from the tag (bench/nps + a fixed-depth signature vs the tag).
-  2. **External anchor sanity check.** Run the `current` build vs **Stash 12.0**:
-     a real +355 must turn t17's 42.58% into a rout and challenge Stash 13+. If
-     it doesn't move much, the self-play +355 is an artifact.
-  3. Only if both hold, treat as a (huge) ship and re-baseline. Until then this
-     is logged as **measured-but-unverified.**
+- **Binary + source audit (Intel, 2026-06-27) — ALL THREE ARTIFACT THEORIES
+  RULED OUT. The Intel self-play test was a clean, legitimate t19 vs
+  t19+move-level-futility isolation.** Signature = `go depth 14` from startpos,
+  single-thread, `OwnBook=false`, default hash (deterministic node counts):
+  1. **`source current` (flags OFF) ≡ t19** — `git diff baseline-t19..HEAD --
+     src/` is *only* Doxygen comments + two default-OFF flag guards
+     (`ENABLE_SCALED_NMP_R=0` → flat R=4 = t19; `ENABLE_MOVE_LEVEL_FUTILITY=0`).
+     position/zobrist/see/bitboard/polyglot have **0** non-comment code changes;
+     the #43-s2 flag was reconciled OFF in `65f19e8`. So the *only* behavioural
+     delta available to the test arm is the futility flag.
+  2. **fastchess `huginn_t19.exe` IS the tag** — its signature is *byte-for-byte
+     identical* to a fresh `baseline-t19` build (worktree, same preset):
+     d12 4,683,084 / d13 6,833,542 / d14 10,357,442 nodes, scores cp 18/26/37,
+     identical PVs, **~3.5 Mnps** (full-speed Release, not debug/stale). The
+     "mis-built baseline" theory is dead.
+  3. **fastchess `current` genuinely carries the flag** — its signature
+     *diverges* from t19 (d14 12,035,479 nodes = +16% from startpos, score cp 27,
+     PV `e2e4 e7e5 b1c3 b8c6 …` vs t19's `… g8f6 …`; both legit lines). So the
+     tested arm really is t19 + the futility change, not an accidental rebuild of
+     t19 (which would have scored ~0, not +355).
+  - **Net: the +355 is NOT a build/baseline/harness artifact on Intel.** Both
+    arms are exactly what they claim; terminations were all `normal`. This
+    *raises* the odds the effect is real — but the magnitude still exceeds the
+    fixed-depth prediction, so the external anchor remains the decider.
+- **Status: ONE CHECK LEFT — external anchor (running on AMD).**
+  - ✅ **Binary/source audit (Intel): DONE — clean isolation, baseline sound.**
+  - ⏳ **External anchor (AMD, in progress):** `current` vs **Stash 12.0**, with a
+    **t19-vs-Stash-12 control** running alongside. Read: if t19 holds its known
+    ~42% (≈1834 CCRL) and `current` posts ~90% (prelim 90.5% / +391), the +355 is
+    corroborated *externally* (external Elo doesn't self-inflate like self-play) →
+    real, ship + re-baseline. If t19 *also* crushes Stash 12, the Stash
+    config/harness is the problem → external numbers void, re-examine.
+  - Until the anchor lands this stays **measured-but-unverified** (not shipped).
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
