@@ -27,10 +27,11 @@ location is derived from the bitboards via `Position::at_sq64()`.
 - ✅ **Comprehensive test suite**: 203 GoogleTest cases
 - ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
   non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, MTLChess v0.5 (2314)
-  61% → ~2392 (+9pp-favorable MTL non-transitivity). **t21 adds +127 self-play over
-  t20** (clock-usage fix), so it is materially stronger again in real play; its
-  external LTC (60+0.6) rating is pending → feeds the `v2.2` release. t19 was ~1834
-  (t17 vs Stash 12.0 42.58%, +48 from #44). The earlier 3-anchor MLE was **~1818 ±
+  61% → ~2392 (+9pp-favorable MTL non-transitivity). **t21 (+127 self-play over t20,
+  clock-usage fix) at LTC: vs Stash 17.0 (2298) 68.65% / +136 ± 20 over 1000g at
+  60+0.6 → ~2434** — markedly above t20's blitz ~2345 vs the same anchor (the longer
+  clock is where #47 pays); zero Huginn time-forfeits. This is the `v2.2` rating.
+  t19 was ~1834 (t17 vs Stash 12.0 42.58%, +48 from #44). The earlier 3-anchor MLE was **~1818 ±
   30 Elo** (10+0.1, no book) as of
   baseline-t11, June 2026 — 3-anchor pooled MLE over 600 games vs Snowy 0.2
   (1868), CDrill 2000 (1949), MTLChess v0.3 (1984). Big jump from the old

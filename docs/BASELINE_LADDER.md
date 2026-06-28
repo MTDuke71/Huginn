@@ -29,8 +29,15 @@ unused** while the opponent had 0:40.
   normal). Single-machine decisive freeze (sign-flip impossible at this magnitude;
   precedent t12) — Intel confirms on push. 203/203 tests pass. The +127 at *blitz*
   is mostly #47: the gate bug was TC-independent, so reclaiming the unused clock
-  buys a deeper search every move at every TC. LTC (60+0.6) rating pending →
-  feeds the v2.2 release. Artifact: `gauntlet/t21_vs_t20.pgn`.
+  buys a deeper search every move at every TC.
+- **LTC rating (60+0.6, AMD, 1000g): t21 vs Stash 17.0 (2298) = 68.65% / +136.16
+  ± 19.87, LOS 100%** (567W/194L/239D, Ptnml [20,46,136,137,161]) → **t21 ≈ ~2434
+  LTC**. Markedly above t20's *blitz* 56.75%/+47 (~2345) vs the same anchor — the
+  longer clock is exactly where #47 pays. **Zero Huginn time-forfeits** (the 4 in
+  the run were all Stash flagging, 0.4%) → the aggressive clock use is safe at LTC.
+  This is the v2.2 rating number. Artifacts: `gauntlet/t21_vs_t20.pgn`,
+  `gauntlet/ltc_t21_vs_stash17.pgn` (the LTC games — conversion/endgame audit
+  material: 219 of 239 draws are 3-folds, cf. #5).
 
 ### baseline-t20 — move-level futility (#45): latent search-correctness bug fix
 = t19 + replaced node-level futility (`return alpha` before the move loop when
