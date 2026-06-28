@@ -47,59 +47,51 @@
 // UCI constants following VICE Part 67 recommendations
 constexpr int UCI_INPUT_BUFFER_SIZE = 400 * 6; // Large buffer for GUI commands
 
-// UCI (Universal Chess Interface) implementation for Huginn chess engine
+/**
+ * @brief UCI protocol front-end: owns the engine + root position, parses GUI
+ *        commands from stdin, and drives searches (async, stoppable).
+ */
 class UCIInterface {
 private:
-    Position position;
-    std::unique_ptr<Huginn::Engine> search_engine;  // Changed from SimpleEngine
-    std::unique_ptr<Huginn::SyzygyTablebase> tablebase;
-    std::atomic<bool> is_searching{false};
-    std::atomic<bool> should_stop{false};
-    // Pointer to running SearchInfo so stop() can update it safely
-    std::atomic<Huginn::SearchInfo*> running_info{nullptr};
-    bool debug_mode = false;
-    int threads = 1; // Default to 1 thread to test for threading issues
-    
+    Position position;                                       ///< Current root position (set by the `position` command).
+    std::unique_ptr<Huginn::Engine> search_engine;          ///< The search engine (owns the transposition table).
+    std::unique_ptr<Huginn::SyzygyTablebase> tablebase;     ///< Syzygy probe wrapper (may be uninitialized).
+    std::atomic<bool> is_searching{false};                  ///< True while a search thread is active.
+    std::atomic<bool> should_stop{false};                   ///< Set by `stop`/`quit` to abort the search.
+    std::atomic<Huginn::SearchInfo*> running_info{nullptr}; ///< Live SearchInfo so stop() can flag it safely across threads.
+    bool debug_mode = false;                                ///< Extra `info string` logging when true.
+    int threads = 1;                                        ///< UCI `Threads` option (the engine is single-threaded).
+
     // Opening book settings
-    bool own_book = false;  // Opening book OFF by default (set OwnBook=true to enable).
-                            // Prevents ad-hoc UCI/analysis runs from silently playing book
-                            // moves instead of searching; gauntlets pass OwnBook explicitly,
-                            // so this default does not affect measured strength.
-    std::string book_file = "src/performance.bin";  // Default book file path
-    
-    // Parse a UCI move string (e.g., "e2e4", "e7e8q") to our internal move format
+    bool own_book = false;  ///< Opening book OFF by default (set OwnBook=true to enable).
+                            ///< Prevents ad-hoc UCI/analysis runs from silently playing book
+                            ///< moves instead of searching; gauntlets pass OwnBook explicitly,
+                            ///< so this default does not affect measured strength.
+    std::string book_file = "src/performance.bin";          ///< Polyglot book path (UCI `BookFile` option).
+
 public:
-    
-    // Split string by whitespace
+    /// @brief Split @p str into whitespace-separated tokens.
     std::vector<std::string> split_string(const std::string& str);
-    
-    // Handle position command
+    /// @brief Handle `position [startpos | fen <fen>] [moves ...]` — set the root position.
     void handle_position(const std::vector<std::string>& tokens);
-    
-    // Handle go command
+    /// @brief Handle `go ...` — parse limits / time controls and launch the search.
     void handle_go(const std::vector<std::string>& tokens);
-    
-    // Handle setoption command
+    /// @brief Handle `setoption name <id> value <v>` (Hash, Threads, OwnBook, BookFile, SyzygyPath).
     void handle_setoption(const std::vector<std::string>& tokens);
-    
-    // Search for best move using the search engine
-    void search_best_move(const Huginn::MinimalLimits& limits);  // Changed from SearchLimits
-    
-    // Load opening book
+    /// @brief Run a search under @p limits and emit `info` lines + the final `bestmove`.
+    void search_best_move(const Huginn::MinimalLimits& limits);
+    /// @brief (Re)load the Polyglot opening book from book_file (no-op unless own_book).
     void load_opening_book();
 
 public:
     UCIInterface();
-    
-    // Main UCI loop - processes commands from stdin
-    void run();
 
-    // Test helper: signal stop to the running search (mirrors UCI 'stop' command)
+    /// @brief Main UCI loop — read and dispatch commands from stdin until `quit`/EOF.
+    void run();
+    /// @brief Test helper: signal stop to the running search (mirrors the UCI `stop` command).
     void signal_stop();
-    
-    // Send identification info
+    /// @brief Emit the `id name` / `id author` lines.
     void send_id();
-    
-    // Send available options
+    /// @brief Emit the `option name ...` advertisement lines.
     void send_options();
 };

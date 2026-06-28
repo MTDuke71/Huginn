@@ -1,4 +1,7 @@
-// init.hpp
+/**
+ * @file init.hpp
+ * @brief Engine startup: one-time subsystem initialization + an init-state query.
+ */
 #pragma once
 
 /**

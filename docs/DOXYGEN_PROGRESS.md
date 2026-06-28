@@ -58,7 +58,8 @@ movegen_bb, chess_types, evaluation.hpp, move.hpp).
       magic-slider delegates (2026-06-22)
 - [x] `see.hpp` / `see.cpp` — SEE_PIECE_VALUE independence rationale (Doxygen),
       file-local helpers (piece_type_on, attackers_to) (2026-06-22)
-- [ ] `uci.hpp` / `uci.cpp` — already has @file + ~24 briefs; audit later
+- [x] `uci.hpp` / `uci.cpp` — uci.hpp: class @brief + member `///<` + method briefs;
+      uci.cpp already had @file + ~24 briefs (audited) (2026-06-28)
 - [x] `uci_utils.hpp` / `uci_utils.cpp` — @file + parse_uci_move contract (2026-06-22)
 - [x] `polyglot_book.hpp` / `polyglot_book.cpp` — .cpp @file (own-Zobrist note);
       hpp already documented (2026-06-22)
@@ -67,8 +68,8 @@ movegen_bb, chess_types, evaluation.hpp, move.hpp).
 - [x] `zobrist.hpp` / `zobrist.cpp` — globals `///<`, init/compute @brief,
       .cpp @file + relocated compute() doc (2026-06-22)
 - [x] `pvtable.hpp` / `pvtable.cpp` — PVEntry/PVTable members + methods; .cpp @file (2026-06-22)
-- [ ] `input_checking.hpp` / `input_checking.cpp`
-- [ ] `attack_tables.hpp` / `attack_tables.cpp`
+- [x] `input_checking.hpp` / `input_checking.cpp` — @file + briefs present, audited (2026-06-28)
+- [x] `attack_tables.hpp` / `attack_tables.cpp` — @file + briefs present, audited (2026-06-28)
 - [x] `attack_detection.hpp` / `attack_detection.cpp` — square semantics,
       target-side pawn lookup, params/return/precondition (2026-06-17)
 - [x] `movegen.hpp` / `movegen.cpp` — S_MOVELIST facade, scoring bands,
@@ -76,13 +77,16 @@ movegen_bb, chess_types, evaluation.hpp, move.hpp).
 
 ## Tier 3 — small / leaf files
 
-- [ ] `main.cpp`, `init.hpp` / `init.cpp`
-- [ ] `square.hpp`, `bit_utils.hpp`
-- [ ] `msvc_intrinsics.hpp`, `msvc_optimizations.hpp`
+- [x] `main.cpp` (+@file), `init.hpp` (+@file) / `init.cpp` (had @file + briefs) (2026-06-28)
+- [x] `square.hpp` (function/enum briefs), `bit_utils.hpp` (exemplary @file covering its
+      shims, audited) (2026-06-28)
+- [x] `msvc_intrinsics.hpp`, `msvc_optimizations.hpp` — @file + briefs present, audited (2026-06-28)
 
 ---
 
-_Last updated: 2026-06-22 — Tier 1 done + a Tier-2 batch (zobrist, see, pvtable,
-uci_utils, syzygy, polyglot_book, bitboard, magic_bitboards). Tier 2 remaining:
-uci (audit — already mostly done), input_checking, attack_tables (both decent),
-then Tier 3 leaf files._
+**PASS COMPLETE** ✅ (2026-06-28). All three tiers done: every `src/` file has an
+`@file` block and `@brief` on its public types/functions; member `//` comments
+converted to `///<`. Comment-only throughout; final build clean, 203/203 tests pass.
+
+_History: Tier 1 (2026-06-14→22), Tier-2 main batch (2026-06-22), Tier-2 remainder
++ Tier-3 leaf files (2026-06-28)._
