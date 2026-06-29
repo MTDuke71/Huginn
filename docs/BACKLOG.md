@@ -89,7 +89,7 @@
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
-| 42 | TT aging (dates) + clusters (Fruit/Toga design) | **OPEN** — idea, pairs with #31 | feature/search | low |
+| 48 | Kill the double TT probe (move ordering) | **OPEN** (2026-06-28) — `AlphaBeta` probes the TT at node entry ([search.cpp:1756]) and captures `tt_best_move`, then `pick_next_move` probes the TT *again* ([search.cpp:1401]) just to get that move for ordering → two cache-miss-prone probes/node. Fix: pass `tt_best_move` into `pick_next_move`, drop the re-probe. Surfaced by the 2026-06-28 uProf profile (pick_next_move was #2 self-time). Behavior-equivalent (ordering heuristic) → verify identical node counts at fixed depth + higher nps; SPRT at fixed time. | speed | medium |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
@@ -765,6 +765,24 @@ TC.** Related: #8 (aspiration step b, parked).
 ### #31 / #32 / #34 / #42: Speed / research (OPEN, low)
 
 - **#31** — SPRT sweep of `Hash` (64 vs 128 vs 256 MB) at the current strength.
+- **#48 — Kill the double TT probe (move ordering).** uProf (2026-06-28, time-based
+  sampling of a Kiwipete `go movetime` workload) put `pick_next_move` at **#2 self-time**
+  (behind `evaluate`, ahead of `AlphaBeta`). It does NOT re-score per pick (scores once
+  at `move_num==0`, then cheap selection scans — sound). The real cost: `AlphaBeta`
+  already probes the TT at node entry ([../src/search.cpp#L1756](../src/search.cpp#L1756))
+  and has `tt_best_move`, then `pick_next_move` probes the TT **again**
+  ([../src/search.cpp#L1401](../src/search.cpp#L1401)) only to get the ordering move —
+  **two cache-miss-prone probes per node.** *Fix:* pass `tt_best_move` (+ `tt_hit`) from
+  `AlphaBeta` into `pick_next_move`, delete the re-probe. Ordering is a heuristic so it's
+  behavior-equivalent — verify **identical node counts at fixed depth** (or near, if a
+  rare in-node TT overwrite differs) + higher nps; confirm with an IBS run (the probe's
+  cache misses should drop), then a fixed-time SPRT. **Second-tier idea from the same
+  profile:** `pick_next_move`'s scoring pass calls `pos.at_sq64(from)` per move (attacker
+  for MVV-LVA, piece index for history) — a per-move bitboard reconstruction since the
+  mailbox was removed; could be cut by threading the moving piece through movegen, but
+  trickier than the probe dedup. Profiling tooling: `tools/profile_workload.bat` +
+  `tools/run_uprof_profile.bat`. Speed lever (nps→depth at fixed time), not a direct-Elo
+  one; pairs with the #31 Hash sweep / #42 TT work.
 - **#32** — PEXT slider attacks, build-gated with a magic fallback (BMI2 boxes).
   - **AVX-512 assessment (2026-06-26): not a lever for the current HCE engine.**
     The build already compiles `/arch:AVX2` (MSVC) + `-march=native -mtune=native`
