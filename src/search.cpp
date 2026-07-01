@@ -1391,18 +1391,18 @@ void Engine::order_moves(S_MOVELIST& move_list, const Position& pos) const {
 ///        by MVV-LVA, killers, counter-move, history) and swap the best into
 ///        slot @p move_num, returning its score. Lazier than a full sort — a
 ///        beta cutoff often means later moves never get scored. VICE Part 62.
-int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move) const {
+int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth, const S_MOVE& iid_move, uint32_t tt_move) const {
     // For the first call (move_num == 0), score all moves using VICE Part 64 ordering
     if (move_num == 0) {
-        // VICE Part 84: Check for transposition table move (highest priority)
-        int tt_score;
-        uint8_t tt_depth, tt_node_type; 
-        uint32_t tt_best_move;
-        bool has_tt_move = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
-        
+        // VICE Part 84: TT move gets highest ordering priority. BACKLOG #48:
+        // the move comes in from the caller's probe (AlphaBeta's node-entry
+        // probe / quiescence's pre-loop probe) instead of a second probe here —
+        // the re-probe was a redundant cache-miss-prone TT hit per node.
+        const uint32_t tt_best_move = tt_move;
+
         // Validate TT move to ensure it's reasonable for this position
         bool tt_move_valid = false;
-        if (has_tt_move && tt_best_move != 0) {
+        if (tt_best_move != 0) {
             // Basic sanity checks on the TT move
             S_MOVE tt_move;
             tt_move.move = static_cast<int>(tt_best_move);
@@ -2034,8 +2034,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
 
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
-        // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos, info, depth, iid_move);
+        // VICE Part 62: Pick best move from remaining moves. BACKLOG #48: the
+        // ordering TT move is the one from the node-entry probe above — no re-probe.
+        pick_next_move(move_list, i, pos, info, depth, iid_move, tt_hit ? tt_best_move : 0u);
 
         if (pos.MakeMove(move_list.moves[i]) != 1) {
             assert_search_position_integrity(pos, "after illegal AlphaBeta MakeMove rollback");
@@ -2426,11 +2427,24 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
     // Saves the per-capture Make/Unmake legality filter that the legal version did.
     S_MOVELIST move_list;
     generate_all_caps_pseudo(pos, move_list);
-    
+
+    // BACKLOG #48: quiescence has no node-entry TT probe, so probe once here
+    // for the ordering move (pick_next_move no longer re-probes internally).
+    // Same single probe per node as before — just hoisted out of the picker.
+    uint32_t q_tt_move = 0;
+    if (move_list.count > 0) {
+        int tt_score;
+        uint8_t tt_depth, tt_node_type;
+        uint32_t tt_best_move;
+        if (tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move)) {
+            q_tt_move = tt_best_move;
+        }
+    }
+
     // Search all capture moves
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
-        pick_next_move(move_list, i, pos, info, -1);  // No depth in quiescence
+        pick_next_move(move_list, i, pos, info, -1, S_MOVE{}, q_tt_move);  // No depth in quiescence
 
         S_MOVE move = move_list.moves[i];
 

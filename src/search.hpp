@@ -322,11 +322,13 @@ public:  // Make members public for easier access
     void order_moves(std::vector<S_MOVE>& moves, const Position& pos) const; // Order moves using MVV-LVA
     void order_moves(S_MOVELIST& move_list, const Position& pos) const;      // Order moves in S_MOVELIST
     
-    // VICE Part 62: Move Picking - Pick best move from remaining moves  
+    // VICE Part 62: Move Picking - Pick best move from remaining moves
     // VICE Part 64: Enhanced with PV move, killer moves, and history heuristic
     // Counter-move heuristic: Enhanced with counter-move support
     // IID Enhancement: Enhanced with Internal Iterative Deepening move support
-    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1, const S_MOVE& iid_move = S_MOVE{}) const;
+    // BACKLOG #48: tt_move (0 = none) is supplied by the caller's TT probe —
+    // no re-probe inside; AlphaBeta already probed at node entry.
+    int pick_next_move(S_MOVELIST& move_list, int move_num, const Position& pos, const SearchInfo& info, int depth = -1, const S_MOVE& iid_move = S_MOVE{}, uint32_t tt_move = 0) const;
     
     // VICE Part 85: Opening book functions
     bool load_opening_book(const std::string& book_path);

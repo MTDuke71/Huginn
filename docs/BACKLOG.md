@@ -89,7 +89,7 @@
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
-| 48 | Kill the double TT probe (move ordering) | **OPEN** (2026-06-28) — `AlphaBeta` probes the TT at node entry ([search.cpp:1756]) and captures `tt_best_move`, then `pick_next_move` probes the TT *again* ([search.cpp:1401]) just to get that move for ordering → two cache-miss-prone probes/node. Fix: pass `tt_best_move` into `pick_next_move`, drop the re-probe. Surfaced by the 2026-06-28 uProf profile (pick_next_move was #2 self-time). Behavior-equivalent (ordering heuristic) → verify identical node counts at fixed depth + higher nps; SPRT at fixed time. | speed | medium |
+| 48 | Kill the double TT probe (move ordering) | **IMPLEMENTED** (2026-07-01) — `tt_best_move` now passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (new param, re-probe deleted); quiescence keeps exactly one probe, hoisted pre-loop. Verified: startpos d15 nodes **byte-identical** (18,223,597, 5/5 runs both arms), 203/203 tests; interleaved A/B nps **+0.8% startpos / +4.0% Kiwipete d14**. Fixed-time SPRT pending (batch with #49). | speed | medium |
 | 49 | Fuse king-safety attacker scan into the mobility pass | **OPEN** (2026-06-28) — `king_safety_white_mg`'s `danger_for` lambda ([search.cpp:344]) recomputes a magic slider attack set for **every** enemy B/R/Q (queen ×2) for both kings → ~3% of total time (uProf). The same per-piece attack sets are already computed by the **mobility** term (and movegen). Fix: compute each piece's attacks once per eval and reuse for both mobility + king-zone overlap (or fuse KS counting into the mobility loop). Behavior-identical → verify identical eval/node-counts at fixed depth + higher nps. | speed | medium |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
@@ -766,7 +766,13 @@ TC.** Related: #8 (aspiration step b, parked).
 ### #31 / #32 / #34 / #42: Speed / research (OPEN, low)
 
 - **#31** — SPRT sweep of `Hash` (64 vs 128 vs 256 MB) at the current strength.
-- **#48 — Kill the double TT probe (move ordering).** uProf (2026-06-28, time-based
+- **#48 — Kill the double TT probe (move ordering).** **IMPLEMENTED 2026-07-01:**
+  `pick_next_move` takes the TT move as a parameter (0 = none) from `AlphaBeta`'s
+  node-entry probe; quiescence (which has no entry probe) does one pre-loop probe —
+  same probe count as before there, one fewer everywhere else. Verified identical
+  startpos d15 node counts (18,223,597, deterministic both arms), 203/203 tests,
+  interleaved A/B nps +0.8% (startpos d15) / +4.0% (Kiwipete d14). Fixed-time SPRT
+  pending — batch with #49. Original analysis: uProf (2026-06-28, time-based
   sampling of a Kiwipete `go movetime` workload) put `pick_next_move` at **#2 self-time**
   (behind `evaluate`, ahead of `AlphaBeta`). It does NOT re-score per pick (scores once
   at `move_num==0`, then cheap selection scans — sound). The real cost: `AlphaBeta`
