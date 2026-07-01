@@ -90,7 +90,7 @@
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 48 | Kill the double TT probe (move ordering) | **IMPLEMENTED** (2026-07-01) — `tt_best_move` now passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (new param, re-probe deleted); quiescence keeps exactly one probe, hoisted pre-loop. Verified: startpos d15 nodes **byte-identical** (18,223,597, 5/5 runs both arms), 203/203 tests; interleaved A/B nps **+0.8% startpos / +4.0% Kiwipete d14**. Fixed-time SPRT pending (batch with #49). | speed | medium |
-| 49 | Fuse king-safety attacker scan into the mobility pass | **OPEN** (2026-06-28) — `king_safety_white_mg`'s `danger_for` lambda ([search.cpp:344]) recomputes a magic slider attack set for **every** enemy B/R/Q (queen ×2) for both kings → ~3% of total time (uProf). The same per-piece attack sets are already computed by the **mobility** term (and movegen). Fix: compute each piece's attacks once per eval and reuse for both mobility + king-zone overlap (or fuse KS counting into the mobility loop). Behavior-identical → verify identical eval/node-counts at fixed depth + higher nps. | speed | medium |
+| 49 | Fuse king-safety attacker scan into the mobility pass | **IMPLEMENTED** (2026-07-01) — king-zone attacker units now accumulated inside the mobility loop (which computes every piece's attack set anyway); `king_danger_mg()` finalizes (square/cap/shelter) at the taper; the standalone `king_safety_white_mg` scan deleted. Verified: startpos d15 nodes **byte-identical** (18,223,597), 203/203 tests incl. symmetry; interleaved A/B nps **+8.2% startpos / +5.5% Kiwipete** — above the ~3% uProf estimate. Fixed-time SPRT pending (batch with #48). | speed | medium |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
@@ -791,7 +791,16 @@ TC.** Related: #8 (aspiration step b, parked).
   `tools/run_uprof_profile.bat`. Speed lever (nps→depth at fixed time), not a direct-Elo
   one; pairs with the #31 Hash sweep / #42 TT work.
 - **#49 — Fuse king-safety attacker scan into the mobility pass (share per-piece
-  attacks).** Same uProf run: `king_safety_white_mg`'s `danger_for` lambda
+  attacks).** **IMPLEMENTED 2026-07-01:** king-zone attacker units are accumulated
+  in the mobility loop via a per-side `ks_accum` lambda (both the safe-mobility and
+  flat fallback branches, so all flag combos work); the new `king_danger_mg(pos, c,
+  units)` applies the square/cap/shelter finalization at the taper; the standalone
+  scan is gone. Verified identical startpos d15 node counts (18,223,597,
+  deterministic both arms), 203/203 tests incl. the symmetry suite; interleaved A/B
+  nps +8.2% (startpos d15) / +5.5% (Kiwipete d14) — above the ~3% uProf estimate
+  (the fused loop also drops redundant per-piece popcount setup, and the queen's
+  two magic lookups per king are gone). Fixed-time SPRT pending — batch with #48.
+  Original analysis: same uProf run: `king_safety_white_mg`'s `danger_for` lambda
   ([../src/search.cpp#L344](../src/search.cpp#L344)) computes a magic slider attack set
   for **every enemy bishop/rook/queen** (queen = two lookups), for *both* kings → a
   magic lookup for every slider on the board, every eval, at every leaf ≈ **~3% of total

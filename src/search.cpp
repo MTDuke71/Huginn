@@ -331,59 +331,38 @@ static inline int game_phase_256(const Position& pos) {
 }
 
 #if ENABLE_KING_SAFETY
-/// @brief King-safety score (white-positive, MG-only; #35 Exp 3 / #9 round 7).
+/// @brief Finalize one side's king danger (white-positive term via
+///        danger(Black) − danger(White); MG-only; #35 Exp 3 / #9 round 7).
 ///
-/// Per side, a non-linear "danger" = attacker pressure on the king ring (fires
-/// on ≥1 attacker, units²/divisor capped) + an open-file shelter penalty; returns
-/// Black's danger − White's (White gains when Black's king is unsafe). The caller
-/// adds this to the **MG accumulator only**, so the taper fades it to 0 in the
-/// endgame (an untapered KS term regressed −126; see #2). Colour-symmetric.
-static int king_safety_white_mg(const Position& pos) {
-    const uint64_t occ = pos.occupied_bitboard;
+/// @p units is the attacker pressure on @p c's king ring — accumulated in the
+/// mobility pass (#49: the per-piece attack sets are computed there anyway, so
+/// the old standalone scan's magic lookup per slider per king was pure rework).
+/// Applies the non-linear units²/divisor shape (capped) + the open-file shelter
+/// penalty. The caller adds the result to the **MG accumulator only**, so the
+/// taper fades it to 0 in the endgame (an untapered KS term regressed −126;
+/// see #2). Colour-symmetric.
+///
+/// No min-attacker gate (#9 round 7): danger fires whenever units > 0. The
+/// square still concentrates danger on heavy / multi-piece attacks, but the
+/// term is non-zero on most middlegame positions so the Texel tuner can
+/// constrain the weights.
+static int king_danger_mg(const Position& pos, Color c, int units) {
+    const int ksq = pos.king_sq[int(c)];
+    if (ksq < 0) return 0;
 
-    auto danger_for = [&](Color c) -> int {
-        const int ksq = pos.king_sq[int(c)];
-        if (ksq < 0) return 0;
-        const Color them = (c == Color::White) ? Color::Black : Color::White;
-        const uint64_t zone = king_attacks[ksq] | (1ULL << ksq);
-        const auto& ep = pos.piece_bitboards[int(them)];
+    int danger = units * units / EvalParams::KS_ATTACK_DIVISOR;
+    if (danger > EvalParams::KS_ATTACK_CAP) danger = EvalParams::KS_ATTACK_CAP;
 
-        int units = 0;
-        uint64_t bb;
-
-        bb = ep[int(PieceType::Knight)];
-        while (bb) { int s = pop_lsb(bb); int h = popcount(knight_attacks[s] & zone);
-            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Knight)] * h; }
-        bb = ep[int(PieceType::Bishop)];
-        while (bb) { int s = pop_lsb(bb); int h = popcount(bishop_attacks(s, occ) & zone);
-            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Bishop)] * h; }
-        bb = ep[int(PieceType::Rook)];
-        while (bb) { int s = pop_lsb(bb); int h = popcount(rook_attacks(s, occ) & zone);
-            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Rook)] * h; }
-        bb = ep[int(PieceType::Queen)];
-        while (bb) { int s = pop_lsb(bb); int h = popcount(queen_attacks(s, occ) & zone);
-            units += EvalParams::KS_ATTACK_WEIGHT[int(PieceType::Queen)] * h; }
-
-        // No min-attacker gate (#9 round 7): danger fires whenever units > 0.
-        // The square still concentrates danger on heavy / multi-piece attacks,
-        // but the term is now non-zero on most middlegame positions so the
-        // Texel tuner can constrain the weights.
-        int danger = units * units / EvalParams::KS_ATTACK_DIVISOR;
-        if (danger > EvalParams::KS_ATTACK_CAP) danger = EvalParams::KS_ATTACK_CAP;
-
-        // Shelter: open files on/adjacent to the king's file (no own pawn).
-        const uint64_t own_pawns = pos.piece_bitboards[int(c)][int(PieceType::Pawn)];
-        const int kf = ksq & 7;
-        const int lo = (kf > 0) ? kf - 1 : 0;
-        const int hi = (kf < 7) ? kf + 1 : 7;
-        for (int f = lo; f <= hi; ++f) {
-            if ((own_pawns & EvalParams::FILE_MASKS[f]) == 0)
-                danger += EvalParams::KS_OPEN_FILE_PENALTY;
-        }
-        return danger;
-    };
-
-    return danger_for(Color::Black) - danger_for(Color::White);
+    // Shelter: open files on/adjacent to the king's file (no own pawn).
+    const uint64_t own_pawns = pos.piece_bitboards[int(c)][int(PieceType::Pawn)];
+    const int kf = ksq & 7;
+    const int lo = (kf > 0) ? kf - 1 : 0;
+    const int hi = (kf < 7) ? kf + 1 : 7;
+    for (int f = lo; f <= hi; ++f) {
+        if ((own_pawns & EvalParams::FILE_MASKS[f]) == 0)
+            danger += EvalParams::KS_OPEN_FILE_PENALTY;
+    }
+    return danger;
 }
 #endif // ENABLE_KING_SAFETY
 
@@ -752,6 +731,18 @@ int Engine::evaluate(const Position& pos) {
     // Per-phase mobility score (white-positive). Computed here, added to the
     // mg/eg accumulators at the combine below so it tapers smoothly.
     int mg_mob = 0, eg_mob = 0;
+#if ENABLE_KING_SAFETY
+    // BACKLOG #49: king-zone attacker units (indexed by the ATTACKED king's
+    // colour) are accumulated inside the mobility loop below, which computes
+    // every piece's attack set anyway; king_danger_mg() finalizes them at the
+    // taper. A missing king (test positions) leaves its zone empty → units 0.
+    int ks_units[2] = {0, 0};
+    uint64_t king_zone[2] = {0, 0};
+    for (int c = 0; c <= 1; ++c) {
+        const int ksq = pos.king_sq[c];
+        if (ksq >= 0) king_zone[c] = king_attacks[ksq] | (1ULL << ksq);
+    }
+#endif
     {
         const uint64_t occ = pos.occupied_bitboard;
 #if ENABLE_SAFE_MOBILITY
@@ -775,14 +766,28 @@ int Engine::evaluate(const Position& pos) {
             const uint64_t queen_safe = safe & ~enemy_minor_att;
             const int sign = (color == int(Color::White)) ? 1 : -1;
 
+#if ENABLE_KING_SAFETY
+            // #49: this side's pieces attack the ENEMY king's ring — count the
+            // zone overlap on the attack set already in hand for mobility.
+            const uint64_t ezone = king_zone[them];
+            auto ks_accum = [&](uint64_t att, PieceType pt) {
+                ks_units[them] += EvalParams::KS_ATTACK_WEIGHT[int(pt)] * popcount(att & ezone);
+            };
+#else
+            auto ks_accum = [](uint64_t, PieceType) {};
+#endif
             b = pos.piece_bitboards[color][int(PieceType::Knight)];
-            while (b) { int sq = pop_lsb(b); kn += sign * popcount(knight_attacks[sq] & safe); }
+            while (b) { int sq = pop_lsb(b); const uint64_t att = knight_attacks[sq];
+                kn += sign * popcount(att & safe); ks_accum(att, PieceType::Knight); }
             b = pos.piece_bitboards[color][int(PieceType::Bishop)];
-            while (b) { int sq = pop_lsb(b); bi += sign * popcount(bishop_attacks(sq, occ) & safe); }
+            while (b) { int sq = pop_lsb(b); const uint64_t att = bishop_attacks(sq, occ);
+                bi += sign * popcount(att & safe); ks_accum(att, PieceType::Bishop); }
             b = pos.piece_bitboards[color][int(PieceType::Rook)];
-            while (b) { int sq = pop_lsb(b); rk += sign * popcount(rook_attacks(sq, occ) & safe); }
+            while (b) { int sq = pop_lsb(b); const uint64_t att = rook_attacks(sq, occ);
+                rk += sign * popcount(att & safe); ks_accum(att, PieceType::Rook); }
             b = pos.piece_bitboards[color][int(PieceType::Queen)];
-            while (b) { int sq = pop_lsb(b); qn += sign * popcount(queen_attacks(sq, occ) & queen_safe); }
+            while (b) { int sq = pop_lsb(b); const uint64_t att = queen_attacks(sq, occ);
+                qn += sign * popcount(att & queen_safe); ks_accum(att, PieceType::Queen); }
         }
         mg_mob = kn * EvalParams::KNIGHT_MOBILITY_MG + bi * EvalParams::BISHOP_MOBILITY_MG
                + rk * EvalParams::ROOK_MOBILITY_MG   + qn * EvalParams::QUEEN_MOBILITY_MG;
@@ -795,14 +800,28 @@ int Engine::evaluate(const Position& pos) {
         for (int color = 0; color <= 1; ++color) {
             const uint64_t own = pos.color_bitboards[color];
             int count = 0;
+#if ENABLE_KING_SAFETY
+            // #49: same fusion as the safe-mobility branch above.
+            const int them = color ^ 1;
+            const uint64_t ezone = king_zone[them];
+            auto ks_accum = [&](uint64_t att, PieceType pt) {
+                ks_units[them] += EvalParams::KS_ATTACK_WEIGHT[int(pt)] * popcount(att & ezone);
+            };
+#else
+            auto ks_accum = [](uint64_t, PieceType) {};
+#endif
             uint64_t bb = pos.piece_bitboards[color][int(PieceType::Knight)];
-            while (bb) { int sq = pop_lsb(bb); count += popcount(knight_attacks[sq] & ~own); }
+            while (bb) { int sq = pop_lsb(bb); const uint64_t att = knight_attacks[sq];
+                count += popcount(att & ~own); ks_accum(att, PieceType::Knight); }
             bb = pos.piece_bitboards[color][int(PieceType::Bishop)];
-            while (bb) { int sq = pop_lsb(bb); count += popcount(bishop_attacks(sq, occ) & ~own); }
+            while (bb) { int sq = pop_lsb(bb); const uint64_t att = bishop_attacks(sq, occ);
+                count += popcount(att & ~own); ks_accum(att, PieceType::Bishop); }
             bb = pos.piece_bitboards[color][int(PieceType::Rook)];
-            while (bb) { int sq = pop_lsb(bb); count += popcount(rook_attacks(sq, occ) & ~own); }
+            while (bb) { int sq = pop_lsb(bb); const uint64_t att = rook_attacks(sq, occ);
+                count += popcount(att & ~own); ks_accum(att, PieceType::Rook); }
             bb = pos.piece_bitboards[color][int(PieceType::Queen)];
-            while (bb) { int sq = pop_lsb(bb); count += popcount(queen_attacks(sq, occ) & ~own); }
+            while (bb) { int sq = pop_lsb(bb); const uint64_t att = queen_attacks(sq, occ);
+                count += popcount(att & ~own); ks_accum(att, PieceType::Queen); }
             if (color == int(Color::White)) mobility_units += count;
             else                            mobility_units -= count;
         }
@@ -819,7 +838,10 @@ int Engine::evaluate(const Position& pos) {
     int eg_total = eg_pst + eg_mob;
 #if ENABLE_KING_SAFETY
     // MG-only: added before the blend so it fades to 0 as phase -> 0 (#35 Exp 3).
-    mg_total += king_safety_white_mg(pos);
+    // White gains when Black's king is in danger; units come from the mobility
+    // pass (#49), king_danger_mg() applies the square/cap/shelter shape.
+    mg_total += king_danger_mg(pos, Color::Black, ks_units[int(Color::Black)])
+              - king_danger_mg(pos, Color::White, ks_units[int(Color::White)]);
 #endif
     score += (mg_total * phase + eg_total * (256 - phase)) / 256;
 #else
