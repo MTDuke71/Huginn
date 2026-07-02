@@ -667,7 +667,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | Branch | Item | Flag | d14 nodes vs old t22 12.04M | Note |
 |---|---|---|---|---|
 | ~~`experiment/fix-nondet-50`~~ → **`main` (`baseline-t23`)** | #50 | *(none — shipped unconditionally)* | n/a (t23 IS the new reference) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
-| `copilot/fix50-for-see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | 5.75M (**−52%**) | bad captures below quiets; big ordering win at fixed depth |
+| `copilot/fix50-for-see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **AMD H1 ACCEPTED @586g — +49.54 ± 20.55, LOS 100%** (57.08%, W189/L106/D291, Ptnml [11,55,99,96,32], LLR 2.97). Intel leg next. |
 | `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | does razoring earn its keep at all |
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | sounder PV values → better TT reuse shrank the tree |
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
@@ -1001,8 +1001,13 @@ One-liners; full detail + evidence in [the archive](BACKLOG-archive-2.0.md).
   the Texel harness rather than by hand (hand-tuning hit a ~0-Elo ceiling).
 - **#3 — Continuation history.** 1-ply additive falsified (w16 neutral, w64 −9);
   flag off, kept in-tree (`experiment/continuation-history`).
-- **#6 — Lazy SEE in main-search capture ordering.** Attempt 2 pooled +2.08
-  (neutral), reverted; branch `wip/see-capture-ordering`.
+- **#6 — Lazy SEE in main-search capture ordering.** Attempt 2 (the lazy
+  variant) pooled +2.08 (neutral), reverted; branch `wip/see-capture-ordering`.
+  **Superseded 2026-07-02 by the full good/bad split** (SPRT queue, see
+  above): `copilot/fix50-for-see-ordering`, **AMD H1 ACCEPTED @586g — +49.54 ±
+  20.55, LOS 100%** vs t23. Bad captures (SEE<0) drop below quiets instead of
+  just de-prioritizing — a different, much stronger mechanism than the
+  neutral lazy attempt. Intel leg pending; second confirmed winner into t24.
 - **#7 — LMP (late move pruning) fix.** Deferred (`experiment/lmp-quiet-count`).
 - **#8 — Aspiration step (b), narrow-window search.** Deferred; folds into #17.
 - **#20 — Trapped-bishop eval pattern** (a7/h7/a2/h2 + enemy pawn locks).
