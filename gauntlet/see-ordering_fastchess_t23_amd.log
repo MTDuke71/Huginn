@@ -1,0 +1,11 @@
+[INFO  ] [18:35:20.991581] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [18:35:20.991671] <   > fastchess --- Setting seed to: 8908693203503764175
+[INFO  ] [18:35:21.025184] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [18:35:21.032694] <   > fastchess --- Starting tournament...
+[INFO  ] [19:37:32.069321] <   > fastchess --- SPRT ([0.00, 10.00]) completed - H1 was accepted
+[INFO  ] [19:37:33.426509] <   > fastchess --- Finished match
+
+[INFO  ] [19:37:33.426641] <   > fastchess --- Total Time: 01:02:12 (hours:minutes:seconds)
+
+
