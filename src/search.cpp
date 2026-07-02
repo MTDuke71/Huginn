@@ -180,6 +180,18 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_FUTILITY_PV_GUARD: BACKLOG #45 follow-up knob (b) — PV-node guard on
+// the futility condition. Fruit 2.1 exempts ALL PV nodes from futility
+// (node_type != NodePV); Huginn excludes only isRoot, so futility still fires
+// at interior PV nodes. In Huginn's PVS a node is PV iff the window is open,
+// so additionally require a zero-width window (beta - alpha == 1) before
+// arming futility_prune (!isRoot kept — root is a PV node, but the explicit
+// guard is cheap). Futility no longer fires at PV nodes => slightly more
+// nodes at fixed depth. DEFAULT ON on this branch (the test arm); build the
+// t22-identical arm with -DENABLE_FUTILITY_PV_GUARD=0.
+#ifndef ENABLE_FUTILITY_PV_GUARD
+#define ENABLE_FUTILITY_PV_GUARD 1
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1979,7 +1991,12 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     bool futility_prune = false;
     int futility_margin = 0;
     
-    if (depth <= MAX_FUTILITY_DEPTH && !in_check && !isRoot) {
+    if (depth <= MAX_FUTILITY_DEPTH && !in_check && !isRoot
+#if ENABLE_FUTILITY_PV_GUARD
+        // #45 knob (b): exempt ALL PV nodes (open window), Fruit's exact recipe.
+        && (beta - alpha == 1)
+#endif
+        ) {
         // Reuse the node's cached static eval (computed once, see top of node)
         int eval = get_static_eval();
 

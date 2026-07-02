@@ -181,6 +181,14 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# BACKLOG #45 knob (b): PV-node guard on the futility condition. Empty =
+# source default (see src/search.cpp flag block); set 0/1 to force an arm.
+set(ENABLE_FUTILITY_PV_GUARD "" CACHE STRING "BACKLOG #45 futility PV-node guard (0/1; empty = source default)")
+if(NOT ENABLE_FUTILITY_PV_GUARD STREQUAL "")
+    add_compile_definitions(ENABLE_FUTILITY_PV_GUARD=${ENABLE_FUTILITY_PV_GUARD})
+    message(STATUS "ENABLE_FUTILITY_PV_GUARD forced to ${ENABLE_FUTILITY_PV_GUARD}")
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
