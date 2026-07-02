@@ -9,6 +9,37 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t22 — speed pair: #48 double-TT-probe kill + #49 KS/mobility fusion
+= t21 + two **behavior-identical** nps optimizations from the 2026-06-28 uProf
+profile. No search/eval behavior change: startpos d15 node counts byte-identical
+across every run of every arm (18,223,597), 203/203 tests incl. eval symmetry.
+- **#48 — kill the double TT probe.** `AlphaBeta` probed the TT at node entry
+  AND `pick_next_move` re-probed just to fetch the ordering move → two
+  cache-miss-prone probes/node (uProf: pick_next_move #2 self-time). The TT
+  move is now a parameter fed from the node-entry probe; quiescence (no entry
+  probe) keeps exactly one probe, hoisted pre-loop. Alone: +0.8% nps startpos
+  d15 / +4.0% Kiwipete d14.
+- **#49 — fuse the king-safety attacker scan into the mobility pass.**
+  `king_safety_white_mg` recomputed a magic attack set for every enemy B/R/Q
+  (queen ×2) for both kings at every eval (~3% of time) — the exact sets the
+  mobility loop already computes. King-zone attacker units are now accumulated
+  inside the mobility loop (`ks_accum`, both branches); `king_danger_mg()`
+  finalizes (square/cap/shelter) at the taper; the standalone scan is deleted.
+  Alone: +8.2% / +5.5% — above the uProf estimate.
+- **Combined interleaved A/B: +11.0% nps (startpos d15) / +6.3% (Kiwipete d14).**
+- **Two-machine SPRT vs t21 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g each) —
+  both legs positive, cross-machine-agreement ship:**
+  - AMD: **+14.60 ± 15.69** (nElo +20.07), 52.10%, LOS 96.62%, W285/L243/D472,
+    Ptnml [36,104,175,152,33], LLR 1.23. `gauntlet/huginn_vs_t21_amd.pgn`.
+  - Intel: **+18.08 ± 14.44** (nElo +27.03), 52.60%, LOS 99.31%, W260/L208/D532,
+    Ptnml [17,110,216,118,39], LLR 1.83. `gauntlet/huginn_vs_t21_intel.pgn`.
+  - Pooled: W545/L451/D1004 = **52.35% / 2000g** (≈ +16.3), Ptnml
+    [53,214,391,270,72].
+- Validates the #48/#49 judging bar: a pure-nps bump converts to Elo at fixed
+  time with zero behavior change (the speed reaches the next iteration depth).
+  Side discovery logged as **#50**: Kiwipete fixed-depth node counts wobble
+  ±~1k/4.7M run-to-run (pre-existing at t21; startpos is clean).
+
 ### baseline-t21 — TT-clear-on-newgame (#46) + time-management fix (#47)
 = t20 + two fixes surfaced by watching a 5+2 Arena game (t20 vs MTLChess v0.5):
 the TT was 100% full from game 2 on, and Huginn finished 50 moves with **2:48

@@ -13,17 +13,18 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t21` — **TT-clear-on-newgame (#46) + time-management
-  fix (#47)**, both surfaced by watching a real 5+2 game. t20 left ~half its clock
-  unused (iteration gate bailed at budget/4) and never cleared the TT between games;
-  t21 fixes both. **+126.97 ± 24.60 vs t20 (10+0.1, 400g, LOS 100%, zero
-  time-forfeits)** — single-machine decisive (Intel confirms on push). Prior:
-  `baseline-t20` — **move-level futility** (#45), a latent search-correctness bug
-  fix (node-level `return alpha` bailed whole nodes incl. PV + tactics); two-machine
-  +345/+355 vs t19, audited, externally validated (~2350–2390). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t21 TT-clear + time-mgmt · t20
-  move-level futility · t19 safe mobility · t18 mate-distance pruning · t17 #44
-  repetition fix · t16 king safety · t15 threats.
+- ✅ **Baseline tag**: `baseline-t22` — **speed pair #48 (double-TT-probe kill) +
+  #49 (king-safety scan fused into the mobility pass)**, both verified
+  behavior-identical (byte-identical fixed-depth node counts, 203/203 tests) for
+  **+11% nps startpos / +6% Kiwipete** combined. Two-machine SPRT vs t21, both
+  legs positive — **AMD +14.60 ± 15.69 (LOS 96.6%) / Intel +18.08 ± 14.44 (LOS
+  99.3%)**, pooled 52.35% / 2000g — cross-machine-agreement ship. Prior:
+  `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
+  both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
+  400g, LOS 100%, zero time-forfeits). **Full history in
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t22 speed pair · t21
+  TT-clear + time-mgmt · t20 move-level futility · t19 safe mobility · t18
+  mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 203 GoogleTest cases
 - ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
   non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, MTLChess v0.5 (2314)
