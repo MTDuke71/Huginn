@@ -170,6 +170,7 @@ endif()
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
+option(ENABLE_RFP_PV_GUARD "BACKLOG #45 audit: restrict reverse futility to null-window (non-PV) nodes" ON)
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
@@ -179,6 +180,15 @@ endif()
 if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     add_compile_definitions(ENABLE_SEARCH_INTEGRITY_ASSERTS=1)
     message(STATUS "Search position integrity diagnostics enabled")
+endif()
+
+# Both arms must be buildable from cache: =1 test arm, =0 byte-identical t22.
+if(ENABLE_RFP_PV_GUARD)
+    add_compile_definitions(ENABLE_RFP_PV_GUARD=1)
+    message(STATUS "Reverse-futility PV-node guard enabled (#45 audit test arm)")
+else()
+    add_compile_definitions(ENABLE_RFP_PV_GUARD=0)
+    message(STATUS "Reverse-futility PV-node guard disabled (t22 baseline arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----

@@ -180,6 +180,17 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_RFP_PV_GUARD: BACKLOG #45 pruning-stack audit — reverse futility /
+// static-null returns `eval - margin >= beta` at depth <= 6 with only an
+// !isRoot guard, so it can prune an interior PV node — the same node-level,
+// no-PV-guard shape that leaked ~+350 Elo in futility's case (#45). Gate the
+// prune on a null window (`beta - alpha == 1`, Fruit's PV test) so it fires
+// only at non-PV nodes; PV nodes always reach the move loop. Costs nodes at
+// fixed depth (RFP off at PV nodes). Default ON on this branch = the test
+// arm; build the t22-identical arm with -DENABLE_RFP_PV_GUARD=0.
+#ifndef ENABLE_RFP_PV_GUARD
+#define ENABLE_RFP_PV_GUARD 1
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1859,6 +1870,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     const int REVERSE_FUTILITY_MAX_DEPTH = 6;
     const int REVERSE_FUTILITY_MARGIN = 80;  // cp per ply
     if (!in_check && !isRoot && depth > 0 && depth <= REVERSE_FUTILITY_MAX_DEPTH
+#if ENABLE_RFP_PV_GUARD
+            && (beta - alpha == 1)  // #45 audit: null-window (non-PV) nodes only
+#endif
             && beta < MATE - 1000 && beta > -(MATE - 1000)) {
         int eval = get_static_eval();
         int margin = REVERSE_FUTILITY_MARGIN * depth;
