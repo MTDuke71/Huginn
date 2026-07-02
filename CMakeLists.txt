@@ -170,6 +170,13 @@ endif()
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
+option(ENABLE_PEXT "BACKLOG #32: BMI2 PEXT slider-attack indexing (OFF = magic-multiply fallback, needs no BMI2)" ON)
+
+if(ENABLE_PEXT)
+    add_compile_definitions(ENABLE_PEXT=1)
+else()
+    add_compile_definitions(ENABLE_PEXT=0)
+endif()
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)

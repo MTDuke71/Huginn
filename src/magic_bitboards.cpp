@@ -119,6 +119,7 @@ uint64_t nth_subset_of_mask(uint64_t mask, uint64_t n) {
     return result;
 }
 
+#if !ENABLE_PEXT
 // ---- xorshift64* PRNG (deterministic, seeded once) -----------------
 //
 // Sparse random numbers (AND of three xorshift outputs) have low
@@ -236,11 +237,36 @@ bool find_magic_for_square(int sq,
     }
     return false;
 }
+#endif // !ENABLE_PEXT
+
+#if ENABLE_PEXT
+// ---- PEXT table fill (BACKLOG #32) ----------------------------------
+//
+// The pext index of a blocker subset is its subset ordinal:
+// pext(nth_subset_of_mask(mask, n), mask) == n by construction
+// (nth_subset_of_mask spreads n's bits into mask's bit positions;
+// pext extracts them back out). So the table fill is direct — entry n
+// is the ray attack set of the n-th subset. No search, no collisions;
+// slots above 2^popcount(mask) are never indexed (pext yields
+// < 2^popcount(mask)) and stay zero.
+
+/// @brief Fill @p attack_table with ray attacks indexed by pext(subset, mask).
+template <typename StepArr>
+void fill_pext_table(int sq, uint64_t mask, uint64_t* attack_table,
+                     const StepArr& steps) {
+    const int bits = __builtin_popcountll(mask);
+    const int n_subsets = 1 << bits;
+    for (int i = 0; i < n_subsets; ++i) {
+        attack_table[i] = ray_attacks(sq, nth_subset_of_mask(mask, i), steps);
+    }
+}
+#endif // ENABLE_PEXT
 
 // ---- Verifier ------------------------------------------------------
 //
 // After init, walk every (square, every subset of its mask) and
-// confirm magic_*_attacks() agrees with the ray-walker. Bug catcher:
+// confirm magic_*_attacks() agrees with the ray-walker. Verifies
+// whichever indexing is active (magic multiply or pext). Bug catcher:
 // if a magic is silently wrong for some occupancy, the engine would
 // generate illegal moves or miss legal ones in obscure positions.
 
@@ -286,10 +312,10 @@ void verify_or_die() {
 
 // ---- Public init ---------------------------------------------------
 
-/// @brief Build all per-square masks, find a magic for every rook and bishop
-///        square, and populate the attack tables. Call once at startup before
-///        magic_rook_attacks / magic_bishop_attacks. Aborts if any magic search
-///        fails (should never happen with the fixed seed).
+/// @brief Build all per-square masks, populate the attack tables (magic search
+///        or direct pext fill per ENABLE_PEXT), and verify. Call once at
+///        startup before magic_rook_attacks / magic_bishop_attacks. Aborts if
+///        any magic search fails (should never happen with the fixed seed).
 void init_magic_bitboards() {
     static bool done = false;
     if (done) return;
@@ -300,6 +326,14 @@ void init_magic_bitboards() {
         BISHOP_MASKS[sq] = compute_bishop_mask(sq);
     }
 
+#if ENABLE_PEXT
+    // 2. Fill tables with the pext index (BACKLOG #32) — no magic search;
+    //    MAGICS arrays stay zero (unused by the pext lookup).
+    for (int sq = 0; sq < 64; ++sq) {
+        fill_pext_table(sq, ROOK_MASKS[sq],   ROOK_ATTACK_TABLE[sq],   ROOK_STEPS);
+        fill_pext_table(sq, BISHOP_MASKS[sq], BISHOP_ATTACK_TABLE[sq], BISHOP_STEPS);
+    }
+#else
     // 2. Find magics (deterministic via fixed PRNG seed).
     XorShift64 rng(MAGIC_SEED);
     for (int sq = 0; sq < 64; ++sq) {
@@ -320,6 +354,7 @@ void init_magic_bitboards() {
             std::abort();
         }
     }
+#endif
 
     // 3. Exhaustive verification before any search code touches these.
     verify_or_die();

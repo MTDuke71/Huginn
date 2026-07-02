@@ -41,6 +41,28 @@
 
 #include <cstdint>
 
+// ENABLE_PEXT: BACKLOG #32 — BMI2 PEXT slider-attack indexing. On BMI2 CPUs
+// (Zen3+/modern Intel) `_pext_u64(occ, mask)` computes the table index in one
+// instruction, replacing the magic mask + multiply + shift. KEY FACT: the
+// PEXT index is a DIFFERENT permutation of the blocker subsets than the magic
+// index, so the tables must be FILLED with the matching indexing at init —
+// a magic-built table cannot be read with pext lookups. Layout and size are
+// unchanged either way (each square uses 2^popcount(mask) <= per-square-size
+// slots), so only the index computation differs; init under PEXT skips the
+// magic search entirely (MAGICS stay zero, unused). Requires BMI2 at runtime
+// — build-gated, not CPU-dispatched (per-machine builds handle that). Attack
+// sets are identical in both arms (verify_or_die checks the active indexing
+// against the ray-walker), so node counts/signatures must match exactly.
+// Default ON on this branch (test arm); build the magic fallback arm
+// (byte-identical t22 behavior) with -DENABLE_PEXT=0.
+#ifndef ENABLE_PEXT
+#define ENABLE_PEXT 1
+#endif
+
+#if ENABLE_PEXT
+#include <immintrin.h>  // _pext_u64 (BMI2)
+#endif
+
 /**
  * @namespace Magic
  * @brief Magic-bitboard slider attack generation.
@@ -93,16 +115,26 @@ void init_magic_bitboards();
 //
 // Inline so callers in bitboard.cpp's bishop_attacks/rook_attacks
 // (which themselves are likely to be inlined further) compile down to
-// a mask + multiply + shift + indexed load.
+// a mask + multiply + shift + indexed load (magic) or a single pext +
+// indexed load (ENABLE_PEXT). pext extracts exactly the mask bits, so
+// the `occupied & mask` pre-mask is implicit.
 inline uint64_t magic_rook_attacks(int sq, uint64_t occupied) {
+#if ENABLE_PEXT
+    const uint64_t index = _pext_u64(occupied, ROOK_MASKS[sq]);
+#else
     const uint64_t blockers = occupied & ROOK_MASKS[sq];
     const uint64_t index    = (blockers * ROOK_MAGICS[sq]) >> ROOK_SHIFT;
+#endif
     return ROOK_ATTACK_TABLE[sq][index];
 }
 
 inline uint64_t magic_bishop_attacks(int sq, uint64_t occupied) {
+#if ENABLE_PEXT
+    const uint64_t index = _pext_u64(occupied, BISHOP_MASKS[sq]);
+#else
     const uint64_t blockers = occupied & BISHOP_MASKS[sq];
     const uint64_t index    = (blockers * BISHOP_MAGICS[sq]) >> BISHOP_SHIFT;
+#endif
     return BISHOP_ATTACK_TABLE[sq][index];
 }
 
