@@ -139,17 +139,35 @@ flag (branch default = test arm), what to expect, and the decision.
   faster on both, batch it with the next speed ship (like #48+#49) — it does
   not need its own SPRT slot since behavior is identical.
 
-## Bookkeeping when the queue is done
+## Combining the winners → t23 (screen → combine → validate)
 
-1. Fold winners into `main` (flip flag default / delete the losing path per
-   the aggressive-cleanup convention), one at a time, re-verifying the
-   signature + suite after each fold.
-2. Tag `baseline-t23`, build + snapshot `huginn_t23.exe` per machine, push tag.
-3. Update BACKLOG (per-item results + close/park), BASELINE_LADDER.md (t23
-   section), CLAUDE.md (baseline bullet).
-4. Park losing branches (do NOT delete — they carry the negative-result
-   documentation in their commit messages).
-5. If `fix-nondet-50` shipped: re-run the #37 thread with fresh eyes
+1. **Screen** (the queue above): every arm independently vs t22.
+2. **Combine:** merge ALL winning branches into one candidate branch
+   (`candidate/t23`). The flags make this mechanical — the candidate is just
+   "all winning flags ON"; resolve the (textual) flag-block merge conflicts,
+   re-run the suite + the startpos signature sanity of each OFF arm.
+3. **Validate:** candidate vs t22, two machines, standard bar. **The combined
+   measured Elo — not the sum of the individual runs — is t23's delta.**
+4. **Undershoot guard (the t16 lesson):** compare combined vs the naive sum.
+   Mild under-additivity is normal (ship the measured number). But if the
+   combined result lands clearly BELOW the best single arm, a winner has
+   turned negative in company (precedent: the #44+NMP bundle measured +62
+   while NMP-verify silently dragged −15 — only leave-one-out isolation
+   exposed it). Drop the most suspect interacting arm and re-validate;
+   suspect order: the pruning pair-ups (futility knobs × razoring ×
+   rfp-guard), then see-ordering (it changes what every pruning heuristic
+   sees), then tt-aging (TT dynamics).
+5. **Orthogonal-evidence exception:** if tt-aging only proves out at LTC, or
+   drawishness only vs weaker external anchors, fold them on that evidence
+   but keep them OUT of the blitz validation run's attribution reasoning —
+   they're near-orthogonal to the search arms.
+6. Tag `baseline-t23` on the folded main (flip flag defaults / delete losing
+   paths per the aggressive-cleanup convention), build + snapshot
+   `huginn_t23.exe` per machine, push tag.
+7. Update BACKLOG (per-item results + close/park), BASELINE_LADDER.md (t23
+   section), CLAUDE.md (baseline bullet). Park losing branches (do NOT
+   delete — their commit messages carry the negative-result documentation).
+8. If `fix-nondet-50` shipped: re-run the #37 thread with fresh eyes
    (collision-corrupted TT moves are a candidate mechanism), and re-establish
    the Kiwipete d14 signature as a SECOND deterministic verification anchor
    alongside startpos.
