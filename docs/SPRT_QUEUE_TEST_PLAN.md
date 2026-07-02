@@ -38,20 +38,24 @@
 Run top to bottom — ordered by expected value. Each entry: what it is, the
 flag (branch default = test arm), what to expect, and the decision.
 
-### 1. `experiment/fix-nondet-50` — Zobrist black-king OOB fix (#50) — PRIORITY
-- **What:** `PIECE_NB` 12→13. t22's black king read past the key table: one
-  square (f4) got a per-process ASLR value (the Kiwipete nondeterminism);
-  squares b1/c1/d1/g4/h4 got constant 0 → positions differing only in that
-  black-king placement **hash identically** (real TT collisions in every
-  baseline ever). Flag `ENABLE_ZOBRIST_BLACK_KING_ROW` (0 = buggy t22 arm).
-- **Class:** latent correctness bug (#44/#45 family) — could be worth real
-  Elo; even if ~neutral it ships on soundness (like #43 MDP) because the
-  collision class is strictly harmful and the fix costs nothing.
-- **Decision:** positive or neutral-with-lean → ship into t23 regardless of
-  magnitude (document the reasoning); clearly negative would be shocking —
-  re-verify the run before believing it.
-- **Follow-up hook:** if it ships, revisit #37 (illegal bestmove) — zobrist
-  collisions corrupt TT-move sourcing, one of few mechanisms that fits #37.
+### 1. ~~`experiment/fix-nondet-50`~~ → **SHIPPED directly to `main`** (#50)
+- **What:** `PIECE_NB` 12→13, unconditional (no compile flag — this was pure
+  UB with one correct value, not a tunable behavior, so it landed straight on
+  `main` rather than through the flag/branch/SPRT-queue process). t22's black
+  king read past the key table: one square (f4) got a per-process ASLR value
+  (the Kiwipete nondeterminism); squares b1/c1/d1/g4/h4 got constant 0 →
+  positions differing only in that black-king placement **hashed identically**
+  (real TT collisions in every baseline ever).
+- **Class:** latent correctness bug (#44/#45 family).
+- **Result: AMD SPRT vs t22 — H1 ACCEPTED @872g, +33.97 ± 16.60, LOS 100%**
+  (54.87%, W267/L182/D423, Ptnml [20,86,160,129,41], LLR 3.01). Artifacts
+  `gauntlet/fix50_*` on `main`. Third #44/#45-class latent bug to convert to
+  real Elo — worth more than a determinism nit. Intel leg next; this is
+  already the first confirmed winner into the t23 candidate (see "Combining
+  the winners" below — the REMAINING 9 branches below still combine against
+  `main`, which now already carries this fix).
+- **Follow-up hook:** revisit #37 (illegal bestmove) — zobrist collisions
+  corrupted TT-move sourcing, one of few mechanisms that fit #37.
 
 ### 2. `experiment/see-ordering` — SEE good/bad capture split (#6)
 - **What:** in `pick_next_move`, captures with SEE < 0 drop below every quiet
@@ -141,11 +145,21 @@ flag (branch default = test arm), what to expect, and the decision.
 
 ## Combining the winners → t23 (screen → combine → validate)
 
-1. **Screen** (the queue above): every arm independently vs t22.
-2. **Combine:** merge ALL winning branches into one candidate branch
-   (`candidate/t23`). The flags make this mechanical — the candidate is just
-   "all winning flags ON"; resolve the (textual) flag-block merge conflicts,
-   re-run the suite + the startpos signature sanity of each OFF arm.
+> **Note on #50:** `main` now already carries the #50 fix (shipped directly,
+> unconditionally — see item 1 above), while the other 9 branches below are
+> still built off the OLD `baseline-t22` tag (pre-#50). Screening them
+> individually vs `t22` is still a fair, isolated A/B (neither arm has #50, so
+> it cancels). But when it's time to combine, **rebase/merge each winner onto
+> current `main`** (not onto the `baseline-t22` tag) so the candidate carries
+> #50 too — check for zobrist-adjacent conflicts (unlikely; only
+> `experiment/tt-aging` touches TT internals, and that's a different file).
+
+1. **Screen** (the queue above): every remaining arm independently vs t22.
+2. **Combine:** merge ALL winning branches onto current `main` (which already
+   has #50) into one candidate branch (`candidate/t23`). The flags make this
+   mechanical — the candidate is just "all winning flags ON"; resolve the
+   (textual) flag-block merge conflicts, re-run the suite + the startpos
+   signature sanity of each OFF arm.
 3. **Validate:** candidate vs t22, two machines, standard bar. **The combined
    measured Elo — not the sum of the individual runs — is t23's delta.**
 4. **Undershoot guard (the t16 lesson):** compare combined vs the naive sum.
