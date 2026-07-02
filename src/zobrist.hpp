@@ -32,13 +32,36 @@
 #include "chess_types.hpp"
 
 using U64 = std::uint64_t;
-constexpr int PIECE_NB = 12;
+
+// BACKLOG #50: number of rows in the Piece key table. The piece-index scheme
+// used by every keying site (position.hpp make/unmake primitives,
+// Zobrist::compute, Position::is_consistent) is
+//     row = int(PieceType) + (Black ? 6 : 0)      // Pawn=1 .. King=6
+// i.e. White 1..6, Black 7..12, row 0 unused — 13 rows. The historical
+// PIECE_NB=12 made the BLACK KING (row 12) index one row PAST the table:
+// an out-of-bounds read of whatever globals the linker placed after it. On
+// the MSVC release layout that region held an ASLR'd heap pointer at slot 29
+// (= black king on f4), injecting a per-process value into the zobrist key —
+// the fixed-depth node-count nondeterminism of BACKLOG #50 (Kiwipete d14
+// wobbled ~1k in 4.7M run-to-run; startpos never walks the black king to f4
+// and stayed byte-identical). Several other slots read constant ZERO, so
+// positions differing only in those black-king squares hashed identically —
+// real TT key collisions. Flag-off reproduces the t22 baseline arm (UB and
+// all) for A/B comparison only: build with -DENABLE_ZOBRIST_BLACK_KING_ROW=0.
+#ifndef ENABLE_ZOBRIST_BLACK_KING_ROW
+#define ENABLE_ZOBRIST_BLACK_KING_ROW 1
+#endif
+#if ENABLE_ZOBRIST_BLACK_KING_ROW
+constexpr int PIECE_NB = 13;  // rows 1..12 used (White 1-6, Black 7-12); 0 unused
+#else
+constexpr int PIECE_NB = 12;  // baseline-t22: black king (row 12) reads OOB — UB
+#endif
 
 // Forward declaration to avoid circular dependency - ensure consistency with position.hpp
 class Position;
 
 namespace Zobrist {
-    inline U64 Piece[PIECE_NB][64];  ///< Key per [piece-type][sq64] (12 × 64).
+    inline U64 Piece[PIECE_NB][64];  ///< Key per [piece-type][sq64]; White rows 1-6, Black 7-12.
     inline U64 Side;                 ///< Key XOR'd in when Black is to move.
     inline U64 Castle[16];           ///< Key per castling-rights mask (0..15).
     inline U64 EpFile[8];            ///< Key per en-passant file (a..h).

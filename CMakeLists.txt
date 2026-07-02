@@ -170,6 +170,7 @@ endif()
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
+option(ENABLE_ZOBRIST_BLACK_KING_ROW "BACKLOG #50: real zobrist row for the black king (fixes OOB read / node-count nondeterminism)" ON)
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
@@ -179,6 +180,13 @@ endif()
 if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     add_compile_definitions(ENABLE_SEARCH_INTEGRITY_ASSERTS=1)
     message(STATUS "Search position integrity diagnostics enabled")
+endif()
+
+if(ENABLE_ZOBRIST_BLACK_KING_ROW)
+    add_compile_definitions(ENABLE_ZOBRIST_BLACK_KING_ROW=1)
+else()
+    add_compile_definitions(ENABLE_ZOBRIST_BLACK_KING_ROW=0)
+    message(STATUS "BACKLOG #50 zobrist black-king row DISABLED (baseline-t22 OOB arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
