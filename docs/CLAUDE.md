@@ -13,17 +13,34 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t22` — **speed pair #48 (double-TT-probe kill) +
-  #49 (king-safety scan fused into the mobility pass)**, both verified
-  behavior-identical (byte-identical fixed-depth node counts, 203/203 tests) for
-  **+11% nps startpos / +6% Kiwipete** combined. Two-machine SPRT vs t21, both
-  legs positive — **AMD +14.60 ± 15.69 (LOS 96.6%) / Intel +18.08 ± 14.44 (LOS
+- ✅ **Baseline tag**: `baseline-t23` — **#50: Zobrist black-king row
+  out-of-bounds fix.** `Piece[PIECE_NB=12][64]` was one row short of the
+  13-row piece-index scheme (Pawn=1..King=6, White vs Black rows); the black
+  king's row read 64 `U64`s past the table — an ASLR heap pointer on one
+  square (per-process key → node-count nondeterminism) and **constant zero on
+  five others (real TT key collisions carried by every baseline ever)**.
+  Fixed unconditionally (`PIECE_NB` 12→13, no flag — pure UB with one correct
+  value, so it shipped straight to `main` ahead of the SPRT queue as a bug
+  fix, not a feature). **AMD SPRT vs t22: H1 accepted @872g, +33.97 ± 16.60,
+  LOS 100%** (54.87%, W267/L182/D423, Ptnml [20,86,160,129,41], LLR 3.01) —
+  single-machine decisive freeze, Intel confirms on push (t21 precedent). The
+  fix shifts the Zobrist RNG draw sequence, so **fixed-depth signatures moved**
+  (startpos d14: 12,035,479→14,306,844 nodes) — see
+  [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) for the new reference
+  numbers. Ten more candidate branches (`copilot/fix50-for-*`, rebased onto
+  t23) are queued for gauntlet screening toward `t24`. Prior:
+  `baseline-t22` — **speed pair #48 (double-TT-probe kill) + #49 (king-safety
+  scan fused into the mobility pass)**, both verified behavior-identical
+  (byte-identical fixed-depth node counts, 203/203 tests) for **+11% nps
+  startpos / +6% Kiwipete** combined. Two-machine SPRT vs t21, both legs
+  positive — **AMD +14.60 ± 15.69 (LOS 96.6%) / Intel +18.08 ± 14.44 (LOS
   99.3%)**, pooled 52.35% / 2000g — cross-machine-agreement ship. Prior:
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t22 speed pair · t21
-  TT-clear + time-mgmt · t20 move-level futility · t19 safe mobility · t18
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t23 zobrist OOB fix ·
+  t22 speed pair · t21 TT-clear + time-mgmt · t20 move-level futility · t19
+  safe mobility · t18
   mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 203 GoogleTest cases
 - ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —

@@ -9,6 +9,65 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t23 — #50: Zobrist black-king row out-of-bounds fix
+= t22 + a one-line correctness fix, shipped directly to `main` ahead of the
+SPRT queue (bug, not a feature — see [BACKLOG.md #50](BACKLOG.md) for the full
+root-cause writeup). Every keying site computes the piece-table row as
+`int(PieceType) + (Black ? 6 : 0)` — White rows 1–6, Black rows 7–12, row 0
+unused, **13 rows total** — but `Zobrist::Piece` was declared
+`[PIECE_NB=12][64]`. The **black king's row (12) read 64 `U64`s past the end
+of the array**:
+- One phantom slot (black king on **f4**) landed on an **ASLR'd heap
+  pointer**, injecting a fresh per-process value into every key with the
+  black king there — the source of the BACKLOG #50 Kiwipete d14 node-count
+  nondeterminism (±~1k/4.7M run-to-run; startpos never walks the black king
+  to f4, so it stayed deterministic and the bug went unnoticed for the whole
+  t5→t22 ladder).
+- Five more phantom slots (black king on **b1/c1/d1/g4/h4**) read **constant
+  zero** — the black king contributed NOTHING to the key on those squares, so
+  two positions differing only in that placement **hashed identically: real
+  TT key collisions**, a correctness hazard beyond nondeterminism, carried by
+  every baseline ever shipped (same latent-bug class as #44 and #45).
+- Time/input polling and Syzygy TB were each exonerated experimentally before
+  the OOB read was found (per-node key traces + a per-process dump of the key
+  table pinned the exact phantom slots and their contents).
+
+**Fix:** `PIECE_NB` 12→13, unconditional — **no compile flag.** This was pure
+undefined behavior with exactly one correct value, not a tunable behavior, so
+it didn't go through the flag/branch/SPRT-queue process other backlog items
+use; it landed as a direct commit to `main` (`150ea1f`, merged via PR #22).
+15× Kiwipete d14 confirmed constant post-fix (was wobbling); 203/203 tests.
+
+**Signature shift (expected, not a bug):** `init_zobrist()` draws keys
+sequentially — `Piece[][]` then `Side`/`Castle[]`/`EpFile[]` — so inserting a
+whole extra row before those shifts every key drawn after it, not just the
+black king's. Fixed-depth node counts moved even at positions that never
+approach the phantom squares: startpos `go depth 14` was 12,035,479 nodes /
+cp 27 under t22, now **14,306,844 nodes / cp 24** under t23 (same bestmove
+e2e4 both times — the search logic is unchanged, only the hash constants
+moved). d15 = 21,844,725. **Kiwipete is now also deterministic** (1,639,166 @
+d13, 3/3 runs) and usable as a second verification anchor going forward.
+
+- **AMD SPRT vs t22 (10+0.1, 1t, 64MB, noob_3moves.epd): H1 ACCEPTED @872g —
+  +33.97 ± 16.60** (nElo +47.55 ± 23.06), 54.87% (W267/L182/D423), **LOS
+  100.00%**, DrawRatio 36.70%, PairsRatio 1.60, Ptnml(0-2) [20,86,160,129,41],
+  LLR 3.01 — resolved decisively inside the cap. Artifacts
+  `gauntlet/fix50_vs_t22_amd.pgn` + `fix50_fastchess_t22_amd.log`.
+- **Single-machine decisive freeze** (LLR resolved, not just a lean) — Intel
+  confirms on push, same pattern as the t21 ship. Third #44/#45-class latent
+  structural bug to convert to real Elo (#44 ≈ +48–76, #45 ≈ +345–355) —
+  smaller here (+34), but the same lesson: **audit long-standing structures
+  periodically, not just new deltas** (every incremental A/B on this ladder
+  carried the collision bug in both arms, so it never surfaced until the
+  structure itself — the Zobrist table — was examined directly).
+- **Ten more candidate branches** (`copilot/fix50-for-*`, rebased onto t23
+  from the pre-#50 `experiment/*` originals — feature diffs verified
+  byte-identical) are queued for gauntlet screening toward the next baseline,
+  `t24`. Full procedure: [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+- **Follow-up hook:** re-test #37 (illegal bestmove) — zobrist collisions
+  corrupting TT-move sourcing were a candidate mechanism, and this fix removed
+  one concrete collision source.
+
 ### baseline-t22 — speed pair: #48 double-TT-probe kill + #49 KS/mobility fusion
 = t21 + two **behavior-identical** nps optimizations from the 2026-06-28 uProf
 profile. No search/eval behavior change: startpos d15 node counts byte-identical

@@ -645,32 +645,43 @@ Intel; fastchess forfeits on it).
   repro until it trips, then bisect from the captured context. The diagnostic
   should hand us a deterministic repro the next time the imbalance occurs.
 
-### SPRT queue — experiment branches off baseline-t22 (2026-07-02)
+### SPRT queue — branches off baseline-t23 (2026-07-02, updated after #50 shipped)
 
-Eleven branches implemented + adversarially verified in one session (each: own
-flag, branch default = the test arm, other arm verified byte-identical to the
-t22 startpos-d14 signature 12,035,479, full suite green, independent rebuild).
-Gauntlet each independently: `git checkout <branch>` on each box, then
-`test_huginn_gauntlet.bat t22`. Recommended order (expected value):
+Eleven branches implemented + adversarially verified in one session, originally
+off `baseline-t22`. **#50 (below) shipped directly to `main` ahead of the queue
+— a correctness bug, not a feature — and `main` was tagged `baseline-t23`
+immediately after.** Because #50 shifts the `init_zobrist()` RNG draw sequence
+(inserting a whole extra table row changes every subsequently-drawn key, not
+just the black-king ones), every remaining branch was **rebased onto t23** by
+GitHub Copilot as `copilot/fix50-for-*` — diff-verified byte-identical feature
+content to the originals (feature diff vs `experiment/*`, excluding
+`zobrist.hpp`, is empty for all 10). **Use the `copilot/fix50-for-*` branches
+for gauntlets; the `experiment/*` ones are stale (pre-#50) and kept only for
+reference.** Full procedure + the new t23 signature numbers:
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md). Gauntlet each
+independently: `git checkout copilot/fix50-for-<name>`, then
+`test_huginn_gauntlet.bat t23`. Recommended order (expected value; node deltas
+below are from the original pre-rebase measurement vs t22 and are directional
+only — re-baseline against t23's own signature, see the test plan):
 
-| Branch | Item | Flag | d14 nodes vs t22 12.04M | Note |
+| Branch | Item | Flag | d14 nodes vs old t22 12.04M | Note |
 |---|---|---|---|---|
-| ~~`experiment/fix-nondet-50`~~ → **`main`** | #50 | *(none — shipped unconditionally)* | ~same (startpos) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
-| `experiment/see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | 5.75M (**−52%**) | bad captures below quiets; big ordering win at fixed depth |
-| `experiment/razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | does razoring earn its keep at all |
-| `experiment/rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | sounder PV values → better TT reuse shrank the tree |
-| `experiment/futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
-| `experiment/futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
-| `experiment/tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
-| `experiment/drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
-| `experiment/root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
-| `experiment/trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
-| `experiment/pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
+| ~~`experiment/fix-nondet-50`~~ → **`main` (`baseline-t23`)** | #50 | *(none — shipped unconditionally)* | n/a (t23 IS the new reference) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
+| `copilot/fix50-for-see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | 5.75M (**−52%**) | bad captures below quiets; big ordering win at fixed depth |
+| `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | does razoring earn its keep at all |
+| `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | sounder PV values → better TT reuse shrank the tree |
+| `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
+| `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
+| `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
+| `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
+| `copilot/fix50-for-root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
+| `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
+| `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
 
-Ships fold into the next baseline; losers get their branch parked with the
-result logged under their item.
+Ships fold into the next baseline (`t24`); losers get their branch parked with
+the result logged under their item.
 
-### #50: Zobrist black-king row OOB — ROOT-CAUSED (2026-07-02), fix branch pending SPRT
+### #50: Zobrist black-king row OOB — SHIPPED to `main` = `baseline-t23` (2026-07-02)
 
 Surfaced during the #48/#49 verification runs as a run-to-run Kiwipete d14
 node-count wobble (±~1k in 4.7M; startpos byte-identical); present at t21.
