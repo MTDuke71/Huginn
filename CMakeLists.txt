@@ -181,6 +181,20 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# BACKLOG #42: date-based TT aging experiment. The source default (test arm = 1
+# on experiment/tt-aging) lives in src/transposition_table.hpp; pass
+# -DENABLE_TT_AGING=0/1 (or OFF/ON) here to force an arm — 0 reproduces the t22
+# depth-preferred-only replacement exactly. Left unset, the source default rules.
+if(DEFINED ENABLE_TT_AGING)
+    if(ENABLE_TT_AGING)
+        add_compile_definitions(ENABLE_TT_AGING=1)
+        message(STATUS "TT aging (#42) forced ON")
+    else()
+        add_compile_definitions(ENABLE_TT_AGING=0)
+        message(STATUS "TT aging (#42) forced OFF (t22 replacement policy)")
+    endif()
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
@@ -476,6 +490,7 @@ if(GTEST_FOUND)
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
+    test/test_transposition_table.cpp
     )
 
     add_executable(huginn_tests
