@@ -183,11 +183,27 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
 endif()
 
 # BACKLOG #6: forward as an explicit 0/1 so -DENABLE_SEE_ORDER_SPLIT=0 builds
-# the baseline-t22 arm (the source default in search.cpp is the test arm, 1).
+# the pre-t24 arm (the source default in search.cpp is the shipped default, 1).
 if(ENABLE_SEE_ORDER_SPLIT)
     add_compile_definitions(ENABLE_SEE_ORDER_SPLIT=1)
 else()
     add_compile_definitions(ENABLE_SEE_ORDER_SPLIT=0)
+endif()
+
+# BACKLOG #44 follow-up: root two-fold draw-avoidance (see the
+# ENABLE_ROOT_TWOFOLD_AVOID block in src/search.cpp). Forward as an explicit
+# 0/1 ALWAYS — never rely on a bare if(DEFINED) skip to silently fall through
+# to the source default. A reused/incrementally-reconfigured build directory
+# can leave a CACHE-variable-backed guard like this compiled as if 0 even
+# when unset; see BACKLOG #50-queue notes (the same bug hit
+# ENABLE_FUTILITY_PV_GUARD).
+option(ENABLE_ROOT_TWOFOLD_AVOID "BACKLOG #44 follow-up: root two-fold draw-avoidance (shipped default)" ON)
+if(ENABLE_ROOT_TWOFOLD_AVOID)
+    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=1)
+    message(STATUS "Root two-fold draw-avoidance enabled")
+else()
+    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=0)
+    message(STATUS "Root two-fold draw-avoidance disabled (pre-t24 arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
@@ -485,6 +501,7 @@ if(GTEST_FOUND)
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
+    test/test_root_twofold_avoid.cpp
     )
 
     add_executable(huginn_tests

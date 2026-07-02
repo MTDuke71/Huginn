@@ -195,10 +195,29 @@
 // order among the bad captures themselves. Exempt: en passant (always PxP,
 // SEE >= 0 — skip the call) and promotion-captures (mirrors quiescence's
 // SEE-prune exemption). Quiescence ordering is untouched — it passes
-// depth == -1 and already SEE-prunes bad captures outright. Default ON on
-// this branch (test arm); build the t22 arm with -DENABLE_SEE_ORDER_SPLIT=0.
+// depth == -1 and already SEE-prunes bad captures outright.
+// SHIPPED baseline-t24 (two-machine SPRT vs t23: AMD +49.54/LOS 100%, Intel
+// +29.02/LOS 99.99%). Build the pre-t24 arm with -DENABLE_SEE_ORDER_SPLIT=0.
 #ifndef ENABLE_SEE_ORDER_SPLIT
 #define ENABLE_SEE_ORDER_SPLIT 1
+#endif
+// ENABLE_ROOT_TWOFOLD_AVOID: BACKLOG #44 follow-up. Extend the root
+// draw-avoidance (searchPosition's winning-repetition clamp) from the rule
+// threefold (rep count >= 3) to a SINGLE repetition (>= 2): when the root
+// static eval is winning (>= WINNING_REPETITION_AVOID_THRESHOLD), a root move
+// that recreates ANY position key already in the game history is clamped to
+// WINNING_REPETITION_DRAW_SCORE, so a won engine routes around the shuffle one
+// move earlier — before the position ever recurs twice. The in-tree Zarkov
+// single-rep rule (#28 Part 2) already draws winning single reps, but only
+// past the root neighbourhood (info.ply > 2); the root child at info.ply == 1
+// is exactly the hole this plugs. Inert without game history (rep counting
+// needs pos.ply >= 6) and never applies when not winning — a losing engine
+// keeps the repetition rescue.
+// SHIPPED baseline-t24 (cross-machine agreement vs t23: AMD +12.51/LOS
+// 94.68%, Intel +7.99/LOS 85.01%). Build the pre-t24 arm with
+// -DENABLE_ROOT_TWOFOLD_AVOID=0.
+#ifndef ENABLE_ROOT_TWOFOLD_AVOID
+#define ENABLE_ROOT_TWOFOLD_AVOID 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
@@ -2711,7 +2730,17 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             }
             assert_search_position_integrity(pos, "after root MakeMove");
             ++legal_count;
+#if ENABLE_ROOT_TWOFOLD_AVOID
+            // BACKLOG #44 follow-up: rep count >= 2 means this root move
+            // recreates a position key already in the game history (a single
+            // repetition; >= 3 is the rule threefold isRepetition() requires).
+            // The winning clamp below then routes around the shuffle one move
+            // earlier. Same gate as before — no effect unless clearly winning.
+            const bool immediate_repetition =
+                (repetition_count_in_history(pos) >= 2);
+#else
             const bool immediate_repetition = isRepetition(pos);
+#endif
 
             // Track move in search stack for counter-move heuristic.
             // info.ply is 0 at root; this writes search_stack[0].
