@@ -89,8 +89,8 @@
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 32 | PEXT slider attacks (build-gated) | **OPEN** | speed/research | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
-| 48 | Kill the double TT probe (move ordering) | **IMPLEMENTED** (2026-07-01) — `tt_best_move` now passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (new param, re-probe deleted); quiescence keeps exactly one probe, hoisted pre-loop. Verified: startpos d15 nodes **byte-identical** (18,223,597, 5/5 runs both arms), 203/203 tests; interleaved A/B nps **+0.8% startpos / +4.0% Kiwipete d14**. Fixed-time SPRT pending (batch with #49). | speed | medium |
-| 49 | Fuse king-safety attacker scan into the mobility pass | **IMPLEMENTED** (2026-07-01) — king-zone attacker units now accumulated inside the mobility loop (which computes every piece's attack set anyway); `king_danger_mg()` finalizes (square/cap/shelter) at the taper; the standalone `king_safety_white_mg` scan deleted. Verified: startpos d15 nodes **byte-identical** (18,223,597), 203/203 tests incl. symmetry; interleaved A/B nps **+8.2% startpos / +5.5% Kiwipete** — above the ~3% uProf estimate. Fixed-time SPRT pending (batch with #48). | speed | medium |
+| 48 | Kill the double TT probe (move ordering) | **IMPLEMENTED** (2026-07-01) — `tt_best_move` now passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (new param, re-probe deleted); quiescence keeps exactly one probe, hoisted pre-loop. Verified: startpos d15 nodes **byte-identical** (18,223,597, 5/5 runs both arms), 203/203 tests; interleaved A/B nps **+0.8% startpos / +4.0% Kiwipete d14**. **AMD SPRT (batched w/ #49) vs t21: +14.60 ± 15.69, LOS 96.6%** @1000g — Intel leg next. | speed | medium |
+| 49 | Fuse king-safety attacker scan into the mobility pass | **IMPLEMENTED** (2026-07-01) — king-zone attacker units now accumulated inside the mobility loop (which computes every piece's attack set anyway); `king_danger_mg()` finalizes (square/cap/shelter) at the taper; the standalone `king_safety_white_mg` scan deleted. Verified: startpos d15 nodes **byte-identical** (18,223,597), 203/203 tests incl. symmetry; interleaved A/B nps **+8.2% startpos / +5.5% Kiwipete** — above the ~3% uProf estimate. **AMD SPRT (batched w/ #48) vs t21: +14.60 ± 15.69, LOS 96.6%** @1000g — Intel leg next. | speed | medium |
 | 50 | Fixed-depth node counts are not deterministic on all positions | **OPEN** (2026-07-01) — Kiwipete `go depth 14` (1t, OwnBook=false, after `ucinewgame`) wobbles ±~1k nodes in 4.7M run-to-run; startpos d15 is perfectly deterministic (5/5 byte-identical). Observed on the pre-#48 t21 build too, so it long predates #48/#49. A time-dependent node-count wobble in a single-threaded engine at fixed depth is a soundness smell — same *time-dependent* class as #37; suspects: input-polling `checkup()` side effects, time-management state leaking into `go depth`, TB probe caching. Diagnose before it undermines the fixed-depth verification methodology on non-startpos signatures. | bug/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
@@ -800,8 +800,14 @@ TC.** Related: #8 (aspiration step b, parked).
   node-entry probe; quiescence (which has no entry probe) does one pre-loop probe —
   same probe count as before there, one fewer everywhere else. Verified identical
   startpos d15 node counts (18,223,597, deterministic both arms), 203/203 tests,
-  interleaved A/B nps +0.8% (startpos d15) / +4.0% (Kiwipete d14). Fixed-time SPRT
-  pending — batch with #49. Original analysis: uProf (2026-06-28, time-based
+  interleaved A/B nps +0.8% (startpos d15) / +4.0% (Kiwipete d14).
+  **AMD SPRT vs t21 (batched with #49, 10+0.1, 1t, 64MB, noob_3moves.epd,
+  2026-07-01): +14.60 ± 15.69** (nElo +20.07 ± 21.53), 52.10% (W285/L243/D472),
+  **LOS 96.62%**, DrawRatio 35.0%, PairsRatio 1.32, Ptnml [36,104,175,152,33],
+  LLR 1.23 (inconclusive @1000g cap; point estimate above the elo1=10 target).
+  PGN `gauntlet/huginn_vs_t21_amd.pgn`. Intel leg next — ship bar is same-sign
+  two-machine (or tight cross-machine agreement).
+  Original analysis: uProf (2026-06-28, time-based
   sampling of a Kiwipete `go movetime` workload) put `pick_next_move` at **#2 self-time**
   (behind `evaluate`, ahead of `AlphaBeta`). It does NOT re-score per pick (scores once
   at `move_num==0`, then cheap selection scans — sound). The real cost: `AlphaBeta`
@@ -828,7 +834,8 @@ TC.** Related: #8 (aspiration step b, parked).
   deterministic both arms), 203/203 tests incl. the symmetry suite; interleaved A/B
   nps +8.2% (startpos d15) / +5.5% (Kiwipete d14) — above the ~3% uProf estimate
   (the fused loop also drops redundant per-piece popcount setup, and the queen's
-  two magic lookups per king are gone). Fixed-time SPRT pending — batch with #48.
+  two magic lookups per king are gone). **AMD SPRT vs t21 (batched with #48):
+  +14.60 ± 15.69, LOS 96.62% @1000g** — full line under #48; Intel leg next.
   Original analysis: same uProf run: `king_safety_white_mg`'s `danger_for` lambda
   ([../src/search.cpp#L344](../src/search.cpp#L344)) computes a magic slider attack set
   for **every enemy bishop/rook/queen** (queen = two lookups), for *both* kings → a
