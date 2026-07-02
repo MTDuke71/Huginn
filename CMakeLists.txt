@@ -170,6 +170,7 @@ endif()
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
+option(ENABLE_SEE_ORDER_SPLIT "Enable BACKLOG #6 SEE good/bad capture ordering split" ON)
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
@@ -179,6 +180,14 @@ endif()
 if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     add_compile_definitions(ENABLE_SEARCH_INTEGRITY_ASSERTS=1)
     message(STATUS "Search position integrity diagnostics enabled")
+endif()
+
+# BACKLOG #6: forward as an explicit 0/1 so -DENABLE_SEE_ORDER_SPLIT=0 builds
+# the baseline-t22 arm (the source default in search.cpp is the test arm, 1).
+if(ENABLE_SEE_ORDER_SPLIT)
+    add_compile_definitions(ENABLE_SEE_ORDER_SPLIT=1)
+else()
+    add_compile_definitions(ENABLE_SEE_ORDER_SPLIT=0)
 endif()
 
 # ---- Sanitizers for enhanced debugging ----

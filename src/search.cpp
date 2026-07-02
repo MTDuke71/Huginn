@@ -38,6 +38,7 @@
 #include "msvc_optimizations.hpp"
 #include "see.hpp"
 #include <cassert>
+#include <climits>   // INT_MIN selection sentinel (ENABLE_SEE_ORDER_SPLIT)
 #include <cstdlib>
 #include <cmath>     // for std::log used by the LMR-table initializer
 #include <array>
@@ -179,6 +180,25 @@
 // follow-up knobs if this clears.
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
+#endif
+// ENABLE_SEE_ORDER_SPLIT: BACKLOG #6 — full good/bad capture split (the
+// MTLChess recipe; the prior parked #6 attempt was "lazy SEE", ~neutral).
+// t22 scores EVERY capture at 1,000,000 + MVV-LVA — above killers (900K/800K)
+// — so losing captures (e.g. QxP defended by a pawn) are searched before
+// killers/history quiets and waste nodes. Flag ON: each main-search capture is
+// SEE-scored once in pick_next_move's move_num==0 pass; SEE >= 0 keeps
+// 1,000,000 + MVV-LVA (still above killers), SEE < 0 drops to -10,000,000 +
+// MVV-LVA — strictly below every quiet band (killers 900K/800K, promotions
+// 25K-90K, counter-move 1.5K, history quiets = raw search_history, whose
+// updates are capped at depth^2 <= 4096, quartered per search and aged 7/8
+// per iteration, so it can never approach -9.9M) while preserving MVV-LVA
+// order among the bad captures themselves. Exempt: en passant (always PxP,
+// SEE >= 0 — skip the call) and promotion-captures (mirrors quiescence's
+// SEE-prune exemption). Quiescence ordering is untouched — it passes
+// depth == -1 and already SEE-prunes bad captures outright. Default ON on
+// this branch (test arm); build the t22 arm with -DENABLE_SEE_ORDER_SPLIT=0.
+#ifndef ENABLE_SEE_ORDER_SPLIT
+#define ENABLE_SEE_ORDER_SPLIT 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
@@ -1471,12 +1491,24 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                 PieceType attacker = type_of(attacking_piece);
                 
                 score = 1000000 + get_mvv_lva_score(victim, attacker);
-                
+
                 // Bonus for en passant captures (always pawn takes pawn)
                 if (move.is_en_passant()) {
                     score += 10000;  // High priority for en passant
                 }
-                
+#if ENABLE_SEE_ORDER_SPLIT
+                // BACKLOG #6: losing captures sink strictly below every quiet
+                // band, still MVV-LVA-ordered among themselves. Main search
+                // only (quiescence passes depth == -1 and SEE-prunes these
+                // instead). The else exempts en passant (always PxP, SEE >= 0);
+                // promotion-captures are exempt like quiescence's SEE-prune
+                // exemption — never bury a promotion below quiets.
+                else if (depth >= 0 && !move.is_promotion() &&
+                         Huginn::see(pos, move) < 0) {
+                    score = -10000000 + get_mvv_lva_score(victim, attacker);
+                }
+#endif
+
             } else {
                 // Check for killer moves (non-captures only)
                 bool is_killer = false;
@@ -1558,7 +1590,14 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
     }
     
     // Find the best move from move_num onwards
+#if ENABLE_SEE_ORDER_SPLIT
+    // BACKLOG #6: bad captures carry negative scores; the old -1 sentinel
+    // would never select among them (leaving generation order). INT_MIN keeps
+    // the selection sort total. Quiescence lists are all-positive either way.
+    int best_score = INT_MIN;
+#else
     int best_score = -1;
+#endif
     int best_index = move_num;
     
     for (int i = move_num; i < move_list.count; i++) {
