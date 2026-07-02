@@ -180,6 +180,17 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_FUTILITY_DEPTH2: BACKLOG #45 follow-up knob (a) — narrow the futility
+// envelope from depth<=3 to depth<=2. Fruit 2.1 only trusts futility at the
+// frontier (depth==1); the #45 ship deliberately kept the <=3 envelope so the
+// SPRT measured the node->move change alone, parking depth-narrowing as a
+// follow-up. Firing at fewer depths prunes LESS (more nodes at fixed depth)
+// but stops trusting the static-eval margin two plies from qsearch. Default ON
+// on this branch (= the test arm); build the t22-identical arm with
+// -DENABLE_FUTILITY_DEPTH2=0 (MAX_FUTILITY_DEPTH back to 3).
+#ifndef ENABLE_FUTILITY_DEPTH2
+#define ENABLE_FUTILITY_DEPTH2 1
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1974,7 +1985,11 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // This is safe because even the best possible move won't improve alpha enough
     const int FUTILITY_MARGIN_BASE = 100;      // Base margin in centipawns
     const int FUTILITY_MARGIN_PER_PLY = 50;    // Additional margin per remaining ply
+#if ENABLE_FUTILITY_DEPTH2
+    const int MAX_FUTILITY_DEPTH = 2;          // #45 follow-up (a): narrowed envelope
+#else
     const int MAX_FUTILITY_DEPTH = 3;          // Maximum depth to apply futility pruning
+#endif
     
     bool futility_prune = false;
     int futility_margin = 0;

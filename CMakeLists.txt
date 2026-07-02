@@ -181,6 +181,16 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# BACKLOG #45 follow-up knob (a): futility envelope depth<=2 (ON) vs t22's
+# depth<=3 (OFF). Source default is ON; forward both arms so -DENABLE_FUTILITY_DEPTH2=0/1 works.
+option(ENABLE_FUTILITY_DEPTH2 "BACKLOG #45 follow-up: narrow move-level futility envelope to depth<=2" ON)
+if(ENABLE_FUTILITY_DEPTH2)
+    add_compile_definitions(ENABLE_FUTILITY_DEPTH2=1)
+else()
+    add_compile_definitions(ENABLE_FUTILITY_DEPTH2=0)
+    message(STATUS "Futility envelope: baseline depth<=3 (t22 arm)")
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
