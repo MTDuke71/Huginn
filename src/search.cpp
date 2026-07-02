@@ -180,6 +180,21 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_DRAWISHNESS_SCALING: #9/#35 HCE roadmap, "drawishness scaling
+// (mul[])" — kill the "scores a dead-drawn endgame as winning" class (also the
+// #5 conversion weakness, 99 draws vs Stash 11). In evaluate(), the final
+// white-positive score (after the tapered blend, before the side-to-move
+// negation + tempo) is scaled by mul/128: pure opposite-coloured bishops
+// (exactly one bishop each, no other non-pawn pieces) → 64/128; a pawnless
+// favoured side ahead by at most a minor in non-pawn material → 16/128.
+// Hand-set multipliers, NOT sigmoid-tunable (a final-eval factor is invisible
+// to the Texel fit) — SPRT decides. Colour-symmetric by construction (per-side
+// counts + "the side the score favours"); the mirror suite must stay green.
+// DEFAULT ON on this branch (the test arm); build the t22 arm with
+// -DENABLE_DRAWISHNESS_SCALING=0.
+#ifndef ENABLE_DRAWISHNESS_SCALING
+#define ENABLE_DRAWISHNESS_SCALING 1
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -847,6 +862,68 @@ int Engine::evaluate(const Position& pos) {
 #else
     // Legacy hard boolean: pick one side of the blend at the 1150 threshold.
     score += (is_endgame ? (eg_pst + eg_mob) : (mg_pst + mg_mob));
+#endif
+
+#if ENABLE_DRAWISHNESS_SCALING
+    // Drawishness scaling (#9/#35 "mul[]"): damp the final white-positive
+    // score in endings the favoured side can rarely convert, so a dead-drawn
+    // ending isn't scored as winning. Applied AFTER the tapered blend, BEFORE
+    // the side-to-move negation + tempo. Both rules reference only per-side
+    // counts and "the side the score favours", and `score * mul / 128`
+    // truncates toward zero for either sign, so colour symmetry
+    // (evaluate(pos) == -evaluate(mirror(pos))) holds by construction.
+    // MaterialDraw() at the top already short-circuits the both-sides-pawnless
+    // KvK / K+minor vs K subset — nothing here double-handles those.
+    if (score != 0) {
+        int mul = 128;
+        const int white_knights = popcount(wbb[int(PieceType::Knight)]);
+        const int black_knights = popcount(bbb[int(PieceType::Knight)]);
+        const int white_rooks   = popcount(wbb[int(PieceType::Rook)]);
+        const int black_rooks   = popcount(bbb[int(PieceType::Rook)]);
+        const int white_queens  = popcount(wbb[int(PieceType::Queen)]);
+        const int black_queens  = popcount(bbb[int(PieceType::Queen)]);
+
+        // Rule 1 — pure opposite-coloured bishops: exactly one bishop each and
+        // NO other non-pawn pieces, bishops on opposite square colours → halve.
+        // Square colour = (rank+file) parity; a vertical mirror flips BOTH
+        // bishops' square colours, so the "opposite" relation is mirror-stable.
+        if (white_bishops == 1 && black_bishops == 1 &&
+            white_knights + black_knights + white_rooks + black_rooks +
+            white_queens + black_queens == 0) {
+            const int wbsq = get_lsb(wbb[int(PieceType::Bishop)]);
+            const int bbsq = get_lsb(bbb[int(PieceType::Bishop)]);
+            if ((((wbsq >> 3) + (wbsq & 7)) & 1) != (((bbsq >> 3) + (bbsq & 7)) & 1)) {
+                mul = 64;
+            }
+        }
+
+        // Rule 2 — pawnless lone-minor advantage: the side the score favours
+        // has no pawns and leads by at most one minor of non-pawn material
+        // (KB/KN up, KR vs K+minor, KR+minor vs KR, ...) — a bare-king edge
+        // that small almost never wins → 16/128. Uses the tuned eval material
+        // (PIECE_VALUES_MG) so "a minor" tracks the eval's own scale. KNNvK
+        // (a TWO-minor edge over a bare king) is outside both this rule and
+        // MaterialDraw() and keeps full value — a known gap, left for a
+        // follow-up recognizer rather than widening this rule.
+        const bool white_favoured = (score > 0);
+        const uint64_t favoured_pawns = white_favoured ? white_pawns : black_pawns;
+        if (favoured_pawns == 0) {
+            const int knight_mg = PIECE_VALUES_MG[int(PieceType::Knight)];
+            const int bishop_mg = PIECE_VALUES_MG[int(PieceType::Bishop)];
+            const int w_npm = white_knights * knight_mg + white_bishops * bishop_mg
+                            + white_rooks  * PIECE_VALUES_MG[int(PieceType::Rook)]
+                            + white_queens * PIECE_VALUES_MG[int(PieceType::Queen)];
+            const int b_npm = black_knights * knight_mg + black_bishops * bishop_mg
+                            + black_rooks  * PIECE_VALUES_MG[int(PieceType::Rook)]
+                            + black_queens * PIECE_VALUES_MG[int(PieceType::Queen)];
+            const int adv = white_favoured ? (w_npm - b_npm) : (b_npm - w_npm);
+            if (adv <= std::max(knight_mg, bishop_mg)) {
+                mul = 16;  // overrides the OCB halving — strictly more drawish
+            }
+        }
+
+        score = score * mul / 128;
+    }
 #endif
 
     // Return from current side's perspective (negate if black to move),

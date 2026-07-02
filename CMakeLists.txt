@@ -181,6 +181,14 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# #9/#35 drawishness scaling (experiment/drawishness-scaling). Unset -> the
+# in-source default in src/search.cpp; pass -DENABLE_DRAWISHNESS_SCALING=0/1
+# to force an arm (0 = baseline-t22 behavior, 1 = scaled eval).
+if(DEFINED ENABLE_DRAWISHNESS_SCALING)
+    add_compile_definitions(ENABLE_DRAWISHNESS_SCALING=${ENABLE_DRAWISHNESS_SCALING})
+    message(STATUS "Drawishness scaling: ENABLE_DRAWISHNESS_SCALING=${ENABLE_DRAWISHNESS_SCALING}")
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
@@ -476,6 +484,7 @@ if(GTEST_FOUND)
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
+    test/test_eval_drawishness.cpp
     )
 
     add_executable(huginn_tests
