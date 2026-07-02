@@ -180,6 +180,17 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_RAZORING: BACKLOG #45-audit — first probe of the pruning-stack audit
+// opened by the #45 result. Gates the razoring block in AlphaBeta (depth 2..4,
+// !in_check, !isRoot: eval + 400 < alpha => depth--). Same node-level,
+// no-PV-guard, wide-depth-envelope shape as the #45 bug, so the audit's first
+// question is simply whether razoring earns its keep at all. NOTE the INVERTED
+// arm mapping on this branch: default 0 => razoring OFF is the TEST arm (a
+// plain build produces the experiment); build the t22-reference arm (razoring
+// ON, byte-identical to baseline-t22) with -DENABLE_RAZORING=1.
+#ifndef ENABLE_RAZORING
+#define ENABLE_RAZORING 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -2007,9 +2018,12 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
     }
 
+#if ENABLE_RAZORING
     // Razoring: at low depth, if static eval + a generous margin is still
     // below alpha, the position is hopeless — reduce search depth by 1
     // rather than full search. Soft pruning (depth reduction, not return).
+    // #45-audit: node-level, no PV guard, fires to depth 4 — same shape as the
+    // #45 bug; gated to measure whether it earns its keep (see flag block).
     {
         const int RAZORING_MARGIN = 400;        // 4 pawns of slack
         const int MAX_RAZORING_DEPTH = 4;
@@ -2023,6 +2037,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             }
         }
     }
+#endif
 
     // Generate pseudo-legal moves; legality is checked per-move via MakeMove
     // below, and mate/stalemate is detected after the loop via legal_count.

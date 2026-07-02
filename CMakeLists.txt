@@ -181,6 +181,15 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# BACKLOG #45-audit: forward ENABLE_RAZORING to the compiler when set on the
+# cmake command line (-DENABLE_RAZORING=0/1). Unset -> the in-source default at
+# the top of src/search.cpp applies (0 on this branch = razoring-off test arm;
+# =1 rebuilds the baseline-t22 reference arm).
+if(DEFINED ENABLE_RAZORING)
+    add_compile_definitions(ENABLE_RAZORING=${ENABLE_RAZORING})
+    message(STATUS "ENABLE_RAZORING=${ENABLE_RAZORING} (explicit)")
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
