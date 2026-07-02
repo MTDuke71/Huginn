@@ -180,6 +180,21 @@
 #ifndef ENABLE_MOVE_LEVEL_FUTILITY
 #define ENABLE_MOVE_LEVEL_FUTILITY 1
 #endif
+// ENABLE_TRAPPED_BISHOP: BACKLOG #20 — penalize a bishop cornered behind an
+// enemy pawn (the CPW-engine EvalBishop locks): a7/h7/b8/g8 blocked by a pawn
+// on b6/g6/c7/f7 (full penalty) and a6/h6 blocked by b5/g5 (lighter penalty),
+// plus the colour mirrors (a2/b3 etc.). Such a bishop is usually lost for the
+// pawn, but mobility still credits the diagonal it "sees" — signal mobility
+// can't capture. Implemented as six direct square+enemy-pawn mask tests per
+// side (no piece loop) with two tapered EVAL_PARAM pairs
+// (P_BISHOP_TRAPPED_A7/A6, Texel-tunable). CPW's RETURNING_BISHOP is
+// deliberately NOT ported (rewards an undeveloped bishop; fights
+// DEVELOP_BONUS). Default ON on this branch = the test arm; build the
+// baseline-t22 arm with -DENABLE_TRAPPED_BISHOP=0 (flag-off is byte-identical
+// to t22).
+#ifndef ENABLE_TRAPPED_BISHOP
+#define ENABLE_TRAPPED_BISHOP 1
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -679,6 +694,44 @@ int Engine::evaluate(const Position& pos) {
             eg_pst -= n * EvalParams::ROOK_ON_7TH_EG;
         }
     }
+
+#if ENABLE_TRAPPED_BISHOP
+    // Trapped bishops (#20, CPW-engine EvalBishop locks): a bishop cornered
+    // behind an enemy pawn (Ba7/pb6 etc.) is usually lost for that pawn, but
+    // mobility still credits the diagonal it "sees". Six direct
+    // square+enemy-pawn mask tests per side (no piece loop), two penalty
+    // tiers, tapered into the mg/eg accumulators (white-positive);
+    // colour-symmetric (a7/b6 <-> a2/b3 etc.), so eval mirror-symmetry holds.
+    {
+        // Square bits (sq64: a1=0 … h8=63), named for readability.
+        constexpr uint64_t A7 = 1ULL << 48, B6 = 1ULL << 41, H7 = 1ULL << 55, G6 = 1ULL << 46,
+                           B8 = 1ULL << 57, C7 = 1ULL << 50, G8 = 1ULL << 62, F7 = 1ULL << 53,
+                           A6 = 1ULL << 40, B5 = 1ULL << 33, H6 = 1ULL << 47, G5 = 1ULL << 38,
+                           A2 = 1ULL <<  8, B3 = 1ULL << 17, H2 = 1ULL << 15, G3 = 1ULL << 22,
+                           B1 = 1ULL <<  1, C2 = 1ULL << 10, G1 = 1ULL <<  6, F2 = 1ULL << 13,
+                           A3 = 1ULL << 16, B4 = 1ULL << 25, H3 = 1ULL << 23, G4 = 1ULL << 30;
+        const uint64_t wB = wbb[int(PieceType::Bishop)];
+        const uint64_t bB = bbb[int(PieceType::Bishop)];
+        // White-positive lock counts: (Black bishops trapped) − (White's).
+        int full = 0, light = 0;
+        if ((wB & A7) && (black_pawns & B6)) --full;
+        if ((wB & H7) && (black_pawns & G6)) --full;
+        if ((wB & B8) && (black_pawns & C7)) --full;
+        if ((wB & G8) && (black_pawns & F7)) --full;
+        if ((wB & A6) && (black_pawns & B5)) --light;
+        if ((wB & H6) && (black_pawns & G5)) --light;
+        if ((bB & A2) && (white_pawns & B3)) ++full;
+        if ((bB & H2) && (white_pawns & G3)) ++full;
+        if ((bB & B1) && (white_pawns & C2)) ++full;
+        if ((bB & G1) && (white_pawns & F2)) ++full;
+        if ((bB & A3) && (white_pawns & B4)) ++light;
+        if ((bB & H3) && (white_pawns & G4)) ++light;
+        mg_pst += full  * EvalParams::P_BISHOP_TRAPPED_A7_MG;
+        eg_pst += full  * EvalParams::P_BISHOP_TRAPPED_A7_EG;
+        mg_pst += light * EvalParams::P_BISHOP_TRAPPED_A6_MG;
+        eg_pst += light * EvalParams::P_BISHOP_TRAPPED_A6_EG;
+    }
+#endif
 
     // Threats (#9 round 6): bonus per enemy piece attacked by a cheaper / more
     // dangerous attacker. Computed per side and folded white-positive into the

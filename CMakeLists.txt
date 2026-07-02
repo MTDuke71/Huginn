@@ -170,6 +170,7 @@ endif()
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
+option(ENABLE_TRAPPED_BISHOP "Enable BACKLOG #20 trapped-bishop eval penalty (OFF = baseline-t22 arm)" ON)
 
 if(ENABLE_DEBUG_ASSERTIONS OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
@@ -179,6 +180,14 @@ endif()
 if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     add_compile_definitions(ENABLE_SEARCH_INTEGRITY_ASSERTS=1)
     message(STATUS "Search position integrity diagnostics enabled")
+endif()
+
+if(ENABLE_TRAPPED_BISHOP)
+    add_compile_definitions(ENABLE_TRAPPED_BISHOP=1)
+    message(STATUS "Trapped-bishop eval penalty (#20) enabled")
+else()
+    add_compile_definitions(ENABLE_TRAPPED_BISHOP=0)
+    message(STATUS "Trapped-bishop eval penalty (#20) disabled (baseline-t22 arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
@@ -476,6 +485,7 @@ if(GTEST_FOUND)
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
+    test/test_eval_trapped_bishop.cpp
     )
 
     add_executable(huginn_tests

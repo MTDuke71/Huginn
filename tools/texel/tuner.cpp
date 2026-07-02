@@ -175,6 +175,11 @@ std::vector<int*> collect_params() {
     for (int pt = int(PieceType::Knight); pt <= int(PieceType::Queen); ++pt)
         p.push_back(&Huginn::EvalParams::KS_ATTACK_WEIGHT[size_t(pt)]);
     p.push_back(&Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
+    // #20: trapped-bishop locks (tapered MG/EG, full a7-tier + lighter a6-tier).
+    p.push_back(&Huginn::EvalParams::P_BISHOP_TRAPPED_A7_MG);
+    p.push_back(&Huginn::EvalParams::P_BISHOP_TRAPPED_A7_EG);
+    p.push_back(&Huginn::EvalParams::P_BISHOP_TRAPPED_A6_MG);
+    p.push_back(&Huginn::EvalParams::P_BISHOP_TRAPPED_A6_EG);
     return p;
 }
 
@@ -301,6 +306,10 @@ void dump_results() {
         Huginn::EvalParams::KS_ATTACK_WEIGHT[4], Huginn::EvalParams::KS_ATTACK_WEIGHT[5],
         Huginn::EvalParams::KS_ATTACK_WEIGHT[6]);
     std::printf("KS_OPEN_FILE_PENALTY = %d;\n", Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
+    std::printf("P_BISHOP_TRAPPED_A7_MG = %d;\n", Huginn::EvalParams::P_BISHOP_TRAPPED_A7_MG);
+    std::printf("P_BISHOP_TRAPPED_A7_EG = %d;\n", Huginn::EvalParams::P_BISHOP_TRAPPED_A7_EG);
+    std::printf("P_BISHOP_TRAPPED_A6_MG = %d;\n", Huginn::EvalParams::P_BISHOP_TRAPPED_A6_MG);
+    std::printf("P_BISHOP_TRAPPED_A6_EG = %d;\n", Huginn::EvalParams::P_BISHOP_TRAPPED_A6_EG);
     std::printf("=====================================================\n");
 }
 

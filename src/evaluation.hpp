@@ -147,6 +147,20 @@ EVAL_PARAM int ROOK_ON_7TH_MG = 20;  ///< Rook on relative 7th, midgame.
 EVAL_PARAM int ROOK_ON_7TH_EG = 19;  ///< Rook on relative 7th, endgame.
 
 /**
+ * @brief Trapped-bishop penalty (#20, from the CPW-engine EvalBishop locks;
+ *        ENABLE_TRAPPED_BISHOP): a bishop cornered behind an enemy pawn
+ *        (Ba7/pb6 and friends) is usually lost for that pawn, but mobility
+ *        still credits the diagonal it "sees" — signal mobility can't capture.
+ *        Two tiers: the full corner locks (a7/h7/b8/g8 + mirrors) and the
+ *        lighter one-step locks (a6/h6 + mirrors). Tapered MG/EG,
+ *        colour-symmetric, Texel-tunable.
+ */
+EVAL_PARAM int P_BISHOP_TRAPPED_A7_MG = 100; ///< Bishop locked on a7/h7/b8/g8, midgame.
+EVAL_PARAM int P_BISHOP_TRAPPED_A7_EG = 120; ///< Bishop locked on a7/h7/b8/g8, endgame.
+EVAL_PARAM int P_BISHOP_TRAPPED_A6_MG = 50;  ///< Bishop locked on a6/h6, midgame.
+EVAL_PARAM int P_BISHOP_TRAPPED_A6_EG = 60;  ///< Bishop locked on a6/h6, endgame.
+
+/**
  * @brief Threat bonuses (#9 round 6): per enemy piece attacked by a cheaper /
  *        more dangerous attacker (the side to move usually wins material or
  *        forces a concession). Named `THREAT_<attacker>_ON_<target>_<phase>`,
