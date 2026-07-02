@@ -32,13 +32,21 @@
 #include "chess_types.hpp"
 
 using U64 = std::uint64_t;
-constexpr int PIECE_NB = 12;
+// BACKLOG #50 fix: the piece-index scheme used at every keying site is
+//     row = int(PieceType) + (Black ? 6 : 0)   // Pawn=1 .. King=6
+// i.e. White 1..6, Black 7..12, row 0 unused — 13 rows total.
+// The old PIECE_NB=12 caused the black-king row (12) to read one slot past
+// the array end — UB on every black-king add/move/clear.  On MSVC release
+// builds the linker placed an ASLR heap pointer there, injecting a
+// per-process value into the Zobrist key and causing the Kiwipete d14
+// node-count nondeterminism logged in BACKLOG #50.
+constexpr int PIECE_NB = 13;  // rows 1..12 used (White 1-6, Black 7-12); row 0 unused
 
 // Forward declaration to avoid circular dependency - ensure consistency with position.hpp
 class Position;
 
 namespace Zobrist {
-    inline U64 Piece[PIECE_NB][64];  ///< Key per [piece-type][sq64] (12 × 64).
+    inline U64 Piece[PIECE_NB][64];  ///< Key per [piece-type][sq64]; White rows 1-6, Black 7-12.
     inline U64 Side;                 ///< Key XOR'd in when Black is to move.
     inline U64 Castle[16];           ///< Key per castling-rights mask (0..15).
     inline U64 EpFile[8];            ///< Key per en-passant file (a..h).
