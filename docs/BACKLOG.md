@@ -91,6 +91,7 @@
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 48 | Kill the double TT probe (move ordering) | **IMPLEMENTED** (2026-07-01) — `tt_best_move` now passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (new param, re-probe deleted); quiescence keeps exactly one probe, hoisted pre-loop. Verified: startpos d15 nodes **byte-identical** (18,223,597, 5/5 runs both arms), 203/203 tests; interleaved A/B nps **+0.8% startpos / +4.0% Kiwipete d14**. Fixed-time SPRT pending (batch with #49). | speed | medium |
 | 49 | Fuse king-safety attacker scan into the mobility pass | **IMPLEMENTED** (2026-07-01) — king-zone attacker units now accumulated inside the mobility loop (which computes every piece's attack set anyway); `king_danger_mg()` finalizes (square/cap/shelter) at the taper; the standalone `king_safety_white_mg` scan deleted. Verified: startpos d15 nodes **byte-identical** (18,223,597), 203/203 tests incl. symmetry; interleaved A/B nps **+8.2% startpos / +5.5% Kiwipete** — above the ~3% uProf estimate. Fixed-time SPRT pending (batch with #48). | speed | medium |
+| 50 | Fixed-depth node counts are not deterministic on all positions | **OPEN** (2026-07-01) — Kiwipete `go depth 14` (1t, OwnBook=false, after `ucinewgame`) wobbles ±~1k nodes in 4.7M run-to-run; startpos d15 is perfectly deterministic (5/5 byte-identical). Observed on the pre-#48 t21 build too, so it long predates #48/#49. A time-dependent node-count wobble in a single-threaded engine at fixed depth is a soundness smell — same *time-dependent* class as #37; suspects: input-polling `checkup()` side effects, time-management state leaking into `go depth`, TB probe caching. Diagnose before it undermines the fixed-depth verification methodology on non-startpos signatures. | bug/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
@@ -643,6 +644,34 @@ Intel; fastchess forfeits on it).
   all balanced on inspection. **Next:** run an instrumented self-play / fastchess
   repro until it trips, then bisect from the captured context. The diagnostic
   should hand us a deterministic repro the next time the imbalance occurs.
+
+### #50: Fixed-depth node counts not deterministic on all positions (OPEN 2026-07-01)
+
+Surfaced during the #48/#49 verification runs. Kiwipete
+(`r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1`)
+at `go depth 14` — 1 thread, `OwnBook=false`, default hash, fresh `ucinewgame`
+per run — returns *slightly different* node counts run-to-run (e.g. 4,705,140 …
+4,708,437; same bestmove/score/PV). Startpos d14/d15 is perfectly deterministic
+(byte-identical across every run of every build tested). Reproduced on the
+**pre-#48 t21 build**, so it predates the 2026-07-01 speed pair and is not an
+artifact of them.
+
+Why it matters: the ship methodology leans on deterministic fixed-depth node
+counts (the #45 binary-audit signature, the #48/#49 behavior-equivalence
+checks). Startpos happens to be clean, but any future signature on a sharper
+position would wobble — and a **time-dependent** node-count in a single-threaded
+engine at fixed depth has no innocent explanation. Same time-dependent class as
+#37 (board-desync under time pressure); plausibly the same underlying mechanism.
+
+**Suspects:** (a) `checkup()` / input-polling side effects (fires on a node-count
+mask but its effects may be time-coupled); (b) time-management state incorrectly
+consulted during `go depth` (post-#47 the iteration gate reads the clock —
+verify it's fully bypassed when no time control is set); (c) Syzygy probe
+behavior (Kiwipete subtrees can reach ≤5-man leaves; TB init is active —
+`c:\TB\`); (d) anything hashing wall-clock into search decisions. **Repro:**
+`scratchpad ab_nps.py`-style loop — 5× `go depth 14` on Kiwipete, diff node
+counts. **First diagnostic:** re-run with tablebases disabled, then with the
+input-polling stubbed; whichever kills the wobble names the mechanism.
 
 ### #38: Displayed PV continues past the fifty-move rule (FIXED 2026-06-16)
 
