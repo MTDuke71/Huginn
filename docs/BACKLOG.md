@@ -91,7 +91,7 @@
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 48 | Kill the double TT probe (move ordering) | **SHIPPED t22** (2026-07-02) — `tt_best_move` passed from `AlphaBeta`'s node-entry probe into `pick_next_move` (re-probe deleted); quiescence keeps one probe, hoisted pre-loop. Behavior-identical (startpos d15 nodes byte-identical; 203/203 tests); +0.8%/+4.0% nps alone. Two-machine SPRT vs t21 (batched w/ #49): **AMD +14.60 LOS 96.6% / Intel +18.08 LOS 99.3%**, pooled 52.35%/2000g. | speed | medium |
 | 49 | Fuse king-safety attacker scan into the mobility pass | **SHIPPED t22** (2026-07-02) — king-zone attacker units accumulated inside the mobility loop; `king_danger_mg()` finalizes at the taper; standalone scan deleted. Behavior-identical (startpos d15 nodes byte-identical; 203/203 tests incl. symmetry); +8.2%/+5.5% nps alone (above the ~3% uProf estimate). Two-machine SPRT vs t21 (batched w/ #48): **AMD +14.60 LOS 96.6% / Intel +18.08 LOS 99.3%**, pooled 52.35%/2000g. | speed | medium |
-| 50 | Fixed-depth node counts are not deterministic on all positions | **OPEN** (2026-07-01) — Kiwipete `go depth 14` (1t, OwnBook=false, after `ucinewgame`) wobbles ±~1k nodes in 4.7M run-to-run; startpos d15 is perfectly deterministic (5/5 byte-identical). Observed on the pre-#48 t21 build too, so it long predates #48/#49. A time-dependent node-count wobble in a single-threaded engine at fixed depth is a soundness smell — same *time-dependent* class as #37; suspects: input-polling `checkup()` side effects, time-management state leaking into `go depth`, TB probe caching. Diagnose before it undermines the fixed-depth verification methodology on non-startpos signatures. | bug/research | low |
+| 50 | Zobrist table OOB read: black king row past `Piece[12][64]` | **ROOT-CAUSED + FIX BRANCH** (2026-07-02) — the "nondeterminism" was an out-of-bounds read: every keying site computes row `int(PieceType) + (Black ? 6 : 0)` = rows 1..12 (13 rows, row 0 unused) but `Zobrist::Piece` was `[PIECE_NB=12][64]`, so the **black king (row 12) reads 64 U64s past the table**. One slot (sq f4) lands on an ASLR'd heap pointer → per-process keys → the Kiwipete wobble; several slots read **constant 0 → positions differing only in black-king placement on those squares hash IDENTICALLY (real TT collisions — a correctness bug, same latent class as #44/#45)**. NOT time/input/TB (each exonerated experimentally). Fix: `PIECE_NB` 12→13 on `experiment/fix-nondet-50` (`ENABLE_ZOBRIST_BLACK_KING_ROW`, default 1); 15× Kiwipete now constant. **SPRT vs t22 pending — priority arm.** | bug | **high** |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
 | 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
 | 19 | Two-machine gauntlet workflow + SPRT | **ESTABLISHED** (reference) | tooling | — |
@@ -645,33 +645,70 @@ Intel; fastchess forfeits on it).
   repro until it trips, then bisect from the captured context. The diagnostic
   should hand us a deterministic repro the next time the imbalance occurs.
 
-### #50: Fixed-depth node counts not deterministic on all positions (OPEN 2026-07-01)
+### SPRT queue — experiment branches off baseline-t22 (2026-07-02)
 
-Surfaced during the #48/#49 verification runs. Kiwipete
-(`r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1`)
-at `go depth 14` — 1 thread, `OwnBook=false`, default hash, fresh `ucinewgame`
-per run — returns *slightly different* node counts run-to-run (e.g. 4,705,140 …
-4,708,437; same bestmove/score/PV). Startpos d14/d15 is perfectly deterministic
-(byte-identical across every run of every build tested). Reproduced on the
-**pre-#48 t21 build**, so it predates the 2026-07-01 speed pair and is not an
-artifact of them.
+Eleven branches implemented + adversarially verified in one session (each: own
+flag, branch default = the test arm, other arm verified byte-identical to the
+t22 startpos-d14 signature 12,035,479, full suite green, independent rebuild).
+Gauntlet each independently: `git checkout <branch>` on each box, then
+`test_huginn_gauntlet.bat t22`. Recommended order (expected value):
 
-Why it matters: the ship methodology leans on deterministic fixed-depth node
-counts (the #45 binary-audit signature, the #48/#49 behavior-equivalence
-checks). Startpos happens to be clean, but any future signature on a sharper
-position would wobble — and a **time-dependent** node-count in a single-threaded
-engine at fixed depth has no innocent explanation. Same time-dependent class as
-#37 (board-desync under time pressure); plausibly the same underlying mechanism.
+| Branch | Item | Flag | d14 nodes vs t22 12.04M | Note |
+|---|---|---|---|---|
+| `experiment/fix-nondet-50` | #50 | `ENABLE_ZOBRIST_BLACK_KING_ROW` | ~same (startpos) | **latent correctness bug** (TT collisions) — #44/#45 class, run first |
+| `experiment/see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | 5.75M (**−52%**) | bad captures below quiets; big ordering win at fixed depth |
+| `experiment/razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | does razoring earn its keep at all |
+| `experiment/rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | sounder PV values → better TT reuse shrank the tree |
+| `experiment/futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
+| `experiment/futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
+| `experiment/tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
+| `experiment/drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
+| `experiment/root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
+| `experiment/trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
+| `experiment/pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
 
-**Suspects:** (a) `checkup()` / input-polling side effects (fires on a node-count
-mask but its effects may be time-coupled); (b) time-management state incorrectly
-consulted during `go depth` (post-#47 the iteration gate reads the clock —
-verify it's fully bypassed when no time control is set); (c) Syzygy probe
-behavior (Kiwipete subtrees can reach ≤5-man leaves; TB init is active —
-`c:\TB\`); (d) anything hashing wall-clock into search decisions. **Repro:**
-`scratchpad ab_nps.py`-style loop — 5× `go depth 14` on Kiwipete, diff node
-counts. **First diagnostic:** re-run with tablebases disabled, then with the
-input-polling stubbed; whichever kills the wobble names the mechanism.
+Ships fold into the next baseline; losers get their branch parked with the
+result logged under their item.
+
+### #50: Zobrist black-king row OOB — ROOT-CAUSED (2026-07-02), fix branch pending SPRT
+
+Surfaced during the #48/#49 verification runs as a run-to-run Kiwipete d14
+node-count wobble (±~1k in 4.7M; startpos byte-identical); present at t21.
+**Root cause (2026-07-02, found by the diagnosis agent via per-node key traces
++ a per-process dump of the key tables):** an **out-of-bounds read of the
+Zobrist piece table.** Every keying site (`position.hpp` make/unmake
+primitives, `Zobrist::compute`, `Position::is_consistent`) computes
+`row = int(PieceType) + (Black ? 6 : 0)` with Pawn=1..King=6 — White rows
+1–6, Black rows 7–12, row 0 unused = **13 rows** — but `zobrist.hpp` declared
+`Zobrist::Piece[PIECE_NB=12][64]`. The **black king (row 12) reads 64 U64s
+past the table** — whatever globals the linker parked there:
+
+- Phantom slot 29 (black king on **f4**) lands on an **ASLR'd heap pointer** →
+  a fresh per-process value XORed into every key with the black king on f4 →
+  per-process TT collision patterns → the run-to-run wobble. Startpos d14
+  never walks the black king to f4 (stays deterministic); Kiwipete's deep
+  check-extension lines do.
+- Phantom slots 1–3/30/31 (black king on **b1/c1/d1/g4/h4**) read **constant
+  0** — the black king contributes NOTHING to the key on those squares, so
+  positions differing only in that placement **hash identically: genuine TT
+  key collisions**, a correctness hazard beyond nondeterminism (same latent
+  class as #44/#45, invisible to every incremental A/B because both arms
+  carried it). Remaining phantom slots read adjacent constants (Side/Castle/
+  EpFile + attack-table data) — deterministic but unintended key material
+  that can alias other hash components.
+- **Exonerated experimentally:** time/input (checkup compiled to a bare
+  return → wobble persists), Syzygy (stub + gate), #47 clock reads
+  (output-only under `go depth`).
+
+**Fix:** `PIECE_NB` 12→13 (`experiment/fix-nondet-50`, commit `650cd47`,
+`ENABLE_ZOBRIST_BLACK_KING_ROW` default 1; flag 0 = byte-identical t22 arm for
+A/B). Verified: 15× Kiwipete d14 now constant, tests green. Node counts
+legitimately differ from t22 (black-king keys changed → different TT
+interactions), so this is **SPRT'd like any behavior change — priority arm in
+the SPRT queue** (a collision-class bug fix has #44/#45 upside). Possible #37
+connection worth revisiting after the SPRT: zobrist collisions corrupt
+TT-move sourcing, one of the few mechanisms that could explain a rare illegal
+bestmove.
 
 ### #38: Displayed PV continues past the fifty-move rule (FIXED 2026-06-16)
 
