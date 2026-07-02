@@ -181,6 +181,15 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
+# BACKLOG #44 follow-up: root two-fold draw-avoidance arm switch (see the
+# ENABLE_ROOT_TWOFOLD_AVOID block in src/search.cpp). Unset -> the source
+# default (the test arm on this branch); pass -DENABLE_ROOT_TWOFOLD_AVOID=0/1
+# to force either arm explicitly (0 = baseline-t22-identical root behaviour).
+if(DEFINED ENABLE_ROOT_TWOFOLD_AVOID)
+    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=${ENABLE_ROOT_TWOFOLD_AVOID})
+    message(STATUS "ENABLE_ROOT_TWOFOLD_AVOID=${ENABLE_ROOT_TWOFOLD_AVOID}")
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
@@ -476,6 +485,7 @@ if(GTEST_FOUND)
     test/test_pv_display.cpp
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
+    test/test_root_twofold_avoid.cpp
     )
 
     add_executable(huginn_tests
