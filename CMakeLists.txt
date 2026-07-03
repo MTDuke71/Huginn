@@ -181,13 +181,20 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
-# BACKLOG #44 follow-up: root two-fold draw-avoidance arm switch (see the
-# ENABLE_ROOT_TWOFOLD_AVOID block in src/search.cpp). Unset -> the source
-# default (the test arm on this branch); pass -DENABLE_ROOT_TWOFOLD_AVOID=0/1
-# to force either arm explicitly (0 = baseline-t22-identical root behaviour).
-if(DEFINED ENABLE_ROOT_TWOFOLD_AVOID)
-    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=${ENABLE_ROOT_TWOFOLD_AVOID})
-    message(STATUS "ENABLE_ROOT_TWOFOLD_AVOID=${ENABLE_ROOT_TWOFOLD_AVOID}")
+# BACKLOG #44 follow-up: root two-fold draw-avoidance (see the
+# ENABLE_ROOT_TWOFOLD_AVOID block in src/search.cpp). Forward as an explicit
+# 0/1 ALWAYS — never rely on a bare if(DEFINED) skip to silently fall through
+# to the source default. A reused/incrementally-reconfigured build directory
+# can leave a CACHE-variable-backed guard like this compiled as if 0 even
+# when unset; see BACKLOG #50-queue notes (the same bug hit
+# ENABLE_FUTILITY_PV_GUARD).
+option(ENABLE_ROOT_TWOFOLD_AVOID "BACKLOG #44 follow-up: root two-fold draw-avoidance (test arm)" ON)
+if(ENABLE_ROOT_TWOFOLD_AVOID)
+    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=1)
+    message(STATUS "Root two-fold draw-avoidance enabled")
+else()
+    add_compile_definitions(ENABLE_ROOT_TWOFOLD_AVOID=0)
+    message(STATUS "Root two-fold draw-avoidance disabled (t23 baseline arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
