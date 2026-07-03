@@ -181,12 +181,19 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
-# BACKLOG #45 knob (b): PV-node guard on the futility condition. Empty =
-# source default (see src/search.cpp flag block); set 0/1 to force an arm.
-set(ENABLE_FUTILITY_PV_GUARD "" CACHE STRING "BACKLOG #45 futility PV-node guard (0/1; empty = source default)")
-if(NOT ENABLE_FUTILITY_PV_GUARD STREQUAL "")
-    add_compile_definitions(ENABLE_FUTILITY_PV_GUARD=${ENABLE_FUTILITY_PV_GUARD})
-    message(STATUS "ENABLE_FUTILITY_PV_GUARD forced to ${ENABLE_FUTILITY_PV_GUARD}")
+# BACKLOG #45 knob (b): PV-node guard on the futility condition. Forward as
+# an explicit 0/1 ALWAYS (never rely on silently falling through to the
+# src/search.cpp source default) — a reused/incrementally-reconfigured build
+# directory can silently skip an empty-cache-string add_compile_definitions
+# guard, leaving the flag compiled as if 0 even though the branch default is
+# 1. See BACKLOG #50-queue notes: this exact bug produced a no-op test arm.
+option(ENABLE_FUTILITY_PV_GUARD "BACKLOG #45 futility PV-node guard (test arm)" ON)
+if(ENABLE_FUTILITY_PV_GUARD)
+    add_compile_definitions(ENABLE_FUTILITY_PV_GUARD=1)
+    message(STATUS "Futility PV-node guard enabled (#45 knob b test arm)")
+else()
+    add_compile_definitions(ENABLE_FUTILITY_PV_GUARD=0)
+    message(STATUS "Futility PV-node guard disabled (t23 baseline arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
