@@ -612,6 +612,19 @@ same latent-leak class. Audit each behind its own flag, complexity-gate + two-ma
   - **Razoring** ([search.cpp] `RAZORING_MARGIN=400`, depth 2–4, `!in_check`,
     `!isRoot`): drops depth by 1 when `eval + 400 < alpha`. Node-level, no PV guard,
     fires to depth 4 — same shape as the bug just fixed. Highest suspicion.
+    **Tested 2026-07-02 (`copilot/fix50-for-razoring-off`, `ENABLE_RAZORING`) —
+    PARKED, sign-split.** Two-machine SPRT vs t23 (10+0.1, 1t, 64MB,
+    noob_3moves.epd, 1000g each), razoring fully removed:
+    AMD **+5.56 ± 14.83** (nElo +8.08), 50.80% (W258/L242/D500), LOS 76.89%,
+    Ptnml [28,115,200,127,30], LLR 0.25 — undecided, barely positive-of-center.
+    Intel **−10.08 ± 15.90** (nElo −13.67), 48.55% (W244/L273/D483), LOS
+    10.67%, Ptnml [39,134,180,111,36], LLR −1.54 — undecided, leaning negative.
+    Both CIs span zero, opposite signs — a clean sign-split, does not clear
+    the ship bar. **Razoring earns its keep**: the highest-suspicion pruning
+    lever from the #45-era audit turns out sound (or at least not measurably
+    harmful) at this TC. Not folded into t24; branch parked. Unlike #45 itself,
+    this one did NOT hide a comparable leak — the audit's suspicion was
+    reasonable but this specific lever checks out.
   - **Reverse futility / static null** (`REVERSE_FUTILITY_MARGIN=80`/ply, depth ≤6,
     returns `eval - margin` ≥ beta): returns beta-side; check it isn't pruning PV
     nodes or interacting badly with the new move-level futility.
@@ -668,7 +681,7 @@ only — re-baseline against t23's own signature, see the test plan):
 |---|---|---|---|---|
 | ~~`experiment/fix-nondet-50`~~ → **`main` (`baseline-t23`)** | #50 | *(none — shipped unconditionally)* | n/a (t23 IS the new reference) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
 | `copilot/fix50-for-see-ordering` | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **AMD H1 ACCEPTED @586g — +49.54 ± 20.55, LOS 100%** (57.08%, W189/L106/D291, Ptnml [11,55,99,96,32], LLR 2.97). Intel leg next. |
-| `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | does razoring earn its keep at all |
+| `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | **PARKED** — sign-split: AMD +5.56±14.83 (LOS 76.9%) / Intel −10.08±15.90 (LOS 10.7%), both CIs span 0. Razoring earns its keep; not folded into t24. |
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | sounder PV values → better TT reuse shrank the tree |
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
