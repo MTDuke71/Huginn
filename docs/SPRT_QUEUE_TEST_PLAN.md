@@ -81,8 +81,17 @@ feature content are unchanged from the original `experiment/*` design.
   Flag `ENABLE_RAZORING` — **INVERTED: default 0 = razoring OFF is the test
   arm; =1 is the t23-equivalent arm.** The plain branch build is correct for
   the bat.
-- **Expect:** fewer nodes pruned ⇒ more nodes at fixed depth (razor-reduced
-  re-searches no longer happen).
+- **Expect (verified 2026-07-02, t23-based build):** counterintuitively
+  **FEWER** nodes at fixed depth with razoring OFF — 10,316,958 vs the ON
+  arm's 14,306,844 (which reproduces the t23 signature byte-for-byte, as
+  required). Razoring's `depth--` doesn't just shrink the local subtree; it
+  also caches that subtree's results in the TT at the REDUCED depth, so a
+  later transposition into the same position at the node's true (higher)
+  depth gets a TT-depth-miss and re-searches — the same TT-reuse mechanism
+  documented for `rfp-pv-guard` below. Net effect at fixed depth: OFF (no
+  premature shallow TT stores) ends up smaller here. Trust the SPRT for Elo,
+  not this node-count direction — it doesn't predict search quality either
+  way.
 - **Decision:** if OFF wins or is neutral → razoring is dead weight, remove it
   in the next baseline (fewer, better, sound). If OFF clearly loses →
   razoring earns its keep; park and optionally test a PV-guarded variant.
