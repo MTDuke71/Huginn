@@ -18,6 +18,41 @@
 > `copilot/fix50-for-*` branches for gauntlets, not the stale `experiment/*`
 > ones**, which lack the #50 fix and are kept only as historical reference.
 
+## ⚠ Known trap: verify the signature before EVERY gauntlet, every box
+
+**2026-07-03 finding.** `copilot/fix50-for-futility-pv-guard`'s plain build
+(`git checkout` + `cmake --build`, no explicit `-D`) silently compiled the
+flag as **OFF** in a build directory that had been reconfigured across many
+prior branch checkouts in the same session — even though the branch's
+intended default is ON and the CMakeLists.txt registration looked correct.
+Root cause: that branch used `set(VAR "" CACHE STRING ...)` +
+`if(NOT VAR STREQUAL "")` to decide whether to forward the flag; once a
+build directory's `CMakeCache.txt` had that variable cached as an empty
+`STRING` (from that branch's very first configure), later relying on the
+source's `#ifndef/#define` fallback did NOT reliably kick back in — CMake
+cache entries are sticky and don't reset just because the guard logic
+changes. The Intel gauntlet box hit the exact same thing independently and
+had to force `-DENABLE_FUTILITY_PV_GUARD=1` to get the real test arm; on
+this AMD-session box it was caught before any games were run by re-checking
+the node-count signature against t23's own baseline and finding it matched
+*exactly* (byte-for-byte) instead of differing as every other arm in the
+queue did.
+- **Fixed:** `futility-pv-guard`, `tt-aging`, `drawishness-scaling`, and
+  `root-twofold-avoid` were all switched to the same pattern already used
+  safely by `see-ordering`/`rfp-pv-guard`/`futility-depth2`/`trapped-bishop`/
+  `pext`: `option(VAR "..." ON)` + an **unconditional** `if(VAR)/else()` that
+  ALWAYS explicitly forwards `=1` or `=0` — no path silently no-ops.
+- **Still verify anyway, on every box, every branch:** before trusting a
+  gauntlet result, run `go depth 14` from startpos on the freshly-built exe
+  and confirm the node count is NOT byte-identical to t23's own baseline
+  (14,306,844) — the OFF arm should match, the test arm should differ. If a
+  "test arm" build reproduces the baseline exactly, the flag silently didn't
+  take (rebuild with an explicit `-DENABLE_<X>=1`, or `cmake -UENABLE_<X>`
+  then reconfigure, to unstick a poisoned cache entry).
+- `rfp-pv-guard` and `futility-depth2`'s already-reported results were
+  independently re-verified via a fully fresh build directory after this was
+  found — both stand as reported.
+
 ## Ground rules (apply to every arm)
 
 - **Baseline:** `baseline-t23` (= t22 + the #50 Zobrist fix, `PIECE_NB` 12→13,
@@ -116,7 +151,14 @@ feature content are unchanged from the original `experiment/*` design.
 
 ### 5. `copilot/fix50-for-futility-pv-guard` — futility PV guard (#45 knob b)
 - **What:** futility exempts ALL PV nodes (`beta - alpha == 1` added), Fruit's
-  exact recipe. Flag `ENABLE_FUTILITY_PV_GUARD` (was +11% nodes vs t22).
+  exact recipe. Flag `ENABLE_FUTILITY_PV_GUARD`.
+- **⚠ CMake fix required first (see the trap note above) — rebuild before
+  gauntleting.** Verified test-arm signature post-fix: startpos d14 =
+  38,332,470 nodes (cp 27, e2e4) — a big jump, MUCH larger than the
+  pre-rebase estimate (+11% vs the old t22 baseline was measured on a build
+  that likely ALSO silently had the guard off, given how easy this was to
+  trigger — treat that old number as unreliable and use 38,332,470 as the
+  real reference for this arm going forward).
 - **Decision:** standard bar. Independent of knob (a) — if BOTH win, fold one,
   re-run the other on top before folding it too (they overlap).
 
