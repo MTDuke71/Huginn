@@ -211,6 +211,27 @@ is the bigger lever.
   "a minor up, no pawns"→⅛. High impact, cheap, independent; kills the
   "scores a dead-drawn endgame as winning" class. **Not** sigmoid-tunable (it's
   a final-eval multiplier) — hand-set from known values + SPRT to confirm.
+  **Tested 2026-07-03 (`copilot/fix50-for-drawishness-scaling`,
+  `ENABLE_DRAWISHNESS_SCALING`) — PARKED, two-machine flat neutral, exactly
+  as predicted.** Implemented: pure-OCB ×64/128, pawnless-favoured-side-up-
+  ≤-a-minor ×16/128 (KNNK etc. deliberately left to `MaterialDraw()`, which
+  already short-circuits it — not double-handled). Two-machine SPRT vs t23
+  (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g each): AMD **+1.04 ± 15.10**
+  (nElo +1.49), 50.15% (W240/L237/D523), LOS 55.38%, Ptnml
+  [32,116,201,119,32], LLR −0.29; Intel **+4.52 ± 15.25** (nElo +6.38),
+  50.65% (W256/L243/D501), LOS 71.94%, Ptnml [32,116,191,129,32], LLR 0.11.
+  Both dead-flat. **Correctly predicted before the run:** this term targets
+  the #5 conversion weakness (drawing WEAKER opponents), so self-play vs an
+  equal-strength t23 is the least sensitive test available — mirror games
+  rarely reach the exact drawish material configs this term discounts, and
+  even when they do, both players are equally strong so the "converting a
+  won-but-drawish endgame" scenario barely arises. Flag verified genuinely
+  live (not a repeat of the futility-pv-guard silent-off bug) via a direct
+  eval A/B on a pure-OCB position (73 vs 127 cp, roughly the intended
+  halving) plus the Intel implementer's independent confirmation (OCB +3P
+  endgame: cp 150 scaled vs cp 300 unscaled). **Not folded into t24 on
+  current evidence** — a future revisit should test vs a weaker external
+  anchor (Stash 11/12, the #5 draw-prone pairing) rather than self-play.
 - **Lower priority:** doubled-rooks / blind-pig follow-up to t14's rook-on-7th;
   space (safe squares behind own centre pawns); rook-on-king-file; specific
   endgame recognizers (KPK, KRKP); trapped-bishop (#20, parked).
@@ -725,7 +746,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | +27.6% d15 nodes vs t23 | **PARKED — clean two-machine neutral.** AMD +2.43±15.34 (LOS 62.21%); Intel −2.78±15.48 (LOS 36.23%). Both LLR near-flat. Matches #45's "may have already saturated" caveat exactly — costs speed for ~0 Elo. |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 38.3M d14 (post-CMake-fix; **+90% d15**) | **REJECTED — two-machine H0.** AMD −12.86±15.50 (LOS 5.17%); Intel **H0 ACCEPTED −27.33±16.79, LOS 0.07%** @828g (LLR crossed −2.94). Same verdict as rfp-pv-guard — futility's PV-node pruning earns its keep. |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | **INCONCLUSIVE, weak positive lean.** AMD +0.69±15.24 (LOS 53.56%, dead flat); Intel +11.12±15.01 (LOS 92.71%, real lean, undecided). Both positive but AMD too flat for clean cross-machine agreement (cf. t19's both-legs->+5 precedent). **LTC check recommended before park/ship** — aging's value should concentrate in long games. |
-| `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
+| `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | **PARKED — two-machine flat neutral vs t23 (as predicted).** AMD +1.04±15.10 (LOS 55.38%); Intel +4.52±15.25 (LOS 71.94%). Self-play vs an equal-strength opponent is the least sensitive test for a #5 conversion-weakness fix — a weaker-anchor check (Stash 11/12) is the better read if this is revisited. Not folded into t24 on current evidence. |
 | `copilot/fix50-for-root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
 | `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
 | `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
