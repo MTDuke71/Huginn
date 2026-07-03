@@ -181,12 +181,18 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
-# #9/#35 drawishness scaling (experiment/drawishness-scaling). Unset -> the
-# in-source default in src/search.cpp; pass -DENABLE_DRAWISHNESS_SCALING=0/1
-# to force an arm (0 = baseline-t22 behavior, 1 = scaled eval).
-if(DEFINED ENABLE_DRAWISHNESS_SCALING)
-    add_compile_definitions(ENABLE_DRAWISHNESS_SCALING=${ENABLE_DRAWISHNESS_SCALING})
-    message(STATUS "Drawishness scaling: ENABLE_DRAWISHNESS_SCALING=${ENABLE_DRAWISHNESS_SCALING}")
+# #9/#35 drawishness scaling. Forward as an explicit 0/1 ALWAYS — never rely
+# on a bare if(DEFINED) skip to silently fall through to the source default.
+# A reused/incrementally-reconfigured build directory can leave a
+# CACHE-variable-backed guard like this compiled as if 0 even when unset; see
+# BACKLOG #50-queue notes (the same bug hit ENABLE_FUTILITY_PV_GUARD).
+option(ENABLE_DRAWISHNESS_SCALING "BACKLOG #9/#35 drawishness scaling (test arm)" ON)
+if(ENABLE_DRAWISHNESS_SCALING)
+    add_compile_definitions(ENABLE_DRAWISHNESS_SCALING=1)
+    message(STATUS "Drawishness scaling enabled")
+else()
+    add_compile_definitions(ENABLE_DRAWISHNESS_SCALING=0)
+    message(STATUS "Drawishness scaling disabled (t23 baseline arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
