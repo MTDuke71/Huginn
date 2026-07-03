@@ -645,13 +645,32 @@ same latent-leak class. Audit each behind its own flag, complexity-gate + two-ma
     change alone won big): narrow the depth envelope (`<=3` → `==1`/`<=2`) and add a
     **PV-node guard** (`beta > alpha + 1`, Fruit's exact recipe). Each its own SPRT
     atop t20 — may add more, or may have already saturated. Test after t20 ships.
-    **Knob (a) tested 2026-07-03 (`copilot/fix50-for-futility-depth2`) — AMD leg
-    clean neutral.** AMD SPRT vs t23 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g):
-    **+2.43 ± 15.34** (nElo +3.42), 50.35% (W262/L255/D483), LOS 62.21%, Ptnml
-    [34,114,197,121,34], LLR −0.13 — as flat as a result gets, exactly the
-    "may have already saturated" outcome flagged when the knob was parked.
-    Intel leg pending; a same-sign flat result parks this knob as dead weight
-    (fewer, better, sound — not worth the added complexity for ~0 Elo).
+    **Knob (a) tested 2026-07-03 (`copilot/fix50-for-futility-depth2`) —
+    PARKED, clean two-machine neutral.** Two-machine SPRT vs t23 (10+0.1,
+    1t, 64MB, noob_3moves.epd, 1000g each): AMD **+2.43 ± 15.34** (nElo
+    +3.42), 50.35% (W262/L255/D483), LOS 62.21%, Ptnml [34,114,197,121,34],
+    LLR −0.13; Intel **−2.78 ± 15.48** (nElo −3.87), 49.60% (W257/L265/D478),
+    LOS 36.23%, Ptnml [36,119,197,113,35], LLR −0.73. Both as flat as a
+    result gets — exactly the "may have already saturated" outcome flagged
+    when the knob was parked. Costs +27.6% nodes at fixed depth (startpos
+    d15, 27.87M vs t23's 21.84M) for ~0 Elo either direction — dead weight,
+    not folded into t24 (fewer, better, sound).
+    **Knob (b) tested 2026-07-02/03 (`copilot/fix50-for-futility-pv-guard`)
+    — REJECTED, two-machine H0.** Two-machine SPRT vs t23: AMD **−12.86 ±
+    15.50** (nElo −17.89), 48.15% (W222/L259/D519, 1000g), LOS 5.17%, Ptnml
+    [39,136,173,127,25], LLR −1.89 (undecided, trending H0); Intel **H0
+    ACCEPTED −27.33 ± 16.79** (nElo −38.72), 46.07% (W180/L245/D403, 828g),
+    LOS 0.07%, Ptnml [35,116,164,77,22], LLR −2.95 (crossed the lower bound,
+    decisive). Same-sign negative both legs, same verdict as sibling
+    rfp-pv-guard: exempting ALL PV nodes from futility nearly doubles the
+    tree (+90% startpos d15, 41.56M vs 21.84M) yet loses ~27 Elo — Fruit's
+    exact PV-exemption recipe doesn't transfer cleanly onto Huginn's
+    PVS-window proxy for PV-node detection. Futility's PV-node pruning
+    earns its keep; rejected, not folded into t24. **Note:** this branch
+    initially had a CMakeLists.txt bug that silently compiled the flag as
+    OFF in a reused build directory (caught before any games ran, fixed,
+    verified — see SPRT_QUEUE_TEST_PLAN.md's trap note); the result above
+    is from the corrected build.
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
@@ -703,8 +722,8 @@ only — re-baseline against t23's own signature, see the test plan):
 | ~~`copilot/fix50-for-see-ordering`~~ → **t24 candidate** | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **SHIPPED — two-machine H1-accept.** AMD +49.54±20.55, LOS 100% @586g; Intel +29.02±15.17, LOS 99.99% @996g. First clean two-machine win of the queue. |
 | `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | **PARKED** — sign-split: AMD +5.56±14.83 (LOS 76.9%) / Intel −10.08±15.90 (LOS 10.7%), both CIs span 0. Razoring earns its keep; not folded into t24. |
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | **REJECTED — two-machine H0.** AMD −12.86±15.41 (LOS 5.07%); Intel **H0 ACCEPTED −22.47±15.32, LOS 0.20%** @960g (LLR crossed −2.94). RFP's PV-node pruning earns its keep; not folded into t24. |
-| `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | AMD **+2.43 ± 15.34, LOS 62.21%** — clean neutral, LLR flat. Matches #45's "may have already saturated" caveat. Intel leg pending, likely park. |
-| `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
+| `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | +27.6% d15 nodes vs t23 | **PARKED — clean two-machine neutral.** AMD +2.43±15.34 (LOS 62.21%); Intel −2.78±15.48 (LOS 36.23%). Both LLR near-flat. Matches #45's "may have already saturated" caveat exactly — costs speed for ~0 Elo. |
+| `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 38.3M d14 (post-CMake-fix; **+90% d15**) | **REJECTED — two-machine H0.** AMD −12.86±15.50 (LOS 5.17%); Intel **H0 ACCEPTED −27.33±16.79, LOS 0.07%** @828g (LLR crossed −2.94). Same verdict as rfp-pv-guard — futility's PV-node pruning earns its keep. |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
 | `copilot/fix50-for-root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
