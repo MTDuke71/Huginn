@@ -629,15 +629,18 @@ same latent-leak class. Audit each behind its own flag, complexity-gate + two-ma
     returns `eval - margin` ≥ beta): returns beta-side; check it isn't pruning PV
     nodes or interacting badly with the new move-level futility.
     **Tested 2026-07-02/03 (`copilot/fix50-for-rfp-pv-guard`,
-    `ENABLE_RFP_PV_GUARD`) — AMD leg negative-leaning.** AMD SPRT vs t23
-    (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g): **−12.86 ± 15.41** (nElo
-    −18.00), 48.15% (W235/L272/D493), LOS 5.07%, Ptnml [43,123,185,126,23],
-    LLR −1.91 — undecided at cap but trending clearly toward H0, unlike
-    razoring's clean sign-split. Reading: RFP was NOT hiding a #45-class
-    leak at PV nodes — exempting it there just gives up cheap beta cutoffs
-    the search actually needed. Intel leg pending to confirm; if same-sign
-    negative, reverse futility (unlike razoring) checks out as sound too and
-    this branch parks/rejects.
+    `ENABLE_RFP_PV_GUARD`) — REJECTED, two-machine H0.** Two-machine SPRT vs
+    t23 (10+0.1, 1t, 64MB, noob_3moves.epd): AMD **−12.86 ± 15.41** (nElo
+    −18.00), 48.15% (W235/L272/D493, 1000g), LOS 5.07%, Ptnml
+    [43,123,185,126,23], LLR −1.91 (undecided at cap, trending H0); Intel
+    **H0 ACCEPTED −22.47 ± 15.32** (nElo −32.35), 46.77% (W206/L268/D486,
+    960g), LOS 0.20%, Ptnml [39,127,193,99,22], LLR −2.95 (crossed the lower
+    bound, decisive). Same-sign negative both legs. **Reading: RFP was NOT
+    hiding a #45-class leak at PV nodes** — exempting it there just gives up
+    cheap beta cutoffs the search actually needed, despite cutting the tree
+    20–43% at fixed depth (fewer nodes, worse Elo — the node-count direction
+    didn't predict quality, as flagged in the test plan). Reverse futility
+    checks out as sound as-is; branch rejected, not folded into t24.
   - **The two #45 knobs deliberately left ON the table** (now that the node→move
     change alone won big): narrow the depth envelope (`<=3` → `==1`/`<=2`) and add a
     **PV-node guard** (`beta > alpha + 1`, Fruit's exact recipe). Each its own SPRT
@@ -699,7 +702,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | ~~`experiment/fix-nondet-50`~~ → **`main` (`baseline-t23`)** | #50 | *(none — shipped unconditionally)* | n/a (t23 IS the new reference) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
 | ~~`copilot/fix50-for-see-ordering`~~ → **t24 candidate** | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **SHIPPED — two-machine H1-accept.** AMD +49.54±20.55, LOS 100% @586g; Intel +29.02±15.17, LOS 99.99% @996g. First clean two-machine win of the queue. |
 | `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | **PARKED** — sign-split: AMD +5.56±14.83 (LOS 76.9%) / Intel −10.08±15.90 (LOS 10.7%), both CIs span 0. Razoring earns its keep; not folded into t24. |
-| `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | AMD **−12.86 ± 15.41, LOS 5.07%** (undecided, trending H0) — negative-leaning, unlike razoring's sign-split. Intel leg pending; likely reject. |
+| `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | **REJECTED — two-machine H0.** AMD −12.86±15.41 (LOS 5.07%); Intel **H0 ACCEPTED −22.47±15.32, LOS 0.20%** @960g (LLR crossed −2.94). RFP's PV-node pruning earns its keep; not folded into t24. |
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | AMD **+2.43 ± 15.34, LOS 62.21%** — clean neutral, LLR flat. Matches #45's "may have already saturated" caveat. Intel leg pending, likely park. |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
