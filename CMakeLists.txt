@@ -181,18 +181,19 @@ if(ENABLE_SEARCH_INTEGRITY_ASSERTS)
     message(STATUS "Search position integrity diagnostics enabled")
 endif()
 
-# BACKLOG #42: date-based TT aging experiment. The source default (test arm = 1
-# on experiment/tt-aging) lives in src/transposition_table.hpp; pass
-# -DENABLE_TT_AGING=0/1 (or OFF/ON) here to force an arm — 0 reproduces the t22
-# depth-preferred-only replacement exactly. Left unset, the source default rules.
-if(DEFINED ENABLE_TT_AGING)
-    if(ENABLE_TT_AGING)
-        add_compile_definitions(ENABLE_TT_AGING=1)
-        message(STATUS "TT aging (#42) forced ON")
-    else()
-        add_compile_definitions(ENABLE_TT_AGING=0)
-        message(STATUS "TT aging (#42) forced OFF (t22 replacement policy)")
-    endif()
+# BACKLOG #42: date-based TT aging experiment. The source default (test arm)
+# lives in src/transposition_table.hpp. Forward as an explicit 0/1 ALWAYS —
+# never rely on a bare if(DEFINED) skip to silently fall through to the
+# source default. A reused/incrementally-reconfigured build directory can
+# leave a CACHE-variable-backed guard like this compiled as if 0 even when
+# unset; see BACKLOG #50-queue notes (the same bug hit ENABLE_FUTILITY_PV_GUARD).
+option(ENABLE_TT_AGING "BACKLOG #42 date-based TT aging (test arm)" ON)
+if(ENABLE_TT_AGING)
+    add_compile_definitions(ENABLE_TT_AGING=1)
+    message(STATUS "TT aging (#42) enabled")
+else()
+    add_compile_definitions(ENABLE_TT_AGING=0)
+    message(STATUS "TT aging (#42) disabled (t23 replacement policy)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----
