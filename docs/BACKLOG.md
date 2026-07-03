@@ -642,6 +642,13 @@ same latent-leak class. Audit each behind its own flag, complexity-gate + two-ma
     change alone won big): narrow the depth envelope (`<=3` → `==1`/`<=2`) and add a
     **PV-node guard** (`beta > alpha + 1`, Fruit's exact recipe). Each its own SPRT
     atop t20 — may add more, or may have already saturated. Test after t20 ships.
+    **Knob (a) tested 2026-07-03 (`copilot/fix50-for-futility-depth2`) — AMD leg
+    clean neutral.** AMD SPRT vs t23 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g):
+    **+2.43 ± 15.34** (nElo +3.42), 50.35% (W262/L255/D483), LOS 62.21%, Ptnml
+    [34,114,197,121,34], LLR −0.13 — as flat as a result gets, exactly the
+    "may have already saturated" outcome flagged when the knob was parked.
+    Intel leg pending; a same-sign flat result parks this knob as dead weight
+    (fewer, better, sound — not worth the added complexity for ~0 Elo).
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
@@ -693,7 +700,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | ~~`copilot/fix50-for-see-ordering`~~ → **t24 candidate** | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **SHIPPED — two-machine H1-accept.** AMD +49.54±20.55, LOS 100% @586g; Intel +29.02±15.17, LOS 99.99% @996g. First clean two-machine win of the queue. |
 | `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | **PARKED** — sign-split: AMD +5.56±14.83 (LOS 76.9%) / Intel −10.08±15.90 (LOS 10.7%), both CIs span 0. Razoring earns its keep; not folded into t24. |
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | AMD **−12.86 ± 15.41, LOS 5.07%** (undecided, trending H0) — negative-leaning, unlike razoring's sign-split. Intel leg pending; likely reject. |
-| `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | Fruit-style envelope narrowing |
+| `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | 14.47M (+20%) | AMD **+2.43 ± 15.34, LOS 62.21%** — clean neutral, LLR flat. Matches #45's "may have already saturated" caveat. Intel leg pending, likely park. |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 13.37M (+11%) | Fruit's PV exemption |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
