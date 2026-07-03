@@ -724,7 +724,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | **REJECTED — two-machine H0.** AMD −12.86±15.41 (LOS 5.07%); Intel **H0 ACCEPTED −22.47±15.32, LOS 0.20%** @960g (LLR crossed −2.94). RFP's PV-node pruning earns its keep; not folded into t24. |
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | +27.6% d15 nodes vs t23 | **PARKED — clean two-machine neutral.** AMD +2.43±15.34 (LOS 62.21%); Intel −2.78±15.48 (LOS 36.23%). Both LLR near-flat. Matches #45's "may have already saturated" caveat exactly — costs speed for ~0 Elo. |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 38.3M d14 (post-CMake-fix; **+90% d15**) | **REJECTED — two-machine H0.** AMD −12.86±15.50 (LOS 5.17%); Intel **H0 ACCEPTED −27.33±16.79, LOS 0.07%** @828g (LLR crossed −2.94). Same verdict as rfp-pv-guard — futility's PV-node pruning earns its keep. |
-| `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | 6-bit date in node_type; stale entries evictable; pays in long games |
+| `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | **INCONCLUSIVE, weak positive lean.** AMD +0.69±15.24 (LOS 53.56%, dead flat); Intel +11.12±15.01 (LOS 92.71%, real lean, undecided). Both positive but AMD too flat for clean cross-machine agreement (cf. t19's both-legs->+5 precedent). **LTC check recommended before park/ship** — aging's value should concentrate in long games. |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | OCB ×½, pawnless ≤minor-up ×⅛; targets #5 conversion |
 | `copilot/fix50-for-root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
 | `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
@@ -992,6 +992,26 @@ TC.** Related: #8 (aspiration step b, parked).
   a correctness bug. #41 says the gap is eval, not search, so this sits behind the
   eval roadmap. Good "search-quality round" candidate; pairs naturally with #31's
   Hash sweep (test aging + size together). Needs two-machine SPRT like any ship.
+  **Idea 1 (date-based aging) tested 2026-07-03 (`copilot/fix50-for-tt-aging`,
+  `ENABLE_TT_AGING`) — INCONCLUSIVE, weak positive lean, LTC recommended.**
+  Two-machine SPRT vs t23 (10+0.1, 1t, 64MB, noob_3moves.epd, 1000g each):
+  AMD **+0.69 ± 15.24** (nElo +0.98), 50.10% (W259/L257/D484), LOS 53.56%,
+  Ptnml [33,117,198,119,33], LLR −0.33 (dead flat, essentially a coin flip);
+  Intel **+11.12 ± 15.01** (nElo +15.98), 51.60% (W261/L229/D510), LOS
+  92.71%, Ptnml [28,113,188,141,30], LLR 0.90 (a real lean, undecided).
+  Same-sign positive, but AMD's magnitude is too close to zero to call this
+  the same clean cross-machine agreement as t19's ship (there both legs
+  cleared +5). Behavior verified genuine (not a repeat of the
+  `ENABLE_FUTILITY_PV_GUARD` silent-off bug): `CMakeCache.txt` shows
+  `ENABLE_TT_AGING:BOOL=ON`, 211/211 tests incl. 8 aging-specific cases pass,
+  and a direct multi-search-in-one-process A/B (small 8MB hash to force
+  eviction pressure) showed the ON/OFF arms diverging from the second search
+  onward, exactly the signature aging should produce. **Reading:** aging's
+  value should concentrate in LONG games (many searches per game accumulate
+  more staleness for it to fix) — blitz may genuinely understate it, matching
+  the caveat flagged before this run. **Recommend one LTC leg (60+0.6, like
+  the t21 validation) before a final park/ship call**, rather than parking
+  on a blitz-only inconclusive result. Idea 2 (clusters) untried.
 
 ### #19: Two-machine gauntlet workflow (ESTABLISHED — reference)
 
