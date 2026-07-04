@@ -763,7 +763,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | **PARKED — two-machine flat neutral vs t23 (as predicted).** AMD +1.04±15.10 (LOS 55.38%); Intel +4.52±15.25 (LOS 71.94%). Self-play vs an equal-strength opponent is the least sensitive test for a #5 conversion-weakness fix — a weaker-anchor check (Stash 11/12) is the better read if this is revisited. Not folded into t24 on current evidence. |
 | ~~`copilot/fix50-for-root-twofold-avoid`~~ → **t24 candidate** | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | **SHIPPED — cross-machine agreement.** AMD +12.51±15.22 (LOS 94.68%), Intel +7.99±15.12 (LOS 85.01%) — both same-sign positive, both clear the t19 precedent (+5.9/+10.4). Won engine routes around the shuffle a move earlier. |
 | `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | **PARKED — clean two-machine neutral, as predicted.** AMD +2.08±14.96 (LOS 60.77%); Intel −5.21±14.91 (LOS 24.65%). Mild opposite lean, both noise-level. CPW locks, tuner-wired seeds 100/120 + 50/60 — park-for-Texel-retune, not folded into t24. |
-| `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
+| `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (verified) | **PARKED on this box — PEXT is 3–5% SLOWER, not faster** (AMD 7800X3D/Zen4, interleaved A/B). Node counts bit-identical as required (203/203 tests). Not adopted; Intel leg would need its own check but low expectation given the AMD result. |
 
 Ships fold into the next baseline (`t24`); losers get their branch parked with
 the result logged under their item.
@@ -1004,6 +1004,28 @@ TC.** Related: #8 (aspiration step b, parked).
     12th–14th gen has AVX-512 fused off, so any AVX-512 build is AMD-leg-only;
     per-machine builds already handle that. Determinism survives (pure-int SIMD is
     bit-identical) — never introduce FP reassociation.
+    **Implemented + tested 2026-07-03/04 (`copilot/fix50-for-pext`,
+    `ENABLE_PEXT`) — PARKED, the expected win did NOT materialize on this
+    box.** `_pext_u64` table indexing replaces the magic multiply+shift for
+    rook/bishop lookups; init fills tables with pext ordering instead of the
+    magic search; `verify_or_die()` validates the active indexing against
+    the ray-walker at startup either way. 203/203 tests pass (perft would
+    catch any attack-table error instantly) and node counts are **bit-exact
+    identical** between arms as required (startpos d15 = 21,844,725,
+    Kiwipete d14 = 4,665,682, both arms). **Interleaved A/B nps (AMD
+    7800X3D/Zen4, 5×5 runs): PEXT is 3–5% SLOWER, not faster** — startpos
+    −2.87%, Kiwipete −4.90%. Contrary to the "BMI2 beats magic-multiply on
+    Zen4" assumption above: the hot path here is memory-latency-bound (the
+    attack-table load dominates), not ALU-bound, so replacing a cheap
+    multiply+shift with a single `pext` doesn't help when the bottleneck is
+    the load itself — and the extra instruction-decode/scheduling overhead
+    of `pext` (a less common, sometimes-microcoded-adjacent op even on chips
+    where it's "fast") can net slightly negative. **Not adopted on this
+    machine.** An Intel-side check would need its own measurement (different
+    microarchitecture, different memory subsystem), but low prior given this
+    result — the correctness/portability infrastructure (build-gated PEXT
+    with a verified magic fallback) is sound and kept behind the flag for
+    future revisit on different hardware, just not shipped now.
 - **#34** — SF-style `blockersForKing` pin/blocker-aware legal movegen (drop the
   per-move `MakeMove` legality filter for pinned-piece fast paths).
 - **#42 — TT aging + clusters (Fruit/Toga design).** Huginn's TT
