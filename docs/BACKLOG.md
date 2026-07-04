@@ -762,7 +762,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | **INCONCLUSIVE, weak positive lean.** AMD +0.69±15.24 (LOS 53.56%, dead flat); Intel +11.12±15.01 (LOS 92.71%, real lean, undecided). Both positive but AMD too flat for clean cross-machine agreement (cf. t19's both-legs->+5 precedent). **LTC check recommended before park/ship** — aging's value should concentrate in long games. |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | **PARKED — two-machine flat neutral vs t23 (as predicted).** AMD +1.04±15.10 (LOS 55.38%); Intel +4.52±15.25 (LOS 71.94%). Self-play vs an equal-strength opponent is the least sensitive test for a #5 conversion-weakness fix — a weaker-anchor check (Stash 11/12) is the better read if this is revisited. Not folded into t24 on current evidence. |
 | ~~`copilot/fix50-for-root-twofold-avoid`~~ → **t24 candidate** | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | **SHIPPED — cross-machine agreement.** AMD +12.51±15.22 (LOS 94.68%), Intel +7.99±15.12 (LOS 85.01%) — both same-sign positive, both clear the t19 precedent (+5.9/+10.4). Won engine routes around the shuffle a move earlier. |
-| `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
+| `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | **PARKED — clean two-machine neutral, as predicted.** AMD +2.08±14.96 (LOS 60.77%); Intel −5.21±14.91 (LOS 24.65%). Mild opposite lean, both noise-level. CPW locks, tuner-wired seeds 100/120 + 50/60 — park-for-Texel-retune, not folded into t24. |
 | `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
 
 Ships fold into the next baseline (`t24`); losers get their branch parked with
@@ -1138,6 +1138,25 @@ One-liners; full detail + evidence in [the archive](BACKLOG-archive-2.0.md).
   another eval change or run after the higher-leverage round-8 terms. Lowest
   priority of the bishop work; the higher-ROI bishop term is a "bishop-pawns /
   bad-bishop" penalty (own pawns on the bishop's colour), not the corner trap.
+  **Implemented + tested 2026-07-03 (`copilot/fix50-for-trapped-bishop`,
+  `ENABLE_TRAPPED_BISHOP`) — PARKED, clean two-machine neutral exactly as
+  predicted.** Six square+enemy-pawn locks per side, two tapered tiers
+  (`P_BISHOP_TRAPPED_A7_MG/EG` seeded 100/120, `P_BISHOP_TRAPPED_A6_MG/EG`
+  seeded 50/60), wired into `tools/texel/tuner.cpp`. `RETURNING_BISHOP`
+  deliberately not ported, per this scoping note. Flag verified genuinely
+  live (207/207 tests incl. 4 new `EvalTrappedBishop` cases; a direct eval
+  A/B confirmed the penalty fires: bishop trapped a7/pawn-b6 = 204cp vs the
+  same position with the pawn on b5 (bishop free) = 250cp, a 46cp discount
+  in the right direction). **Two-machine SPRT vs t23 (10+0.1, 1t, 64MB,
+  noob_3moves.epd, 1000g each):** AMD **+2.08 ± 14.96** (nElo +3.00), 50.30%
+  (W252/L246/D502), LOS 60.77%, Ptnml [26,131,183,131,29], LLR −0.17; Intel
+  **−5.21 ± 14.91** (nElo −7.53), 49.25% (W243/L258/D499), LOS 24.65%,
+  Ptnml [34,121,195,126,24], LLR −1.04. Mild opposite lean, both legs
+  noise-level — exactly the "~1–3 Elo, needs large N" outcome this item
+  always expected. **Not folded into t24 on current evidence**; a full
+  Texel re-tune with these params exposed (rather than the hand-set seed
+  values) remains the better long-term path if revisited, per the original
+  scoping note above.
 - **#26 — `board64[64]` piece-on-square cache.** Deferred (a prior sign-split;
   perf/cache changes carry more downside risk than gated eval terms).
 - **#27 — Unorthodox early-queen PV** (d1d3 / d8d6). Deferred (evaluation).
