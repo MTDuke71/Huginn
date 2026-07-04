@@ -1,0 +1,40 @@
+PEXT (#32, ENABLE_PEXT=ON) vs baseline-t23 -- Intel box, interleaved nps A/B
+============================================================================
+Procedure (per SPRT_QUEUE_TEST_PLAN #10): no SPRT slot -- behavior is
+identical, so this is a pure speed check. Build the branch with
+-DENABLE_PEXT=ON, run alternating go-depth searches TEST(pext) vs
+huginn_t23.exe on a quiet machine, compare median nps.
+
+Correctness (both confirmed on this box):
+  - verify_or_die() passes at startup (exit 0, no abort) -> PEXT tables valid.
+  - Node counts bit-identical to t23:
+      startpos  d15 : 21,844,725  (TEST == BASE)
+      -> behavior-equivalent, as the plan states.
+
+Interleaved nps, 5 reps each, alternating TEST/BASE:
+
+  startpos depth 15
+    rep 1 : TEST  3,645,040   BASE  3,620,872
+    rep 2 : TEST  3,652,964   BASE  3,653,575
+    rep 3 : TEST  3,637,150   BASE  3,659,695
+    rep 4 : TEST  3,631,708   BASE  3,649,912
+    rep 5 : TEST  3,638,968   BASE  3,657,857
+    median TEST 3,638,968  |  BASE 3,653,575  |  pext -0.40%
+
+  Kiwipete depth 14 (slider-heavy)
+    r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
+    rep 1 : TEST  2,605,070   BASE  2,630,034
+    rep 2 : TEST  2,631,518   BASE  2,621,169
+    rep 3 : TEST  2,630,034   BASE  2,612,363
+    rep 4 : TEST  2,627,073   BASE  2,625,594
+    rep 5 : TEST  2,625,594   BASE  2,607,983
+    median TEST 2,627,073  |  BASE 2,621,169  |  pext +0.23%
+
+Verdict (Intel): NO measurable speedup. Both deltas (-0.40% / +0.23%) are
+within run-to-run noise; individual reps overlap in both directions. PEXT is
+correct but buys nothing on this CPU while adding a hard BMI2 dependency.
+
+Recommendation: do NOT ship PEXT on the strength of the Intel box. Needs the
+AMD leg -- and if that box is Zen1/Zen2, PEXT is microcoded and will be
+SLOWER (only Zen3+ has fast PEXT). Ship only if AMD shows a genuine win on
+both; otherwise keep the portable magic-multiply path.
