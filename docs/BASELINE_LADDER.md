@@ -11,9 +11,10 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ### baseline-t24 — SPRT queue winners: SEE ordering (#6) + root two-fold avoidance (#44 f/u)
 = t23 + the two confirmed winners from the 2026-07-02/04 SPRT queue (10 branches
-screened, see [BACKLOG.md's SPRT queue section](BACKLOG.md) for all 8
-parked/rejected items and the full [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)
-procedure). Built as `candidate/t24` (cherry-picked both feature commits onto
+screened, see [BACKLOG-archive-2.1.md's SPRT queue section](BACKLOG-archive-2.1.md)
+for all 8 parked/rejected items and the full
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) procedure). Built as
+`candidate/t24` (cherry-picked both feature commits onto
 `main`, resolved a textual flag-block merge conflict — no logic overlap, the
 two features touch different functions), verified, then merged.
 
@@ -69,11 +70,13 @@ two features touch different functions), verified, then merged.
   LTC check recommended), drawishness-scaling (flat vs equal-strength t23, as
   predicted — needs a weaker external anchor), trapped-bishop (clean neutral,
   SF-class magnitude, park-for-Texel-retune), pext (3–5% *slower* on this
-  Zen4 box, not faster). Full numbers for each in BACKLOG.md.
+  Zen4 box, not faster). Full numbers for each in
+  [BACKLOG-archive-2.1.md](BACKLOG-archive-2.1.md).
 
 ### baseline-t23 — #50: Zobrist black-king row out-of-bounds fix
 = t22 + a one-line correctness fix, shipped directly to `main` ahead of the
-SPRT queue (bug, not a feature — see [BACKLOG.md #50](BACKLOG.md) for the full
+SPRT queue (bug, not a feature — see
+[BACKLOG-archive-2.1.md #50](BACKLOG-archive-2.1.md) for the full
 root-cause writeup). Every keying site computes the piece-table row as
 `int(PieceType) + (Black ? 6 : 0)` — White rows 1–6, Black rows 7–12, row 0
 unused, **13 rows total** — but `Zobrist::Piece` was declared

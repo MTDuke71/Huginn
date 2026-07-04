@@ -4,7 +4,9 @@
 > branches below + #50) have final two-machine verdicts. **Winners:** #50
 > (already in `main`/t23), `see-ordering` (#6), `root-twofold-avoid` (#44 f/u).
 > Everything else parked/rejected — see the per-item status below and
-> BACKLOG.md for full numbers.
+> [BACKLOG-archive-2.1.md](BACKLOG-archive-2.1.md) for full numbers (this
+> whole queue is now closed history — see the lean [BACKLOG.md](BACKLOG.md)
+> for what's currently open).
 >
 > **Combined-candidate two-machine SPRT vs t23 — both legs H1-ACCEPT:** AMD
 > **+48.84 ± 20.36** (LOS 100%, 580g, LLR 2.98); Intel **+66.33 ± 23.61** (LOS
@@ -18,8 +20,9 @@
 
 > **Purpose:** self-contained run-sheet for gauntleting the experiment branches
 > created 2026-07-02. Written so it can be followed with no chat context.
-> Companion state lives in [BACKLOG.md](BACKLOG.md) ("SPRT queue" section +
-> per-item sections); this file is the *procedure*.
+> Companion state now lives in [BACKLOG-archive-2.1.md](BACKLOG-archive-2.1.md)
+> ("SPRT queue" section + per-item sections, since the queue is closed); this
+> file is the *procedure*.
 >
 > **History (2026-07-02):** #50 (a Zobrist table out-of-bounds read, see below)
 > was a correctness bug, not a feature, so it shipped directly to `main`

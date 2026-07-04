@@ -1,4 +1,9 @@
-# BACKLOG
+# BACKLOG archive — 2.0 era
+
+> Covers issues #1–#37 (through the Huginn 2.0 stamp and early 2.1 work). For
+> the 2.1/2.2-era closed items (t16→t24), see
+> [BACKLOG-archive-2.1.md](BACKLOG-archive-2.1.md). For currently open items,
+> see [BACKLOG.md](BACKLOG.md).
 
 ## Quick Index
 
