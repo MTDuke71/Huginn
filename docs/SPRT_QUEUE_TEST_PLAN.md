@@ -6,22 +6,21 @@
 > (shipped). Everything else parked/rejected — see the per-item status below
 > and BACKLOG.md for full numbers.
 >
-> **`candidate/t24` is built and verified (2026-07-04), ready to gauntlet:**
-> cherry-picked `see-ordering`'s + `root-twofold-avoid`'s feature commits onto
-> current `main` (both flags default ON = the shipped behavior). Verified:
-> both-flags-OFF arm reproduces `baseline-t23`'s exact signature
-> (startpos d14 = 14,306,844 nodes, byte-for-byte); both-flags-ON signature
-> (8,461,833 nodes / d2d4) matches see-ordering's standalone number exactly
-> (root-twofold-avoid is inert without game history, as designed); 204/205
-> tests pass (1 by-design skip, the opposite-arm test pair) incl. the
-> `RootTwofoldAvoid.WinningRootRoutesAroundSingleRepetition` positive-behavior
-> test. **Run `test_huginn_gauntlet.bat t23` on `candidate/t24`, both boxes** —
-> this is the number that becomes t24's shipped delta (not the sum of the two
-> individual runs). Undershoot guard: if the combined result is much weaker
-> than `root-twofold-avoid`'s standalone lean (the smaller/newer effect),
-> re-check for interaction before tagging. If clean, tag `baseline-t24`,
-> snapshot `huginn_t24.exe` per machine, update BACKLOG/BASELINE_LADDER/
-> CLAUDE.md, merge `candidate/t24` → `main`.
+> **`candidate/t24` built, verified, AMD leg H1-ACCEPTED (2026-07-04).**
+> Cherry-picked `see-ordering`'s + `root-twofold-avoid`'s feature commits onto
+> `main` (both flags default ON). Verified: both-OFF reproduces `baseline-t23`
+> exactly (14,306,844 nodes); both-ON matches `see-ordering`'s standalone
+> signature (8,461,833 / d2d4); 204/205 tests pass incl. the positive
+> repetition-routing test. **AMD SPRT vs t23: H1 ACCEPTED @580g — +48.84 ±
+> 20.36, LOS 100%** (56.98%, W186/L105/D289, Ptnml [8,59,99,92,32], LLR 2.98,
+> resolved inside the cap). **Undershoot guard: clean** — combined sits
+> essentially at `see-ordering`'s solo number (+49.54), not below it; the gap
+> to the naive sum (+62.05) is normal Elo non-additivity, not a negative
+> interaction. No leave-one-out isolation needed. **Intel leg is the last
+> thing needed before tagging `baseline-t24`** — run
+> `test_huginn_gauntlet.bat t23` on `candidate/t24` there, then tag, snapshot
+> `huginn_t24.exe` per machine, update BACKLOG/BASELINE_LADDER/CLAUDE.md,
+> merge `candidate/t24` → `main`.
 
 > **Purpose:** self-contained run-sheet for gauntleting the experiment branches
 > created 2026-07-02. Written so it can be followed with no chat context.
