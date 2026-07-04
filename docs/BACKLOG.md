@@ -492,9 +492,23 @@ truncation), so it is NOT byte-identical.
 **Related:** #28 (TT-safe repetition handling — this is the missing piece: the
 detector it relies on was miscounting), #5 (conversion weakness — one concrete
 cause), #37 (also a make/unmake-buffer subtlety, but that one *does* desync the
-board; distinct bug). **Follow-up idea (separate SPRT):** extend the root
-draw-avoidance to a winning *single* repetition (2-fold), not just 3-fold, so a
-won engine routes around the shuffle one move earlier.
+board; distinct bug). **Follow-up idea — SHIPPED 2026-07-03
+(`copilot/fix50-for-root-twofold-avoid`, `ENABLE_ROOT_TWOFOLD_AVOID`):**
+extended the root draw-avoidance to a winning *single* repetition (rep count
+≥2, not just the rule-threefold ≥3), so a won engine routes around the
+shuffle one move earlier — the root child at `info.ply==1` was the one gap
+the existing #28-Part-2 Zarkov single-rep rule didn't cover. Provably inert
+without game history (startpos node counts identical to t23; verified via
+the dedicated `RootTwofoldAvoid.WinningRootRoutesAroundSingleRepetition`
+unit test, which directly confirms a stale warm-TT repetition bait is routed
+around). **Two-machine SPRT vs t23 (10+0.1, 1t, 64MB, noob_3moves.epd,
+1000g each) — cross-machine-agreement ship:** AMD **+12.51 ± 15.22** (nElo
++17.73), 51.80% (W269/L233/D498), LOS 94.68%, Ptnml [24,117,201,115,43],
+LLR 1.06; Intel **+7.99 ± 15.12** (nElo +11.39), 51.15% (W268/L245/D487),
+LOS 85.01%, Ptnml [32,109,193,136,30], LLR 0.53. Pooled W537/L478/D985 =
+**51.48% / 2000g**. Neither leg resolves individually, but both same-sign
+positive and both LOS values clear the t19 safe-mobility ship precedent
+(+5.91/LOS 74.2%, +10.43/LOS 88.0%) — a clean small keeper, folds into t24.
 
 ### #45: Move-level (Fruit-style) futility vs current node-level (OPEN, 2026-06-17)
 
@@ -747,7 +761,7 @@ only — re-baseline against t23's own signature, see the test plan):
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 38.3M d14 (post-CMake-fix; **+90% d15**) | **REJECTED — two-machine H0.** AMD −12.86±15.50 (LOS 5.17%); Intel **H0 ACCEPTED −27.33±16.79, LOS 0.07%** @828g (LLR crossed −2.94). Same verdict as rfp-pv-guard — futility's PV-node pruning earns its keep. |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | **INCONCLUSIVE, weak positive lean.** AMD +0.69±15.24 (LOS 53.56%, dead flat); Intel +11.12±15.01 (LOS 92.71%, real lean, undecided). Both positive but AMD too flat for clean cross-machine agreement (cf. t19's both-legs->+5 precedent). **LTC check recommended before park/ship** — aging's value should concentrate in long games. |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | **PARKED — two-machine flat neutral vs t23 (as predicted).** AMD +1.04±15.10 (LOS 55.38%); Intel +4.52±15.25 (LOS 71.94%). Self-play vs an equal-strength opponent is the least sensitive test for a #5 conversion-weakness fix — a weaker-anchor check (Stash 11/12) is the better read if this is revisited. Not folded into t24 on current evidence. |
-| `copilot/fix50-for-root-twofold-avoid` | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | won engine routes around the shuffle a move earlier |
+| ~~`copilot/fix50-for-root-twofold-avoid`~~ → **t24 candidate** | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | **SHIPPED — cross-machine agreement.** AMD +12.51±15.22 (LOS 94.68%), Intel +7.99±15.12 (LOS 85.01%) — both same-sign positive, both clear the t19 precedent (+5.9/+10.4). Won engine routes around the shuffle a move earlier. |
 | `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | CPW locks, tuner-wired seeds 100/120 + 50/60 |
 | `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (required) | behavior-identical speed; nps check per box, no SPRT slot needed — batch with a future speed ship |
 
