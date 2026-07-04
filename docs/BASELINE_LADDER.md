@@ -9,6 +9,68 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t24 — SPRT queue winners: SEE ordering (#6) + root two-fold avoidance (#44 f/u)
+= t23 + the two confirmed winners from the 2026-07-02/04 SPRT queue (10 branches
+screened, see [BACKLOG.md's SPRT queue section](BACKLOG.md) for all 8
+parked/rejected items and the full [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)
+procedure). Built as `candidate/t24` (cherry-picked both feature commits onto
+`main`, resolved a textual flag-block merge conflict — no logic overlap, the
+two features touch different functions), verified, then merged.
+
+- **#6 — SEE good/bad capture split** (`ENABLE_SEE_ORDER_SPLIT`, default ON).
+  In `pick_next_move`, captures with SEE < 0 drop to strictly below every
+  quiet move instead of scoring with MVV-LVA above killers; SEE ≥ 0 captures
+  keep their normal high priority. Promotions and en passant exempt (mirrors
+  quiescence's own SEE-prune exemptions). The prior #6 attempt ("lazy SEE")
+  was ~neutral; this full split is a different, much stronger mechanism.
+  Two-machine SPRT vs t23 — **both legs H1-accept:** AMD **+49.54 ± 20.55**
+  (nElo +68.84), 57.08% (W189/L106/D291, 586g), LOS 100%, Ptnml
+  [11,55,99,96,32], LLR 2.97; Intel **+29.02 ± 15.17** (nElo +41.48), 54.17%
+  (W279/L196/D521, 996g), LOS 99.99%, Ptnml [20,102,197,133,46], LLR 2.98.
+- **#44 follow-up — root two-fold draw-avoidance** (`ENABLE_ROOT_TWOFOLD_AVOID`,
+  default ON). Extends the root winning-repetition clamp from the rule
+  threefold (≥3) to a single repetition (≥2), so a won engine routes around
+  a repeating shuffle one move earlier — closing the one gap the #28-Part-2
+  Zarkov single-rep rule didn't cover (the root child at `info.ply==1`).
+  Provably inert without game history (startpos node counts identical to
+  t23); verified via `RootTwofoldAvoid.WinningRootRoutesAroundSingleRepetition`,
+  which directly confirms a stale warm-TT repetition bait is routed around.
+  Two-machine SPRT vs t23 — **cross-machine agreement** (neither leg resolves
+  alone, but both clear the t19 safe-mobility ship precedent of +5.91/+10.43):
+  AMD **+12.51 ± 15.22** (nElo +17.73), 51.80% (W269/L233/D498, 1000g), LOS
+  94.68%, Ptnml [24,117,201,115,43], LLR 1.06; Intel **+7.99 ± 15.12** (nElo
+  +11.39), 51.15% (W268/L245/D487, 1000g), LOS 85.01%, Ptnml
+  [32,109,193,136,30], LLR 0.53.
+- **Combined-candidate validation (`candidate/t24`, both flags ON) vs t23 —
+  two-machine SPRT, both legs H1-ACCEPT:** AMD **+48.84 ± 20.36** (nElo
+  +68.81), 56.98% (W186/L105/D289, 580g), LOS 100%, Ptnml [8,59,99,92,32],
+  LLR 2.98 (crossed the upper bound); Intel **+66.33 ± 23.61** (nElo +93.61),
+  59.43% (W159/L76/D205, 440g), LOS 100%, Ptnml [7,34,75,77,27], LLR 2.97
+  (crossed the upper bound). **Pooled: W345/L181/D494 = 58.04% / 1020g.**
+- **Undershoot guard (AMD): clean.** Combined (+48.84) sits essentially at
+  see-ordering's solo AMD number (+49.54), not below it — healthy
+  sub-additivity vs the naive sum (+62.05), not a masked negative interaction.
+  **Intel showed the opposite pattern** — combined (+66.33) notably exceeds
+  see-ordering's solo Intel number (+29.02), i.e. apparent positive synergy
+  between the two winners on that box. Neither pattern triggers a concern:
+  the guard only fires on undershoot (a winner turning negative in company,
+  the #44+NMP precedent), and both machines show the combine outperforming
+  or matching its best single component.
+- Verified: both-flags-OFF arm reproduces `baseline-t23`'s exact signature
+  (startpos d14 = 14,306,844 nodes, byte-for-byte); both-flags-ON signature
+  (8,461,833 nodes / d2d4) matches `see-ordering`'s standalone number exactly
+  (confirms `root-twofold-avoid` composes cleanly, no leakage into ordinary
+  search); 204/205 tests pass (1 by-design skip — the opposite-arm test pair).
+- **Eight items screened in the same queue did NOT make t24** — razoring-off
+  (sign-split, parked), rfp-pv-guard (two-machine reject), futility-depth2
+  (clean neutral, parked), futility-pv-guard (two-machine reject — caught and
+  fixed a silent-flag-off CMake bug mid-queue, see
+  [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)), tt-aging (inconclusive,
+  LTC check recommended), drawishness-scaling (flat vs equal-strength t23, as
+  predicted — needs a weaker external anchor), trapped-bishop (clean neutral,
+  SF-class magnitude, park-for-Texel-retune), pext (3–5% *slower* on this
+  Zen4 box, not faster). Full numbers for each in BACKLOG.md.
+
 ### baseline-t23 — #50: Zobrist black-king row out-of-bounds fix
 = t22 + a one-line correctness fix, shipped directly to `main` ahead of the
 SPRT queue (bug, not a feature — see [BACKLOG.md #50](BACKLOG.md) for the full

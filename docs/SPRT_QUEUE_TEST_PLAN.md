@@ -1,26 +1,20 @@
-# SPRT Queue Test Plan — 10 branches off baseline-t23
+# SPRT Queue Test Plan — 10 branches off baseline-t23 (CLOSED)
 
-> **QUEUE CLOSED 2026-07-04.** All 11 items (the 10 branches below + #50)
-> have final two-machine verdicts. **Winners for `baseline-t24`:** #50
-> (already in `main`/t23), `see-ordering` (shipped), `root-twofold-avoid`
-> (shipped). Everything else parked/rejected — see the per-item status below
-> and BACKLOG.md for full numbers.
+> **QUEUE CLOSED, `baseline-t24` SHIPPED (2026-07-04).** All 11 items (the 10
+> branches below + #50) have final two-machine verdicts. **Winners:** #50
+> (already in `main`/t23), `see-ordering` (#6), `root-twofold-avoid` (#44 f/u).
+> Everything else parked/rejected — see the per-item status below and
+> BACKLOG.md for full numbers.
 >
-> **`candidate/t24` built, verified, AMD leg H1-ACCEPTED (2026-07-04).**
-> Cherry-picked `see-ordering`'s + `root-twofold-avoid`'s feature commits onto
-> `main` (both flags default ON). Verified: both-OFF reproduces `baseline-t23`
-> exactly (14,306,844 nodes); both-ON matches `see-ordering`'s standalone
-> signature (8,461,833 / d2d4); 204/205 tests pass incl. the positive
-> repetition-routing test. **AMD SPRT vs t23: H1 ACCEPTED @580g — +48.84 ±
-> 20.36, LOS 100%** (56.98%, W186/L105/D289, Ptnml [8,59,99,92,32], LLR 2.98,
-> resolved inside the cap). **Undershoot guard: clean** — combined sits
-> essentially at `see-ordering`'s solo number (+49.54), not below it; the gap
-> to the naive sum (+62.05) is normal Elo non-additivity, not a negative
-> interaction. No leave-one-out isolation needed. **Intel leg is the last
-> thing needed before tagging `baseline-t24`** — run
-> `test_huginn_gauntlet.bat t23` on `candidate/t24` there, then tag, snapshot
-> `huginn_t24.exe` per machine, update BACKLOG/BASELINE_LADDER/CLAUDE.md,
-> merge `candidate/t24` → `main`.
+> **Combined-candidate two-machine SPRT vs t23 — both legs H1-ACCEPT:** AMD
+> **+48.84 ± 20.36** (LOS 100%, 580g, LLR 2.98); Intel **+66.33 ± 23.61** (LOS
+> 100%, 440g, LLR 2.97). Pooled W345/L181/D494 = **58.04% / 1020g**.
+> Undershoot guard clean on both legs — AMD sits at `see-ordering`'s solo
+> number (healthy sub-additivity), Intel exceeds it (apparent positive
+> synergy); neither pattern is a red flag. `candidate/t24` was merged into
+> `main`, tagged `baseline-t24`, and `huginn_t24.exe` snapshotted. Full
+> writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md). This file is retained as
+> the historical procedure record for how the queue was run.
 
 > **Purpose:** self-contained run-sheet for gauntleting the experiment branches
 > created 2026-07-02. Written so it can be followed with no chat context.

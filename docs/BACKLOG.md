@@ -732,7 +732,14 @@ Intel; fastchess forfeits on it).
   repro until it trips, then bisect from the captured context. The diagnostic
   should hand us a deterministic repro the next time the imbalance occurs.
 
-### SPRT queue — branches off baseline-t23 (2026-07-02, updated after #50 shipped)
+### SPRT queue — branches off baseline-t23 (2026-07-02, CLOSED 2026-07-04)
+
+**Queue closed. `baseline-t24` = t23 + see-ordering (#6) + root-twofold-avoid
+(#44 f/u), both two-machine H1-accepted as a combined candidate (AMD +48.84±
+20.36 LOS 100% @580g; Intel +66.33±23.61 LOS 100% @440g — pooled W345/L181/
+D494 = 58.04% / 1020g). See [BASELINE_LADDER.md](BASELINE_LADDER.md) for the
+full t24 writeup. Eight items parked/rejected below; details preserved for
+reference.**
 
 Eleven branches implemented + adversarially verified in one session, originally
 off `baseline-t22`. **#50 (below) shipped directly to `main` ahead of the queue
@@ -754,14 +761,14 @@ only — re-baseline against t23's own signature, see the test plan):
 | Branch | Item | Flag | d14 nodes vs old t22 12.04M | Note |
 |---|---|---|---|---|
 | ~~`experiment/fix-nondet-50`~~ → **`main` (`baseline-t23`)** | #50 | *(none — shipped unconditionally)* | n/a (t23 IS the new reference) | **SHIPPED** — latent correctness bug (TT collisions), #44/#45 class. AMD H1 @872g, +33.97±16.60, LOS 100% |
-| ~~`copilot/fix50-for-see-ordering`~~ → **t24 candidate** | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **SHIPPED — two-machine H1-accept.** AMD +49.54±20.55, LOS 100% @586g; Intel +29.02±15.17, LOS 99.99% @996g. First clean two-machine win of the queue. |
+| ~~`copilot/fix50-for-see-ordering`~~ → **`main` (`baseline-t24`)** | #6 | `ENABLE_SEE_ORDER_SPLIT` | −41% vs t23 | **SHIPPED — two-machine H1-accept.** AMD +49.54±20.55, LOS 100% @586g; Intel +29.02±15.17, LOS 99.99% @996g. First clean two-machine win of the queue. |
 | `copilot/fix50-for-razoring-off` | #45-audit | `ENABLE_RAZORING` (**default 0 = test arm**) | 10.57M (−12%) | **PARKED** — sign-split: AMD +5.56±14.83 (LOS 76.9%) / Intel −10.08±15.90 (LOS 10.7%), both CIs span 0. Razoring earns its keep; not folded into t24. |
 | `copilot/fix50-for-rfp-pv-guard` | #45-audit | `ENABLE_RFP_PV_GUARD` | 7.89M (−34%) | **REJECTED — two-machine H0.** AMD −12.86±15.41 (LOS 5.07%); Intel **H0 ACCEPTED −22.47±15.32, LOS 0.20%** @960g (LLR crossed −2.94). RFP's PV-node pruning earns its keep; not folded into t24. |
 | `copilot/fix50-for-futility-depth2` | #45 knob a | `ENABLE_FUTILITY_DEPTH2` | +27.6% d15 nodes vs t23 | **PARKED — clean two-machine neutral.** AMD +2.43±15.34 (LOS 62.21%); Intel −2.78±15.48 (LOS 36.23%). Both LLR near-flat. Matches #45's "may have already saturated" caveat exactly — costs speed for ~0 Elo. |
 | `copilot/fix50-for-futility-pv-guard` | #45 knob b | `ENABLE_FUTILITY_PV_GUARD` | 38.3M d14 (post-CMake-fix; **+90% d15**) | **REJECTED — two-machine H0.** AMD −12.86±15.50 (LOS 5.17%); Intel **H0 ACCEPTED −27.33±16.79, LOS 0.07%** @828g (LLR crossed −2.94). Same verdict as rfp-pv-guard — futility's PV-node pruning earns its keep. |
 | `copilot/fix50-for-tt-aging` | #42 | `ENABLE_TT_AGING` | ~same (startpos) | **INCONCLUSIVE, weak positive lean.** AMD +0.69±15.24 (LOS 53.56%, dead flat); Intel +11.12±15.01 (LOS 92.71%, real lean, undecided). Both positive but AMD too flat for clean cross-machine agreement (cf. t19's both-legs->+5 precedent). **LTC check recommended before park/ship** — aging's value should concentrate in long games. |
 | `copilot/fix50-for-drawishness-scaling` | roadmap | `ENABLE_DRAWISHNESS_SCALING` | ~same (startpos) | **PARKED — two-machine flat neutral vs t23 (as predicted).** AMD +1.04±15.10 (LOS 55.38%); Intel +4.52±15.25 (LOS 71.94%). Self-play vs an equal-strength opponent is the least sensitive test for a #5 conversion-weakness fix — a weaker-anchor check (Stash 11/12) is the better read if this is revisited. Not folded into t24 on current evidence. |
-| ~~`copilot/fix50-for-root-twofold-avoid`~~ → **t24 candidate** | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | **SHIPPED — cross-machine agreement.** AMD +12.51±15.22 (LOS 94.68%), Intel +7.99±15.12 (LOS 85.01%) — both same-sign positive, both clear the t19 precedent (+5.9/+10.4). Won engine routes around the shuffle a move earlier. |
+| ~~`copilot/fix50-for-root-twofold-avoid`~~ → **`main` (`baseline-t24`)** | #44 f/u | `ENABLE_ROOT_TWOFOLD_AVOID` | same (inert w/o history) | **SHIPPED — cross-machine agreement.** AMD +12.51±15.22 (LOS 94.68%), Intel +7.99±15.12 (LOS 85.01%) — both same-sign positive, both clear the t19 precedent (+5.9/+10.4). Won engine routes around the shuffle a move earlier. |
 | `copilot/fix50-for-trapped-bishop` | #20 | `ENABLE_TRAPPED_BISHOP` | ~same | **PARKED — clean two-machine neutral, as predicted.** AMD +2.08±14.96 (LOS 60.77%); Intel −5.21±14.91 (LOS 24.65%). Mild opposite lean, both noise-level. CPW locks, tuner-wired seeds 100/120 + 50/60 — park-for-Texel-retune, not folded into t24. |
 | `copilot/fix50-for-pext` | #32 | `ENABLE_PEXT` | identical (verified) | **PARKED on this box — PEXT is 3–5% SLOWER, not faster** (AMD 7800X3D/Zen4, interleaved A/B). Node counts bit-identical as required (203/203 tests). Not adopted; Intel leg would need its own check but low expectation given the AMD result. |
 
