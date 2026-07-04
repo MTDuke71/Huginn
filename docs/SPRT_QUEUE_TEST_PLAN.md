@@ -4,11 +4,24 @@
 > have final two-machine verdicts. **Winners for `baseline-t24`:** #50
 > (already in `main`/t23), `see-ordering` (shipped), `root-twofold-avoid`
 > (shipped). Everything else parked/rejected — see the per-item status below
-> and BACKLOG.md for full numbers. **Next step: assemble the t24 candidate**
-> (merge `see-ordering` + `root-twofold-avoid` onto current `main`, validate
-> two-machine vs t23) per the "Combining the winners" section at the bottom
-> of this file. This header supersedes the "Purpose" note below for future
-> reads — kept for historical procedure reference.
+> and BACKLOG.md for full numbers.
+>
+> **`candidate/t24` is built and verified (2026-07-04), ready to gauntlet:**
+> cherry-picked `see-ordering`'s + `root-twofold-avoid`'s feature commits onto
+> current `main` (both flags default ON = the shipped behavior). Verified:
+> both-flags-OFF arm reproduces `baseline-t23`'s exact signature
+> (startpos d14 = 14,306,844 nodes, byte-for-byte); both-flags-ON signature
+> (8,461,833 nodes / d2d4) matches see-ordering's standalone number exactly
+> (root-twofold-avoid is inert without game history, as designed); 204/205
+> tests pass (1 by-design skip, the opposite-arm test pair) incl. the
+> `RootTwofoldAvoid.WinningRootRoutesAroundSingleRepetition` positive-behavior
+> test. **Run `test_huginn_gauntlet.bat t23` on `candidate/t24`, both boxes** —
+> this is the number that becomes t24's shipped delta (not the sum of the two
+> individual runs). Undershoot guard: if the combined result is much weaker
+> than `root-twofold-avoid`'s standalone lean (the smaller/newer effect),
+> re-check for interaction before tagging. If clean, tag `baseline-t24`,
+> snapshot `huginn_t24.exe` per machine, update BACKLOG/BASELINE_LADDER/
+> CLAUDE.md, merge `candidate/t24` → `main`.
 
 > **Purpose:** self-contained run-sheet for gauntleting the experiment branches
 > created 2026-07-02. Written so it can be followed with no chat context.
