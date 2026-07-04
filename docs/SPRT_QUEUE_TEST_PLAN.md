@@ -1,5 +1,15 @@
 # SPRT Queue Test Plan — 10 branches off baseline-t23
 
+> **QUEUE CLOSED 2026-07-04.** All 11 items (the 10 branches below + #50)
+> have final two-machine verdicts. **Winners for `baseline-t24`:** #50
+> (already in `main`/t23), `see-ordering` (shipped), `root-twofold-avoid`
+> (shipped). Everything else parked/rejected — see the per-item status below
+> and BACKLOG.md for full numbers. **Next step: assemble the t24 candidate**
+> (merge `see-ordering` + `root-twofold-avoid` onto current `main`, validate
+> two-machine vs t23) per the "Combining the winners" section at the bottom
+> of this file. This header supersedes the "Purpose" note below for future
+> reads — kept for historical procedure reference.
+
 > **Purpose:** self-contained run-sheet for gauntleting the experiment branches
 > created 2026-07-02. Written so it can be followed with no chat context.
 > Companion state lives in [BACKLOG.md](BACKLOG.md) ("SPRT queue" section +
@@ -100,7 +110,7 @@ flag (branch default = test arm), what to expect, and the decision. Branch
 names below are the `copilot/fix50-for-*` rebases (t23-based); flags and
 feature content are unchanged from the original `experiment/*` design.
 
-### 1. `copilot/fix50-for-see-ordering` — SEE good/bad capture split (#6)
+### 1. `copilot/fix50-for-see-ordering` — SEE good/bad capture split (#6) — ✅ SHIPPED
 - **What:** in `pick_next_move`, captures with SEE < 0 drop below every quiet
   (−10M + MVV-LVA); SEE ≥ 0 captures stay above killers. Promotions + en
   passant exempt. Flag `ENABLE_SEE_ORDER_SPLIT`.
@@ -111,7 +121,7 @@ feature content are unchanged from the original `experiment/*` design.
   this is the full split.
 - **Decision:** standard two-machine bar.
 
-### 2. `copilot/fix50-for-razoring-off` — pruning-stack audit probe (#45-audit)
+### 2. `copilot/fix50-for-razoring-off` — pruning-stack audit probe (#45-audit) — ⏸ PARKED (sign-split)
 - **What:** razoring (depth 2–4, eval+400<alpha ⇒ depth−1) fully removed.
   Flag `ENABLE_RAZORING` — **INVERTED: default 0 = razoring OFF is the test
   arm; =1 is the t23-equivalent arm.** The plain branch build is correct for
@@ -131,7 +141,7 @@ feature content are unchanged from the original `experiment/*` design.
   in the next baseline (fewer, better, sound). If OFF clearly loses →
   razoring earns its keep; park and optionally test a PV-guarded variant.
 
-### 3. `copilot/fix50-for-rfp-pv-guard` — reverse futility PV guard (#45-audit)
+### 3. `copilot/fix50-for-rfp-pv-guard` — reverse futility PV guard (#45-audit) — ❌ REJECTED
 - **What:** RFP fires only at null-window nodes (`beta - alpha == 1`), so it
   can no longer prune an interior PV node. Flag `ENABLE_RFP_PV_GUARD`.
 - **Expect:** meaningfully more nodes at fixed depth (was −34% *smaller* than
@@ -140,7 +150,7 @@ feature content are unchanged from the original `experiment/*` design.
   Elo read).
 - **Decision:** standard bar. Same #45 leak-class rationale as futility's fix.
 
-### 4. `copilot/fix50-for-futility-depth2` — futility envelope ≤3→≤2 (#45 knob a)
+### 4. `copilot/fix50-for-futility-depth2` — futility envelope ≤3→≤2 (#45 knob a) — ⏸ PARKED (flat neutral)
 - **What:** move-level futility now only at depth ≤ 2 (Fruit trusts only
   depth 1). Flag `ENABLE_FUTILITY_DEPTH2`.
 - **Expect:** more nodes at fixed depth (prunes less, was +20% vs the t22
@@ -149,7 +159,7 @@ feature content are unchanged from the original `experiment/*` design.
   neutral is a fine outcome (park).
 - **Decision:** standard bar.
 
-### 5. `copilot/fix50-for-futility-pv-guard` — futility PV guard (#45 knob b)
+### 5. `copilot/fix50-for-futility-pv-guard` — futility PV guard (#45 knob b) — ❌ REJECTED
 - **What:** futility exempts ALL PV nodes (`beta - alpha == 1` added), Fruit's
   exact recipe. Flag `ENABLE_FUTILITY_PV_GUARD`.
 - **⚠ CMake fix required first (see the trap note above) — rebuild before
@@ -162,7 +172,7 @@ feature content are unchanged from the original `experiment/*` design.
 - **Decision:** standard bar. Independent of knob (a) — if BOTH win, fold one,
   re-run the other on top before folding it too (they overlap).
 
-### 6. `copilot/fix50-for-tt-aging` — date-based TT aging (#42 idea 1)
+### 6. `copilot/fix50-for-tt-aging` — date-based TT aging (#42 idea 1) — ❓ INCONCLUSIVE (LTC check recommended)
 - **What:** 6-bit search date packed into `node_type`'s upper bits;
   `new_search()` bumps it per `go`; stale-dated entries evictable regardless
   of depth; probe hits re-date. Flag `ENABLE_TT_AGING`.
@@ -171,7 +181,7 @@ feature content are unchanged from the original `experiment/*` design.
   (60+0.6 vs Stash 17, like the t21 validation) before deciding.
 - **Decision:** standard bar, with the LTC caveat above.
 
-### 7. `copilot/fix50-for-drawishness-scaling` — endgame draw scaling (roadmap)
+### 7. `copilot/fix50-for-drawishness-scaling` — endgame draw scaling (roadmap) — ⏸ PARKED (flat, needs weaker anchor)
 - **What:** final white-positive eval scaled: pure OCB ×64/128; pawnless
   favoured side ahead ≤ a minor ×16/128. Flag `ENABLE_DRAWISHNESS_SCALING`.
   Targets the #5 conversion weakness (draw-heavy vs weaker engines).
@@ -180,7 +190,7 @@ feature content are unchanged from the original `experiment/*` design.
   draw-prone pairing) is the better read.
 - **Decision:** standard bar (+ optional external check).
 
-### 8. `copilot/fix50-for-root-twofold-avoid` — root 2-fold avoidance (#44 f/u)
+### 8. `copilot/fix50-for-root-twofold-avoid` — root 2-fold avoidance (#44 f/u) — ✅ SHIPPED
 - **What:** the root winning-repetition clamp now triggers on a SINGLE
   repetition (key already in game history), not just rule-threefold, so a won
   engine routes around the shuffle a move earlier. Inert without game history.
@@ -190,7 +200,7 @@ feature content are unchanged from the original `experiment/*` design.
 - **Decision:** standard bar; neutral-positive is shippable on soundness
   grounds if the drawn-won-games mechanism is visible in the PGNs.
 
-### 9. `copilot/fix50-for-trapped-bishop` — CPW trapped-bishop locks (#20)
+### 9. `copilot/fix50-for-trapped-bishop` — CPW trapped-bishop locks (#20) — ⏸ PARKED (flat neutral)
 - **What:** six square+pawn locks per side (a7/h7/b8/g8 full = seeds 100/120;
   a6/h6 lighter = 50/60), tapered, tuner-wired (`P_BISHOP_TRAPPED_*`). Flag
   `ENABLE_TRAPPED_BISHOP`.
@@ -200,7 +210,7 @@ feature content are unchanged from the original `experiment/*` design.
 - **Decision:** standard bar; treat "inconclusive lean-positive" as
   keep-parked-for-tune, not ship.
 
-### 10. `copilot/fix50-for-pext` — BMI2 PEXT sliders (#32) — NO GAUNTLET NEEDED
+### 10. `copilot/fix50-for-pext` — BMI2 PEXT sliders (#32) — ⏸ PARKED (3–5% slower on this box, not faster)
 - **What:** `_pext_u64` table indexing replaces magic multiply; init fills
   tables with pext ordering; `verify_or_die()` validates at startup. Flag
   `ENABLE_PEXT`. **Verified bit-identical** to its OFF arm (both t23-equal).
