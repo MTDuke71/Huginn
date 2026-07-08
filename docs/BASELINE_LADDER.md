@@ -9,6 +9,54 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t25 — #51: History-heuristic piece-index collision fix
+= t24 + a one-line-class correctness fix, shipped directly to `main` ahead of
+any flag/branch/SPRT-queue process (bug, not a tunable feature — see
+[BACKLOG.md #51](BACKLOG.md) for the full writeup). Found while comparing
+Huginn's move-ordering design against a sibling JS engine built for an
+unrelated competition.
+
+Four call sites (`update_search_history`, `penalize_search_history`,
+`pick_next_move`'s quiet-move scoring, and the gated
+`ENABLE_CONTINUATION_HISTORY` helper) indexed `search_history[13][64]` /
+`continuation_history` with `static_cast<int>(piece) % 13`, where `Piece` is
+packed as `(color<<3)|type` (`WhitePawn=1..WhiteKing=6`,
+`BlackPawn=9..BlackKing=14`) rather than a dense 0..12 range. The modulo
+folded `BlackKing=14 → 1`, the same row as `WhitePawn`, so quiet White-pawn
+moves and quiet Black-king moves to the same square shared one history
+cell (and `BlackQueen=13 → 0`, silently wasting a row). Same species of bug
+as **#50** (Zobrist black-king-row OOB) but narrower in mechanism — the
+correct 13-row convention (`type_of(piece) + (Black ? 6 : 0)`, White 1-6 /
+Black 7-12 / row 0 unused) already existed in `zobrist.hpp` and just hadn't
+been reused here; the two schemes had silently diverged.
+
+**Fix:** new `history_piece_row()` helper (`search.cpp`, anonymous
+namespace) replacing all four `% 13` call sites, reusing `zobrist.hpp`'s
+proven-correct convention instead of reinventing a broken one. No compile
+flag — this was a straightforward indexing bug with one correct answer, not
+tunable behavior. Clean Release build; 205/205 tests pass (204 run + 1
+by-design skip).
+
+**Signature check:** `go depth 14` from startpos — 8,406,631 nodes (t25) vs
+8,461,833 nodes (t24), same bestmove/PV (`d2d4`, expected — king moves don't
+enter the startpos-d14 PV, so this only confirms the fix is live, not a
+strength signal).
+
+**AMD SPRT vs t24 (2026-07-07):** 10+0.1, 1t, 64MB, noob_3moves.epd, cc=4,
+1000 games (hit the `-rounds 500` cap before LLR crossed either SPRT bound
+— LLR 1.88 of [-2.94, 2.94]). **+19.48 ± 15.00 Elo**, nElo +28.03 ± 21.53,
+**LOS 99.46%**, W280/L224/D496 (52.80%), DrawRatio 40.20%. CI excludes
+zero. Larger than expected for a collision this narrow on paper — the
+shared row corrupts ordering for the far more common White-pawn quiet
+moves too, not just the rare Black-king ones, so the practical impact was
+broader than "rare edge case" suggested.
+
+**Shipped on AMD-only accept** (user call, given the clear CI/LOS margin) —
+no Intel leg run. Mirrors t23's own precedent: that baseline also shipped
+on a single-machine SPRT accept (AMD, +33.97 ± 16.60, LOS 100%, @872g)
+ahead of the Intel leg, since #50 was likewise a correctness bug rather
+than a tunable feature.
+
 ### baseline-t24 — SPRT queue winners: SEE ordering (#6) + root two-fold avoidance (#44 f/u)
 = t23 + the two confirmed winners from the 2026-07-02/04 SPRT queue (10 branches
 screened, see [BACKLOG-archive-2.1.md's SPRT queue section](BACKLOG-archive-2.1.md)

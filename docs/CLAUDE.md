@@ -13,7 +13,22 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t24` — **SPRT queue winners: SEE good/bad
+- ✅ **Baseline tag**: `baseline-t25` — **#51: history-heuristic
+  piece-index collision fix.** `search_history[13][64]` (and the gated
+  continuation-history table) indexed with `static_cast<int>(piece) % 13`
+  on the packed `Piece` enum (`color<<3|type`), which folds `BlackKing=14`
+  into `WhitePawn`'s row (`14 % 13 == 1`) — quiet White-pawn and Black-king
+  moves to the same square shared one history cell. Same bug species as
+  #50, found while comparing Huginn's design against a sibling JS engine.
+  Fixed via a `history_piece_row()` helper reusing `zobrist.hpp`'s already-
+  correct 13-row convention. Fixed unconditionally, no flag — shipped
+  directly to `main` ahead of the flag/branch/SPRT-queue process, same as
+  #50. **AMD SPRT vs t24: +19.48 ± 15.00, LOS 99.46%, 1000g** (rounds cap
+  reached before LLR crossed the SPRT bound, but CI excludes zero) —
+  **shipped on AMD-only accept** (user call), no Intel leg, mirroring t23's
+  own single-machine-accept precedent below. **Full writeup:**
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t24` — **SPRT queue winners: SEE good/bad
   capture ordering (#6) + root two-fold draw-avoidance (#44 follow-up).**
   Screened 10 candidate branches off t23 (8 parked/rejected — razoring-off,
   rfp-pv-guard, futility-depth2, futility-pv-guard, tt-aging,
@@ -45,8 +60,9 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t24 SEE ordering +
-  root-twofold · t23 zobrist OOB fix · t22 speed pair · t21 TT-clear +
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t25 history-heuristic
+  collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·
+  t22 speed pair · t21 TT-clear +
   time-mgmt · t20 move-level futility · t19 safe mobility · t18
   mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 205 GoogleTest cases (204 run + 1 by-design

@@ -1147,20 +1147,33 @@ void Engine::store_pv_move(uint64_t position_key, const S_MOVE& move) {
     pv_table.store_move(position_key, move);
 }
 
+namespace {
+/// @brief Map a Piece to its history-table row: White 1-6, Black 7-12, row 0
+///        unused/None -- the same 13-row convention `Zobrist::Piece` uses
+///        (zobrist.hpp, BACKLOG #50). Replaces the old
+///        `static_cast<int>(piece) % 13`, which collided BlackKing (packed
+///        value 14, since Piece is `(color<<3)|type`, not a dense 0..12
+///        range) into WhitePawn's row (`14 % 13 == 1`) -- quiet White-pawn
+///        and Black-king moves to the same square shared one history cell.
+inline int history_piece_row(Piece piece) {
+    return static_cast<int>(type_of(piece)) + (color_of(piece) == Color::Black ? 6 : 0);
+}
+}
+
 /// @brief Reward a quiet move that improved alpha: `history[piece][to] += depth²`
 ///        (depth-weighted), to float it earlier in future orderings.
 void Engine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
-    
+
     // Get piece and destination square
     int from = move.get_from();
     int to = move.get_to();
-    
+
     if (from < 0 || from >= 64 || to < 0 || to >= 64) return;
-    
+
     Piece piece = pos.at_sq64(from);
-    int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
-    
+    int piece_index = history_piece_row(piece);
+
     // Increase history score for this piece-to-square combination
     search_history[piece_index][to] += depth * depth;  // Deeper moves get higher bonus
 }
@@ -1169,16 +1182,16 @@ void Engine::update_search_history(const Position& pos, const S_MOVE& move, int 
 ///        to cause it (negative history) — demotes it in future orderings.
 void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
-    
+
     // Get piece and destination square
     int from = move.get_from();
     int to = move.get_to();
-    
+
     if (from < 0 || from >= 64 || to < 0 || to >= 64) return;
-    
+
     Piece piece = pos.at_sq64(from);
-    int piece_index = static_cast<int>(piece) % 13;  // Ensure valid index
-    
+    int piece_index = history_piece_row(piece);
+
     // Decrease history score for this piece-to-square combination
     search_history[piece_index][to] -= depth * depth;  // Penalize with same magnitude as bonus
 }
@@ -1251,11 +1264,11 @@ S_MOVE Engine::get_counter_move(const S_MOVE& previous_move) const {
 // piece sits on prev.get_to() and the current move's piece on move.get_from().
 //
 // Index validity: prev/move squares are sq64; piece_index uses the same
-// `static_cast<int>(piece) % 13` convention as butterfly history. A piece of
-// None on prev.get_to() (shouldn't happen for a real parent move, but guard
-// anyway) maps to index 0 and is harmless.
+// history_piece_row() convention as butterfly history (White 1-6, Black
+// 7-12, row 0 unused). A piece of None on prev.get_to() (shouldn't happen
+// for a real parent move, but guard anyway) maps to index 0 and is harmless.
 namespace {
-inline int ch_piece_index(Piece p) { return static_cast<int>(p) % 13; }
+inline int ch_piece_index(Piece p) { return history_piece_row(p); }
 }
 
 /// @brief Reward the (prev-move → this-move) pair on a cutoff — continuation
@@ -1580,7 +1593,7 @@ int Engine::pick_next_move(S_MOVELIST& move_list, int move_num, const Position& 
                         
                         if (from >= 0 && from < 64 && to >= 0 && to < 64) {
                             Piece piece = pos.at_sq64(from);
-                            int piece_index = static_cast<int>(piece) % 13;
+                            int piece_index = history_piece_row(piece);
                             score = search_history[piece_index][to];  // History score
 #if ENABLE_CONTINUATION_HISTORY
                             // BACKLOG #3: blend 1-ply continuation history into
