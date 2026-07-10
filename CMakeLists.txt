@@ -210,7 +210,7 @@ endif()
 # src/search.cpp). CANDIDATE — source default 0; -DENABLE_QSEARCH_CHECK_EVASIONS=ON
 # builds the SPRT arm. Forwarded as an explicit 0/1 (same cache-variable
 # rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
-option(ENABLE_QSEARCH_CHECK_EVASIONS "BACKLOG #52: check-aware quiescence (candidate arm)" OFF)
+option(ENABLE_QSEARCH_CHECK_EVASIONS "BACKLOG #52: check-aware quiescence (candidate arm)" ON)  # candidate branch default
 if(ENABLE_QSEARCH_CHECK_EVASIONS)
     add_compile_definitions(ENABLE_QSEARCH_CHECK_EVASIONS=1)
     message(STATUS "Check-aware quiescence enabled (BACKLOG #52 candidate arm)")

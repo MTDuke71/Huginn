@@ -234,7 +234,7 @@
 // fixed-depth / fixed-time comparison + two-machine SPRT per the house rules.
 // Build the candidate arm with -DENABLE_QSEARCH_CHECK_EVASIONS=1.
 #ifndef ENABLE_QSEARCH_CHECK_EVASIONS
-#define ENABLE_QSEARCH_CHECK_EVASIONS 0
+#define ENABLE_QSEARCH_CHECK_EVASIONS 1  // candidate branch: test arm is the default
 #endif
 // ENABLE_RULE50_TT_GUARD: BACKLOG #53 (#29 follow-up). TT keys are position-
 // only, but within `depth` plies of the 100-ply rule-50 boundary a node's

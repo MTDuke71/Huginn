@@ -30,7 +30,7 @@
 // CMake forwards the same -DENABLE_X=1 to every translation unit, so the
 // tests track the built arm (same pattern as test_root_twofold_avoid.cpp).
 #ifndef ENABLE_QSEARCH_CHECK_EVASIONS
-#define ENABLE_QSEARCH_CHECK_EVASIONS 0
+#define ENABLE_QSEARCH_CHECK_EVASIONS 1  // candidate branch: test arm is the default
 #endif
 #ifndef ENABLE_RULE50_TT_GUARD
 #define ENABLE_RULE50_TT_GUARD 0
