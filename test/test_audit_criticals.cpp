@@ -33,7 +33,7 @@
 #define ENABLE_QSEARCH_CHECK_EVASIONS 0
 #endif
 #ifndef ENABLE_RULE50_TT_GUARD
-#define ENABLE_RULE50_TT_GUARD 0
+#define ENABLE_RULE50_TT_GUARD 1  // candidate branch: test arm is the default
 #endif
 
 using namespace Huginn;

@@ -252,7 +252,7 @@
 // value is correctness in long shuffle endgames). Build the candidate arm
 // with -DENABLE_RULE50_TT_GUARD=1.
 #ifndef ENABLE_RULE50_TT_GUARD
-#define ENABLE_RULE50_TT_GUARD 0
+#define ENABLE_RULE50_TT_GUARD 1  // candidate branch: test arm is the default
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

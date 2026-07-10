@@ -221,7 +221,7 @@ endif()
 # BACKLOG #53: rule-50-aware TT eligibility (see ENABLE_RULE50_TT_GUARD in
 # src/search.cpp). CANDIDATE — source default 0; -DENABLE_RULE50_TT_GUARD=ON
 # builds the SPRT arm.
-option(ENABLE_RULE50_TT_GUARD "BACKLOG #53: rule-50-aware TT eligibility guard (candidate arm)" OFF)
+option(ENABLE_RULE50_TT_GUARD "BACKLOG #53: rule-50-aware TT eligibility guard (candidate arm)" ON)  # candidate branch default
 if(ENABLE_RULE50_TT_GUARD)
     add_compile_definitions(ENABLE_RULE50_TT_GUARD=1)
     message(STATUS "Rule-50 TT guard enabled (BACKLOG #53 candidate arm)")
