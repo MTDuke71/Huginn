@@ -91,9 +91,20 @@
   The guard trades away TT cutoffs near the boundary that blitz benefits from;
   the correctness payoff is in long shuffle endgames this TC rarely reaches.
   PGN `gauntlet/huginn_vs_t25_rule50_intel.pgn`.
-- **Decision:** as above; record the verdict in BACKLOG #53 either way.
-  Blitz says slightly worse, so this is NOT an Elo win — do not combine as a
-  baseline winner. Open options (user's call): park at the blitz cost, run an
+- **Result (AMD, 2026-07-10) — inconclusive / ~neutral:** **+5.21 ± 14.37**
+  (nElo 7.82 ± 21.53), LOS 76.16%, 1000g (round cap, LLR 0.23 — no bound
+  crossed), 50.75% (W250/L235/D515), Ptnml(0-2) [23,119,205,126,27],
+  PairsRatio 1.08, DrawRatio 41.00%. Arms verified pre-run: clock
+  discriminator (test → `cp 1211 / h2d6`; baseline → `cp 25 / h2c7`), both
+  arms startpos d14 = 8,406,631 (identical by design), and the mate-in-1
+  probe answered `cp 1277 / g6g5` on both (no qsearch-flag contamination).
+  PGN `gauntlet/huginn_vs_t25_rule50_amd.pgn`.
+- **Two-leg picture (final, 2026-07-10):** Intel −18.08 / AMD +5.21 — the
+  machines disagree in sign; pooled W467/L504/D1029 = 49.08% over 2000g
+  (≈ −6.4 Elo). Net blitz read: neutral-to-slightly-negative. NOT an Elo
+  win — do not combine as a baseline winner.
+- **Decision:** blitz legs complete on both machines; verdict recorded in
+  BACKLOG #53. Open options (user's call): park at the blitz cost, run an
   LTC leg (60+0.6) where the boundary actually gets hit, or ship on
   correctness+tests alone (#50/#51 precedent) accepting the small blitz cost.
 

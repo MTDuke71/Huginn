@@ -158,11 +158,18 @@ Arms verified pre-run via the clock discriminator (test → `cp 1211 / h2d6`,
 baseline → poisoned `cp 25 / h2c7`). The guard disables TT cutoffs near the
 50-move boundary that blitz self-play does benefit from, so it costs a little
 where it can't pay back — the correctness value lives in long shuffle endgames
-this TC rarely reaches. **Decision pending (user's call):** park at blitz cost,
-run an LTC leg (60+0.6) where the boundary actually gets hit, or ship on
-correctness+tests alone (#50/#51 precedent) accepting a small blitz cost. Do
-NOT combine into the next baseline as an Elo winner. PGN
-`gauntlet/huginn_vs_t25_rule50_intel.pgn`.
+this TC rarely reaches. PGN `gauntlet/huginn_vs_t25_rule50_intel.pgn`.
+**AMD leg (2026-07-10): inconclusive / ~neutral — +5.21 ± 14.37, LOS 76.16%,
+1000g (round cap, LLR 0.23, no bound crossed), 50.75% (W250/L235/D515),
+Ptnml [23,119,205,126,27], PairsRatio 1.08.** Arms verified pre-run (clock
+discriminator + d14 = 8,406,631 both arms by design + mate-in-1 probe clean).
+PGN `gauntlet/huginn_vs_t25_rule50_amd.pgn`. **Two-leg verdict: machines
+disagree in sign (Intel −18.08 / AMD +5.21); pooled 49.08% over 2000g
+(≈ −6.4 Elo) — neutral-to-slightly-negative at blitz.** **Decision pending
+(user's call):** park at blitz cost, run an LTC leg (60+0.6) where the
+boundary actually gets hit, or ship on correctness+tests alone (#50/#51
+precedent) accepting a small blitz cost. Do NOT combine into the next
+baseline as an Elo winner.
 
 ### #54: Transactional, bounded FEN / `position` input (critical)
 
