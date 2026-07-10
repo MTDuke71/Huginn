@@ -206,6 +206,29 @@ else()
     message(STATUS "Root two-fold draw-avoidance disabled (pre-t24 arm)")
 endif()
 
+# BACKLOG #52: check-aware quiescence (see ENABLE_QSEARCH_CHECK_EVASIONS in
+# src/search.cpp). CANDIDATE — source default 0; -DENABLE_QSEARCH_CHECK_EVASIONS=ON
+# builds the SPRT arm. Forwarded as an explicit 0/1 (same cache-variable
+# rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
+option(ENABLE_QSEARCH_CHECK_EVASIONS "BACKLOG #52: check-aware quiescence (candidate arm)" OFF)
+if(ENABLE_QSEARCH_CHECK_EVASIONS)
+    add_compile_definitions(ENABLE_QSEARCH_CHECK_EVASIONS=1)
+    message(STATUS "Check-aware quiescence enabled (BACKLOG #52 candidate arm)")
+else()
+    add_compile_definitions(ENABLE_QSEARCH_CHECK_EVASIONS=0)
+endif()
+
+# BACKLOG #53: rule-50-aware TT eligibility (see ENABLE_RULE50_TT_GUARD in
+# src/search.cpp). CANDIDATE — source default 0; -DENABLE_RULE50_TT_GUARD=ON
+# builds the SPRT arm.
+option(ENABLE_RULE50_TT_GUARD "BACKLOG #53: rule-50-aware TT eligibility guard (candidate arm)" OFF)
+if(ENABLE_RULE50_TT_GUARD)
+    add_compile_definitions(ENABLE_RULE50_TT_GUARD=1)
+    message(STATUS "Rule-50 TT guard enabled (BACKLOG #53 candidate arm)")
+else()
+    add_compile_definitions(ENABLE_RULE50_TT_GUARD=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging ----
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
@@ -502,6 +525,7 @@ if(GTEST_FOUND)
     test/test_position_integrity.cpp
     test/test_eval_outposts.cpp
     test/test_root_twofold_avoid.cpp
+    test/test_audit_criticals.cpp
     )
 
     add_executable(huginn_tests

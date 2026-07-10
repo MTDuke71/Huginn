@@ -270,16 +270,23 @@ std::vector<std::string> UCIInterface::split_string(const std::string& str) {
  */
 void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
     if (tokens.size() < 2) return;
-    
+
+    // BACKLOG #54: the whole command is transactional. Build the new root in
+    // a scratch position — FEN (or startpos), structural validation, and the
+    // complete move list — and commit to the live root only when EVERYTHING
+    // succeeded. Any failure (bad FEN, illegal position, first bad move)
+    // rejects the command and leaves the current root exactly as it was; the
+    // old code committed a valid prefix, silently desyncing engine and GUI.
+    Position new_position;
     size_t move_index = 0;
-    
+
     if (tokens[1] == "startpos") {
-        position.set_startpos();
+        new_position.set_startpos();
         move_index = 2;
     }
     else if (tokens[1] == "fen") {
         if (tokens.size() < 3) return; // Need at least "position fen [something]"
-        
+
         // Build FEN string from tokens until we find "moves" or reach end
         std::string fen;
         size_t i = 2;
@@ -288,17 +295,26 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
             fen += tokens[i];
             i++;
         }
-        
+
         if (fen.empty()) {
             if (debug_mode) std::cout << "info string Empty FEN string" << std::endl;
             return;
         }
-        
-        if (!position.set_from_fen(fen)) {
+
+        if (!new_position.set_from_fen(fen)) {
             if (debug_mode) std::cout << "info string Invalid FEN: " << fen << std::endl;
             return;
         }
-        
+
+        // Syntactically valid FEN, but is the position one the engine can
+        // search safely? (kings, piece counts, idle-side check, castle/EP
+        // coherence — see validate_uci_position)
+        std::string why;
+        if (!validate_uci_position(new_position, &why)) {
+            if (debug_mode) std::cout << "info string Illegal position (" << why << "): " << fen << std::endl;
+            return;
+        }
+
         move_index = i; // Points to "moves" or end of tokens
     }
     else {
@@ -306,19 +322,23 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
         return;
     }
 
-    // Process moves if present
+    // Process moves if present. Stop at the FIRST invalid/illegal move and
+    // reject the entire command — never commit a valid prefix.
     if (move_index < tokens.size() && tokens[move_index] == "moves") {
         for (size_t i = move_index + 1; i < tokens.size(); ++i) {
-            S_MOVE move = parse_uci_move(tokens[i], position);
-            if (move.move != 0) {
-                if (position.MakeMove(move) != 1) {
-                    if (debug_mode) std::cout << "info string Illegal move: " << tokens[i] << std::endl;
-                }
-            } else if (debug_mode) {
-                std::cout << "info string Invalid move: " << tokens[i] << std::endl;
+            S_MOVE move = parse_uci_move(tokens[i], new_position);
+            if (move.move == 0 || new_position.MakeMove(move) != 1) {
+                if (debug_mode) std::cout << "info string Rejecting position command, bad move: " << tokens[i] << std::endl;
+                return;
             }
         }
     }
+    else if (move_index < tokens.size()) {
+        if (debug_mode) std::cout << "info string Rejecting position command, unexpected token: " << tokens[move_index] << std::endl;
+        return;
+    }
+
+    position = std::move(new_position);
 
     if (debug_mode) std::cout << "info string Position set, FEN: " << position.to_fen() << std::endl;
 }

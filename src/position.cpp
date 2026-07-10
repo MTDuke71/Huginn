@@ -173,12 +173,35 @@ void Position::reset() {
     zobrist_key = 0ULL;
     move_history.clear();
 }
+namespace {
+/// Strict, fully-consuming, non-negative integer parse for FEN clock fields
+/// (BACKLOG #54): digits only — rejects signs, spaces, and suffix junk that
+/// std::stoi silently accepted ("-1" became 65535, "12junk" became 12) — and
+/// an explicit range check instead of silent narrowing into uint16_t.
+bool parse_fen_counter(const std::string& token, long min_value, long max_value,
+                       uint16_t& out) {
+    if (token.empty() || token.size() > 5) return false;
+    long value = 0;
+    for (char ch : token) {
+        if (ch < '0' || ch > '9') return false;
+        value = value * 10 + (ch - '0');
+    }
+    if (value < min_value || value > max_value) return false;
+    out = static_cast<uint16_t>(value);
+    return true;
+}
+} // namespace
+
 /// @brief Parse a FEN string into this position (board, side, castling, ep,
 ///        clocks), rebuild the derived bitboards/counts and the Zobrist key.
 /// @param fen A FEN record.
-/// @return true on success; false (position left partially set) on malformed input.
+/// @return true on success; false on malformed input, in which case *this is
+///         left EXACTLY as it was (BACKLOG #54: the parse is transactional —
+///         it runs on a scratch position and commits only on full success).
 bool Position::set_from_fen(const std::string& fen) {
-    reset();
+    Position parsed;
+    parsed.reset();
+
     std::vector<std::string> tokens;
     std::istringstream iss(fen);
     std::string token;
@@ -188,22 +211,26 @@ bool Position::set_from_fen(const std::string& fen) {
     if (tokens.size() != 6) {
         return false;
     }
-    // Piece placement: basic validation
+
+    // Piece placement: exactly eight ranks of exactly eight files. Digits are
+    // restricted to '1'..'8' (isdigit also let '0' and '9' through) and the
+    // file is bounds-checked BEFORE set_sq64 so no `1ULL << square` can run
+    // off the board.
     const std::string& placement = tokens[0];
     int rank = 7;
     int file = 0;
     for (char ch : placement) {
         if (ch == '/') {
-            if (file != 8) return false;
+            if (file != 8 || rank <= 0) return false;
             rank--;
             file = 0;
-        } else if (isdigit(ch)) {
+        } else if (ch >= '1' && ch <= '8') {
             file += ch - '0';
-        } else if (from_char(ch) == Piece::None) {
-            return false;
+            if (file > 8) return false;
         } else {
-            int square = sq64(static_cast<File>(file), static_cast<Rank>(rank));
-            set_sq64(square, from_char(ch));
+            Piece piece = from_char(ch);
+            if (piece == Piece::None || file >= 8) return false;
+            parsed.set_sq64(sq64(static_cast<File>(file), static_cast<Rank>(rank)), piece);
             file++;
         }
     }
@@ -211,48 +238,55 @@ bool Position::set_from_fen(const std::string& fen) {
 
     // Side to move: must be "w" or "b"
     if (tokens[1] == "w") {
-        side_to_move = Color::White;
+        parsed.side_to_move = Color::White;
     } else if (tokens[1] == "b") {
-        side_to_move = Color::Black;
+        parsed.side_to_move = Color::Black;
     } else {
         return false;
     }
 
-    // Castling rights: must be subset of "KQkq" or "-"
-    castling_rights = 0;
-    if (tokens[2] == "-") {
-        // No rights
-    } else {
+    // Castling rights: "-" or a non-empty subset of "KQkq" without duplicates
+    if (tokens[2] != "-") {
+        if (tokens[2].empty() || tokens[2].size() > 4) return false;
         for (char c : tokens[2]) {
-            if (c == 'K') castling_rights |= CASTLE_WK;
-            else if (c == 'Q') castling_rights |= CASTLE_WQ;
-            else if (c == 'k') castling_rights |= CASTLE_BK;
-            else if (c == 'q') castling_rights |= CASTLE_BQ;
-            else return false;
+            uint8_t right;
+            switch (c) {
+                case 'K': right = CASTLE_WK; break;
+                case 'Q': right = CASTLE_WQ; break;
+                case 'k': right = CASTLE_BK; break;
+                case 'q': right = CASTLE_BQ; break;
+                default: return false;
+            }
+            if (parsed.castling_rights & right) return false;  // duplicate
+            parsed.castling_rights |= right;
         }
     }
 
-    // En passant: must be "-" or valid square a3/a6/h3/h6 etc.
+    // En passant: "-" or a rank-3/6 square coherent with the side to move
+    // (only a black double push can leave a rank-6 target behind it, and only
+    // a white double push a rank-3 one).
     if (tokens[3] == "-") {
-        ep_square = -1;
-    } else if (tokens[3].size() == 2 && tokens[3][0] >= 'a' && tokens[3][0] <= 'h' && (tokens[3][1] == '3' || tokens[3][1] == '6')) {
-        File file = File(tokens[3][0] - 'a');
-        Rank rank = Rank(tokens[3][1] - '1');
-        ep_square = sq64(file, rank);
+        parsed.ep_square = -1;
+    } else if (tokens[3].size() == 2 &&
+               tokens[3][0] >= 'a' && tokens[3][0] <= 'h' &&
+               ((tokens[3][1] == '6' && parsed.side_to_move == Color::White) ||
+                (tokens[3][1] == '3' && parsed.side_to_move == Color::Black))) {
+        File ep_file = File(tokens[3][0] - 'a');
+        Rank ep_rank = Rank(tokens[3][1] - '1');
+        parsed.ep_square = sq64(ep_file, ep_rank);
     } else {
         return false;
     }
 
-    // Move counters: must be valid integers
-    try {
-        halfmove_clock = std::stoi(tokens[4]);
-        fullmove_number = std::stoi(tokens[5]);
-    } catch (...) {
-        return false;
-    }
+    // Move counters: strict digits-only parse with explicit storage ranges
+    if (!parse_fen_counter(tokens[4], 0, 65535, parsed.halfmove_clock)) return false;
+    if (!parse_fen_counter(tokens[5], 1, 65535, parsed.fullmove_number)) return false;
 
-    rebuild_counts();
-    update_zobrist_key();
+    parsed.rebuild_counts();
+    parsed.update_zobrist_key();
+
+    // Full command parsed clean — commit.
+    *this = std::move(parsed);
     return true;
 }
 

@@ -50,7 +50,24 @@ void generate_all_caps_pseudo(const Position& pos, S_MOVELIST& list) {
     for (int i = 0; i < all_moves.size(); ++i) {
         const S_MOVE& move = all_moves[i];
         if (move.is_capture()) {
-            list.moves[list.count++] = move;
+            list.add_scored_move(move);
+        }
+    }
+}
+
+// Pseudo-legal tactical frontier for quiescence (BACKLOG #52): captures PLUS
+// quiet promotions. A non-capturing promotion changes material as much as
+// winning a minor piece — leaving it out of qsearch made the horizon blind to
+// it. Same lazy-legality contract as generate_all_caps_pseudo.
+void generate_tactical_pseudo(const Position& pos, S_MOVELIST& list) {
+    S_MOVELIST all_moves;
+    generate_all_moves(pos, all_moves);
+
+    list.count = 0;
+    for (int i = 0; i < all_moves.size(); ++i) {
+        const S_MOVE& move = all_moves[i];
+        if (move.is_capture() || move.is_promotion()) {
+            list.add_scored_move(move);
         }
     }
 }

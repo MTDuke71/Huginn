@@ -38,28 +38,45 @@ struct S_MOVELIST {
     
     /// Clears the list without touching existing storage.
     void clear() { count = 0; }
-    
+
+    /**
+     * @brief Capacity gate shared by every append helper (BACKLOG #55).
+     *
+     * Legal chess tops out around 218 pseudo-legal moves, but the generator
+     * also runs on composed/adversarial positions the FEN boundary accepts
+     * (a board of 47 queens generates 279). The old
+     * `__assume(count < MAX_POSITION_MOVES)` was a promise to the optimizer,
+     * not a check — overflow wrote past the array (stack corruption; explicit
+     * UB on GCC). Fail closed instead: assert diagnostically in debug builds,
+     * drop the move and keep the list valid in release builds.
+     * @return true if the list is full and the append must be dropped.
+     */
+    FORCE_INLINE bool full() const {
+        if (count < MAX_POSITION_MOVES) [[likely]] {
+            return false;
+        }
+        DEBUG_ASSERT(false, "S_MOVELIST overflow: dropping move (BACKLOG #55)");
+        return true;
+    }
+
     /**
      * @brief Appends a quiet move with the base quiet ordering score.
      * @param move Non-capture, non-promotion move to append.
-     * @pre count < MAX_POSITION_MOVES.
      */
     FORCE_INLINE void add_quiet_move(const S_MOVE& move) {
-        // MSVC optimization: Tell compiler array bounds are safe
-        __assume(count < MAX_POSITION_MOVES);
+        if (full()) return;
         moves[count] = move;
         moves[count].score = 0;  // Quiet moves get base score
         count++;
     }
-    
+
     /**
      * @brief Appends a capture and assigns MVV-LVA ordering score.
      * @param move Capture move to append.
      * @param pos Pre-move position, used to identify the attacking piece.
-     * @pre count < MAX_POSITION_MOVES.
      */
     FORCE_INLINE void add_capture_move(const S_MOVE& move, const Position& pos) {
-        __assume(count < MAX_POSITION_MOVES);
+        if (full()) return;
         moves[count] = move;
         // MVV-LVA scoring: Most Valuable Victim - Least Valuable Attacker
         Piece victim_piece = make_piece(!pos.side_to_move, move.get_captured());
@@ -67,26 +84,37 @@ struct S_MOVELIST {
         moves[count].score = 1000000 + (10 * value_of(victim_piece)) - value_of(attacker_piece);
         count++;
     }
-    
+
     /**
      * @brief Appends an en-passant capture in the capture ordering band.
      * @param move En-passant move to append.
-     * @pre count < MAX_POSITION_MOVES.
      */
     FORCE_INLINE void add_en_passant_move(const S_MOVE& move) {
-        __assume(count < MAX_POSITION_MOVES);
+        if (full()) return;
         moves[count] = move;
         moves[count].score = 1000105;  // En passant gets high priority (captures pawn)
         count++;
     }
-    
+
+    /**
+     * @brief Appends an already-scored move, preserving its ordering score.
+     * @param move Move whose score was assigned by a previous generator pass.
+     *
+     * Used by the filter passes (captures-only, legality) that copy from
+     * another S_MOVELIST and must keep the source scores intact.
+     */
+    FORCE_INLINE void add_scored_move(const S_MOVE& move) {
+        if (full()) return;
+        moves[count] = move;
+        count++;
+    }
+
     /**
      * @brief Appends a promotion with a promotion-piece-based ordering score.
      * @param move Promotion move to append; captures receive an extra bonus.
-     * @pre count < MAX_POSITION_MOVES.
      */
     FORCE_INLINE void add_promotion_move(const S_MOVE& move) {
-        __assume(count < MAX_POSITION_MOVES);
+        if (full()) return;
         moves[count] = move;
         // Promotion scoring based on promoted piece value
         Piece promo_piece = make_piece(Color::White, move.get_promoted());  // Color doesn't matter for value
@@ -103,10 +131,9 @@ struct S_MOVELIST {
     /**
      * @brief Appends a castling move in the quiet-but-useful ordering band.
      * @param move Castling move to append.
-     * @pre count < MAX_POSITION_MOVES.
      */
     FORCE_INLINE void add_castle_move(const S_MOVE& move) {
-        __assume(count < MAX_POSITION_MOVES);
+        if (full()) return;
         moves[count] = move;
         moves[count].score = 50000;  // Castling gets moderate priority
         count++;
@@ -169,6 +196,17 @@ void generate_legal_moves(Position& pos, S_MOVELIST& list);
  * the post-move board where the attacker has already left its source square.
  */
 void generate_all_caps_pseudo(const Position& pos, S_MOVELIST& list);
+
+/**
+ * @brief Generates the pseudo-legal tactical frontier for quiescence search:
+ *        captures plus quiet (non-capturing) promotions. (BACKLOG #52)
+ * @param pos Position to generate from; not modified.
+ * @param[out] list Destination list of captures and promotions.
+ *
+ * Same lazy-legality contract as generate_all_caps_pseudo(): no
+ * MakeMove/TakeMove here, the caller must reject illegal moves.
+ */
+void generate_tactical_pseudo(const Position& pos, S_MOVELIST& list);
 
 /**
  * @brief Tests whether the side to move is currently in check.

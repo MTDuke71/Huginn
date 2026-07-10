@@ -88,6 +88,9 @@ public:
 
     /// @brief Main UCI loop — read and dispatch commands from stdin until `quit`/EOF.
     void run();
+    /// @brief Read-only view of the current root position (tests: BACKLOG #54
+    ///        transactionality — a rejected `position` command must not move it).
+    const Position& current_position() const { return position; }
     /// @brief Test helper: signal stop to the running search (mirrors the UCI `stop` command).
     void signal_stop();
     /// @brief Emit the `id name` / `id author` lines.

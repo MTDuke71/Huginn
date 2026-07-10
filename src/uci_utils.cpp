@@ -53,3 +53,85 @@ S_MOVE parse_uci_move(const std::string& uci_move, const Position& position) {
 	}
 	return S_MOVE();
 }
+
+// BACKLOG #54: structural / legal-position gate for the UCI boundary.
+// set_from_fen stays permissive about piece counts so unit tests can build
+// partial positions; everything the ENGINE assumes about a root position is
+// enforced here instead, once, where GUI input enters.
+bool validate_uci_position(const Position& pos, std::string* reason) {
+	auto fail = [&](const char* why) {
+		if (reason) *reason = why;
+		return false;
+	};
+
+	// Exactly one king per side: king_sq[], evaluation, and check detection
+	// all assume it.
+	if (popcount(pos.piece_bitboards[0][int(PieceType::King)]) != 1 ||
+	    popcount(pos.piece_bitboards[1][int(PieceType::King)]) != 1) {
+		return fail("each side must have exactly one king");
+	}
+
+	// Piece-count sanity: at most 8 pawns / 16 units per side. This is the
+	// deliberate second boundary in front of the fixed-capacity move list
+	// (BACKLOG #55) — real games can never exceed it.
+	for (int c = 0; c < 2; ++c) {
+		if (popcount(pos.piece_bitboards[c][int(PieceType::Pawn)]) > 8) {
+			return fail("more than 8 pawns for one side");
+		}
+		if (popcount(pos.color_bitboards[c]) > 16) {
+			return fail("more than 16 pieces for one side");
+		}
+	}
+
+	// Pawns cannot stand on rank 1 or rank 8.
+	constexpr Bitboard BACK_RANKS = 0x00000000000000FFULL | 0xFF00000000000000ULL;
+	if ((pos.piece_bitboards[0][int(PieceType::Pawn)] |
+	     pos.piece_bitboards[1][int(PieceType::Pawn)]) & BACK_RANKS) {
+		return fail("pawn on rank 1 or 8");
+	}
+
+	// The side NOT to move must not be in check — its king would be
+	// capturable, and search/movegen assume that never happens.
+	const Color stm = pos.side_to_move;
+	const int idle_king = pos.king_sq[int(!stm)];
+	if (idle_king >= 0 && Huginn::SqAttackedBB(idle_king, pos, stm)) {
+		return fail("side not to move is in check");
+	}
+
+	// Castling rights must match the board: the castle move executor assumes
+	// king and rook are on their home squares when a right is set.
+	const Piece wk = make_piece(Color::White, PieceType::King);
+	const Piece wr = make_piece(Color::White, PieceType::Rook);
+	const Piece bk = make_piece(Color::Black, PieceType::King);
+	const Piece br = make_piece(Color::Black, PieceType::Rook);
+	if ((pos.castling_rights & CASTLE_WK) && (pos.at_sq64(4) != wk || pos.at_sq64(7) != wr)) {
+		return fail("castling right K without king on e1 and rook on h1");
+	}
+	if ((pos.castling_rights & CASTLE_WQ) && (pos.at_sq64(4) != wk || pos.at_sq64(0) != wr)) {
+		return fail("castling right Q without king on e1 and rook on a1");
+	}
+	if ((pos.castling_rights & CASTLE_BK) && (pos.at_sq64(60) != bk || pos.at_sq64(63) != br)) {
+		return fail("castling right k without king on e8 and rook on h8");
+	}
+	if ((pos.castling_rights & CASTLE_BQ) && (pos.at_sq64(60) != bk || pos.at_sq64(56) != br)) {
+		return fail("castling right q without king on e8 and rook on a8");
+	}
+
+	// En passant coherence: the double-pushed enemy pawn must sit in front of
+	// the target square and both the target and the push origin must be
+	// empty — otherwise MakeMove's EP executor would desync the board.
+	if (pos.ep_square >= 0) {
+		const bool white_to_move = (stm == Color::White);
+		const int pawn_sq = white_to_move ? pos.ep_square - 8 : pos.ep_square + 8;
+		const int origin_sq = white_to_move ? pos.ep_square + 8 : pos.ep_square - 8;
+		const Piece pushed_pawn = make_piece(!stm, PieceType::Pawn);
+		if (pawn_sq < 0 || pawn_sq >= 64 || origin_sq < 0 || origin_sq >= 64 ||
+		    pos.at_sq64(pawn_sq) != pushed_pawn ||
+		    pos.at_sq64(pos.ep_square) != Piece::None ||
+		    pos.at_sq64(origin_sq) != Piece::None) {
+			return fail("en passant square does not match a double pawn push");
+		}
+	}
+
+	return true;
+}

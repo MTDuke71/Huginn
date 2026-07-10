@@ -201,14 +201,27 @@ TEST_F(LegalMoveTest, LegalCastling) {
 }
 
 TEST_F(LegalMoveTest, EnPassantPinIssue) {
-    // En passant that would expose king to check should be illegal
-    pos.set_from_fen("8/8/8/2k5/3Pp3/8/8/4K2R w - e3 0 1");
-    
+    // En passant that would expose the own king to check must be illegal.
+    // White just played d2-d4; the black e4 pawn could capture en passant on
+    // d3, but removing BOTH pawns from the 4th rank exposes the a4 king to
+    // the h4 rook. (The previous fixture was incoherent — a rank-3 EP target
+    // with WHITE to move — which the BACKLOG #54 strict FEN parser rejects.)
+    ASSERT_TRUE(pos.set_from_fen("8/8/8/8/k2Pp2R/8/8/4K3 b - d3 0 1"));
+
     generate_all_moves(pos, pseudo_moves);
     generate_legal_moves(pos, legal_moves);
-    
-    // Pawn on d4 could capture en passant on e3, but this would expose king to rook
-    // This is a complex case - for now just verify we generate some legal moves
+
+    // The EP capture exists pseudo-legally but must not survive the filter.
+    bool pseudo_has_ep = false;
+    for (size_t i = 0; i < pseudo_moves.size(); ++i) {
+        if (pseudo_moves[i].is_en_passant()) pseudo_has_ep = true;
+    }
+    EXPECT_TRUE(pseudo_has_ep);
+
+    for (size_t i = 0; i < legal_moves.size(); ++i) {
+        EXPECT_FALSE(legal_moves[i].is_en_passant())
+            << "horizontally-pinned en passant capture leaked through";
+    }
     EXPECT_GT(legal_moves.size(), 0);
 }
 

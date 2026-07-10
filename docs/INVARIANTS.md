@@ -77,7 +77,15 @@ file would have prevented it.
   50-move draw scores depend on the path to the node, so they are **returned
   before any TT probe/store** (and never cached). Putting a path-dependent score
   through the TT is how a winning score gets served for a now-drawn position
-  (the warm-TT half of #44).
+  (the warm-TT half of #44). **Returning the terminal node early is NOT
+  sufficient on its own (#53):** a clock-98/99 ancestor can *propagate* a
+  child's rule-50 draw bound into its own score and store that under the
+  position-only key, poisoning the same placement at any clock. The
+  `ENABLE_RULE50_TT_GUARD` candidate therefore takes no TT cutoff and stores
+  no entry whenever `halfmove_clock + depth >= 100` (the TT move stays usable
+  for ordering — ordering is always sound). Residual: check extensions can
+  stretch a subtree a few plies past nominal depth; precise containment would
+  need taint propagation up the tree.
 - **Mate scores encode as `MATE − ply`** (`MATE = 29000`, `INFINITE = 30000`).
   They must be ply-adjusted on TT store *and* probe (`ENABLE_PLY_TRACKED_TT_MATE`)
   so a "mate in N" from one depth reads correctly at another. Mate-distance

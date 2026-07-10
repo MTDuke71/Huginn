@@ -219,6 +219,41 @@
 #ifndef ENABLE_ROOT_TWOFOLD_AVOID
 #define ENABLE_ROOT_TWOFOLD_AVOID 1
 #endif
+// ENABLE_QSEARCH_CHECK_EVASIONS: BACKLOG #52 (2026-07-09 audit) — make
+// quiescence check-aware. AlphaBeta enters qsearch at depth == 0 BEFORE its
+// check test, and qsearch stand-pats + searches captures only — so at the
+// horizon it misses quiet king escapes/blocks, checkmate itself (from
+// 7k/8/5KQ1/8/8/8/8/8 w - - 0 1, `go depth 1` picked g6g5 at ~cp 1277 with
+// g6g7# on the board), and quiet promotions. Flag ON: detect check at qsearch
+// entry; in check disable stand-pat/delta/SEE pruning and search every
+// pseudo-legal evasion (quiet blocks and king retreats included), returning
+// -MATE + ply when none is legal; out of check the frontier becomes captures
+// + quiet promotions (generate_tactical_pseudo); info.ply advances through
+// the qsearch recursion so mate encoding and seldepth are true. DEFAULT OFF —
+// search-shape change: flag-off is byte-identical to baseline-t25; needs the
+// fixed-depth / fixed-time comparison + two-machine SPRT per the house rules.
+// Build the candidate arm with -DENABLE_QSEARCH_CHECK_EVASIONS=1.
+#ifndef ENABLE_QSEARCH_CHECK_EVASIONS
+#define ENABLE_QSEARCH_CHECK_EVASIONS 0
+#endif
+// ENABLE_RULE50_TT_GUARD: BACKLOG #53 (#29 follow-up). TT keys are position-
+// only, but within `depth` plies of the 100-ply rule-50 boundary a node's
+// score can be PROPAGATED from a child that hit the boundary — storing it
+// poisons the same placement at ANY clock (repro: warm-search
+// k7/8/8/8/8/8/7Q/7K w - - 98 1 to depth 2, then search the same placement
+// at clock 0 — the warm engine returned ~cp 25 instead of the fresh-engine
+// ~cp 1211). The direct >=100 return before the TT (BACKLOG #29) only makes
+// the terminal node path-safe, not its ancestors. Flag ON: when
+// halfmove_clock + depth can reach 100, take no TT cutoff and store no entry
+// (the TT move is still used for ordering — always sound). Residual hole:
+// check extensions can stretch the subtree a few plies past nominal depth;
+// precise containment would need taint propagation up the tree. DEFAULT OFF
+// pending the standard comparison + SPRT (expected ~neutral at blitz — the
+// value is correctness in long shuffle endgames). Build the candidate arm
+// with -DENABLE_RULE50_TT_GUARD=1.
+#ifndef ENABLE_RULE50_TT_GUARD
+#define ENABLE_RULE50_TT_GUARD 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -1857,12 +1892,21 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
 
     // VICE Part 84: Transposition Table Probe
     // Check if we've already searched this position to sufficient depth
+#if ENABLE_RULE50_TT_GUARD
+    // BACKLOG #53: if the subtree below this node can reach the 100-ply
+    // rule-50 boundary, its score is path-dependent (see the flag comment).
+    // Neither trust a stored score here nor store this node's result; the
+    // TT best move remains usable for ordering.
+    const bool rule50_tt_unsafe = (int(pos.halfmove_clock) + depth >= 100);
+#else
+    constexpr bool rule50_tt_unsafe = false;
+#endif
     int tt_score;
     uint8_t tt_depth, tt_node_type;
     uint32_t tt_best_move;
     bool tt_hit = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
-    
-    if (tt_hit && tt_depth >= depth && !isRoot) {
+
+    if (tt_hit && tt_depth >= depth && !isRoot && !rule50_tt_unsafe) {
 #if ENABLE_PLY_TRACKED_TT_MATE
         // Adjust mate scores to current ply (VICE Part 84: 5:13)
         if (tt_score > MATE - 1000) {
@@ -2376,7 +2420,14 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     }
 #endif
 
-    tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
+#if ENABLE_RULE50_TT_GUARD
+    // BACKLOG #53: recomputed with the final (possibly check-extended) depth —
+    // deeper subtrees reach the rule-50 boundary from lower clocks.
+    if (int(pos.halfmove_clock) + depth < 100)
+#endif
+    {
+        tt_table.store(pos.zobrist_key, store_score, depth, node_type, best_move.move);
+    }
 
     return best_score;
 }
@@ -2474,6 +2525,9 @@ S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, 
  * Called at the AlphaBeta leaf to avoid the horizon effect: stand-pat on the
  * static eval, then search captures (SEE- and delta-pruned) and checks until the
  * position is quiet. Keeps the returned score free of dangling tactics.
+ * With ENABLE_QSEARCH_CHECK_EVASIONS (BACKLOG #52) an in-check node instead
+ * searches every evasion with stand-pat and pruning disabled, returns
+ * -MATE + ply when none is legal, and the frontier gains quiet promotions.
  * @param pos     Position to search (mutated via make/unmake, restored).
  * @param alpha   Lower bound (seeded with the stand-pat eval).
  * @param beta    Upper bound.
@@ -2484,42 +2538,80 @@ S_MOVE Engine::internal_iterative_deepening(Position& pos, int alpha, int beta, 
 int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int q_depth) {
     // Quiescence depth limit to prevent stack overflow and improve performance
     const int MAX_QUIESCENCE_DEPTH = 10;
-    
-    // If we've reached maximum quiescence depth, return stand pat evaluation
-    if (q_depth >= MAX_QUIESCENCE_DEPTH) {
+
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+    // BACKLOG #52: a position in check is not quiet. Detect it up front — it
+    // disables stand-pat and swaps the capture frontier for full evasions.
+    const int q_king_sq = pos.king_sq[int(pos.side_to_move)];
+    const bool q_in_check = (q_king_sq >= 0) &&
+        SqAttackedBB(q_king_sq, pos, !pos.side_to_move);
+#else
+    constexpr bool q_in_check = false;
+#endif
+
+    // If we've reached maximum quiescence depth, return stand pat evaluation.
+    // In check we keep resolving evasions past the cap (the static eval of an
+    // in-check position is meaningless — there may be no legal reply at all);
+    // the hard 2x bound still terminates pathological mutual-check lines,
+    // which consume material every other ply (BACKLOG #52).
+    if (q_depth >= MAX_QUIESCENCE_DEPTH &&
+        (!q_in_check || q_depth >= 2 * MAX_QUIESCENCE_DEPTH)) {
         return evalPosition(pos);
     }
-    
+
     // Increment node count for every position visited
     info.nodes++;
-    
+
     // Periodically check time
     if ((info.nodes & 2047) == 0) {
         checkup(info);
     }
-    
+
     if (info.stopped || info.quit) {
         return 0;
     }
-    
-    // Stand pat - evaluate current position
-    int stand_pat = evalPosition(pos);
-    
-    // Beta cutoff on stand pat
-    if (stand_pat >= beta) {
-        return beta;
+
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+    // BACKLOG #52: report the true selective depth. info.ply advances through
+    // the qsearch recursion (below), so seldepth now extends past the
+    // AlphaBeta horizon as the UCI contract intends.
+    if (info.ply > info.seldepth) info.seldepth = info.ply;
+#endif
+
+    // Stand pat - evaluate current position. Skipped in check: there is no
+    // "do nothing" option when the king is attacked, so the eval cannot be
+    // used as a bound (BACKLOG #52).
+    int stand_pat = 0;
+    if (!q_in_check) {
+        stand_pat = evalPosition(pos);
+
+        // Beta cutoff on stand pat
+        if (stand_pat >= beta) {
+            return beta;
+        }
+
+        // Alpha improvement
+        if (stand_pat > alpha) {
+            alpha = stand_pat;
+        }
     }
-    
-    // Alpha improvement
-    if (stand_pat > alpha) {
-        alpha = stand_pat;
-    }
-    
+
     // VICE Part 65: Generate only capture moves for quiescence search.
     // Pseudo-legal: the per-move `MakeMove() != 1` guard below filters illegals.
     // Saves the per-capture Make/Unmake legality filter that the legal version did.
     S_MOVELIST move_list;
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+    if (q_in_check) {
+        // In check every pseudo-legal move is an evasion candidate — quiet
+        // blocks and king retreats included, not just captures (BACKLOG #52).
+        generate_all_moves(pos, move_list);
+    } else {
+        // Tactical frontier: captures + quiet promotions (BACKLOG #52).
+        generate_tactical_pseudo(pos, move_list);
+    }
+#else
     generate_all_caps_pseudo(pos, move_list);
+#endif
 
     // BACKLOG #48: quiescence has no node-entry TT probe, so probe once here
     // for the ordering move (pick_next_move no longer re-probes internally).
@@ -2534,38 +2626,46 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
         }
     }
 
-    // Search all capture moves
+    // Search all frontier moves (captures; in check, every evasion)
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+    int legal_moves = 0;
+#endif
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves
         pick_next_move(move_list, i, pos, info, -1, S_MOVE{}, q_tt_move);  // No depth in quiescence
 
         S_MOVE move = move_list.moves[i];
 
-        // Delta pruning: if even winning the captured piece can't lift the
-        // stand-pat eval to within DELTA_MARGIN of alpha, this capture is
-        // hopeless — skip it before paying for SEE. Uses the eval material
-        // scale (PIECE_VALUES_MG) since the comparison is against stand_pat,
-        // an eval. Promotions are exempt (the ~800cp promotion gain isn't in
-        // the victim value); the victim is read from the board (robust for
-        // en passant, where the destination square is empty). Mirrors the
-        // existing stand_pat assumption above (no separate in-check guard).
-        const int DELTA_MARGIN = 200;
-        if (!move.is_promotion()) {
-            PieceType victim = move.is_en_passant()
-                ? PieceType::Pawn
-                : type_of(pos.at_sq64(move.get_to()));
-            if (stand_pat + PIECE_VALUES_MG[size_t(victim)] + DELTA_MARGIN <= alpha) {
+        // Delta and SEE pruning apply only outside check: every evasion must
+        // be searched — pruning one can hide the only legal reply and turn a
+        // mate/stalemate distinction invisible (BACKLOG #52).
+        if (!q_in_check) {
+            // Delta pruning: if even winning the captured piece can't lift the
+            // stand-pat eval to within DELTA_MARGIN of alpha, this capture is
+            // hopeless — skip it before paying for SEE. Uses the eval material
+            // scale (PIECE_VALUES_MG) since the comparison is against stand_pat,
+            // an eval. Promotions are exempt (the ~800cp promotion gain isn't in
+            // the victim value); the victim is read from the board (robust for
+            // en passant, where the destination square is empty). Mirrors the
+            // existing stand_pat assumption above (no separate in-check guard).
+            const int DELTA_MARGIN = 200;
+            if (!move.is_promotion()) {
+                PieceType victim = move.is_en_passant()
+                    ? PieceType::Pawn
+                    : type_of(pos.at_sq64(move.get_to()));
+                if (stand_pat + PIECE_VALUES_MG[size_t(victim)] + DELTA_MARGIN <= alpha) {
+                    continue;
+                }
+            }
+
+            // SEE pruning: skip captures that lose material on the recapture
+            // sequence. Promotions are searched anyway because the value gain
+            // from promotion can flip a "bad" capture into a sound one. King
+            // captures are never SEE-pruned (king is the most valuable, so
+            // SEE wouldn't classify them as losing anyway, but be explicit).
+            if (!move.is_promotion() && Huginn::see(pos, move) < 0) {
                 continue;
             }
-        }
-
-        // SEE pruning: skip captures that lose material on the recapture
-        // sequence. Promotions are searched anyway because the value gain
-        // from promotion can flip a "bad" capture into a sound one. King
-        // captures are never SEE-pruned (king is the most valuable, so
-        // SEE wouldn't classify them as losing anyway, but be explicit).
-        if (!move.is_promotion() && Huginn::see(pos, move) < 0) {
-            continue;
         }
 
         if (pos.MakeMove(move) != 1) {
@@ -2573,26 +2673,46 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
             continue; // Skip illegal moves
         }
         assert_search_position_integrity(pos, "after quiescence MakeMove");
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+        legal_moves++;
+#endif
 
         const auto child = capture_search_position(pos);
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+        // BACKLOG #52: advance info.ply through qsearch so mate distances and
+        // seldepth are encoded from the true ply, matching AlphaBeta.
+        ++info.ply;
         int score = -quiescence(pos, -beta, -alpha, info, q_depth + 1);
+        --info.ply;
+#else
+        int score = -quiescence(pos, -beta, -alpha, info, q_depth + 1);
+#endif
         assert_search_position_unchanged(pos, child, "after quiescence child search");
         pos.TakeMove();
         assert_search_position_integrity(pos, "after quiescence TakeMove");
-        
+
         if (info.stopped || info.quit) {
             return 0;
         }
-        
+
         if (score >= beta) {
             return beta; // Beta cutoff
         }
-        
+
         if (score > alpha) {
             alpha = score;
         }
     }
-    
+
+#if ENABLE_QSEARCH_CHECK_EVASIONS
+    // Checkmate at the horizon: in check with no legal evasion (BACKLOG #52).
+    // Same MATE - ply encoding as AlphaBeta's mate leaf. (In check with no
+    // legal move is always mate, never stalemate.)
+    if (q_in_check && legal_moves == 0 && !info.stopped && !info.quit) {
+        return -MATE + info.ply;
+    }
+#endif
+
     return alpha;
 }
 
