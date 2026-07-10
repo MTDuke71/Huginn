@@ -26,7 +26,7 @@
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
 | 52 | Check-aware qsearch + horizon terminal states | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_QSEARCH_CHECK_EVASIONS` (default OFF); SPRT Intel leg H1-ACCEPT (+40.11 ± 18.18, LOS 100%, 696g), AMD leg pending | bug/search | critical |
-| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_RULE50_TT_GUARD` (default OFF), SPRT pending | bug/search | critical |
+| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_RULE50_TT_GUARD` (default OFF); SPRT Intel leg mild regression (−18.08 ± 15.32, LOS 1%, 1000g, no bound), decision pending (LTC or correctness-ship) | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **AUDIT-VERIFIED / OPEN** | bug/UCI | high |
@@ -151,6 +151,18 @@ sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)) — expected
 like #42's, or ship on correctness per the #50/#51 precedent). ⚠ This arm is
 startpos-signature-IDENTICAL to baseline by design — verify with the
 clock-98/clock-0 discriminator in the run-sheet, not startpos nodes.
+**Intel leg (2026-07-10): mild REGRESSION, not neutral — −18.08 ± 15.32,
+LOS 1.02%, 1000g (SPRT hit the round cap, LLR −2.51, leans H0/reject),
+47.40% (W217/L269/D514), Ptnml [39,139,181,117,24], PairsRatio 0.79.**
+Arms verified pre-run via the clock discriminator (test → `cp 1211 / h2d6`,
+baseline → poisoned `cp 25 / h2c7`). The guard disables TT cutoffs near the
+50-move boundary that blitz self-play does benefit from, so it costs a little
+where it can't pay back — the correctness value lives in long shuffle endgames
+this TC rarely reaches. **Decision pending (user's call):** park at blitz cost,
+run an LTC leg (60+0.6) where the boundary actually gets hit, or ship on
+correctness+tests alone (#50/#51 precedent) accepting a small blitz cost. Do
+NOT combine into the next baseline as an Elo winner. PGN
+`gauntlet/huginn_vs_t25_rule50_intel.pgn`.
 
 ### #54: Transactional, bounded FEN / `position` input (critical)
 

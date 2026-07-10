@@ -83,7 +83,19 @@
   ~cp 25, h2c7), then `position fen k7/8/8/8/8/8/7Q/7K w - - 0 1` +
   `go depth 2` → test arm answers **`cp 1211 / h2d6`** (fresh-oracle value);
   baseline arm answers the TT-poisoned `cp 25 / h2c7`.
+- **Result (Intel, 2026-07-10) — mild REGRESSION (not neutral):** **−18.08 ±
+  15.32** (nElo −25.48 ± 21.53), LOS 1.02%, 1000g (SPRT hit the round cap,
+  LLR −2.51 — leans H0/reject, no bound crossed), 47.40% (W217/L269/D514),
+  Ptnml(0-2) [39,139,181,117,24], PairsRatio 0.79. Arms verified pre-run via
+  the clock discriminator (test → `cp 1211 / h2d6`; baseline → `cp 25 / h2c7`).
+  The guard trades away TT cutoffs near the boundary that blitz benefits from;
+  the correctness payoff is in long shuffle endgames this TC rarely reaches.
+  PGN `gauntlet/huginn_vs_t25_rule50_intel.pgn`.
 - **Decision:** as above; record the verdict in BACKLOG #53 either way.
+  Blitz says slightly worse, so this is NOT an Elo win — do not combine as a
+  baseline winner. Open options (user's call): park at the blitz cost, run an
+  LTC leg (60+0.6) where the boundary actually gets hit, or ship on
+  correctness+tests alone (#50/#51 precedent) accepting the small blitz cost.
 
 ---
 
