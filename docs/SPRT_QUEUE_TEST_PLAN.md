@@ -54,6 +54,13 @@
 - **Instant discriminator:** `position fen 7k/8/5KQ1/8/8/8/8/8 w - - 0 1` +
   `go depth 1` → test arm answers **`score mate 1 ... pv g6g7`**; baseline
   arm answers `cp 1277 / g6g5`.
+- **Result (Intel, 2026-07-09) — H1 ACCEPT:** **+40.11 ± 18.18** (nElo 57.51 ±
+  25.81), LOS 100%, 696g, W226/L146/D324 = 55.75%, LLR 2.95 (crossed +2.94).
+  Ptnml(0-2) [12, 69, 126, 109, 32], PairsRatio 1.74, DrawRatio 36.21%. Arms
+  verified pre-run (baseline d14 = 8,406,631 / test d14 = 6,634,033 / mate-in-1
+  discriminator `mate 1 g6g7`). PGN
+  `gauntlet/huginn_vs_t25_qsearch_intel.pgn`. **AMD leg still pending — do not
+  ship on this leg alone.**
 - **Decision:** standard two-machine ship bar. If it ships, flip the flag
   default ON on `main` (source + CMake option + test mirror — all three).
 

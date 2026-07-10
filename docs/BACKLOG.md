@@ -25,7 +25,7 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 52 | Check-aware qsearch + horizon terminal states | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_QSEARCH_CHECK_EVASIONS` (default OFF), SPRT pending | bug/search | critical |
+| 52 | Check-aware qsearch + horizon terminal states | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_QSEARCH_CHECK_EVASIONS` (default OFF); SPRT Intel leg H1-ACCEPT (+40.11 ± 18.18, LOS 100%, 696g), AMD leg pending | bug/search | critical |
 | 53 | Rule-50-aware TT eligibility (#29 follow-up) | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_RULE50_TT_GUARD` (default OFF), SPRT pending | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
@@ -103,7 +103,10 @@ there so the gauntlet bat builds the test arm from a plain checkout) — full
 run-sheet incl. per-arm signatures and instant discriminators in
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md). Test-arm startpos d14 =
 6,634,033 nodes (−21% fixed-depth vs t25's 8,406,631, at lower nps — the
-SPRT decides the fixed-time trade).
+SPRT decides the fixed-time trade). **Intel leg (2026-07-09): H1 ACCEPT
++40.11 ± 18.18, LOS 100%, 696g, 55.75% (W226/L146/D324), LLR 2.95,
+Ptnml [12,69,126,109,32]** — the fixed-time trade pays. AMD leg pending; do
+not flip the default / ship until the second machine agrees.
 
 ### #53: Rule-50-aware TT eligibility — finish #29 (critical)
 
