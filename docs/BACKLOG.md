@@ -97,9 +97,13 @@ at depth 1, horizon-checkmate encoding, quiet-only evasion, quiet promotion,
 and seldepth (217/217 both arms). **Deliberately NOT implemented:**
 horizon-stalemate detection in non-check qsearch nodes — it would need full
 movegen + legality at every quiet leaf (huge cost, and standard engines skip
-it too); stand-pat remains the approximation there. **Next:** WAC/LCT2 +
-fixed-depth/fixed-time comparison, then two-machine SPRT
-(`-DENABLE_QSEARCH_CHECK_EVASIONS=ON`).
+it too); stand-pat remains the approximation there. **Next:** two-machine
+SPRT via branch `candidate/qsearch-check-evasions` (flag default flipped ON
+there so the gauntlet bat builds the test arm from a plain checkout) — full
+run-sheet incl. per-arm signatures and instant discriminators in
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md). Test-arm startpos d14 =
+6,634,033 nodes (−21% fixed-depth vs t25's 8,406,631, at lower nps — the
+SPRT decides the fixed-time trade).
 
 ### #53: Rule-50-aware TT eligibility — finish #29 (critical)
 
@@ -138,9 +142,12 @@ asserts exact fresh-oracle equality. `INVARIANTS.md` TT bullet now covers
 propagated draw bounds. **Documented residual:** check extensions can stretch
 a subtree a few plies past nominal depth — a fixed guard cannot contain that
 adversarial corner; precise containment needs taint propagation (follow-up if
-ever observed). **Next:** SPRT (`-DENABLE_RULE50_TT_GUARD=ON`) — expected
+ever observed). **Next:** SPRT via branch `candidate/rule50-tt-guard` (run-
+sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)) — expected
 ~neutral at 10+0.1 (the value is long shuffle endgames; consider an LTC leg
-like #42's).
+like #42's, or ship on correctness per the #50/#51 precedent). ⚠ This arm is
+startpos-signature-IDENTICAL to baseline by design — verify with the
+clock-98/clock-0 discriminator in the run-sheet, not startpos nodes.
 
 ### #54: Transactional, bounded FEN / `position` input (critical)
 

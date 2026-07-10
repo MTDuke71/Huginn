@@ -1,4 +1,86 @@
-# SPRT Queue Test Plan — 10 branches off baseline-t23 (CLOSED)
+# SPRT Queue Test Plan — 2026-07-09 audit candidates off baseline-t25 (OPEN)
+
+> **Purpose:** self-contained run-sheet for the two BACKLOG #52/#53 candidate
+> branches created 2026-07-09 (commit `c9f190a` on `main` + one flag-flip
+> commit per branch). Written so either gauntlet box can run it with no chat
+> context. Both fixes are already IN `main` behind flags (default OFF,
+> flag-off byte-identical to `baseline-t25`); the branches only flip the flag
+> default so `test_huginn_gauntlet.bat` builds the test arm from a plain
+> checkout. SPRT each branch SEPARATELY; winners combine per the t24-queue
+> methodology (combined candidate + undershoot guard) below.
+
+## Ground rules
+
+- **Baseline:** `baseline-t25` (== `main`@`c9f190a` with both flags OFF).
+  Opponent binary `huginn_t25.exe` built per-machine from the tag as usual.
+- **Run command (each box):**
+  ```
+  git fetch origin
+  git checkout candidate/qsearch-check-evasions   (or candidate/rule50-tt-guard)
+  test_huginn_gauntlet.bat t25
+  ```
+  The branch's flag default IS the test arm. Standard SPRT [0,10], 10+0.1,
+  1t, 64MB, noob_3moves.epd, cc=4, artifacts tagged `_intel`/`_amd`.
+- **⚠ Cache trap (see the t23-queue section below for the war story):** both
+  flags are CMake `option()`s, so a build directory configured on a candidate
+  branch keeps the flag **ON in `CMakeCache.txt` after switching back to
+  `main`** (and vice versa). Verify the arm before EVERY gauntlet with the
+  signatures below; unstick a poisoned cache with
+  `cmake -UENABLE_QSEARCH_CHECK_EVASIONS -UENABLE_RULE50_TT_GUARD` +
+  reconfigure, or delete the build dir.
+
+## Reference signatures (1 thread, OwnBook=false, fresh process, 64MB hash)
+
+**t25 baseline (both flags OFF) — any OFF arm must reproduce these exactly:**
+
+- startpos `go depth 14`: **nodes = 8,406,631**, score cp 22, bestmove d2d4
+- startpos `go depth 12`: **nodes = 2,300,322**, score cp 21, bestmove d2d4
+- Kiwipete `go depth 13`: **nodes = 1,868,991**, score cp −88, bestmove e2a6
+
+## The queue, in recommended order
+
+### 1. `candidate/qsearch-check-evasions` — check-aware qsearch (#52)
+
+- **What:** flag `ENABLE_QSEARCH_CHECK_EVASIONS`. Qsearch detects check at
+  entry; in check it skips stand-pat/delta/SEE and searches every evasion,
+  returning `-MATE + ply` when none is legal; out of check the frontier gains
+  quiet promotions; `info.ply` advances through qsearch (true mate distance +
+  seldepth). Same soundness class as #44/#45 (stop being blind at the
+  horizon), which is why it runs first.
+- **Test-arm signature:** startpos d14 **nodes = 6,634,033**, cp 27, bestmove
+  e2e4 (−21% fixed-depth nodes vs baseline, but nps is lower — evasion
+  movegen + no stand-pat cutoff in check; the SPRT decides the fixed-time
+  trade). Kiwipete d13 **nodes = 2,047,460**, cp −63, bestmove e2a6.
+- **Instant discriminator:** `position fen 7k/8/5KQ1/8/8/8/8/8 w - - 0 1` +
+  `go depth 1` → test arm answers **`score mate 1 ... pv g6g7`**; baseline
+  arm answers `cp 1277 / g6g5`.
+- **Decision:** standard two-machine ship bar. If it ships, flip the flag
+  default ON on `main` (source + CMake option + test mirror — all three).
+
+### 2. `candidate/rule50-tt-guard` — rule-50-aware TT eligibility (#53)
+
+- **What:** flag `ENABLE_RULE50_TT_GUARD`. No TT cutoff and no TT store when
+  `halfmove_clock + depth >= 100` (subtree can reach the fifty-move boundary,
+  so scores are path-dependent); TT move still used for ordering.
+- **Expect:** ~neutral at 10+0.1 — the guard fires only near the boundary,
+  which blitz self-play rarely reaches. The value is correctness in long
+  shuffle endgames (a #5-class conversion concern). If blitz is flat,
+  consider one LTC leg (60+0.6, like #42's plan) or shipping on
+  correctness+tests alone (#50/#51 precedent) — user's call.
+- **⚠ Signature caveat:** the test arm is startpos-signature-IDENTICAL to
+  baseline **by design** (clock 0 + depth ≤ 14 never reaches the boundary,
+  so d14 = 8,406,631 on BOTH arms). Do NOT use startpos nodes to verify this
+  arm.
+- **Instant discriminator (same process, two searches):**
+  `position fen k7/8/8/8/8/8/7Q/7K w - - 98 1` + `go depth 2` (both arms:
+  ~cp 25, h2c7), then `position fen k7/8/8/8/8/8/7Q/7K w - - 0 1` +
+  `go depth 2` → test arm answers **`cp 1211 / h2d6`** (fresh-oracle value);
+  baseline arm answers the TT-poisoned `cp 25 / h2c7`.
+- **Decision:** as above; record the verdict in BACKLOG #53 either way.
+
+---
+
+# Historical: SPRT Queue — 10 branches off baseline-t23 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t24` SHIPPED (2026-07-04).** All 11 items (the 10
 > branches below + #50) have final two-machine verdicts. **Winners:** #50
