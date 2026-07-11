@@ -1046,41 +1046,11 @@ std::string Engine::format_uci_score(int score, Color side_to_move) const {
 }
 
 /// @brief Long-algebraic UCI string for a move (e.g. "e2e4", "e7e8q").
+// #61: single formatter — S_MOVE::to_string() carries the null-move/bounds
+// guards and the lowercase promotion suffix; this wrapper survives for the
+// many existing Engine::move_to_uci call sites.
 std::string Engine::move_to_uci(const S_MOVE& move) {
-    if (move.move == 0) return "0000";
-    
-    std::string result;
-    
-    int from = move.get_from();
-    int to = move.get_to();
-    
-    // from/to are sq64 indices: file = sq & 7, rank = sq >> 3
-    if (from < 0 || from >= 64 || to < 0 || to >= 64) {
-        return "0000";
-    }
-    File from_file = File(from & 7);
-    Rank from_rank = Rank(from >> 3);
-    File to_file = File(to & 7);
-    Rank to_rank = Rank(to >> 3);
-    
-    result += char('a' + int(from_file));
-    result += char('1' + int(from_rank));
-    result += char('a' + int(to_file));
-    result += char('1' + int(to_rank));
-    
-    // Add promotion piece if applicable
-    if (move.is_promotion()) {
-        PieceType promo = move.get_promoted();
-        switch (promo) {
-            case PieceType::Queen:  result += 'q'; break;
-            case PieceType::Rook:   result += 'r'; break;
-            case PieceType::Bishop: result += 'b'; break;
-            case PieceType::Knight: result += 'n'; break;
-            default: break;
-        }
-    }
-    
-    return result;
+    return move.to_string();
 }
 
 /// @brief How many times the current position has occurred along the path

@@ -318,19 +318,31 @@ struct S_MOVE {
     
     /**
      * @brief Convert the move to a UCI string representation
-     * @return UCI string (e.g., e2e4, e7e8q for promotions)
+     * @return UCI string (e.g., e2e4, e7e8q for promotions); "0000" for the
+     *         null move or out-of-range squares.
+     * @note #61: this is THE move formatter — Engine::move_to_uci delegates
+     *       here. The old body indexed piece_to_char's zero-based table with
+     *       the one-based PieceType value (queen printed as 'K') and emitted
+     *       an uppercase suffix where UCI requires lowercase.
      */
     std::string to_string() const {
+        if (move == 0) return "0000";
         int from = (move & MOVE_FROM_MASK) >> MOVE_FROM_SHIFT;
         int to = (move & MOVE_TO_MASK) >> MOVE_TO_SHIFT;
-        std::ostringstream oss;
-        oss << std::string(::square_to_string(static_cast<int>(from)))
-            << std::string(::square_to_string(static_cast<int>(to)));
+        if (from < 0 || from >= 64 || to < 0 || to >= 64) return "0000";
+        std::string result = ::square_to_string(from) + ::square_to_string(to);
         if (move & MOVE_PROMOTED_MASK) {
-            int promoted = (move & MOVE_PROMOTED_MASK) >> MOVE_PROMOTED_SHIFT;
-            oss << ::piece_to_char(0, static_cast<int>(promoted));
+            PieceType promoted =
+                static_cast<PieceType>((move & MOVE_PROMOTED_MASK) >> MOVE_PROMOTED_SHIFT);
+            switch (promoted) {
+                case PieceType::Queen:  result += 'q'; break;
+                case PieceType::Rook:   result += 'r'; break;
+                case PieceType::Bishop: result += 'b'; break;
+                case PieceType::Knight: result += 'n'; break;
+                default: break;
+            }
         }
-        return oss.str();
+        return result;
     }
 };
 

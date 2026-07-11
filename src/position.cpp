@@ -718,32 +718,8 @@ void Position::TakeNullMove() {
     }
 }
 
-/// @brief Perft: count leaf nodes of the legal move tree to @p depth (the
-///        movegen correctness benchmark). Make/unmake recursion; only legal
-///        moves (MakeMove == 1) are counted.
-/// @param depth Plies to search; depth 0 returns 1.
-/// @return Number of leaf positions reachable in exactly @p depth plies.
-uint64_t Position::perft(int depth) {
-    if (depth == 0) return 1;
-
-    S_MOVELIST list;
-    generate_all_moves(list);
-
-    uint64_t nodes = 0;
-    for (int i = 0; i < list.count; ++i) {
-        if (MakeMove(list.moves[i])) {
-            nodes += perft(depth - 1);
-            TakeMove();
-        }
-    }
-    return nodes;
-}
-
-// Generate all moves for the current position
-/// @brief Generate all pseudo-legal moves for the side to move into @p list
-///        (thin wrapper over the bitboard generator; legality is filtered by
-///        MakeMove). @see BitboardMoveGen::generate_all_moves_bitboard.
-void Position::generate_all_moves(S_MOVELIST& list) const {
-    list.clear();
-    // Implement move generation logic here or leave empty if unnecessary
-}
+// #61: Position::perft() and the member Position::generate_all_moves() were
+// removed here. The member generator was an empty stub (cleared the list and
+// nothing else), which made the member perft() return 0 for any depth > 0.
+// Neither had a single caller. The production entry points are the free
+// functions in movegen.hpp/movegen.cpp.

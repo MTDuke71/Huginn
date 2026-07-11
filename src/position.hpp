@@ -277,6 +277,9 @@ public:
     /**
      * @brief Removes the piece on a square, updating material and Zobrist.
      * @param sq64 Square to clear; a no-op if already empty.
+     * @note King material is intentionally not subtracted — symmetric with
+     *       add_piece_sq64/rebuild, which never add it (#61). Kings are never
+     *       captured in legal chess; clearing one is asserted against.
      */
     void clear_piece_sq64(int sq64) {
         DEBUG_ASSERT(sq64 >= 0 && sq64 < 64, "Cannot clear piece from invalid sq64");
@@ -287,8 +290,12 @@ public:
 
         Color piece_color = color_of(piece);
         PieceType piece_type = type_of(piece);
+        DEBUG_ASSERT(piece_type != PieceType::King,
+                     "Kings are never captured/cleared (#61)");
 
-        material_score[size_t(piece_color)] -= value_of(piece);
+        if (piece_type != PieceType::King) {
+            material_score[size_t(piece_color)] -= value_of(piece);
+        }
         zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
 
         popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
@@ -371,18 +378,11 @@ public:
         return piece_bitboards[size_t(Color::Black)][size_t(PieceType::Pawn)];
     }
 
-    /**
-     * @brief Counts leaf nodes of the legal move tree to a fixed depth (movegen validation).
-     * @param depth Plies to expand.
-     * @return Number of legal positions at exactly `depth`.
-     */
-    uint64_t perft(int depth);
-
-    /**
-     * @brief Generates all pseudo-legal moves for the side to move.
-     * @param[out] list Move list to fill (cleared/overwritten).
-     */
-    void generate_all_moves(S_MOVELIST& list) const;
+    // NOTE (#61): the member perft()/generate_all_moves() pair was removed.
+    // The member generator's body was an empty stub (it only cleared the
+    // list), so pos.perft(depth > 0) always returned 0; nothing in src/,
+    // test/, or tools/ called either. Use the free generate_all_moves(pos,
+    // list) from movegen.hpp and the perft harnesses in test/ / perft/.
 };
 
 // Include S_MOVELIST definition after Position class declaration

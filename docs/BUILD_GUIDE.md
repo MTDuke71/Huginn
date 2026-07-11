@@ -30,7 +30,7 @@ All executables are built to: `build\msvc-x64-release\bin\Release\`
 
 # Run via CTest (preferred for CI-style output)
 cd build\msvc-x64-release
-ctest --config Release --output-on-failure -V
+ctest -C Release --output-on-failure -V
 
 # Run perft suite
 cd perft

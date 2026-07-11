@@ -19,9 +19,10 @@ void generate_all_moves(const Position& pos, S_MOVELIST& list) {
 // returning 0), so the filter can run on `pos` directly without copying
 // the entire Position. Net change is zero on `pos` after the loop.
 //
-// Also preserves capture-vs-quiet classification so MVV-LVA scoring set
-// by the bitboard generator survives the filter (was previously clobbered
-// by `add_quiet_move` for everything).
+// #61: copies each surviving move VERBATIM (add_scored_move), preserving the
+// generator's scores. The old body re-ran add_capture_move AFTER MakeMove —
+// scoring against a board where the source square is already empty and the
+// victim gone — and add_quiet_move reset promotion scores to a flat value.
 void generate_legal_moves(Position& pos, S_MOVELIST& list) {
     S_MOVELIST pseudo_moves;
     generate_all_moves(pos, pseudo_moves);
@@ -29,12 +30,8 @@ void generate_legal_moves(Position& pos, S_MOVELIST& list) {
     list.count = 0;
     for (int i = 0; i < pseudo_moves.size(); ++i) {
         if (pos.MakeMove(pseudo_moves[i]) == 1) {
-            if (pseudo_moves[i].is_capture()) {
-                list.add_capture_move(pseudo_moves[i], pos);
-            } else {
-                list.add_quiet_move(pseudo_moves[i]);
-            }
             pos.TakeMove();
+            list.add_scored_move(pseudo_moves[i]);
         }
     }
 }

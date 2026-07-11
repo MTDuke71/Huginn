@@ -33,8 +33,8 @@
 | 57 | Use legal-move ordinal for PVS / LMR | **AUDIT-VERIFIED / OPEN** | bug/search | high |
 | 58 | Make SEE sound before using it for hard pruning | **AUDIT-VERIFIED / OPEN** | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **AUDIT-VERIFIED / OPEN** | bug/rules/book | high |
-| 60 | Make CMake / CTest / CI a trustworthy safety net | **AUDIT-VERIFIED / OPEN** | build/test | high |
-| 61 | Repair or remove divergent public helper APIs | **AUDIT-VERIFIED / OPEN** | maintenance | low |
+| 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
+| 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS, paused** — t10→t19 shipped (see archive); roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -400,6 +400,30 @@ C++17-vs-C++20 settings obscure the actual build contract.
   legal make/unmake/null-move invariants and exact eval-mirror properties. Fix
   documented commands and avoid hard-coded test counts that immediately drift.
 
+**Resolution (2026-07-11): CORE CLOSED.** Everything except the last bullet:
+`check` now runs CTest from the build root with `-C $<CONFIG>
+--no-tests=error` (was: ran in `bin/`, found zero tests, exited 0 — every
+"`--target check` passed" before this date verified nothing); `perft_quick`
+(startpos + Kiwipete to d5, ~7s) registered in the default set with the full
+EPD suite behind `-DHUGINN_HEAVY_TESTS=ON` (label `heavy`);
+`BUILD_TESTING=OFF` builds the engine with no GoogleTest fetch;
+`ENABLE_SANITIZERS` applies real ASan+UBSan flags on GCC/Clang Debug (ASan
+on MSVC) instead of printing a warning; the never-executed pre-`project()`
+MSYS2 block was deleted (CMAKE_CXX_COMPILER_ID is empty before `project()` —
+it had printed its else-branch on every MSVC configure since it was written);
+`project()` now enables C for non-MSVC Fathom; source lists deduplicated;
+single global C++20 (per-target `cxx_std_17` minimums dropped); the
+"gcc-x64-release" preset uses PATH compilers instead of a hard-coded
+`C:/msys64`; docs' `ctest --config` → `ctest -C`; dead never-built
+`test/test_futility_pruning.cpp` deleted; CI rewritten
+(`.github/workflows/ci.yml`): Windows MSVC + Linux GCC/Clang, Fathom ON/OFF,
+a Debug ASan+UBSan leg, and a BUILD_TESTING=OFF engine-only + UCI smoke job.
+Verified: 226/226 CTest entries pass locally, startpos d14 = 6,634,033
+byte-identical. **REMAINING (this item stays open at medium):** the
+parser-purity refactor (exact-result FEN/UCI parser assertions instead of
+EXPECT_NO_THROW), randomized make/unmake/null-move invariants, and exact
+eval-mirror properties.
+
 ### #61: Repair or remove divergent public helper APIs (low)
 
 Small, verified inconsistencies that are not on the current production search
@@ -422,6 +446,20 @@ free generator or remove the duplicate API; copy already-scored legal moves;
 make promotion text share the UCI formatter; make king material updates
 symmetric and assert kings are never captured. Add focused tests for all four
 contracts and update stale mailbox-120 / undo-backup architecture docs.
+
+**Resolution (2026-07-11): CLOSED.** `Position::perft()` + the member
+`generate_all_moves()` stub REMOVED (zero callers anywhere — the compiler now
+enforces the contract); `generate_legal_moves()` copies surviving moves
+verbatim via `add_scored_move` (generator scores preserved; its three
+production call sites — book-move validation, bestmove-legality guard, UCI
+move parsing — only match by move identity, so this is search-neutral);
+`S_MOVE::to_string()` fixed (lowercase UCI promotion suffix, correct piece,
+"0000" null-move/bounds guards) and `Engine::move_to_uci` now delegates to it
+— one formatter; `clear_piece_sq64()` excludes king material symmetrically
+with `add_piece_sq64` and DEBUG-asserts kings are never cleared. Focused
+regressions in [test_audit_helpers.cpp](../test/test_audit_helpers.cpp)
+(8 tests, all four contracts). Verified: 226/226, d14 = 6,634,033
+byte-identical.
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 

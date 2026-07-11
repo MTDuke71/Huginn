@@ -1,44 +1,17 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Prefer MSVC but allow fallback
-if(WIN32)
-    # Aggressive MSYS2 interference prevention
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        # Clear all MSYS2-related environment variables
-        unset(ENV{MSYSTEM})
-        unset(ENV{MSYS2_PATH_TYPE})
-        unset(ENV{PKG_CONFIG_PATH})
-        unset(ENV{ACLOCAL_PATH})
-        unset(ENV{MANPATH})
-        
-        # Force CMake to not use any non-Windows paths
-        set(CMAKE_FIND_ROOT_PATH "")
-        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-        
-        # Clear system paths that might include MSYS2
-        set(CMAKE_SYSTEM_INCLUDE_PATH "")
-        set(CMAKE_SYSTEM_LIBRARY_PATH "")
-        
-        # Explicitly exclude MSYS2 paths from include search
-        set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "")
-        set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "")
-        
-        # Remove any MSYS2 paths from PATH during build
-        string(REPLACE "C:/msys64/ucrt64/bin;" "" CMAKE_PROGRAM_PATH "$ENV{PATH}")
-        string(REPLACE "C:/msys64/ucrt64/include;" "" CMAKE_INCLUDE_PATH "$ENV{INCLUDE}")
-        string(REPLACE "C:/msys64/ucrt64/lib;" "" CMAKE_LIBRARY_PATH "$ENV{LIB}")
-        
-        message(STATUS "Using MSVC toolchain with aggressive MSYS2 interference prevention")
-    else()
-        message(STATUS "Not using MSVC - MSYS2 interference prevention disabled")
-    endif()
-endif()
+# NOTE (#60): a pre-project() "MSYS2 interference prevention" block used to
+# live here. CMAKE_CXX_COMPILER_ID is always empty before project(), so it
+# never executed (every configure log printed its else-branch, even under
+# MSVC) — removed as verified-dead code. MSYS2 isolation is handled by the
+# presets' environment scrubbing in CMakePresets.json.
 
-project(Huginn LANGUAGES CXX)
+# C is required for the Fathom tablebase sources on non-MSVC toolchains
+# (MSVC compiles them as C++ via /TP — see the Fathom block below).
+project(Huginn LANGUAGES C CXX)
 
+# Single source of truth for the language level (#60): C++20, required,
+# applied globally. Do not re-declare per-target feature minimums.
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -233,37 +206,47 @@ else()
     message(STATUS "Rule-50 TT guard disabled (pre-t26 arm)")
 endif()
 
-# ---- Sanitizers for enhanced debugging ----
-if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(WARNING "Sanitizers are not available with MSVC. Consider using static analysis tools instead.")
+# ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
+# Debug-config only. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan unavailable).
+if(ENABLE_SANITIZERS)
+    if(MSVC)
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        message(STATUS "AddressSanitizer enabled for Debug (MSVC; UBSan not available)")
+    else()
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>
+                            $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+        message(STATUS "ASan + UBSan enabled for Debug builds")
+    endif()
+    if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING "ENABLE_SANITIZERS is ON but CMAKE_BUILD_TYPE is not Debug — sanitizer flags only apply to Debug.")
+    endif()
 endif()
 
 # ---- Find Threads (required for all targets) ----
 find_package(Threads REQUIRED)
 
-# ---- Find GTest with FetchContent ----
-include(FetchContent)
-
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(googletest)
-
-# Enable testing
+# ---- Testing infrastructure (#60) ----
+# include(CTest) defines the BUILD_TESTING option (default ON). With
+# -DBUILD_TESTING=OFF the engine builds standalone: no GoogleTest fetch, no
+# network access, no test targets.
 include(CTest)
-enable_testing()
-include(GoogleTest)
 
-set(GTEST_FOUND TRUE)
-set(GTEST_LIBRARIES gtest)
-set(GTEST_MAIN_LIBRARIES gtest_main)
-message(STATUS "GoogleTest configured via FetchContent")
+if(BUILD_TESTING)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+    include(GoogleTest)
+    message(STATUS "GoogleTest configured via FetchContent")
+else()
+    message(STATUS "BUILD_TESTING=OFF - engine-only build, GoogleTest not fetched")
+endif()
 
 # ---- Function to create executables with common settings ----
 function(add_huginn_executable target_name)
@@ -271,7 +254,6 @@ function(add_huginn_executable target_name)
     
     add_executable(${target_name} ${ARG_SOURCES})
 
-    target_compile_features(${target_name} PRIVATE cxx_std_17)
     target_link_libraries(${target_name} PRIVATE Threads::Threads)
     
     if(ARG_INCLUDE_DIRS)
@@ -339,7 +321,7 @@ if(ENABLE_FATHOM)
         fathom/src/tbprobe.c
         fathom/src/tbchess.c
     )
-    # Ensure C11 standard is used for Fathom
+    # Fathom needs C11+; we compile the project's C sources as C17.
     set(CMAKE_C_STANDARD 17)
     set(CMAKE_C_STANDARD_REQUIRED ON)
     
@@ -393,13 +375,13 @@ set(COMMON_SOURCES
     ${FATHOM_SOURCES}
 )
 
+# #60: COMMON_SOURCES already carries search.cpp, pvtable.cpp, and
+# FATHOM_SOURCES — the engine only adds the UCI front-end. (CMake tolerates
+# duplicate sources, but the duplicates obscured the real build contract.)
 set(ENGINE_SOURCES
     ${COMMON_SOURCES}
-    ${FATHOM_SOURCES}
     src/uci.cpp
     src/uci_utils.cpp
-    src/search.cpp
-    src/pvtable.cpp
 )
 
 # ---- Performance Critical Sources (for assembly analysis) ----
@@ -437,8 +419,6 @@ add_huginn_executable(mirror_eval_test
     SOURCES
         mirror_test/mirror_eval_test.cpp
         ${COMMON_SOURCES}
-        src/search.cpp
-        src/pvtable.cpp
     INCLUDE_DIRS
         ${HUGINN_INCLUDE_DIRS}
 )
@@ -494,7 +474,7 @@ if(GENERATE_ASSEMBLY)
 endif()
 
 # ---- Tests ----
-if(GTEST_FOUND)
+if(BUILD_TESTING)
     set(TEST_SOURCES
         test/test_chess_types.cpp
         test/test_perft.cpp
@@ -530,43 +510,57 @@ if(GTEST_FOUND)
     test/test_eval_outposts.cpp
     test/test_root_twofold_avoid.cpp
     test/test_audit_criticals.cpp
+    test/test_audit_helpers.cpp
     )
 
     add_executable(huginn_tests
-    ${TEST_SOURCES}
-    ${ENGINE_SOURCES}
-    src/search.cpp
+        ${TEST_SOURCES}
+        ${ENGINE_SOURCES}
     )
 
-    target_compile_features(huginn_tests PRIVATE cxx_std_17)
-    target_include_directories(huginn_tests PRIVATE 
+    target_include_directories(huginn_tests PRIVATE
         ${HUGINN_INCLUDE_DIRS}
     )
-    target_link_libraries(huginn_tests PRIVATE ${GTEST_LIBRARIES} Threads::Threads)
+    target_link_libraries(huginn_tests PRIVATE gtest Threads::Threads)
 
     set_target_properties(huginn_tests PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
 
-    # Always include GoogleTest before discovering tests
-    include(GoogleTest)
     gtest_discover_tests(
         huginn_tests
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         DISCOVERY_TIMEOUT 30
     )
 
-    # Convenience target to build and run tests
+    # #60: bounded quick perft (startpos + Kiwipete to depth 5) is part of the
+    # default test set. The comprehensive multi-hour run only registers when
+    # explicitly requested: configure with -DHUGINN_HEAVY_TESTS=ON, then
+    #   ctest --test-dir <build> -C Release -L heavy
+    # (or just run perft_suite --full by hand).
+    add_test(NAME perft_quick
+        COMMAND perft_suite --quick --depth 5 --file ${CMAKE_CURRENT_SOURCE_DIR}/test/perftsuite.epd)
+    set_tests_properties(perft_quick PROPERTIES LABELS "perft" TIMEOUT 300)
+
+    option(HUGINN_HEAVY_TESTS "Register the full perft EPD suite as a CTest test (hours)" OFF)
+    if(HUGINN_HEAVY_TESTS)
+        add_test(NAME perft_full
+            COMMAND perft_suite --full --depth 6 --file ${CMAKE_CURRENT_SOURCE_DIR}/test/perftsuite.epd)
+        set_tests_properties(perft_full PROPERTIES LABELS "heavy" TIMEOUT 14400)
+    endif()
+
+    # Convenience target to build and run the default test set.
+    # #60 fixes: CTest must run from the build root (bin/ has no
+    # CTestTestfile.cmake — the old form found zero tests and exited 0),
+    # needs -C on multi-config generators, and now FAILS on empty discovery.
     add_custom_target(check
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        DEPENDS huginn_tests
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-        COMMENT "Building and running tests"
+        COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure --no-tests=error -LE heavy
+        DEPENDS huginn_tests perft_suite
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running test suite (excluding heavy-labelled jobs)"
     )
 
     message(STATUS "Tests enabled - use 'cmake --build . --target check' to run")
-else()
-    message(STATUS "Tests disabled - GTest not found")
 endif()
 
 # COMMENTED OUT TO SPEED UP BUILDS

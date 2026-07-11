@@ -83,8 +83,10 @@ location is derived from the bitboards via `Position::at_sq64()`.
   t22 speed pair · t21 TT-clear +
   time-mgmt · t20 move-level futility · t19 safe mobility · t18
   mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
-- ✅ **Comprehensive test suite**: 217 GoogleTest cases (216 run + 1 by-design
-  skip — the `RootTwofoldAvoid` opposite-arm test pair)
+- ✅ **Comprehensive test suite**: 225 GoogleTest cases (224 run + 1 by-design
+  skip — the `RootTwofoldAvoid` opposite-arm test pair) plus a registered
+  `perft_quick` CTest job (startpos + Kiwipete to depth 5). `--target check`
+  runs all of it and fails on empty discovery (#60)
 - ✅ **Strength**: **t26 ≈ 2571 ± 19 CCRL-blitz** (2026-07-11, AMD box,
   10+0.1, 500g per anchor, cc=1) — two-anchor inverse-variance pool of
   Stash 19.0 (2473) +102.97 ± 25.74 (64.40%) → ~2576 and Stash 20.0.1
@@ -156,10 +158,10 @@ cmake --build build/msvc-x64-release --config Release --target check
 
 # Run tests manually with CTest
 cd build/msvc-x64-release
-ctest --config Release --output-on-failure -V
+ctest -C Release --output-on-failure -V
 
 # Run specific test patterns
-ctest --config Release -R "perft|position"
+ctest -C Release -R "perft|position"
 
 # Run test executable directly
 .\build\msvc-x64-release\bin\Release\huginn_tests.exe

@@ -96,8 +96,8 @@ cmake --build build/msvc-x64-release --config Release --target check
 
 # or directly
 cd build/msvc-x64-release
-ctest --config Release --output-on-failure
-ctest --config Release -R "perft|position"   # filter by pattern
+ctest -C Release --output-on-failure
+ctest -C Release -R "perft|position"   # filter by pattern
 ```
 
 ---
