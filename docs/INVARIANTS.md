@@ -81,7 +81,8 @@ file would have prevented it.
   sufficient on its own (#53):** a clock-98/99 ancestor can *propagate* a
   child's rule-50 draw bound into its own score and store that under the
   position-only key, poisoning the same placement at any clock. The
-  `ENABLE_RULE50_TT_GUARD` candidate therefore takes no TT cutoff and stores
+  `ENABLE_RULE50_TT_GUARD` guard (default ON since `baseline-t26`) therefore
+  takes no TT cutoff and stores
   no entry whenever `halfmove_clock + depth >= 100` (the TT move stays usable
   for ordering — ordering is always sound). Residual: check extensions can
   stretch a subtree a few plies past nominal depth; precise containment would

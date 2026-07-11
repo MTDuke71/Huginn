@@ -229,12 +229,13 @@
 // pseudo-legal evasion (quiet blocks and king retreats included), returning
 // -MATE + ply when none is legal; out of check the frontier becomes captures
 // + quiet promotions (generate_tactical_pseudo); info.ply advances through
-// the qsearch recursion so mate encoding and seldepth are true. DEFAULT OFF —
-// search-shape change: flag-off is byte-identical to baseline-t25; needs the
-// fixed-depth / fixed-time comparison + two-machine SPRT per the house rules.
-// Build the candidate arm with -DENABLE_QSEARCH_CHECK_EVASIONS=1.
+// the qsearch recursion so mate encoding and seldepth are true. DEFAULT ON —
+// SHIPPED in baseline-t26 after a same-sign two-machine SPRT accept vs t25
+// (Intel +40.11 ± 18.18 @696g / AMD +44.67 ± 18.94 @610g, both LOS 100%;
+// pooled ≈ +42 Elo over 1306g). Rebuild the pre-t26 arm with
+// -DENABLE_QSEARCH_CHECK_EVASIONS=0.
 #ifndef ENABLE_QSEARCH_CHECK_EVASIONS
-#define ENABLE_QSEARCH_CHECK_EVASIONS 0
+#define ENABLE_QSEARCH_CHECK_EVASIONS 1
 #endif
 // ENABLE_RULE50_TT_GUARD: BACKLOG #53 (#29 follow-up). TT keys are position-
 // only, but within `depth` plies of the 100-ply rule-50 boundary a node's
@@ -247,12 +248,13 @@
 // halfmove_clock + depth can reach 100, take no TT cutoff and store no entry
 // (the TT move is still used for ordering — always sound). Residual hole:
 // check extensions can stretch the subtree a few plies past nominal depth;
-// precise containment would need taint propagation up the tree. DEFAULT OFF
-// pending the standard comparison + SPRT (expected ~neutral at blitz — the
-// value is correctness in long shuffle endgames). Build the candidate arm
-// with -DENABLE_RULE50_TT_GUARD=1.
+// precise containment would need taint propagation up the tree. DEFAULT ON —
+// SHIPPED in baseline-t26 on correctness+tests (#50/#51 precedent): blitz
+// SPRT vs t25 was ~neutral (Intel −18.08 / AMD +5.21, pooled ≈ −6 Elo over
+// 2000g — the payoff is path-independent scores in long shuffle endgames
+// blitz never reaches). Rebuild the pre-t26 arm with -DENABLE_RULE50_TT_GUARD=0.
 #ifndef ENABLE_RULE50_TT_GUARD
-#define ENABLE_RULE50_TT_GUARD 0
+#define ENABLE_RULE50_TT_GUARD 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

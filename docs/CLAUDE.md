@@ -13,7 +13,25 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t25` — **#51: history-heuristic
+- ✅ **Baseline tag**: `baseline-t26` — **2026-07-09 audit criticals #52 +
+  #53, shipped together** (flags `ENABLE_QSEARCH_CHECK_EVASIONS` +
+  `ENABLE_RULE50_TT_GUARD`, both now default ON). **#52 check-aware
+  quiescence** (the Elo carrier — same "blind at the horizon" soundness
+  class as #44/#45): qsearch detects check at entry; in check no
+  stand-pat/delta/SEE, every evasion searched, `-MATE + ply` when none is
+  legal; quiet promotions join the frontier; `info.ply` advances through
+  qsearch. **Two-machine SPRT vs t25, both legs H1-accept: Intel +40.11 ±
+  18.18 @696g / AMD +44.67 ± 18.94 @610g (both LOS 100%), pooled ≈ +42 Elo
+  over 1306g.** **#53 rule-50-aware TT eligibility** (#29 follow-up): no TT
+  cutoff/store when `halfmove_clock + depth >= 100`; blitz SPRT sign-split
+  (Intel −18.08 / AMD +5.21, pooled ≈ −6 Elo / 2000g) — **shipped on
+  correctness+tests by user call** (#50/#51 precedent; the payoff is
+  path-independent scores in long shuffle endgames). Ship build verified:
+  startpos d14 = 6,634,033 (= #52 solo arm, rule-50 guard inert at low
+  clocks by design), mate-in-1 discriminator `mate 1 g6g7` at d1, rule-50
+  warm/fresh oracle equality (`cp 1211 / h2d6`); 216/217 tests (1 by-design
+  skip). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t25` — **#51: history-heuristic
   piece-index collision fix.** `search_history[13][64]` (and the gated
   continuation-history table) indexed with `static_cast<int>(piece) % 13`
   on the packed `Piece` enum (`color<<3|type`), which folds `BlackKing=14`
@@ -26,8 +44,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   #50. **AMD SPRT vs t24: +19.48 ± 15.00, LOS 99.46%, 1000g** (rounds cap
   reached before LLR crossed the SPRT bound, but CI excludes zero) —
   **shipped on AMD-only accept** (user call), no Intel leg, mirroring t23's
-  own single-machine-accept precedent below. **Full writeup:**
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  own single-machine-accept precedent below.
   Prior: `baseline-t24` — **SPRT queue winners: SEE good/bad
   capture ordering (#6) + root two-fold draw-avoidance (#44 follow-up).**
   Screened 10 candidate branches off t23 (8 parked/rejected — razoring-off,
@@ -60,12 +77,13 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t25 history-heuristic
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t26 check-aware
+  qsearch + rule-50 TT guard · t25 history-heuristic
   collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·
   t22 speed pair · t21 TT-clear +
   time-mgmt · t20 move-level futility · t19 safe mobility · t18
   mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
-- ✅ **Comprehensive test suite**: 205 GoogleTest cases (204 run + 1 by-design
+- ✅ **Comprehensive test suite**: 217 GoogleTest cases (216 run + 1 by-design
   skip — the `RootTwofoldAvoid` opposite-arm test pair)
 - ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
   non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, MTLChess v0.5 (2314)

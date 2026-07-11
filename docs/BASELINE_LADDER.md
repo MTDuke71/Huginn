@@ -9,6 +9,44 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t26 — 2026-07-09 audit criticals: check-aware qsearch (#52) + rule-50 TT guard (#53)
+= t25 + both search-shape criticals from the independent 2026-07-09 code
+audit, SPRT'd separately per the standard queue process (run-sheet:
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)) and shipped together by
+flipping both flag defaults ON (`ENABLE_QSEARCH_CHECK_EVASIONS`,
+`ENABLE_RULE50_TT_GUARD` — source + CMake option + test mirror, all three,
+each). Full findings/resolutions in [BACKLOG.md](BACKLOG.md) #52/#53.
+
+- **#52 — check-aware quiescence** (the Elo carrier; same "blind at the
+  horizon" soundness class as #44/#45). Qsearch detects check at entry; in
+  check it skips stand-pat/delta/SEE and searches every evasion, returning
+  `-MATE + ply` when none is legal; out of check the frontier gains quiet
+  promotions; `info.ply` advances through qsearch (true mate distances +
+  seldepth). **Two-machine SPRT vs t25 — both legs H1-accept:** Intel
+  **+40.11 ± 18.18** (nElo 57.51), LOS 100%, 696g, 55.75% (W226/L146/D324),
+  Ptnml [12,69,126,109,32], LLR 2.95; AMD **+44.67 ± 18.94** (nElo 65.80),
+  LOS 100%, 610g, 56.39% (W188/L110/D312), Ptnml [7,66,97,112,23], LLR 2.97.
+  Pooled **56.05% / 1306g ≈ +42 Elo**, remarkably machine-consistent.
+- **#53 — rule-50-aware TT eligibility** (correctness ship, #50/#51
+  precedent). No TT cutoff / no store when `halfmove_clock + depth >= 100`
+  (subtree can reach the fifty-move boundary → scores are path-dependent);
+  TT move still used for ordering. Blitz SPRT vs t25 was a **sign-split**:
+  Intel −18.08 ± 15.32 (LOS 1.02%) / AMD +5.21 ± 14.37 (LOS 76.16%), both
+  1000g round-capped, pooled 49.08% / 2000g ≈ −6 Elo — accepted as the cost
+  of path-independent scores in long shuffle endgames (a #5-class conversion
+  concern blitz never exercises). Shipped on correctness+tests by explicit
+  user call, same as #50/#51.
+
+**Ship verification (combined build, both flags ON):** startpos d14 =
+**6,634,033** / cp 27 / e2e4 — byte-identical to the #52 solo arm (the
+rule-50 guard cannot fire from startpos at d14: clock+depth never reaches
+100). Mate-in-1 discriminator (`7k/8/5KQ1/8/8/8/8/8 w`) → `mate 1 / g6g7` at
+depth 1. Rule-50 oracle equality: warm clock-98→clock-0 re-search returns
+`cp 1211 / h2d6`, exactly matching a fresh-process search of the clock-0
+position. Tests: **216 pass / 1 by-design skip (217 total)**. Net vs t25 at
+blitz ≈ the #52 number (#53 ~neutral); the t26 self-play delta is expected
+around +35–40 Elo pooled.
+
 ### baseline-t25 — #51: History-heuristic piece-index collision fix
 = t24 + a one-line-class correctness fix, shipped directly to `main` ahead of
 any flag/branch/SPRT-queue process (bug, not a tunable feature — see

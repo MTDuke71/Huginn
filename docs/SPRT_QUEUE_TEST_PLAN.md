@@ -1,4 +1,14 @@
-# SPRT Queue Test Plan — 2026-07-09 audit candidates off baseline-t25 (OPEN)
+# SPRT Queue Test Plan — 2026-07-09 audit candidates off baseline-t25 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t26` SHIPPED (2026-07-10).** Both candidates have
+> final two-machine verdicts and both shipped in `baseline-t26`: **#52** on a
+> same-sign two-machine H1-accept (Intel +40.11 / AMD +44.67, pooled ≈ +42
+> Elo / 1306g); **#53** on correctness+tests by explicit user call (#50/#51
+> precedent) despite a ~neutral-to-slightly-negative blitz sign-split (Intel
+> −18.08 / AMD +5.21, pooled ≈ −6 Elo / 2000g). Both flags now default ON on
+> `main`; ship verification + writeup in
+> [BASELINE_LADDER.md](BASELINE_LADDER.md). Per-leg numbers below retained as
+> the procedure record.
 
 > **Purpose:** self-contained run-sheet for the two BACKLOG #52/#53 candidate
 > branches created 2026-07-09 (commit `c9f190a` on `main` + one flag-flip

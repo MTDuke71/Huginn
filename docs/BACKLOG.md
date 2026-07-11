@@ -25,8 +25,8 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 52 | Check-aware qsearch + horizon terminal states | **SHIP BAR MET (2026-07-10)** — two-machine H1-ACCEPT (Intel +40.11 / AMD +44.67, pooled ≈ +42 over 1306g); flag-flip + baseline tag pending | bug/search | critical |
-| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **SPRT DONE (2026-07-10)** — sign-split (Intel −18.08 / AMD +5.21), pooled ≈ −6 Elo at blitz; decision pending (park / LTC / correctness-ship) | bug/search | critical |
+| 52 | Check-aware qsearch + horizon terminal states | **SHIPPED (2026-07-10, `baseline-t26`)** — two-machine H1-ACCEPT (Intel +40.11 / AMD +44.67, pooled ≈ +42 over 1306g); flag default ON | bug/search | critical |
+| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **SHIPPED (2026-07-10, `baseline-t26`)** — on correctness+tests (#50/#51 precedent); blitz SPRT sign-split ≈ −6 Elo pooled, accepted; flag default ON | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **AUDIT-VERIFIED / OPEN** | bug/UCI | high |
@@ -51,12 +51,13 @@ memory-safety items should be fixed and regression-tested before resuming eval
 expansion. Search-shape changes still need the normal fixed-depth / fixed-time
 comparison and SPRT after their correctness tests pass.
 
-**Status 2026-07-09 (same day):** all four criticals addressed. #54 + #55
-fixed unconditionally (input/memory boundary, no search-shape change); #52 +
-#53 fixed behind candidate flags (`ENABLE_QSEARCH_CHECK_EVASIONS`,
-`ENABLE_RULE50_TT_GUARD`, both default OFF, flag-off byte-identical — startpos
-d12 signature 2,300,322 nodes unchanged) awaiting the standard SPRT queue.
-Both arms pass 217/217 tests; per-item resolution notes below.
+**Status 2026-07-10: all four criticals CLOSED.** #54 + #55 fixed
+unconditionally on 2026-07-09 (input/memory boundary, no search-shape
+change); #52 + #53 went through the standard SPRT queue behind candidate
+flags and **shipped together as `baseline-t26` (2026-07-10)** — both flags
+(`ENABLE_QSEARCH_CHECK_EVASIONS`, `ENABLE_RULE50_TT_GUARD`) now default ON;
+`-DENABLE_<X>=0` rebuilds a pre-t26 arm. Per-item resolution notes below;
+ship writeup in [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #52: Check-aware qsearch + horizon terminal states (critical)
 
@@ -108,12 +109,12 @@ SPRT decides the fixed-time trade). **Intel leg (2026-07-09): H1 ACCEPT
 Ptnml [12,69,126,109,32]** — the fixed-time trade pays. **AMD leg
 (2026-07-10): H1 ACCEPT +44.67 ± 18.94, LOS 100%, 610g, 56.39%
 (W188/L110/D312), LLR 2.97, Ptnml [7,66,97,112,23].** PGNs
-`gauntlet/huginn_vs_t25_qsearch_{intel,amd}.pgn`. **SHIP BAR MET —
-same-sign two-machine H1-accept; pooled 56.05% / 1306g ≈ +42 Elo.**
-Remaining ship steps: flip the flag default ON on `main` (source + CMake
-option + test mirror — all three), verify the flag-ON build reproduces the
-test-arm signature (d14 = 6,634,033 + `mate 1 g6g7` at depth 1), tag the
-new baseline, and snapshot the exe per the ladder process.
+`gauntlet/huginn_vs_t25_qsearch_{intel,amd}.pgn`. **SHIPPED in
+`baseline-t26` (2026-07-10)** — same-sign two-machine H1-accept, pooled
+56.05% / 1306g ≈ +42 Elo; flag default flipped ON (source + CMake option +
+test mirror), ship build reproduces the test-arm signature (d14 =
+6,634,033 + `mate 1 g6g7` at depth 1), 216/217 tests. Writeup:
+[BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #53: Rule-50-aware TT eligibility — finish #29 (critical)
 
@@ -172,11 +173,14 @@ Ptnml [23,119,205,126,27], PairsRatio 1.08.** Arms verified pre-run (clock
 discriminator + d14 = 8,406,631 both arms by design + mate-in-1 probe clean).
 PGN `gauntlet/huginn_vs_t25_rule50_amd.pgn`. **Two-leg verdict: machines
 disagree in sign (Intel −18.08 / AMD +5.21); pooled 49.08% over 2000g
-(≈ −6.4 Elo) — neutral-to-slightly-negative at blitz.** **Decision pending
-(user's call):** park at blitz cost, run an LTC leg (60+0.6) where the
-boundary actually gets hit, or ship on correctness+tests alone (#50/#51
-precedent) accepting a small blitz cost. Do NOT combine into the next
-baseline as an Elo winner.
+(≈ −6.4 Elo) — neutral-to-slightly-negative at blitz.** **SHIPPED in
+`baseline-t26` (2026-07-10) on correctness+tests (explicit user call,
+#50/#51 precedent)** — the small blitz cost is accepted as the price of
+path-independent scores in long shuffle endgames (a #5-class conversion
+concern this TC never exercises); NOT counted as an Elo winner. Flag
+default flipped ON (source + CMake option + test mirror); ship build
+passes the warm/fresh oracle-equality check (`cp 1211 / h2d6` both ways).
+Writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #54: Transactional, bounded FEN / `position` input (critical)
 

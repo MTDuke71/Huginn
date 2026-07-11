@@ -207,26 +207,30 @@ else()
 endif()
 
 # BACKLOG #52: check-aware quiescence (see ENABLE_QSEARCH_CHECK_EVASIONS in
-# src/search.cpp). CANDIDATE — source default 0; -DENABLE_QSEARCH_CHECK_EVASIONS=ON
-# builds the SPRT arm. Forwarded as an explicit 0/1 (same cache-variable
+# src/search.cpp). SHIPPED in baseline-t26 (two-machine SPRT accept: Intel
+# +40.11 / AMD +44.67 vs t25) — default ON; -DENABLE_QSEARCH_CHECK_EVASIONS=OFF
+# rebuilds the pre-t26 arm. Forwarded as an explicit 0/1 (same cache-variable
 # rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
-option(ENABLE_QSEARCH_CHECK_EVASIONS "BACKLOG #52: check-aware quiescence (candidate arm)" OFF)
+option(ENABLE_QSEARCH_CHECK_EVASIONS "BACKLOG #52: check-aware quiescence (shipped t26)" ON)
 if(ENABLE_QSEARCH_CHECK_EVASIONS)
     add_compile_definitions(ENABLE_QSEARCH_CHECK_EVASIONS=1)
-    message(STATUS "Check-aware quiescence enabled (BACKLOG #52 candidate arm)")
+    message(STATUS "Check-aware quiescence enabled (BACKLOG #52, shipped t26)")
 else()
     add_compile_definitions(ENABLE_QSEARCH_CHECK_EVASIONS=0)
+    message(STATUS "Check-aware quiescence disabled (pre-t26 arm)")
 endif()
 
 # BACKLOG #53: rule-50-aware TT eligibility (see ENABLE_RULE50_TT_GUARD in
-# src/search.cpp). CANDIDATE — source default 0; -DENABLE_RULE50_TT_GUARD=ON
-# builds the SPRT arm.
-option(ENABLE_RULE50_TT_GUARD "BACKLOG #53: rule-50-aware TT eligibility guard (candidate arm)" OFF)
+# src/search.cpp). SHIPPED in baseline-t26 on correctness+tests (#50/#51
+# precedent; blitz SPRT ~neutral: Intel −18.08 / AMD +5.21 vs t25) — default
+# ON; -DENABLE_RULE50_TT_GUARD=OFF rebuilds the pre-t26 arm.
+option(ENABLE_RULE50_TT_GUARD "BACKLOG #53: rule-50-aware TT eligibility guard (shipped t26)" ON)
 if(ENABLE_RULE50_TT_GUARD)
     add_compile_definitions(ENABLE_RULE50_TT_GUARD=1)
-    message(STATUS "Rule-50 TT guard enabled (BACKLOG #53 candidate arm)")
+    message(STATUS "Rule-50 TT guard enabled (BACKLOG #53, shipped t26)")
 else()
     add_compile_definitions(ENABLE_RULE50_TT_GUARD=0)
+    message(STATUS "Rule-50 TT guard disabled (pre-t26 arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging ----

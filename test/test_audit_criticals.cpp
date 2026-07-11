@@ -26,14 +26,15 @@
 #include <string>
 #include <vector>
 
-// These mirror the defaults in src/search.cpp. When a candidate arm is built,
-// CMake forwards the same -DENABLE_X=1 to every translation unit, so the
+// These mirror the defaults in src/search.cpp. When an opposite arm is built,
+// CMake forwards the same -DENABLE_X=0/1 to every translation unit, so the
 // tests track the built arm (same pattern as test_root_twofold_avoid.cpp).
+// Both default ON since baseline-t26 shipped #52 + #53.
 #ifndef ENABLE_QSEARCH_CHECK_EVASIONS
-#define ENABLE_QSEARCH_CHECK_EVASIONS 0
+#define ENABLE_QSEARCH_CHECK_EVASIONS 1
 #endif
 #ifndef ENABLE_RULE50_TT_GUARD
-#define ENABLE_RULE50_TT_GUARD 0
+#define ENABLE_RULE50_TT_GUARD 1
 #endif
 
 using namespace Huginn;
