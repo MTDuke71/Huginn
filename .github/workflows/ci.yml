@@ -21,7 +21,7 @@ jobs:
         include:
           - name: windows-msvc-release-fathom
             os: windows-latest
-            configure: cmake -B build -G "Visual Studio 17 2022" -A x64 -DENABLE_FATHOM=ON
+            configure: cmake -B build -A x64 -DENABLE_FATHOM=ON
             build: cmake --build build --config Release
             test: ctest --test-dir build -C Release --output-on-failure --no-tests=error -LE heavy
           - name: linux-gcc-release-fathom
