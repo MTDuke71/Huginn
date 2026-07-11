@@ -12,6 +12,22 @@
 #include <algorithm>
 #include <cstdint>
 
+// ENABLE_SEE_LEGALITY: BACKLOG #58 (2026-07-09 audit). SEE walks exchanges
+// geometrically: an absolutely-pinned defender counts as a real recapturer,
+// so a winning capture like Qxf5 in 4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w scores
+// ~-800 (counting the pinned Ne7xf5, which is illegal) and quiescence
+// HARD-PRUNES it. Flag ON: the FIRST recapture — the ply that decides the
+// prune/order sign in the common case — skips defenders that are absolutely
+// pinned to their own king unless the capture square lies on the pin line
+// (moving along the pin ray stays legal). Deeper swap plies stay geometric:
+// full per-ply legality would cost pin detection on the hottest qsearch
+// path for vanishing returns. DEFAULT OFF — search-shape change: flag-off
+// is byte-identical to baseline-t27; SPRT per house rules. Build the
+// candidate arm with -DENABLE_SEE_LEGALITY=1.
+#ifndef ENABLE_SEE_LEGALITY
+#define ENABLE_SEE_LEGALITY 0
+#endif
+
 namespace Huginn {
 
 namespace {
@@ -92,6 +108,59 @@ inline uint64_t least_valuable_attacker(const Position& pos,
     return 0;
 }
 
+#if ENABLE_SEE_LEGALITY
+/// @brief #58: drop attackers of @p side that are absolutely pinned to their
+///        own king under occupancy @p occ, unless @p to64 lies on the pin
+///        line (capturing the pinner / along the ray stays legal). The king
+///        itself is never "pinned". File-local SEE helper.
+inline uint64_t filter_absolute_pins(const Position& pos, uint64_t side_attackers,
+                                     Color side, int to64, uint64_t occ) {
+    int ks = pos.king_sq[int(side)];
+    if (ks < 0) return side_attackers;
+
+    const int e = int(!side);
+    const uint64_t enemy_rq = pos.piece_bitboards[e][int(PieceType::Rook)] |
+                              pos.piece_bitboards[e][int(PieceType::Queen)];
+    const uint64_t enemy_bq = pos.piece_bitboards[e][int(PieceType::Bishop)] |
+                              pos.piece_bitboards[e][int(PieceType::Queen)];
+    const uint64_t king_bit = 1ULL << ks;
+    const uint64_t to_bit   = 1ULL << to64;
+
+    uint64_t result = side_attackers;
+    uint64_t cands = side_attackers & ~king_bit;
+    while (cands) {
+        uint64_t bit = cands & (uint64_t)(-(int64_t)cands);
+        cands ^= bit;
+
+        // Newly exposed sliders = pinners through this piece.
+        const uint64_t occ_wo = occ ^ bit;
+        uint64_t pinners =
+            ((rook_attacks(ks, occ_wo) & enemy_rq & occ_wo) & ~(rook_attacks(ks, occ) & enemy_rq)) |
+            ((bishop_attacks(ks, occ_wo) & enemy_bq & occ_wo) & ~(bishop_attacks(ks, occ) & enemy_bq));
+        if (!pinners) continue;
+
+        // Pinned. Allowed anyway if the capture square stays on the pin
+        // line: to64 == a pinner square, or strictly between king and pinner
+        // (endpoint-only occupancy gives the between-set on either geometry).
+        bool allowed = false;
+        while (pinners && !allowed) {
+            uint64_t pbit = pinners & (uint64_t)(-(int64_t)pinners);
+            pinners ^= pbit;
+            if (to_bit & pbit) { allowed = true; break; }
+            int psq = 0;
+            uint64_t tmp = pbit;
+            while (tmp >>= 1) ++psq;
+            const uint64_t between =
+                (rook_attacks(ks, pbit) & rook_attacks(psq, king_bit)) |
+                (bishop_attacks(ks, pbit) & bishop_attacks(psq, king_bit));
+            if (between & to_bit) allowed = true;
+        }
+        if (!allowed) result ^= bit;
+    }
+    return result;
+}
+#endif
+
 } // namespace
 
 int see(const Position& pos, const S_MOVE& move) {
@@ -149,6 +218,12 @@ int see(const Position& pos, const S_MOVE& move) {
         // Restrict to currently-on-board attackers
         all_attackers &= occ;
         uint64_t side_attackers = all_attackers & pos.color_bitboards[int(side)];
+#if ENABLE_SEE_LEGALITY
+        // #58: legality-check the FIRST recapture only (see the flag note).
+        if (d == 0 && side_attackers) {
+            side_attackers = filter_absolute_pins(pos, side_attackers, side, to64, occ);
+        }
+#endif
         PieceType next_pt;
         uint64_t lva_bit = least_valuable_attacker(pos, side_attackers, side, next_pt);
         if (lva_bit == 0) break;

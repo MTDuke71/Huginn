@@ -221,6 +221,18 @@ else()
     message(STATUS "Legal-move ordinal PVS/LMR disabled (pre-t27 arm)")
 endif()
 
+# BACKLOG #58: first-recapture legality in SEE (see ENABLE_SEE_LEGALITY in
+# src/see.cpp). CANDIDATE — source default 0; -DENABLE_SEE_LEGALITY=ON builds
+# the SPRT arm. Forwarded as an explicit 0/1 (same cache-variable rationale
+# as ENABLE_ROOT_TWOFOLD_AVOID above).
+option(ENABLE_SEE_LEGALITY "BACKLOG #58: pin-aware first recapture in SEE (candidate arm)" OFF)
+if(ENABLE_SEE_LEGALITY)
+    add_compile_definitions(ENABLE_SEE_LEGALITY=1)
+    message(STATUS "SEE first-recapture legality enabled (BACKLOG #58 candidate arm)")
+else()
+    add_compile_definitions(ENABLE_SEE_LEGALITY=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug-config only. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan unavailable).
 if(ENABLE_SANITIZERS)

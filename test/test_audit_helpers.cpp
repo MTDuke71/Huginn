@@ -20,6 +20,7 @@
 #include "../src/movegen.hpp"
 #include "../src/position.hpp"
 #include "../src/search.hpp"
+#include "../src/see.hpp"
 
 #include <string>
 
@@ -109,6 +110,38 @@ TEST_F(AuditHelpersTest, LegalMovesPreserveScoresKiwipete) {
 TEST_F(AuditHelpersTest, LegalMovesPreserveScoresPromotions) {
     // a7 pawn: quiet promotions a8=Q/R/B/N plus capture-promotions on b8.
     expect_scores_preserved("1n6/P7/8/8/8/8/8/k6K w - - 0 1");
+}
+
+// ---- #58: SEE first-recapture legality (tracks the built arm) ---------------
+
+// Mirrors the default in src/see.cpp; CMake forwards -DENABLE_SEE_LEGALITY=0/1
+// to every translation unit, so this test follows the built arm.
+#ifndef ENABLE_SEE_LEGALITY
+#define ENABLE_SEE_LEGALITY 0
+#endif
+
+// Audit fixture: 4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w — Ne7 is absolutely pinned by
+// Re1 to the e8 king, so Qg4xf5 really wins a pawn. Geometric SEE counts the
+// illegal Ne7xf5 recapture and scores the capture ~-800; the legality arm
+// must score it >= 0 (searched, not hard-pruned by qsearch).
+TEST_F(AuditHelpersTest, SeePinnedDefenderRecapture) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w - - 0 1"));
+    S_MOVE qxf5 = make_capture(30 /*g4*/, 37 /*f5*/, PieceType::Pawn);
+#if ENABLE_SEE_LEGALITY
+    EXPECT_GE(see(pos, qxf5), 0) << "pinned Ne7 must not count as recapturer";
+#else
+    EXPECT_LT(see(pos, qxf5), 0) << "geometric arm counts the pinned knight";
+#endif
+}
+
+// Pin-line exemption: a rook pinned along the e-file CAN still recapture on
+// the pin line. Both arms must count it (the exchange on e5 loses the queen).
+TEST_F(AuditHelpersTest, SeePinnedDefenderOnPinLineStillCounts) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("4k3/8/4r3/4p3/8/8/4Q3/4K3 w - - 0 1"));
+    S_MOVE qxe5 = make_capture(12 /*e2*/, 36 /*e5*/, PieceType::Pawn);
+    EXPECT_LT(see(pos, qxe5), 0) << "Re6 recaptures along its own pin line";
 }
 
 // ---- #57: pinned-position fixture (arm-agnostic sanity) ---------------------
