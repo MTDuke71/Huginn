@@ -8,8 +8,14 @@
 > pinned to their own king (pin-line captures still count); deeper plies stay
 > geometric. Fixture: see(Qg4xf5) >= 0 in 4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w on
 > the test arm (~-800 baseline) — test SeePinnedDefenderRecapture tracks the
-> built arm. **Result:** pending (AMD leg first). **Decision:** two-machine
-> bar or user call per precedent.
+> built arm.
+> **Result (AMD, 2026-07-11): inconclusive / ~neutral** — **+5.56 ± 15.11**
+> (nElo 7.93 ± 21.53), LOS 76.48%, 1000g round cap (LLR 0.24, no bound
+> crossed), 50.80% (W257/L241/D502), Ptnml [29,118,194,126,33]. PGN
+> `gauntlet/huginn_vs_t27_see_amd.pgn`. Same profile as #53: a real
+> tactical-soundness fix that blitz self-play prices at ~zero.
+> **Decision (user's call):** park, run the Intel leg, or ship on
+> correctness (#53 precedent).
 
 # SPRT Queue Test Plan — #57 candidate off baseline-t26 (CLOSED)
 
