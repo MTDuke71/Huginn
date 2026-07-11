@@ -54,7 +54,13 @@
 - **Expect:** genuine search-shape change (same soundness family as
   #44/#45/#52). Fixed-depth nodes moved both directions (startpos up,
   Kiwipete down); fixed-time strength is the SPRT's call.
-- **Result:** _pending — Intel and AMD legs._
+- **Result (AMD, 2026-07-11) — H1 ACCEPT:** **+29.98 ± 15.53** (nElo 42.31 ±
+  21.80), LOS 99.99%, 976g (early-stop, LLR 2.97 crossed +2.94), 54.30%
+  (W288/L204/D484), Ptnml(0-2) [22,99,184,139,44], PairsRatio 1.51,
+  DrawRatio 37.70%. Arms verified pre-run (test d14 = 7,484,807 / d2d4;
+  baseline huginn_t26.exe d14 = 6,634,033 / e2e4). PGN
+  `gauntlet/huginn_vs_t26_ordinal_amd.pgn`. **Intel leg pending — do not
+  ship on this leg alone.**
 - **Decision:** standard two-machine ship bar. If it ships, flip the flag
   default ON on `main` (source + CMake option — both).
 
