@@ -206,6 +206,18 @@ else()
     message(STATUS "Rule-50 TT guard disabled (pre-t26 arm)")
 endif()
 
+# BACKLOG #57: legal-move ordinal for PVS/LMR/fhf + proper PVS condition (see
+# ENABLE_LEGAL_MOVE_ORDINAL in src/search.cpp). CANDIDATE — source default 0;
+# -DENABLE_LEGAL_MOVE_ORDINAL=ON builds the SPRT arm. Forwarded as an explicit
+# 0/1 (same cache-variable rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
+option(ENABLE_LEGAL_MOVE_ORDINAL "BACKLOG #57: legal-move ordinal PVS/LMR (candidate arm)" OFF)
+if(ENABLE_LEGAL_MOVE_ORDINAL)
+    add_compile_definitions(ENABLE_LEGAL_MOVE_ORDINAL=1)
+    message(STATUS "Legal-move ordinal PVS/LMR enabled (BACKLOG #57 candidate arm)")
+else()
+    add_compile_definitions(ENABLE_LEGAL_MOVE_ORDINAL=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug-config only. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan unavailable).
 if(ENABLE_SANITIZERS)

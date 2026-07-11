@@ -111,6 +111,33 @@ TEST_F(AuditHelpersTest, LegalMovesPreserveScoresPromotions) {
     expect_scores_preserved("1n6/P7/8/8/8/8/8/k6K w - - 0 1");
 }
 
+// ---- #57: pinned-position fixture (arm-agnostic sanity) ---------------------
+
+// Knight e2 is pinned by the e8 rook. Its capture Nxc3 scores highest
+// (MVV-LVA) so the ORDERED pseudo-legal list starts with illegal entries
+// before the first legal king move — the exact shape where the pseudo-legal
+// index `i` and the legal-move ordinal diverge (#57). Both arms must search
+// it cleanly and return a legal best move; the arms' node counts are compared
+// via the run-sheet signatures, and strength via SPRT.
+TEST_F(AuditHelpersTest, PinnedPositionSearchReturnsLegalMove) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("4r1k1/8/8/8/8/2p5/4N3/4K3 w - - 0 1"));
+
+    Engine engine;
+    SearchInfo info;
+    info.max_depth = 6;
+    S_MOVE best = engine.searchPosition(pos, info);
+    ASSERT_NE(best.move, 0);
+
+    S_MOVELIST legal;
+    generate_legal_moves(pos, legal);
+    bool found = false;
+    for (int i = 0; i < legal.count; ++i) {
+        if (legal.moves[i].move == best.move) { found = true; break; }
+    }
+    EXPECT_TRUE(found) << best.to_string() << " is not legal in the fixture";
+}
+
 // ---- #61: clear_piece_sq64 king-material symmetry ---------------------------
 
 TEST_F(AuditHelpersTest, ClearPieceMaterialSymmetry) {

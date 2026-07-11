@@ -1,4 +1,66 @@
-# SPRT Queue Test Plan — 2026-07-09 audit candidates off baseline-t25 (CLOSED)
+# SPRT Queue Test Plan — #57 candidate off baseline-t26 (OPEN)
+
+> **Purpose:** run-sheet for the BACKLOG #57 candidate branch created
+> 2026-07-11 (fix on `main` behind `ENABLE_LEGAL_MOVE_ORDINAL`, default OFF,
+> flag-off byte-identical to `baseline-t26`; the branch flips the default ON
+> so `test_huginn_gauntlet.bat` builds the test arm from a plain checkout).
+
+## Ground rules
+
+- **Baseline:** `baseline-t26` (== `main` with the flag OFF). Opponent binary
+  `huginn_t26.exe` built per-machine from the tag as usual (already
+  snapshotted on the AMD box).
+- **Run command (each box):**
+  ```
+  git fetch origin
+  git checkout candidate/legal-move-ordinal
+  test_huginn_gauntlet.bat t26
+  ```
+  Standard SPRT [0,10], 10+0.1, 1t, 64MB, noob_3moves.epd, cc=4, artifacts
+  tagged `_intel`/`_amd` (rename to `..._ordinal_<machine>` after the run).
+- **⚠ Cache trap as always:** `ENABLE_LEGAL_MOVE_ORDINAL` is a CMake
+  `option()` — verify the arm before EVERY gauntlet with the signatures
+  below; unstick with `cmake -UENABLE_LEGAL_MOVE_ORDINAL` + reconfigure.
+
+## Reference signatures (1 thread, OwnBook=false, fresh process, 64MB hash)
+
+**t26 baseline (flag OFF) — any OFF arm must reproduce these exactly:**
+
+- startpos `go depth 14`: **nodes = 6,634,033**, score cp 27, bestmove e2e4
+- Kiwipete `go depth 13`: **nodes = 2,047,460**, score cp −63, bestmove e2a6
+
+**#57 test arm (flag ON):**
+
+- startpos `go depth 14`: **nodes = 7,484,807**, score cp 23, bestmove
+  **d2d4** (+12.8% fixed-depth nodes AND a different root choice — proper
+  PVS re-searches cost nodes when ordering is imperfect; the SPRT decides
+  the fixed-time trade)
+- Kiwipete `go depth 13`: **nodes = 1,930,694**, score cp −63, bestmove e2a6
+  (−5.7%)
+- **Instant discriminator:** the startpos d14 bestmove alone separates the
+  arms (test = d2d4, baseline = e2e4).
+
+### `candidate/legal-move-ordinal` — legal-move ordinal PVS/LMR (#57)
+
+- **What:** flag `ENABLE_LEGAL_MOVE_ORDINAL`. The move loop's pseudo-legal
+  index `i` decided PVS first-move treatment, LMR lateness/row, and fhf —
+  illegal (pinned) entries inflate it, so the first LEGAL move could get a
+  null-window/reduced search. Separately the historical PVS condition
+  `i == 0 || alpha == best_score` made every move after a normal alpha
+  improvement full-window (null-window PVS only engaged in failing-low
+  nodes). Flag ON: a searched-move ordinal (incremented only after a
+  successful MakeMove) drives all three, and PVS is textbook — first legal
+  move full-window, everything else null-window + fail-high re-search.
+- **Expect:** genuine search-shape change (same soundness family as
+  #44/#45/#52). Fixed-depth nodes moved both directions (startpos up,
+  Kiwipete down); fixed-time strength is the SPRT's call.
+- **Result:** _pending — Intel and AMD legs._
+- **Decision:** standard two-machine ship bar. If it ships, flip the flag
+  default ON on `main` (source + CMake option — both).
+
+---
+
+# Historical: SPRT Queue — 2026-07-09 audit candidates off baseline-t25 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t26` SHIPPED (2026-07-10).** Both candidates have
 > final two-machine verdicts and both shipped in `baseline-t26`: **#52** on a

@@ -256,6 +256,24 @@
 #ifndef ENABLE_RULE50_TT_GUARD
 #define ENABLE_RULE50_TT_GUARD 1
 #endif
+// ENABLE_LEGAL_MOVE_ORDINAL: BACKLOG #57 (2026-07-09 audit). The move loop's
+// pseudo-legal index `i` decided PVS first-move treatment, the LMR lateness
+// threshold/row, and fail-high-first telemetry — but illegal (e.g. pinned)
+// entries inflate `i`, so the first LEGAL move can arrive "late" and get a
+// null-window/reduced search. Worse, the historical PVS condition
+// `i == 0 || alpha == best_score` re-enables full-window search for EVERY
+// move after a normal alpha improvement (alpha == best_score holds from the
+// first improving move onward), so null-window PVS only engaged while a node
+// was failing low. Flag ON: a searched-move ordinal incremented only after a
+// successful MakeMove drives PVS (first legal move full-window, all others
+// null-window + fail-high re-search), the LMR threshold/row, and fhf.
+// DEFAULT OFF — search-shape change: flag-off is byte-identical to
+// baseline-t26; needs fixed-depth/fixed-time comparison + two-machine SPRT
+// per the house rules. Build the candidate arm with
+// -DENABLE_LEGAL_MOVE_ORDINAL=1.
+#ifndef ENABLE_LEGAL_MOVE_ORDINAL
+#define ENABLE_LEGAL_MOVE_ORDINAL 0
+#endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
 // that the Position caches still agree with the per-piece bitboards and full
@@ -2158,7 +2176,24 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         if (info.ply >= 0 && info.ply < 64) {
             info.search_stack[info.ply] = move_list.moves[i];
         }
-        
+
+#if ENABLE_LEGAL_MOVE_ORDINAL
+        // BACKLOG #57: 0-based ordinal among moves actually searched (legal
+        // ones). Drives LMR lateness/row, PVS first-move treatment, and fhf.
+        // Proper PVS: only the first legal move gets the full window; every
+        // later move is null-window first, re-searched on fail-high.
+        const int move_ordinal = legal_count - 1;
+        const bool pvs_full_window = (legal_count == 1);
+        const bool first_move_for_fhf = (legal_count == 1);
+#else
+        // Historical arm: pseudo-legal index, and full-window whenever the
+        // node has already improved alpha (alpha == best_score after any
+        // improving move) — kept byte-identical behind the flag.
+        const int move_ordinal = i;
+        const bool pvs_full_window = (i == 0 || alpha == best_score);
+        const bool first_move_for_fhf = (i == 0);
+#endif
+
         int score;
 
         // Late Move Reduction (LMR) implementation
@@ -2199,7 +2234,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
 #endif
 
-        if (depth >= LMR_MIN_DEPTH && i >= LMR_FULL_DEPTH_MOVES &&
+        if (depth >= LMR_MIN_DEPTH && move_ordinal >= LMR_FULL_DEPTH_MOVES &&
             !in_check && !move_list.moves[i].is_capture() &&
             !move_list.moves[i].is_promotion() &&
             !gives_check()) {
@@ -2209,7 +2244,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             // R=1 / R=2 step function — provides finer granularity at high
             // depth and high move number.
             int d_idx = std::min(depth, 63);
-            int m_idx = std::min(i, 63);
+            int m_idx = std::min(move_ordinal, 63);
             int reduction = LMR_TABLE[d_idx][m_idx];
             reduction = std::max(reduction, 1);
             reduction = std::min(reduction, depth - 2);
@@ -2240,8 +2275,8 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
 
         // Full depth search (either initial search or re-search after LMR fail-high)
         if (needs_full_search) {
-            if (i == 0 || alpha == best_score) {
-                // First move or no improvement yet - use full window
+            if (pvs_full_window) {
+                // Full window (see the per-arm definition above)
                 ++info.ply;
                 const auto child = capture_search_position(pos);
                 score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
@@ -2311,7 +2346,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 if (alpha >= beta) {
                     // VICE Part 60: Track fail high statistics (0:13)
                     info.fh++; // Increment fail high count
-                    if (i == 0) {
+                    if (first_move_for_fhf) {
                         info.fhf++; // Fail high first (first move caused beta cutoff)
                     }
 

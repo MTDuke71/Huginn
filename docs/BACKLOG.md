@@ -30,7 +30,7 @@
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **AUDIT-VERIFIED / OPEN** | bug/UCI | high |
-| 57 | Use legal-move ordinal for PVS / LMR | **AUDIT-VERIFIED / OPEN** | bug/search | high |
+| 57 | Use legal-move ordinal for PVS / LMR | **CANDIDATE (2026-07-11)** — fixed behind `ENABLE_LEGAL_MOVE_ORDINAL` (default OFF, flag-off byte-identical); branch `candidate/legal-move-ordinal`, two-machine SPRT vs t26 pending | bug/search | high |
 | 58 | Make SEE sound before using it for hard pruning | **AUDIT-VERIFIED / OPEN** | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **AUDIT-VERIFIED / OPEN** | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
@@ -320,6 +320,25 @@ normal alpha improvement, defeating most intended PVS savings.
   sequence and equivalence to a legal-list reference search.
 - Gate the correction for fixed-depth score/PV/node comparison, then measure the
   search-shape change at fixed time and by SPRT.
+
+**Resolution (2026-07-11): CANDIDATE behind `ENABLE_LEGAL_MOVE_ORDINAL`
+(default OFF, flag-off byte-identical — startpos d14 = 6,634,033 unchanged).**
+Flag ON: a searched-move ordinal incremented only after successful
+`MakeMove()` drives the LMR lateness threshold + reduction row, PVS
+first-move treatment, and fhf; the PVS condition is textbook (first legal
+move full-window, all others null-window + fail-high re-search) — the
+historical `i == 0 || alpha == best_score` gave every move after a normal
+alpha improvement a full window, so null-window PVS only engaged in
+failing-low nodes. Test-arm signatures: startpos d14 = 7,484,807 / cp 23 /
+**d2d4** (root choice changes — instant arm discriminator); Kiwipete d13 =
+1,930,694 / cp −63 / e2a6. Pinned-position fixture
+(`AuditHelpersTest.PinnedPositionSearchReturnsLegalMove`) exercises the
+illegal-moves-first shape on both arms; 226/226 both arms. The
+full/null/re-search instrumentation sub-bullet is intentionally not
+implemented — arm verification runs through the signature discriminators and
+the SPRT per house process. **Next:** two-machine SPRT via branch
+`candidate/legal-move-ordinal` — run-sheet in
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #58: Make SEE sound before using it for hard pruning (high)
 
