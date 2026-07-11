@@ -1,3 +1,16 @@
+# SPRT Queue Test Plan — #58 candidate off baseline-t27 (OPEN)
+
+> **Run:** `git checkout candidate/see-legality` + `test_huginn_gauntlet.bat t27`.
+> Flag `ENABLE_SEE_LEGALITY` (unstick: `cmake -UENABLE_SEE_LEGALITY`).
+> **t27 baseline (OFF):** startpos d14 = **7,484,807** / cp 23 / d2d4.
+> **#58 arm (ON):** startpos d14 = **7,128,502** / cp 30 / **e2e4** (root move
+> discriminates). What: SEE's FIRST recapture skips defenders absolutely
+> pinned to their own king (pin-line captures still count); deeper plies stay
+> geometric. Fixture: see(Qg4xf5) >= 0 in 4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w on
+> the test arm (~-800 baseline) — test SeePinnedDefenderRecapture tracks the
+> built arm. **Result:** pending (AMD leg first). **Decision:** two-machine
+> bar or user call per precedent.
+
 # SPRT Queue Test Plan — #57 candidate off baseline-t26 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t27` SHIPPED (2026-07-11)** on the AMD leg's
