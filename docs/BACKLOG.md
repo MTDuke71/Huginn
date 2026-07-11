@@ -25,8 +25,8 @@
 
 | # | Title | Status | Type | Priority |
 |---|-------|--------|------|----------|
-| 52 | Check-aware qsearch + horizon terminal states | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_QSEARCH_CHECK_EVASIONS` (default OFF); SPRT Intel leg H1-ACCEPT (+40.11 ± 18.18, LOS 100%, 696g), AMD leg pending | bug/search | critical |
-| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **CANDIDATE (2026-07-09)** — fixed behind `ENABLE_RULE50_TT_GUARD` (default OFF); SPRT Intel leg mild regression (−18.08 ± 15.32, LOS 1%, 1000g, no bound), decision pending (LTC or correctness-ship) | bug/search | critical |
+| 52 | Check-aware qsearch + horizon terminal states | **SHIP BAR MET (2026-07-10)** — two-machine H1-ACCEPT (Intel +40.11 / AMD +44.67, pooled ≈ +42 over 1306g); flag-flip + baseline tag pending | bug/search | critical |
+| 53 | Rule-50-aware TT eligibility (#29 follow-up) | **SPRT DONE (2026-07-10)** — sign-split (Intel −18.08 / AMD +5.21), pooled ≈ −6 Elo at blitz; decision pending (park / LTC / correctness-ship) | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **AUDIT-VERIFIED / OPEN** | bug/UCI | high |
@@ -105,8 +105,15 @@ run-sheet incl. per-arm signatures and instant discriminators in
 6,634,033 nodes (−21% fixed-depth vs t25's 8,406,631, at lower nps — the
 SPRT decides the fixed-time trade). **Intel leg (2026-07-09): H1 ACCEPT
 +40.11 ± 18.18, LOS 100%, 696g, 55.75% (W226/L146/D324), LLR 2.95,
-Ptnml [12,69,126,109,32]** — the fixed-time trade pays. AMD leg pending; do
-not flip the default / ship until the second machine agrees.
+Ptnml [12,69,126,109,32]** — the fixed-time trade pays. **AMD leg
+(2026-07-10): H1 ACCEPT +44.67 ± 18.94, LOS 100%, 610g, 56.39%
+(W188/L110/D312), LLR 2.97, Ptnml [7,66,97,112,23].** PGNs
+`gauntlet/huginn_vs_t25_qsearch_{intel,amd}.pgn`. **SHIP BAR MET —
+same-sign two-machine H1-accept; pooled 56.05% / 1306g ≈ +42 Elo.**
+Remaining ship steps: flip the flag default ON on `main` (source + CMake
+option + test mirror — all three), verify the flag-ON build reproduces the
+test-arm signature (d14 = 6,634,033 + `mate 1 g6g7` at depth 1), tag the
+new baseline, and snapshot the exe per the ladder process.
 
 ### #53: Rule-50-aware TT eligibility — finish #29 (critical)
 

@@ -59,10 +59,20 @@
   Ptnml(0-2) [12, 69, 126, 109, 32], PairsRatio 1.74, DrawRatio 36.21%. Arms
   verified pre-run (baseline d14 = 8,406,631 / test d14 = 6,634,033 / mate-in-1
   discriminator `mate 1 g6g7`). PGN
-  `gauntlet/huginn_vs_t25_qsearch_intel.pgn`. **AMD leg still pending — do not
-  ship on this leg alone.**
-- **Decision:** standard two-machine ship bar. If it ships, flip the flag
-  default ON on `main` (source + CMake option + test mirror — all three).
+  `gauntlet/huginn_vs_t25_qsearch_intel.pgn`.
+- **Result (AMD, 2026-07-10) — H1 ACCEPT:** **+44.67 ± 18.94** (nElo 65.80 ±
+  27.57), LOS 100%, 610g, W188/L110/D312 = 56.39%, LLR 2.97 (crossed +2.94).
+  Ptnml(0-2) [7, 66, 97, 112, 23], PairsRatio 1.85, DrawRatio 31.80%. Arms
+  verified pre-run (test d14 = 6,634,033 / cp 27 / e2e4; mate-in-1
+  discriminator `mate 1 g6g7`; baseline t25 d14 = 8,406,631 re-verified same
+  session). PGN `gauntlet/huginn_vs_t25_qsearch_amd.pgn`.
+- **Two-leg verdict (final, 2026-07-10): SHIP BAR MET** — same-sign
+  two-machine H1-accept (Intel +40.11 / AMD +44.67, remarkably consistent).
+  Pooled W414/L256/D636 = 56.05% over 1306g ≈ +42 Elo.
+- **Decision:** two-machine ship bar met. To ship: flip the flag default ON
+  on `main` (source + CMake option + test mirror — all three), verify the
+  flag-ON build reproduces the test-arm signature (d14 = 6,634,033 +
+  `mate 1 g6g7`), then tag per the baseline ladder process.
 
 ### 2. `candidate/rule50-tt-guard` — rule-50-aware TT eligibility (#53)
 
