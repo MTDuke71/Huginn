@@ -210,7 +210,7 @@ endif()
 # ENABLE_LEGAL_MOVE_ORDINAL in src/search.cpp). CANDIDATE — source default 0;
 # -DENABLE_LEGAL_MOVE_ORDINAL=ON builds the SPRT arm. Forwarded as an explicit
 # 0/1 (same cache-variable rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
-option(ENABLE_LEGAL_MOVE_ORDINAL "BACKLOG #57: legal-move ordinal PVS/LMR (candidate arm)" OFF)
+option(ENABLE_LEGAL_MOVE_ORDINAL "BACKLOG #57: legal-move ordinal PVS/LMR (candidate arm)" ON)
 if(ENABLE_LEGAL_MOVE_ORDINAL)
     add_compile_definitions(ENABLE_LEGAL_MOVE_ORDINAL=1)
     message(STATUS "Legal-move ordinal PVS/LMR enabled (BACKLOG #57 candidate arm)")

@@ -272,7 +272,7 @@
 // per the house rules. Build the candidate arm with
 // -DENABLE_LEGAL_MOVE_ORDINAL=1.
 #ifndef ENABLE_LEGAL_MOVE_ORDINAL
-#define ENABLE_LEGAL_MOVE_ORDINAL 0
+#define ENABLE_LEGAL_MOVE_ORDINAL 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations
