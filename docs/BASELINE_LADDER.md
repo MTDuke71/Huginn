@@ -9,6 +9,28 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t27 — #57: legal-move ordinal for PVS/LMR + textbook PVS condition
+= t26 + the 2026-07-09 audit's #57, shipped by flipping
+`ENABLE_LEGAL_MOVE_ORDINAL` default ON (source + CMake option). Two defects
+in one: (a) the move loop's pseudo-legal index `i` decided PVS first-move
+treatment, the LMR lateness threshold/row, and fhf — illegal (pinned) entries
+inflate it, so the first LEGAL move could get a null-window/reduced search;
+(b) the PVS condition `i == 0 || alpha == best_score` gave every move after a
+normal alpha improvement a full window — null-window PVS only engaged in
+failing-low nodes. Fix: a searched-move ordinal incremented only after
+successful `MakeMove()` drives all three sites; PVS is textbook (first legal
+move full-window, all others null-window + fail-high re-search).
+
+**AMD SPRT vs t26 (2026-07-11): H1 ACCEPT +29.98 ± 15.53** (nElo 42.31 ±
+21.80), LOS 99.99%, 976g early-stop (LLR 2.97), 54.30% (W288/L204/D484),
+Ptnml [22,99,184,139,44], PairsRatio 1.51. Notable: the test arm searches
++12.8% MORE fixed-depth nodes from startpos (7,484,807 vs 6,634,033, root
+move d2d4 vs e2e4) and still gains at fixed time — the reshaped tree is
+better, not smaller. Kiwipete d13 = 1,930,694 (−5.7%). **Shipped on AMD-only
+accept** (user call, #51/#25-precedent; no Intel leg). Ship build reproduces
+the test-arm signature exactly; 226/226 tests (1 by-design skip). Sixth
+consecutive structural-search-bug win (#44/#45/#50/#51/#52/#57 lineage).
+
 ### baseline-t26 — 2026-07-09 audit criticals: check-aware qsearch (#52) + rule-50 TT guard (#53)
 = t25 + both search-shape criticals from the independent 2026-07-09 code
 audit, SPRT'd separately per the standard queue process (run-sheet:

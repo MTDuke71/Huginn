@@ -30,7 +30,7 @@
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **AUDIT-VERIFIED / OPEN** | bug/UCI | high |
-| 57 | Use legal-move ordinal for PVS / LMR | **CANDIDATE (2026-07-11)** — `ENABLE_LEGAL_MOVE_ORDINAL`; AMD leg H1-ACCEPT (+29.98 ± 15.53, LOS 99.99%, 976g), Intel leg pending | bug/search | high |
+| 57 | Use legal-move ordinal for PVS / LMR | **SHIPPED (2026-07-11, `baseline-t27`)** — AMD-only H1-ACCEPT (+29.98 ± 15.53, LOS 99.99%, user call per #51 precedent); flag default ON | bug/search | high |
 | 58 | Make SEE sound before using it for hard pruning | **AUDIT-VERIFIED / OPEN** | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **AUDIT-VERIFIED / OPEN** | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
@@ -341,8 +341,12 @@ the SPRT per house process. **Next:** two-machine SPRT via branch
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md). **AMD leg (2026-07-11):
 H1 ACCEPT +29.98 ± 15.53, LOS 99.99%, 976g (early-stop, LLR 2.97), 54.30%
 (W288/L204/D484), Ptnml [22,99,184,139,44].** PGN
-`gauntlet/huginn_vs_t26_ordinal_amd.pgn`. Intel leg pending; do not flip the
-default / ship until the second machine agrees.
+`gauntlet/huginn_vs_t26_ordinal_amd.pgn`. **SHIPPED in `baseline-t27`
+(2026-07-11) on AMD-only accept** (explicit user call given the clear
+CI/LOS margin — #51/#25 precedent; no Intel leg). Flag default flipped ON
+(source + CMake option); ship build reproduces the test-arm signature
+(d14 = 7,484,807 / d2d4); 226/226 tests. Writeup:
+[BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #58: Make SEE sound before using it for hard pruning (high)
 

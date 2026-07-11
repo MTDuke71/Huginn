@@ -13,7 +13,19 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t26` — **2026-07-09 audit criticals #52 +
+- ✅ **Baseline tag**: `baseline-t27` — **#57: legal-move ordinal for
+  PVS/LMR + textbook PVS condition** (`ENABLE_LEGAL_MOVE_ORDINAL`, default
+  ON). The move loop's pseudo-legal index drove PVS first-move treatment,
+  LMR lateness/row, and fhf (pinned entries inflate it), and the PVS
+  condition `i == 0 || alpha == best_score` made every move after an alpha
+  improvement full-window — null-window PVS only engaged in failing-low
+  nodes. Fixed with a searched-move ordinal + textbook PVS. **AMD SPRT vs
+  t26: H1 ACCEPT +29.98 ± 15.53, LOS 99.99%, 976g early-stop** — shipped on
+  AMD-only accept (user call, #51 precedent). Signature: startpos d14 =
+  7,484,807 / cp 23 / d2d4 (+12.8% fixed-depth nodes yet stronger at fixed
+  time — the reshaped tree is better, not smaller). **Full writeup:**
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t26` — **2026-07-09 audit criticals #52 +
   #53, shipped together** (flags `ENABLE_QSEARCH_CHECK_EVASIONS` +
   `ENABLE_RULE50_TT_GUARD`, both now default ON). **#52 check-aware
   quiescence** (the Elo carrier — same "blind at the horizon" soundness
@@ -77,7 +89,8 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t26 check-aware
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t27 legal-move
+  ordinal PVS/LMR · t26 check-aware
   qsearch + rule-50 TT guard · t25 history-heuristic
   collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·
   t22 speed pair · t21 TT-clear +

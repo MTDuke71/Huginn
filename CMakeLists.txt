@@ -207,15 +207,18 @@ else()
 endif()
 
 # BACKLOG #57: legal-move ordinal for PVS/LMR/fhf + proper PVS condition (see
-# ENABLE_LEGAL_MOVE_ORDINAL in src/search.cpp). CANDIDATE — source default 0;
-# -DENABLE_LEGAL_MOVE_ORDINAL=ON builds the SPRT arm. Forwarded as an explicit
-# 0/1 (same cache-variable rationale as ENABLE_ROOT_TWOFOLD_AVOID above).
-option(ENABLE_LEGAL_MOVE_ORDINAL "BACKLOG #57: legal-move ordinal PVS/LMR (candidate arm)" OFF)
+# ENABLE_LEGAL_MOVE_ORDINAL in src/search.cpp). SHIPPED in baseline-t27
+# (AMD-only SPRT accept vs t26: +29.98 ± 15.53, LOS 99.99% — user call, #51
+# precedent) — default ON; -DENABLE_LEGAL_MOVE_ORDINAL=OFF rebuilds the
+# pre-t27 arm. Forwarded as an explicit 0/1 (same cache-variable rationale
+# as ENABLE_ROOT_TWOFOLD_AVOID above).
+option(ENABLE_LEGAL_MOVE_ORDINAL "BACKLOG #57: legal-move ordinal PVS/LMR (shipped t27)" ON)
 if(ENABLE_LEGAL_MOVE_ORDINAL)
     add_compile_definitions(ENABLE_LEGAL_MOVE_ORDINAL=1)
-    message(STATUS "Legal-move ordinal PVS/LMR enabled (BACKLOG #57 candidate arm)")
+    message(STATUS "Legal-move ordinal PVS/LMR enabled (BACKLOG #57, shipped t27)")
 else()
     add_compile_definitions(ENABLE_LEGAL_MOVE_ORDINAL=0)
+    message(STATUS "Legal-move ordinal PVS/LMR disabled (pre-t27 arm)")
 endif()
 
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----

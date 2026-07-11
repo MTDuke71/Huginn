@@ -267,12 +267,11 @@
 // was failing low. Flag ON: a searched-move ordinal incremented only after a
 // successful MakeMove drives PVS (first legal move full-window, all others
 // null-window + fail-high re-search), the LMR threshold/row, and fhf.
-// DEFAULT OFF — search-shape change: flag-off is byte-identical to
-// baseline-t26; needs fixed-depth/fixed-time comparison + two-machine SPRT
-// per the house rules. Build the candidate arm with
-// -DENABLE_LEGAL_MOVE_ORDINAL=1.
+// DEFAULT ON — SHIPPED in baseline-t27 on an AMD-only SPRT accept vs t26
+// (+29.98 ± 15.53, LOS 99.99%, 976g early-stop; user call, #51 precedent —
+// no Intel leg). Rebuild the pre-t27 arm with -DENABLE_LEGAL_MOVE_ORDINAL=0.
 #ifndef ENABLE_LEGAL_MOVE_ORDINAL
-#define ENABLE_LEGAL_MOVE_ORDINAL 0
+#define ENABLE_LEGAL_MOVE_ORDINAL 1
 #endif
 // ENABLE_SEARCH_INTEGRITY_ASSERTS: BACKLOG #37 diagnostic. In debug or
 // explicitly-instrumented builds, assert after search make/unmake operations

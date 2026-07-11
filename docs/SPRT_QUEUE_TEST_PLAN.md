@@ -1,4 +1,9 @@
-# SPRT Queue Test Plan — #57 candidate off baseline-t26 (OPEN)
+# SPRT Queue Test Plan — #57 candidate off baseline-t26 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t27` SHIPPED (2026-07-11)** on the AMD leg's
+> H1-accept (+29.98 ± 15.53, LOS 99.99%, 976g) — AMD-only ship by explicit
+> user call (#51 precedent, no Intel leg). Flag default ON on `main`;
+> writeup in [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Purpose:** run-sheet for the BACKLOG #57 candidate branch created
 > 2026-07-11 (fix on `main` behind `ENABLE_LEGAL_MOVE_ORDINAL`, default OFF,
