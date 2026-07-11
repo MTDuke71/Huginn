@@ -25,7 +25,7 @@
 // is byte-identical to baseline-t27; SPRT per house rules. Build the
 // candidate arm with -DENABLE_SEE_LEGALITY=1.
 #ifndef ENABLE_SEE_LEGALITY
-#define ENABLE_SEE_LEGALITY 0
+#define ENABLE_SEE_LEGALITY 1
 #endif
 
 namespace Huginn {

@@ -225,7 +225,7 @@ endif()
 # src/see.cpp). CANDIDATE — source default 0; -DENABLE_SEE_LEGALITY=ON builds
 # the SPRT arm. Forwarded as an explicit 0/1 (same cache-variable rationale
 # as ENABLE_ROOT_TWOFOLD_AVOID above).
-option(ENABLE_SEE_LEGALITY "BACKLOG #58: pin-aware first recapture in SEE (candidate arm)" OFF)
+option(ENABLE_SEE_LEGALITY "BACKLOG #58: pin-aware first recapture in SEE (candidate arm)" ON)
 if(ENABLE_SEE_LEGALITY)
     add_compile_definitions(ENABLE_SEE_LEGALITY=1)
     message(STATUS "SEE first-recapture legality enabled (BACKLOG #58 candidate arm)")
