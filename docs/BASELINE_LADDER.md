@@ -47,6 +47,24 @@ position. Tests: **216 pass / 1 by-design skip (217 total)**. Net vs t25 at
 blitz ≈ the #52 number (#53 ~neutral); the t26 self-play delta is expected
 around +35–40 Elo pooled.
 
+**External calibration (2026-07-11, AMD box): t26 ≈ 2571 ± 19 CCRL-blitz.**
+Two new same-author anchors added to the Stash ladder (10+0.1, 500g each,
+cc=1, noob_3moves.epd):
+- vs **Stash 19.0 (CCRL 2473)**: **+102.97 ± 25.74** (nElo 129.38), 64.40%
+  (W256/L112/D132), Ptnml [11,23,90,63,63] → pin ~2576.
+  PGN `gauntlet/huginn_vs_stash19_amd.pgn`.
+- vs **Stash 20.0.1 (CCRL 2509)**: **+56.07 ± 27.03** (nElo 64.41), 58.00%
+  (W217/L137/D146), Ptnml [25,32,83,58,52] → pin ~2565.
+  PGN `gauntlet/huginn_vs_stash20_amd.pgn`.
+
+The two pins agree within 11 Elo (inverse-variance pool 2571 ± 19); zero
+Huginn timeouts (Stash had one). Externally measured gain since v2.2/t21
+(~2434 LTC): **≈ +137** — vs +160 summed self-play deltas, a mild ~0.86
+compression (with the blitz-vs-LTC scale caveat). Both anchors are
+non-saturated (58–64%), so the pins are trustworthy; next recalibration
+rung when Huginn approaches ~2650 would be Stash 21+ or a second engine
+family for a style cross-check (BACKLOG #5).
+
 ### baseline-t25 — #51: History-heuristic piece-index collision fix
 = t24 + a one-line-class correctness fix, shipped directly to `main` ahead of
 any flag/branch/SPRT-queue process (bug, not a tunable feature — see

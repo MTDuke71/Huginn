@@ -31,7 +31,7 @@ set OPP=%1
 set ROUNDS=%2
 set CC_ARG=%3
 if "%OPP%"=="" (
-    echo usage: test_huginn_gauntlet.bat ^<tN ^| stash11..stash17 ^| stash154 ^| mtl03 ^| mora ^| mtl05 ^| snowy ^| cdrill^> [rounds] [concurrency]
+    echo usage: test_huginn_gauntlet.bat ^<tN ^| stash11..stash20 ^| stash154 ^| mtl03 ^| mora ^| mtl05 ^| snowy ^| cdrill^> [rounds] [concurrency]
     exit /b 1
 )
 
@@ -79,8 +79,9 @@ if /I "%OPP%"=="cdrill" set OPPONENT=cdrill_2000.exe
 if /I "%OPP%"=="cdrill" set OPP_NAME=CDrill_2000
 REM Stash calibration ladder (CCRL-Blitz, UCI-clean): dense same-author bracket.
 REM Originally bracketed Huginn's ~1820; extended to v17 for the post-#45 jump
-REM (~2300). Ratings (CCRL-Blitz, * = estimate): v11 1690, v12 1886, v13 1972,
-REM v14 2060, v15 2140*, v16 2220*, v17 2298. (v15.4 is a point release, unrated.)
+REM (~2300), then v19/v20 for the post-t26 jump (~2500). Ratings (CCRL-Blitz,
+REM * = estimate): v11 1690, v12 1886, v13 1972, v14 2060, v15 2140*, v16
+REM 2220*, v17 2298, v19 2473, v20 2509. (v15.4 is a point release, unrated.)
 if /I "%OPP%"=="stash11" set OPPONENT=stash-11.0-windows-x86_64-bmi2.exe
 if /I "%OPP%"=="stash11" set OPP_NAME=Stash_11.0
 if /I "%OPP%"=="stash12" set OPPONENT=stash-12.0-windows-x86_64-bmi2.exe
@@ -97,6 +98,10 @@ if /I "%OPP%"=="stash16" set OPPONENT=stash-16.0-windows-x86_64-bmi2.exe
 if /I "%OPP%"=="stash16" set OPP_NAME=Stash_16.0
 if /I "%OPP%"=="stash17" set OPPONENT=stash-17.0-windows-x86_64-bmi2.exe
 if /I "%OPP%"=="stash17" set OPP_NAME=Stash_17.0
+if /I "%OPP%"=="stash19" set OPPONENT=stash-19.0-windows-x86_64-bmi2.exe
+if /I "%OPP%"=="stash19" set OPP_NAME=Stash_19.0
+if /I "%OPP%"=="stash20" set OPPONENT=stash-20.0.1-windows-x86_64-bmi2.exe
+if /I "%OPP%"=="stash20" set OPP_NAME=Stash_20.0.1
 if /I "%OPP%"=="snowy" set OPPONENT=snowy_0_2_x64.exe
 if /I "%OPP%"=="snowy" set OPP_NAME=Snowy_0.2
 REM CPW-engine dropped (2026-06-14): 2014 hobby engine, two UCI-play bugs

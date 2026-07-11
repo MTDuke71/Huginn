@@ -85,7 +85,14 @@ location is derived from the bitboards via `Position::at_sq64()`.
   mate-distance pruning · t17 #44 repetition fix · t16 king safety · t15 threats.
 - ✅ **Comprehensive test suite**: 217 GoogleTest cases (216 run + 1 by-design
   skip — the `RootTwofoldAvoid` opposite-arm test pair)
-- ✅ **Strength**: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
+- ✅ **Strength**: **t26 ≈ 2571 ± 19 CCRL-blitz** (2026-07-11, AMD box,
+  10+0.1, 500g per anchor, cc=1) — two-anchor inverse-variance pool of
+  Stash 19.0 (2473) +102.97 ± 25.74 (64.40%) → ~2576 and Stash 20.0.1
+  (2509) +56.07 ± 27.03 (58.00%) → ~2565; the two pins agree within 11 Elo
+  (same-author anchor family, so style non-transitivity is minimized).
+  Zero Huginn timeouts. Measured externally that's **≈ +137 since v2.2/t21**
+  (blitz-vs-LTC caveat) against +160 summed self-play — mild ~0.86
+  compression. Prior: **t20 ≈ 2350–2390 CCRL-ladder** (2026-06-27, ≈ +510 over t19) —
   non-saturated pins: Stash 17.0 (2298) 56.75%/+47 → ~2345, MTLChess v0.5 (2314)
   61% → ~2392 (+9pp-favorable MTL non-transitivity). **t21 (+127 self-play over t20,
   clock-usage fix) at LTC: vs Stash 17.0 (2298) 68.65% / +136 ± 20 over 1000g at
