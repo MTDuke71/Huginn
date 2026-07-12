@@ -13,7 +13,17 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t28` — **#58: pin-aware first recapture in
+- ✅ **Baseline tag**: `baseline-t29` — **#59: en-passant key semantics.**
+  The EP right is normalized at the source (`MakeMove` + `set_from_fen`
+  store it only when a side-to-move pawn can pseudo-capture — Polyglot /
+  X-FEN convention), fixing missed threefolds and TT splits from decorative
+  EP squares; the Polyglot book-key EP check was also one rank off (book
+  keys wrong in exactly the capturable-EP positions) — now verified against
+  the spec anchor keys. Unconditional fix (#50/#51 precedent). **AMD
+  regression gate vs t28: clean, +8.34 ± 15.32, LOS 85.73%, 1000g.**
+  Signature: startpos d14 = **5,485,978** / cp 26 / e2e4 (−23% — decorative
+  EP no longer splits transpositions).
+  Prior: `baseline-t28` — **#58: pin-aware first recapture in
   SEE** (`ENABLE_SEE_LEGALITY`, default ON): pinned defenders no longer make
   winning captures look losing to qsearch's hard prune (pin-line captures
   still count; deeper swap plies stay geometric). Two-machine SPRT vs t27
@@ -96,7 +106,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t28 SEE pin legality · t27 legal-move
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t29 EP key semantics · t28 SEE pin legality · t27 legal-move
   ordinal PVS/LMR · t26 check-aware
   qsearch + rule-50 TT guard · t25 history-heuristic
   collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·

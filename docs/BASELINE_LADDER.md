@@ -9,6 +9,30 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t29 — #59: en-passant key semantics (normalized EP right)
+= t28 + the audit's #59, fixed **unconditionally** (#50/#51 precedent — key
+semantics with one right answer, no flag). Every double push used to store
+`ep_square` and hash its file even with no capturer, so positions with
+identical legal move sets hashed differently: missed threefolds (the a7a5 +
+knight-shuffle fixture) and needless TT splits. Independently, the Polyglot
+book key scanned for capturers on the EP TARGET rank — one rank off — so
+standard book keys were wrong in exactly the capturable-EP positions.
+
+**Fix:** the EP right is normalized at the source — `MakeMove` and
+`set_from_fen` store it only when a side-to-move pawn could pseudo-capture
+onto it (Polyglot / X-FEN convention). Full + incremental zobrist,
+repetition, TT, `to_fen`, and Polyglot all inherit the semantics; the
+Polyglot EP block hashes the normalized square unconditionally. Verified
+against the Polyglot spec anchors (startpos `0x463B96181691FC9C`; the
+canonical capturable-EP line `0x22A48B5A8E47FF78`). 232 tests green.
+
+**Signature:** startpos d14 = **5,485,978** / cp 26 / e2e4 (−23% vs t28's
+7,128,502 — decorative EP squares no longer split transpositions).
+**AMD regression gate vs t28 (2026-07-11): CLEAN, +8.34 ± 15.32** (nElo
+11.74), LOS 85.73%, 1000g cap (LLR 0.56), 51.20% (W269/L245/D486), Ptnml
+[34,104,201,126,35]. Shipped on the clean gate + correctness (user call).
+PGN `gauntlet/huginn_vs_t28_ep_amd.pgn`.
+
 ### baseline-t28 — #58: pin-aware first recapture in SEE
 = t27 + the audit's #58 (`ENABLE_SEE_LEGALITY` default ON). SEE's first
 recapture skips defenders absolutely pinned to their own king unless the
