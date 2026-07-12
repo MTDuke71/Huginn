@@ -9,13 +9,23 @@
 > geometric. Fixture: see(Qg4xf5) >= 0 in 4k3/4n3/8/5p2/6Q1/8/8/4R1K1 w on
 > the test arm (~-800 baseline) — test SeePinnedDefenderRecapture tracks the
 > built arm.
-> **Result (AMD, 2026-07-11): inconclusive / ~neutral** — **+5.56 ± 15.11**
-> (nElo 7.93 ± 21.53), LOS 76.48%, 1000g round cap (LLR 0.24, no bound
-> crossed), 50.80% (W257/L241/D502), Ptnml [29,118,194,126,33]. PGN
-> `gauntlet/huginn_vs_t27_see_amd.pgn`. Same profile as #53: a real
-> tactical-soundness fix that blitz self-play prices at ~zero.
-> **Decision (user's call):** park, run the Intel leg, or ship on
-> correctness (#53 precedent).
+> **Result — BOTH LEGS DONE, same-sign small positive, tight agreement:**
+> - **AMD (2026-07-11):** **+5.56 ± 15.11** (nElo 7.93), LOS 76.48%, 1000g round
+>   cap (LLR 0.24, no bound), 50.80% (W257/L241/D502), Ptnml [29,118,194,126,33].
+>   PGN `gauntlet/huginn_vs_t27_see_amd.pgn`.
+> - **Intel (2026-07-11):** **+8.69 ± 14.65** (nElo 12.78), LOS 87.77%, 1000g
+>   round cap (LLR 0.64, no bound), 51.25% (W257/L232/D511), Ptnml
+>   [22,125,187,138,28]. PGN `gauntlet/huginn_vs_t27_see_intel.pgn`.
+> - **Pooled (inverse-variance): ≈ +7.2 ± 10.5 Elo, LOS ≈ 91%, 2000g, 51.03%**
+>   (W514/L473/D1013, Ptnml [51,243,381,264,61]). Same profile as #53: a real
+>   tactical-soundness fix that blitz self-play prices near zero — but the sign
+>   is positive on BOTH boxes.
+> **Decision (user's call):** neither leg crossed the SPRT bound, but the two
+> agree in sign and pool to LOS ≈ 91% — clears the cross-machine-agreement ship
+> bar used for small effects (#15 precedent, shipped at 91%), and it's a
+> correctness fix besides (#53 precedent). Reasonable to ship as `baseline-t28`
+> (flip `ENABLE_SEE_LEGALITY` default ON, source + CMake) or park; not a
+> park-for-regression case since the sign is positive.
 
 # SPRT Queue Test Plan — #57 candidate off baseline-t26 (CLOSED)
 
