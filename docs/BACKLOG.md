@@ -719,6 +719,12 @@ the strategic picture is explicit.
 - The per-node *quality* lever — hundreds of Elo, and the honest path to closing
   the gap to Fruit/Stockfish-class strength. Replaces (or augments) the HCE
   `evaluate()` with a small efficiently-updatable network.
+- **Measured 2026-07-12** ([SF18_GAP_STUDY.md](SF18_GAP_STUDY.md)): on
+  Kiwipete, SF18's depth-1 NNUE eval is closer to the converged truth than
+  Huginn's depth-16 HCE result, and Huginn's static eval carries the wrong
+  sign until depth 6. Same study: Huginn is ~2× faster in raw nps but its
+  tree is 112× larger at equal depth (EBF ~1.90 vs ~1.37) — the two levers
+  in one number each.
 - **Why it fits this project:** preserves single-thread determinism (the
   fixed-depth / cross-machine-bit-identical test methodology survives), and it
   improves the thing we actually care about — move quality per node.
@@ -744,6 +750,10 @@ the strategic picture is explicit.
   2. **Breaks the determinism the test methodology leans on** — Lazy SMP is
      non-deterministic by construction, killing the bit-identical-at-fixed-depth
      ship checks and the cross-machine WAC determinism (#33-class).
+     **Measured on SF18 (2026-07-12,
+     [SF18_GAP_STUDY.md](SF18_GAP_STUDY.md)):** 8 threads = ~6.4× node
+     throughput but 2.5× *longer* wall-clock to the same nominal depth (the
+     d32 tree grows 14×) — fixed-depth is not a comparable unit under SMP.
   3. **Highest engineering risk** — needs a race-tolerant (lockless XOR-key) TT,
      per-thread history/killers, a clean multi-thread stop, and forces
      **concurrency-1 gauntlets** (cc=4 would oversubscribe the CPU and make

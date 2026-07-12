@@ -1,0 +1,199 @@
+=== MATCH A: Huginn_current vs Stockfish 18 ===
+Indexing opening suite...
+Started game 2 of 40 (Stockfish_18 vs Huginn_current)
+Started game 4 of 40 (Stockfish_18 vs Huginn_current)
+Started game 3 of 40 (Huginn_current vs Stockfish_18)
+Started game 1 of 40 (Huginn_current vs Stockfish_18)
+Finished game 1 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 5 of 40 (Huginn_current vs Stockfish_18)
+Finished game 4 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 6 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 3 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 7 of 40 (Huginn_current vs Stockfish_18)
+Finished game 2 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 8 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 6 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 9 of 40 (Huginn_current vs Stockfish_18)
+Finished game 7 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 10 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 5 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 11 of 40 (Huginn_current vs Stockfish_18)
+Finished game 8 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 12 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 10 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 13 of 40 (Huginn_current vs Stockfish_18)
+Finished game 9 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 14 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 11 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 15 of 40 (Huginn_current vs Stockfish_18)
+Finished game 12 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 16 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 15 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 17 of 40 (Huginn_current vs Stockfish_18)
+Finished game 13 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 18 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 14 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 19 of 40 (Huginn_current vs Stockfish_18)
+Finished game 18 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 20 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 16 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 21 of 40 (Huginn_current vs Stockfish_18)
+Finished game 17 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 22 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 19 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 23 of 40 (Huginn_current vs Stockfish_18)
+Finished game 22 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 24 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 20 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Stockfish_18 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -inf +/- nan, nElo: -inf +/- nan
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 20, Wins: 0, Losses: 20, Draws: 0, Points: 0.0 (0.00 %)
+Ptnml(0-2): [10, 0, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Started game 25 of 40 (Huginn_current vs Stockfish_18)
+Finished game 21 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 26 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 23 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 27 of 40 (Huginn_current vs Stockfish_18)
+Finished game 26 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 28 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 25 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 29 of 40 (Huginn_current vs Stockfish_18)
+Finished game 24 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 30 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 27 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 31 of 40 (Huginn_current vs Stockfish_18)
+Finished game 28 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 32 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 31 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 33 of 40 (Huginn_current vs Stockfish_18)
+Finished game 29 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 34 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 30 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 35 of 40 (Huginn_current vs Stockfish_18)
+Finished game 33 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 36 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 32 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 37 of 40 (Huginn_current vs Stockfish_18)
+Finished game 35 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Started game 38 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 34 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 39 of 40 (Huginn_current vs Stockfish_18)
+Finished game 38 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Started game 40 of 40 (Stockfish_18 vs Huginn_current)
+Finished game 37 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Finished game 36 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+Finished game 39 (Huginn_current vs Stockfish_18): 0-1 {Black mates}
+Finished game 40 (Stockfish_18 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Stockfish_18 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -inf +/- nan, nElo: -inf +/- nan
+LOS: 0.00 %, DrawRatio: 0.00 %, PairsRatio: 0.00
+Games: 40, Wins: 0, Losses: 40, Draws: 0, Points: 0.0 (0.00 %)
+Ptnml(0-2): [20, 0, 0, 0, 0], WL/DD Ratio: -nan
+--------------------------------------------------
+Finished match
+Total Time: 00:03:57 (hours:minutes:seconds)
+
+=== MATCH B: SF18 vs SF18 (same seed) ===
+Indexing opening suite...
+Started game 2 of 40 (SF18_B vs SF18_A)
+Started game 3 of 40 (SF18_A vs SF18_B)
+Started game 1 of 40 (SF18_A vs SF18_B)
+Started game 4 of 40 (SF18_B vs SF18_A)
+Finished game 3 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 5 of 40 (SF18_A vs SF18_B)
+Finished game 1 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 6 of 40 (SF18_B vs SF18_A)
+Finished game 4 (SF18_B vs SF18_A): 1/2-1/2 {Draw by insufficient mating material}
+Started game 7 of 40 (SF18_A vs SF18_B)
+Finished game 2 (SF18_B vs SF18_A): 1/2-1/2 {Draw by insufficient mating material}
+Started game 8 of 40 (SF18_B vs SF18_A)
+Finished game 5 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 9 of 40 (SF18_A vs SF18_B)
+Finished game 6 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 10 of 40 (SF18_B vs SF18_A)
+Finished game 7 (SF18_A vs SF18_B): 1/2-1/2 {Draw by insufficient mating material}
+Started game 11 of 40 (SF18_A vs SF18_B)
+Finished game 10 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 12 of 40 (SF18_B vs SF18_A)
+Finished game 11 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 13 of 40 (SF18_A vs SF18_B)
+Finished game 9 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 14 of 40 (SF18_B vs SF18_A)
+Finished game 8 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 15 of 40 (SF18_A vs SF18_B)
+Finished game 12 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 16 of 40 (SF18_B vs SF18_A)
+Finished game 13 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 17 of 40 (SF18_A vs SF18_B)
+Finished game 14 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 18 of 40 (SF18_B vs SF18_A)
+Finished game 15 (SF18_A vs SF18_B): 1/2-1/2 {Draw by insufficient mating material}
+Started game 19 of 40 (SF18_A vs SF18_B)
+Finished game 18 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 20 of 40 (SF18_B vs SF18_A)
+Finished game 17 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 21 of 40 (SF18_A vs SF18_B)
+Finished game 16 (SF18_B vs SF18_A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 22 of 40 (SF18_B vs SF18_A)
+Finished game 19 (SF18_A vs SF18_B): 1/2-1/2 {Draw by stalemate}
+Started game 23 of 40 (SF18_A vs SF18_B)
+Finished game 20 (SF18_B vs SF18_A): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of SF18_A vs SF18_B (10+0.1, 1t, 64MB, noob_3moves.epd):
+Elo: -0.00 +/- 0.00, nElo: nan +/- nan
+LOS: nan %, DrawRatio: 100.00 %, PairsRatio: -nan
+Games: 20, Wins: 0, Losses: 0, Draws: 20, Points: 10.0 (50.00 %)
+Ptnml(0-2): [0, 0, 10, 0, 0], WL/DD Ratio: 0.00
+--------------------------------------------------
+Started game 24 of 40 (SF18_B vs SF18_A)
+Finished game 22 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 25 of 40 (SF18_A vs SF18_B)
+Finished game 21 (SF18_A vs SF18_B): 1-0 {White mates}
+Started game 26 of 40 (SF18_B vs SF18_A)
+Finished game 23 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 27 of 40 (SF18_A vs SF18_B)
+Finished game 27 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 28 of 40 (SF18_B vs SF18_A)
+Finished game 24 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 29 of 40 (SF18_A vs SF18_B)
+Finished game 26 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 30 of 40 (SF18_B vs SF18_A)
+Finished game 25 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 31 of 40 (SF18_A vs SF18_B)
+Finished game 30 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 32 of 40 (SF18_B vs SF18_A)
+Finished game 31 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 33 of 40 (SF18_A vs SF18_B)
+Finished game 32 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 34 of 40 (SF18_B vs SF18_A)
+Finished game 29 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 35 of 40 (SF18_A vs SF18_B)
+Finished game 28 (SF18_B vs SF18_A): 1/2-1/2 {Draw by fifty moves rule}
+Started game 36 of 40 (SF18_B vs SF18_A)
+Finished game 34 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 37 of 40 (SF18_A vs SF18_B)
+Finished game 36 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 38 of 40 (SF18_B vs SF18_A)
+Finished game 35 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 39 of 40 (SF18_A vs SF18_B)
+Finished game 33 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 40 of 40 (SF18_B vs SF18_A)
+Finished game 39 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Finished game 38 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+Finished game 37 (SF18_A vs SF18_B): 1/2-1/2 {Draw by 3-fold repetition}
+Finished game 40 (SF18_B vs SF18_A): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of SF18_A vs SF18_B (10+0.1, 1t, 64MB, noob_3moves.epd):
+Elo: 8.69 +/- 16.62, nElo: 56.36 +/- 107.67
+LOS: 84.75 %, DrawRatio: 95.00 %, PairsRatio: inf
+Games: 40, Wins: 1, Losses: 0, Draws: 39, Points: 20.5 (51.25 %)
+Ptnml(0-2): [0, 0, 19, 1, 0], WL/DD Ratio: 0.00
+--------------------------------------------------
+Finished match
+Total Time: 00:04:30 (hours:minutes:seconds)
+
+EXPERIMENT DONE
