@@ -21,11 +21,11 @@
 // pinned to their own king unless the capture square lies on the pin line
 // (moving along the pin ray stays legal). Deeper swap plies stay geometric:
 // full per-ply legality would cost pin detection on the hottest qsearch
-// path for vanishing returns. DEFAULT OFF — search-shape change: flag-off
+// path for vanishing returns. DEFAULT ON — SHIPPED in baseline-t28 (two-machine same-sign ~neutral-positive, pooled +7.2 LOS 91%; correctness ship). Pre-t28 arm: -DENABLE_SEE_LEGALITY=0. (was: flag-off
 // is byte-identical to baseline-t27; SPRT per house rules. Build the
 // candidate arm with -DENABLE_SEE_LEGALITY=1.
 #ifndef ENABLE_SEE_LEGALITY
-#define ENABLE_SEE_LEGALITY 0
+#define ENABLE_SEE_LEGALITY 1
 #endif
 
 namespace Huginn {

@@ -9,6 +9,20 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t28 — #58: pin-aware first recapture in SEE
+= t27 + the audit's #58 (`ENABLE_SEE_LEGALITY` default ON). SEE's first
+recapture skips defenders absolutely pinned to their own king unless the
+capture square lies on the pin line; deeper swap plies stay geometric. Fixes
+qsearch hard-pruning provably-winning captures (audit fixture Qxf5: real
++100, geometric SEE ~−800). **Two-machine SPRT vs t27, both ~neutral-positive:**
+AMD +5.56 ± 15.11 (LOS 76.48%) / Intel +8.69 ± 14.65 (LOS 87.77%), both 1000g
+caps; **pooled +7.2 ± 10.5, LOS ≈ 91%, 51.03% / 2000g** — shipped on
+cross-machine agreement + correctness (user call, #53/#15 precedent).
+Signature: startpos d14 = **7,128,502** / cp 30 / e2e4 (root move flips vs
+t27's d2d4). Tests 228 (incl. arm-tracking SeePinnedDefenderRecapture +
+pin-line exemption).
+
+
 ### baseline-t27 — #57: legal-move ordinal for PVS/LMR + textbook PVS condition
 = t26 + the 2026-07-09 audit's #57, shipped by flipping
 `ENABLE_LEGAL_MOVE_ORDINAL` default ON (source + CMake option). Two defects

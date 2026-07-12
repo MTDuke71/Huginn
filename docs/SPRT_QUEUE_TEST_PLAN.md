@@ -1,4 +1,8 @@
-# SPRT Queue Test Plan — #58 candidate off baseline-t27 (OPEN)
+# SPRT Queue Test Plan — #58 candidate off baseline-t27 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t28` SHIPPED (2026-07-11)** on cross-machine
+> agreement (AMD +5.56 / Intel +8.69, pooled +7.2 ± 10.5, LOS ≈ 91%) plus
+> correctness (#53 precedent) — user call. Flag default ON on `main`.
 
 > **Run:** `git checkout candidate/see-legality` + `test_huginn_gauntlet.bat t27`.
 > Flag `ENABLE_SEE_LEGALITY` (unstick: `cmake -UENABLE_SEE_LEGALITY`).

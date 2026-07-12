@@ -13,7 +13,14 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t27` — **#57: legal-move ordinal for
+- ✅ **Baseline tag**: `baseline-t28` — **#58: pin-aware first recapture in
+  SEE** (`ENABLE_SEE_LEGALITY`, default ON): pinned defenders no longer make
+  winning captures look losing to qsearch's hard prune (pin-line captures
+  still count; deeper swap plies stay geometric). Two-machine SPRT vs t27
+  both ~neutral-positive — AMD +5.56 / Intel +8.69, **pooled +7.2 ± 10.5,
+  LOS ≈ 91%** — shipped on cross-machine agreement + correctness (user
+  call). Signature: startpos d14 = 7,128,502 / cp 30 / e2e4.
+  Prior: `baseline-t27` — **#57: legal-move ordinal for
   PVS/LMR + textbook PVS condition** (`ENABLE_LEGAL_MOVE_ORDINAL`, default
   ON). The move loop's pseudo-legal index drove PVS first-move treatment,
   LMR lateness/row, and fhf (pinned entries inflate it), and the PVS
@@ -23,7 +30,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   t26: H1 ACCEPT +29.98 ± 15.53, LOS 99.99%, 976g early-stop** — shipped on
   AMD-only accept (user call, #51 precedent). Signature: startpos d14 =
   7,484,807 / cp 23 / d2d4 (+12.8% fixed-depth nodes yet stronger at fixed
-  time — the reshaped tree is better, not smaller). **Full writeup:**
+  time — the reshaped tree is better, not smaller). **Full writeup (all baselines):**
   [BASELINE_LADDER.md](BASELINE_LADDER.md).
   Prior: `baseline-t26` — **2026-07-09 audit criticals #52 +
   #53, shipped together** (flags `ENABLE_QSEARCH_CHECK_EVASIONS` +
@@ -42,7 +49,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   startpos d14 = 6,634,033 (= #52 solo arm, rule-50 guard inert at low
   clocks by design), mate-in-1 discriminator `mate 1 g6g7` at d1, rule-50
   warm/fresh oracle equality (`cp 1211 / h2d6`); 216/217 tests (1 by-design
-  skip). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  skip). **Full writeup (all baselines):** [BASELINE_LADDER.md](BASELINE_LADDER.md).
   Prior: `baseline-t25` — **#51: history-heuristic
   piece-index collision fix.** `search_history[13][64]` (and the gated
   continuation-history table) indexed with `static_cast<int>(piece) % 13`
@@ -69,7 +76,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   (LOS 100%, 580g, LLR 2.98) / Intel **+66.33 ± 23.61** (LOS 100%, 440g, LLR
   2.97) — pooled 58.04% / 1020g. Undershoot guard clean on both legs (no
   masked negative interaction; Intel even shows the two winners outperforming
-  either alone). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  either alone). **Full writeup (all baselines):** [BASELINE_LADDER.md](BASELINE_LADDER.md).
   Prior: `baseline-t23` — **#50: Zobrist black-king row out-of-bounds fix**
   (`Piece[PIECE_NB=12][64]` was one row short of the 13-row piece-index
   scheme; the black king's row read 64 `U64`s past the table, producing both
@@ -89,7 +96,7 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t27 legal-move
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t28 SEE pin legality · t27 legal-move
   ordinal PVS/LMR · t26 check-aware
   qsearch + rule-50 TT guard · t25 history-heuristic
   collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·
