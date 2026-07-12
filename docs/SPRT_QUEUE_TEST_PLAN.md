@@ -18,17 +18,25 @@
 > king-safety round's delta; house note: new-feature MSE converts to Elo
 > better than re-fit MSE, and quiet-corpus MSE *under*-states terms that pay
 > in sharp positions (t16 corollary). SPRT decides.
-> **Result — AMD leg (2026-07-12): positive lean, no bound.** **+9.73 ±
-> 14.88** (nElo 14.09 ± 21.53), **LOS 90.02%**, 1000g round cap (LLR 0.75,
-> no bound crossed), 51.40% (W268/L240/D492), DrawRatio 41.60%, PairsRatio
-> 1.18, Ptnml(0-2) [29, 105, 208, 125, 33]. Clean run: zero time losses /
-> illegal moves / disconnects, 1h48m. Arms verified pre-run (test d14 =
-> 8,298,375; baseline huginn_t29.exe d14 = 5,485,978). PGN
-> `gauntlet/huginn_vs_t29_threatsr2_amd.pgn`. Same profile as #58's legs
-> (small positive, cap reached). **Note:** this run used the TB-parity fix
-> (explicit `option.SyzygyPath` both sides — #56 removed the c:\TB
-> auto-probe, which would have made the arms TB-asymmetric on this box).
-> **Intel leg pending — two-machine bar; pool after both legs land.**
+> **Result — BOTH LEGS DONE, same-sign positive, pooled clears the bar:**
+> - **AMD (2026-07-12):** **+9.73 ± 14.88** (nElo 14.09), LOS 90.02%, 1000g
+>   round cap (LLR 0.75, no bound), 51.40% (W268/L240/D492), Ptnml
+>   [29,105,208,125,33]. Clean run (zero forfeits/illegal/disconnects, 1h48m).
+>   PGN `gauntlet/huginn_vs_t29_threatsr2_amd.pgn`.
+> - **Intel (2026-07-12):** **+24.01 ± 14.55** (nElo 35.68), **LOS 99.94%**,
+>   1000g round cap (LLR 2.54, just short of +2.94), 53.45% (W284/L215/D501),
+>   DrawRatio 39.60%, PairsRatio 1.36, Ptnml [15,113,198,136,38]. Clean run,
+>   1h49m. PGN `gauntlet/huginn_vs_t29_threatsr2_intel.pgn`.
+> - **Pooled (inverse-variance): +17.03 ± 10.40 Elo, LOS ≈ 99.9%, 2000g,
+>   52.43%** (W552/L455/D993, Ptnml [44,218,406,261,71]). Both legs positive;
+>   neither crossed the SPRT LLR bound before the 1000g cap, but the pooled
+>   two-machine estimate clears even the strict 95% LOS bar decisively.
+> Both runs used the TB-parity fix (explicit `option.SyzygyPath` both sides —
+> #56 removed the c:\TB auto-probe). Arms verified pre-run on each box
+> (test d14 = 8,298,375; baseline huginn_t29.exe d14 = 5,485,978).
+> **Verdict: SHIP as `baseline-t30`** (largest eval-term ship since t15's
+> threats round 1) — flip `ENABLE_THREATS_R2` default ON on `main` (source +
+> CMake), merge, tag, snapshot `huginn_t30.exe`. User's call to pull the trigger.
 
 ---
 

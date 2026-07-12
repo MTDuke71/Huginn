@@ -619,10 +619,15 @@ outposts; king safety, safe mobility, and outposts are done — see archive):
   time is the SPRT's call); Kiwipete d13 = 1,846,915 / cp −83 / e2a6.
   7 regression tests (`test_eval_threats_r2.cpp`): mirror symmetry both
   arms, term behaviour + unsafe-push filter on the ON arm. Both arms full
-  suite green. **AMD leg (2026-07-12): +9.73 ± 14.88, LOS 90.02%, 1000g
-  cap (LLR 0.75, no bound), 51.40%, clean run** — same small-positive
-  profile as #58's legs. **Next:** Intel leg via `candidate/threats-r2`,
-  then pool — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+  suite green. **Two-machine SPRT vs t29 — both legs positive:** AMD +9.73 ±
+  14.88 (LOS 90.02%, 1000g cap, LLR 0.75) / Intel +24.01 ± 14.55 (**LOS
+  99.94%**, 1000g cap, LLR 2.54), both clean 1h48–49m runs. **Pooled ≈ +17.0 ±
+  10.4 Elo, LOS ≈ 99.9%, 2000g, 52.43%** (W552/L455/D993, Ptnml
+  [44,218,406,261,71]) — neither leg crossed the LLR bound before the cap but
+  the pool clears the strict 95% bar decisively. **Verdict: SHIP as
+  `baseline-t30`** (largest eval-term ship since t15) — flip `ENABLE_THREATS_R2`
+  default ON (source + CMake), merge, tag, snapshot huginn_t30.exe; user's call
+  to trigger. Run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. **Deprioritized**: #41 shows balanced-endgame
   play is already solid (fair-fight cp-loss 13.3). Not yet attempted.
