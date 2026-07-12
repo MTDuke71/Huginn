@@ -64,7 +64,8 @@ set "OPP_OPT="
 
 if "%MODE%"=="baseline" set OPPONENT=huginn_%OPP%.exe
 if "%MODE%"=="baseline" set OPP_NAME=Huginn_%OPP%
-if "%MODE%"=="baseline" set OPP_OPT=option.OwnBook=false
+REM SyzygyPath on both sides: see the note above the fastchess invocation.
+if "%MODE%"=="baseline" set OPP_OPT=option.OwnBook=false option.SyzygyPath=c:\TB\
 
 REM External calibration table (extend here when adding a rated opponent).
 if /I "%OPP%"=="mtl03" set OPPONENT=mtlchess_v03.exe
@@ -161,8 +162,15 @@ if defined SPRT echo   SPRT elo0=0 elo1=10 alpha=0.05 beta=0.05
 echo   results -^> %PGN%
 echo.
 
+REM #56 part 2 removed the c:\TB\ startup auto-probe (SyzygyPath now defaults
+REM to disabled), but every baseline binary up to t29 still auto-probes it, so
+REM gauntlet arms were silently TB-asymmetric on boxes that have c:\TB. Pass
+REM the path explicitly on BOTH sides: post-part-2 builds load TBs iff the
+REM files exist (same net behaviour as the old auto-probe), pre-part-2
+REM baselines just re-initialize the path they already probed. Harmless on
+REM boxes without c:\TB (init fails quietly, both sides TB-less as before).
 "%FASTCHESS%" ^
-  -engine cmd="%FC%\huginn.exe" name=Huginn_current option.OwnBook=false ^
+  -engine cmd="%FC%\huginn.exe" name=Huginn_current option.OwnBook=false option.SyzygyPath=c:\TB\ ^
   -engine cmd="%FC%\%OPPONENT%" name=%OPP_NAME% %OPP_OPT% ^
   -each tc=10+0.1 ^
   %SPRT% ^
