@@ -35,7 +35,7 @@
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
-| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS, paused** — t10→t19 shipped (see archive); roadmap continues below | feature/eval | high |
+| 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
@@ -624,10 +624,12 @@ outposts; king safety, safe mobility, and outposts are done — see archive):
   99.94%**, 1000g cap, LLR 2.54), both clean 1h48–49m runs. **Pooled ≈ +17.0 ±
   10.4 Elo, LOS ≈ 99.9%, 2000g, 52.43%** (W552/L455/D993, Ptnml
   [44,218,406,261,71]) — neither leg crossed the LLR bound before the cap but
-  the pool clears the strict 95% bar decisively. **Verdict: SHIP as
-  `baseline-t30`** (largest eval-term ship since t15) — flip `ENABLE_THREATS_R2`
-  default ON (source + CMake), merge, tag, snapshot huginn_t30.exe; user's call
-  to trigger. Run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+  the pool clears the strict 95% bar decisively. **SHIPPED `baseline-t30`
+  (2026-07-12)** — largest eval-term ship since t15; `ENABLE_THREATS_R2` default
+  flipped ON (source `#ifndef` + CMake option). Ship build verified startpos
+  d14 = 8,298,375 / cp 26 / e2e4; 265 tests green (1 by-design skip); huginn_t30
+  snapshotted. Run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md);
+  writeup in [BASELINE_LADDER.md](BASELINE_LADDER.md).
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. **Deprioritized**: #41 shows balanced-endgame
   play is already solid (fair-fight cp-loss 13.3). Not yet attempted.

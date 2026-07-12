@@ -1,4 +1,10 @@
-# SPRT Queue Test Plan — threats round 2 (#9) candidate off baseline-t29
+# SPRT Queue Test Plan — threats round 2 (#9) candidate off baseline-t29 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t30` SHIPPED (2026-07-12)** — two-machine SPRT vs
+> t29, both legs positive (AMD +9.73 / Intel +24.01), pooled **+17.0 ± 10.4,
+> LOS ≈ 99.9%, 2000g**. `ENABLE_THREATS_R2` default flipped ON (source + CMake);
+> ship build reproduces d14 = 8,298,375 / e2e4; 265 tests green. Largest
+> eval-term ship since t15. Writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Run:** `git checkout candidate/threats-r2` + `test_huginn_gauntlet.bat t29`.
 > Flag `ENABLE_THREATS_R2` (unstick: `cmake -UENABLE_THREATS_R2`).

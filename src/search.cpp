@@ -110,10 +110,10 @@
 // pawn-push threats (the tempo before t15's pawn-attacks-piece can see it),
 // and hanging units in our king's ring (EG-heavy: king activity). Tapered,
 // colour-symmetric, Texel-tunable (tuner --only-new keeps the rest of the
-// vector frozen so the OFF arm stays byte-identical to baseline). DEFAULT OFF
-// pending tune + SPRT; build the ON arm with -DENABLE_THREATS_R2=1.
+// vector frozen so the OFF arm stays byte-identical to baseline). SHIPPED
+// baseline-t30 (default ON); build the pre-t30 OFF arm with -DENABLE_THREATS_R2=0.
 #ifndef ENABLE_THREATS_R2
-#define ENABLE_THREATS_R2 0
+#define ENABLE_THREATS_R2 1  // shipped t30 (two-machine SPRT vs t29, pooled +17.0, LOS ~99.9%)
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

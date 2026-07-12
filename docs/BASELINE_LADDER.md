@@ -9,6 +9,35 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t30 — #9 threats round 2 (hanging / pawn-push / king-ring)
+= t29 + three eval threat classes layered on t15's threats round 1, behind
+`ENABLE_THREATS_R2` (default ON as of this ship): hanging units (attacked +
+undefended), safe pawn-push threats, and hanging units in our king's ring
+(EG-heavy). Params Texel-fitted with the new `--only-new` tuner mode — the six
+new params fit while the rest of the 841-param vector stays frozen, so the OFF
+arm is byte-identical to t29 and SPRT attribution is clean: HANGING 9/18,
+PAWN_PUSH 10/4, BY_KING −5/34 (MG/EG). New-feature ΔMSE 0.056857 → 0.056459
+(−0.000398, ~1.6× the t16 king-safety round). Bake-verified exact.
+
+**Two-machine SPRT vs t29 — both legs positive, pooled clears the bar:**
+- AMD **+9.73 ± 14.88** (nElo 14.09), LOS 90.02%, 1000g cap (LLR 0.75),
+  51.40% (W268/L240/D492), Ptnml [29,105,208,125,33].
+- Intel **+24.01 ± 14.55** (nElo 35.68), LOS 99.94%, 1000g cap (LLR 2.54),
+  53.45% (W284/L215/D501), Ptnml [15,113,198,136,38].
+- **Pooled (inverse-variance): +17.03 ± 10.40, LOS ≈ 99.9%, 52.43% / 2000g**
+  (W552/L455/D993, Ptnml [44,218,406,261,71]).
+
+Neither leg crossed the SPRT LLR bound before the 1000-game cap, but the pooled
+two-machine estimate clears even the strict 95% LOS bar decisively — shipped on
+same-sign two-machine agreement (standard bar). Largest eval-term ship since
+t15's threats round 1. Both runs clean (zero forfeits/illegal/disconnects,
+~1h48m each), first legs to use the TB-parity fix (explicit `SyzygyPath` both
+sides). Ship build verified: startpos d14 = **8,298,375** / cp 26 / e2e4
+(+51% fixed-depth vs t29's 5,485,978 — new terms reshape the tree, PV switches
+to a French line); Kiwipete d13 = 1,846,915 / cp −83 / e2a6; 265 tests green
+(1 by-design skip). Flip: `ENABLE_THREATS_R2` default ON in source `#ifndef` +
+CMake option. PGNs `gauntlet/huginn_vs_t29_threatsr2_{amd,intel}.pgn`.
+
 ### baseline-t29 — #59: en-passant key semantics (normalized EP right)
 = t28 + the audit's #59, fixed **unconditionally** (#50/#51 precedent — key
 semantics with one right answer, no flag). Every double push used to store

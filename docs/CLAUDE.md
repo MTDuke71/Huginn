@@ -13,7 +13,19 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t29` — **#59: en-passant key semantics.**
+- ✅ **Baseline tag**: `baseline-t30` — **#9 threats round 2: hanging /
+  pawn-push / king-ring eval terms** (`ENABLE_THREATS_R2`, default ON).
+  Three eval threat classes layered on t15's threats round 1: hanging units
+  (attacked + undefended), safe pawn-push threats, hanging units in our
+  king's ring. Params Texel-fitted `--only-new` (six new params fit, rest of
+  the 841-vector frozen for clean SPRT attribution): HANGING 9/18, PAWN_PUSH
+  10/4, BY_KING −5/34 (MG/EG). **Two-machine SPRT vs t29, both legs positive:
+  AMD +9.73 ± 14.88 (LOS 90.02%) / Intel +24.01 ± 14.55 (LOS 99.94%), pooled
+  +17.0 ± 10.4, LOS ≈ 99.9%, 2000g** — largest eval-term ship since t15.
+  Signature: startpos d14 = **8,298,375** / cp 26 / e2e4 (+51% vs t29's
+  5,485,978 — the new terms reshape the tree); 265 tests green (1 by-design
+  skip). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t29` — **#59: en-passant key semantics.**
   The EP right is normalized at the source (`MakeMove` + `set_from_fen`
   store it only when a side-to-move pawn can pseudo-capture — Polyglot /
   X-FEN convention), fixing missed threefolds and TT splits from decorative
