@@ -31,7 +31,7 @@
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
 | 56 | UCI parser, options, timing, and search-control contract | **CLOSED (2026-07-12, parts 1–3)** — part 1: full setoption grammar, strict spin parser, honest adverts; part 2: mid-search command pump, race-free atomic-only cancellation, go-infinite bestmove lifetime, Syzygy default disabled + silent startup, subprocess transcript tests; part 3: pure 64-bit `compute_time_budget_ms` (50 ms floor capped by safely-usable remainder — tiny clocks get a 1 ms emergency budget instead of the forfeit-bait overdraft), strict `go` numerics, bare-`go` 5 s default, 0/1/10/49/50/100 ms boundary tests | bug/UCI | high |
 | 57 | Use legal-move ordinal for PVS / LMR | **SHIPPED (2026-07-11, `baseline-t27`)** — AMD-only H1-ACCEPT (+29.98 ± 15.53, LOS 99.99%, user call per #51 precedent); flag default ON | bug/search | high |
-| 58 | Make SEE sound before using it for hard pruning | **CANDIDATE (2026-07-11)** — first-recapture pin filter behind `ENABLE_SEE_LEGALITY` (default OFF, byte-identical off); branch `candidate/see-legality`. Both legs same-sign positive, tight agreement: AMD +5.56 ± 15.11 (LOS 76%), Intel +8.69 ± 14.65 (LOS 88%), each 1000g cap; **pooled ≈ +7.2 ± 10.5, LOS ≈ 91%, 2000g**. Clears cross-machine-agreement ship bar (#15 precedent) + correctness fix — ship-as-t28 or park, user call (arm sigs in SPRT_QUEUE_TEST_PLAN.md: OFF d14 = 7,484,807; ON d14 = 7,128,502 / e2e4) | bug/search | high |
+| 58 | Make SEE sound before using it for hard pruning | **SHIPPED (2026-07-11, `baseline-t28`)** — pin-aware first recapture behind `ENABLE_SEE_LEGALITY`, default ON; two-machine same-sign positive (AMD +5.56 / Intel +8.69, pooled ≈ +7.2 ± 10.5, LOS ≈ 91%, 2000g), shipped on cross-machine agreement + correctness (user call); ship sig d14 = 7,128,502 / cp 30 / e2e4 | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
@@ -446,6 +446,19 @@ pinned to the e8 king, so the real material result is +100.
   exchange tests, plus a qsearch regression proving `Qxf5` is searched.
 - Re-run WAC/LCT2, fixed-depth signatures, node counts, and SPRT; this may trade
   nodes for tactics, so correctness tests precede the performance call.
+
+**Resolution (2026-07-11): SHIPPED in `baseline-t28`.** Took the "make SEE
+legality-aware where it matters most" line: the FIRST recapture is filtered
+for pinned defenders (pin-line captures still count; deeper swap plies stay
+geometric — the first recapture decides the hard-prune sign in the vast
+majority of exchanges). Behind `ENABLE_SEE_LEGALITY`, default ON; flag-off
+byte-identical. The audit's `Qxf5` fixture (pinned-knight recapture) plus
+pin/EP/promotion exchange tests landed with the flag. Two-machine SPRT vs
+t27, both legs same-sign positive — AMD +5.56 ± 15.11 (LOS 76%) / Intel
++8.69 ± 14.65 (LOS 88%), **pooled ≈ +7.2 ± 10.5, LOS ≈ 91% over 2000g** —
+shipped on cross-machine agreement + correctness (user call, #15/#19
+precedent). Ship signature: startpos d14 = 7,128,502 / cp 30 / e2e4.
+Full writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #59: En-passant key semantics — repetition + Polyglot (high)
 
