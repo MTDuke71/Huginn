@@ -232,8 +232,9 @@ void UCIInterface::send_id() {
  */
 void UCIInterface::send_options() {
     std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 64" << std::endl;
-    std::cout << "option name Ponder type check default false" << std::endl;
+    // #56: Threads and Ponder are NOT advertised — the engine is
+    // single-threaded and does not ponder; advertising them promised
+    // support that did not exist. Re-add when implemented.
     std::cout << "option name OwnBook type check default false" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
     std::cout << "option name SyzygyPath type string default c:\\TB\\" << std::endl;
@@ -521,23 +522,56 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
  * @param tokens Vector containing the tokenized setoption command parts.
  *               Expected format: ["setoption", "name", option_name, "value", option_value]
  */
+namespace {
+/// #56: strict spin-option parser — the whole token must be numeric (no
+/// suffix junk, no empty string), with an overflow guard, then clamped to
+/// the advertised [lo, hi] range. Returns false on any malformed input so a
+/// bad `setoption` can never throw (the old naked std::stoi terminated the
+/// process on `setoption name Threads value nope`).
+bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long long& out) {
+    if (s.empty()) return false;
+    size_t idx = (s[0] == '-' || s[0] == '+') ? 1 : 0;
+    if (idx == s.size()) return false;
+    long long v = 0;
+    for (; idx < s.size(); ++idx) {
+        if (s[idx] < '0' || s[idx] > '9') return false;
+        v = v * 10 + (s[idx] - '0');
+        if (v > 1000000000LL) { v = 1000000000LL; break; }  // overflow guard
+    }
+    if (s[0] == '-') v = -v;
+    out = std::max(lo, std::min(hi, v));
+    return true;
+}
+} // namespace
+
 void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
-    if (tokens.size() < 4) return; // Need at least "setoption name X value Y"
-    
-    if (tokens[1] != "name") return;
-    
-    std::string option_name = tokens[2];
-    
-    if (tokens.size() >= 5 && tokens[3] == "value") {
-        std::string option_value = tokens[4];
-        
+    // #56: full `setoption name <name...> [value <value...>]` grammar —
+    // option names and values may contain spaces (BookFile, SyzygyPath
+    // paths), and the value clause may be absent or empty. The old parser
+    // took exactly one token for each, truncating paths at the first space.
+    if (tokens.size() < 3 || tokens[1] != "name") return;
+
+    std::string option_name;
+    std::string option_value;
+    size_t ti = 2;
+    for (; ti < tokens.size() && tokens[ti] != "value"; ++ti) {
+        if (!option_name.empty()) option_name += ' ';
+        option_name += tokens[ti];
+    }
+    if (ti < tokens.size()) {  // consume "value" and join the rest
+        for (++ti; ti < tokens.size(); ++ti) {
+            if (!option_value.empty()) option_value += ' ';
+            option_value += tokens[ti];
+        }
+    }
+    if (option_name.empty()) return;
+
+    {
         if (option_name == "Hash") {
-            // Resize the transposition table to the requested size in MB.
-            // Clamp to the advertised range (1..4096 MB).
-            try {
-                int hash_mb = std::stoi(option_value);
-                if (hash_mb < 1) hash_mb = 1;
-                if (hash_mb > 4096) hash_mb = 4096;
+            // Resize the transposition table to the requested size in MB,
+            // clamped to the advertised range (1..4096 MB); junk is rejected.
+            long long hash_mb = 0;
+            if (parse_spin_clamped(option_value, 1, 4096, hash_mb)) {
                 if (search_engine) {
                     search_engine->tt_table.resize_mb(static_cast<size_t>(hash_mb));
                 }
@@ -546,28 +580,12 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
                               << (search_engine ? search_engine->tt_table.get_size() : 0)
                               << " entries)" << std::endl;
                 }
-            } catch (const std::exception&) {
-                if (debug_mode) {
-                    std::cout << "info string Hash value invalid: " << option_value << std::endl;
-                }
+            } else if (debug_mode) {
+                std::cout << "info string Hash value invalid: " << option_value << std::endl;
             }
         }
-        else if (option_name == "Threads") {
-            int thread_count = std::stoi(option_value);
-            if (thread_count >= 1 && thread_count <= 64) {
-                threads = thread_count;
-                if (debug_mode) {
-                    std::cout << "info string Threads set to " << threads << std::endl;
-                }
-            }
-        }
-        else if (option_name == "Ponder") {
-            bool ponder = (option_value == "true");
-            // Pondering not supported yet
-            if (debug_mode) {
-                std::cout << "info string Ponder set to " << (ponder ? "true" : "false") << " (not supported)" << std::endl;
-            }
-        }
+        // #56: Threads / Ponder handlers removed with their advertisements —
+        // unknown or unadvertised options are ignored per protocol.
         else if (option_name == "OwnBook") {
             bool new_own_book = (option_value == "true");
             if (new_own_book != own_book) {
