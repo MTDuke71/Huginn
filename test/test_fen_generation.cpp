@@ -33,14 +33,16 @@ TEST_F(FENGenerationTest, GenerateKiwipetePositionFEN) {
 }
 
 TEST_F(FENGenerationTest, GeneratePositionWithEnPassant) {
-    // Test position with en passant square
-    const std::string en_passant_fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
-    
-    ASSERT_TRUE(pos.set_from_fen(en_passant_fen));
-    std::string generated_fen = pos.to_fen();
-    
-    EXPECT_EQ(generated_fen, en_passant_fen)
-        << "Generated FEN should match input FEN with en passant square";
+    // #59: a decorative (uncapturable) EP square is normalized away, so the
+    // regenerated FEN prints "-"; a capturable EP square round-trips intact.
+    ASSERT_TRUE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"));
+    EXPECT_EQ(pos.to_fen(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+
+    const std::string capturable_fen =
+        "rnbqkb1r/ppp1p1pp/5n2/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 4";
+    ASSERT_TRUE(pos.set_from_fen(capturable_fen));
+    EXPECT_EQ(pos.to_fen(), capturable_fen)
+        << "Capturable en passant square must round-trip";
 }
 
 TEST_F(FENGenerationTest, GeneratePositionWithPartialCastling) {
@@ -81,7 +83,9 @@ TEST_F(FENGenerationTest, RoundTripFENConversion) {
     std::vector<std::string> test_fens = {
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-        "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",
+        // #59: EP squares only round-trip when capturable — this one is
+        // (the e5 pawn can take f6 en passant).
+        "rnbqkb1r/ppp1p1pp/5n2/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 4",
         "rnbqkb1r/pppppppp/5n2/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2",
         "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 50 25",
         "8/8/8/8/8/8/8/8 b - - 0 1"

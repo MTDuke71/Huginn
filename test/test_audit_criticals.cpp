@@ -170,8 +170,12 @@ TEST_F(AuditCriticalsTest, StructuralValidatorGatesTheUciBoundary) {
     ASSERT_TRUE(pos.set_from_fen("k7/8/8/8/8/8/5q2/4K3 b - - 0 1"));       // idle side (White) in check
     EXPECT_FALSE(validate_uci_position(pos));
 
-    ASSERT_TRUE(pos.set_from_fen("k7/8/8/8/8/8/8/K7 b - e3 0 1"));         // EP square without the pushed pawn
-    EXPECT_FALSE(validate_uci_position(pos));
+    // #59: an EP square with no capturer is normalized away at parse time,
+    // so the "EP square without the pushed pawn" state can no longer be
+    // constructed — the FEN parses to a clean no-EP state and is valid.
+    ASSERT_TRUE(pos.set_from_fen("k7/8/8/8/8/8/8/K7 b - e3 0 1"));
+    EXPECT_EQ(pos.ep_square, -1);
+    EXPECT_TRUE(validate_uci_position(pos));
 
     // And the good cases pass.
     ASSERT_TRUE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
@@ -190,7 +194,8 @@ TEST_F(AuditCriticalsTest, UciPositionCommandIsTransactional) {
 
     uci.handle_position(tokens("position startpos moves e2e4"));
     const std::string good_fen = uci.current_position().to_fen();
-    EXPECT_EQ(good_fen, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+    // #59: e3 is uncapturable after 1.e4, so the normalized FEN prints "-".
+    EXPECT_EQ(good_fen, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
 
     // Illegal third move: e4e5 is blocked after e7e5. Nothing may change.
     uci.handle_position(tokens("position startpos moves e2e4 e7e5 e4e5"));

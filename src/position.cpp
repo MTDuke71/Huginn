@@ -27,6 +27,7 @@
 #include "zobrist.hpp"
 #include "movegen.hpp"  // For in_check function
 #include "attack_detection.hpp"  // For Huginn::SqAttacked function
+#include "attack_tables.hpp"     // #59: pawn_attacks for EP-right normalization
 
 /// @brief Incrementally fold the side-to-move, castling-rights, and en-passant
 ///        changes of a move into the Zobrist key. Piece add/remove XORs are done
@@ -273,7 +274,16 @@ bool Position::set_from_fen(const std::string& fen) {
                 (tokens[3][1] == '3' && parsed.side_to_move == Color::Black))) {
         File ep_file = File(tokens[3][0] - 'a');
         Rank ep_rank = Rank(tokens[3][1] - '1');
-        parsed.ep_square = sq64(ep_file, ep_rank);
+        int ep_sq = sq64(ep_file, ep_rank);
+        // #59: normalize on input exactly like MakeMove — keep the EP right
+        // only if a side-to-move pawn could pseudo-capture onto it, so a FEN
+        // with a decorative EP square hashes identically to the same
+        // placement without one.
+        const Color pusher = !parsed.side_to_move;
+        parsed.ep_square =
+            (pawn_attacks[int(pusher)][ep_sq] &
+             parsed.piece_bitboards[int(parsed.side_to_move)][int(PieceType::Pawn)])
+                ? ep_sq : -1;
     } else {
         return false;
     }
@@ -462,14 +472,24 @@ int Position::MakeMove(const S_MOVE& move) {
     // Reset en passant square 
     ep_square = -1;
     
-    // Set en passant square for pawn double moves
+    // Set en passant square for pawn double moves.
+    // #59: the EP right is stored ONLY when an enemy pawn could pseudo-
+    // capture onto it (Polyglot / X-FEN convention). An uncapturable EP
+    // square used to be stored and hashed, making positions with identical
+    // legal move sets hash differently — missed threefolds and TT splits.
+    // pawn_attacks[pusher][ep_sq] = the two squares a capturer must occupy.
     if (type_of(moving_piece) == PieceType::Pawn && !move.is_capture()) {
         int from_rank = from >> 3;  // sq64 rank 0..7
         int to_rank = to >> 3;
 
         if (abs(to_rank - from_rank) == 2) {  // Pawn moved two squares
             int ep_rank = (from_rank + to_rank) / 2;
-            ep_square = sq64(File(to & 7), Rank(ep_rank));
+            int ep_sq = sq64(File(to & 7), Rank(ep_rank));
+            const Color pusher = color_of(moving_piece);
+            if (pawn_attacks[int(pusher)][ep_sq] &
+                piece_bitboards[int(!pusher)][int(PieceType::Pawn)]) {
+                ep_square = ep_sq;
+            }
         }
     }
 

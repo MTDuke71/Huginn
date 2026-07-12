@@ -326,36 +326,15 @@ uint64_t PolyglotBook::get_polyglot_key(const Position& pos) const {
     if (pos.castling_rights & CASTLE_BK) key ^= PolyglotKeys::RANDOM64[PolyglotKeys::OFFSET_CASTLE + 2]; // black short
     if (pos.castling_rights & CASTLE_BQ) key ^= PolyglotKeys::RANDOM64[PolyglotKeys::OFFSET_CASTLE + 3]; // black long
 
-    // XOR en passant file (only if there's a pawn next to the pushed pawn)
+    // XOR en passant file. #59: ep_square is normalized at the source
+    // (MakeMove / set_from_fen store it only when a side-to-move pawn can
+    // pseudo-capture onto it), which is exactly the Polyglot spec condition
+    // — so hash it unconditionally here. The old in-place adjacency check
+    // scanned the EP TARGET rank for capturers, but they stand one rank
+    // behind it, so capturable-EP positions were (wrongly) never hashed.
     if (pos.ep_square != -1) {
         int ep_file = pos.ep_square & 7;   // ep_square is sq64
-        if (ep_file >= 0 && ep_file < 8) {
-            // Check if there's actually a pawn that could capture en passant
-            bool can_capture_ep = false;
-            int ep_rank = pos.ep_square >> 3;
-
-            // Check left and right of the en passant square for opposing pawns
-            if (ep_file > 0) {  // Check left
-                int left_sq = ep_rank * 8 + (ep_file - 1);
-                Piece left_piece = pos.at_sq64(left_sq);
-                if (get_piece_type(left_piece) == PieceType::Pawn &&
-                    get_piece_color(left_piece) == pos.side_to_move) {
-                    can_capture_ep = true;
-                }
-            }
-            if (ep_file < 7) {  // Check right
-                int right_sq = ep_rank * 8 + (ep_file + 1);
-                Piece right_piece = pos.at_sq64(right_sq);
-                if (get_piece_type(right_piece) == PieceType::Pawn && 
-                    get_piece_color(right_piece) == pos.side_to_move) {
-                    can_capture_ep = true;
-                }
-            }
-            
-            if (can_capture_ep) {
-                key ^= PolyglotKeys::RANDOM64[PolyglotKeys::OFFSET_EP + ep_file];
-            }
-        }
+        key ^= PolyglotKeys::RANDOM64[PolyglotKeys::OFFSET_EP + ep_file];
     }
 
     // XOR side to move: If WHITE is to move, XOR the RandomTurn entry

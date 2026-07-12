@@ -21,6 +21,8 @@
 #include "../src/position.hpp"
 #include "../src/search.hpp"
 #include "../src/see.hpp"
+#include "../src/zobrist.hpp"
+#include "../src/polyglot_book.hpp"
 
 #include <string>
 
@@ -142,6 +144,90 @@ TEST_F(AuditHelpersTest, SeePinnedDefenderOnPinLineStillCounts) {
     ASSERT_TRUE(pos.set_from_fen("4k3/8/4r3/4p3/8/8/4Q3/4K3 w - - 0 1"));
     S_MOVE qxe5 = make_capture(12 /*e2*/, 36 /*e5*/, PieceType::Pawn);
     EXPECT_LT(see(pos, qxe5), 0) << "Re6 recaptures along its own pin line";
+}
+
+// ---- #59: en-passant key semantics (normalized EP right) --------------------
+
+// Find and make the legal move printing as `uci` (e.g. "a7a5"); fails the
+// test if absent or illegal.
+static void make_uci(Position& pos, const std::string& uci) {
+    S_MOVELIST legal;
+    generate_legal_moves(pos, legal);
+    for (int i = 0; i < legal.count; ++i) {
+        if (legal.moves[i].to_string() == uci) {
+            ASSERT_EQ(pos.MakeMove(legal.moves[i]), 1) << uci;
+            return;
+        }
+    }
+    FAIL() << uci << " not legal here";
+}
+
+// BACKLOG #59 repetition fixture: after a7a5 no White pawn can capture on a6,
+// so the EP right must not be stored/hashed — the post-push position must
+// hash identically to the same placement reached without any EP square, and
+// knight-shuffle cycles return to exactly that key (threefold works).
+TEST_F(AuditHelpersTest, UncapturableEpDoesNotChangeKey) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("4k1n1/p7/8/8/8/8/8/4K1N1 b - - 0 1"));
+    make_uci(pos, "a7a5");
+    EXPECT_EQ(pos.ep_square, -1) << "uncapturable EP right must be dropped";
+
+    Position ref;
+    ASSERT_TRUE(ref.set_from_fen("4k1n1/8/8/p7/8/8/8/4K1N1 w - - 0 2"));
+    EXPECT_EQ(pos.zobrist_key, ref.zobrist_key);
+
+    const uint64_t after_push = pos.zobrist_key;
+    for (int cycle = 0; cycle < 2; ++cycle) {
+        make_uci(pos, "g1f3"); make_uci(pos, "g8f6");
+        make_uci(pos, "f3g1"); make_uci(pos, "f6g8");
+        EXPECT_EQ(pos.zobrist_key, after_push) << "cycle " << cycle;
+    }
+}
+
+// Capturable EP is kept — and the incremental key stays equal to the full
+// recomputation across double pushes and EP expiry.
+TEST_F(AuditHelpersTest, CapturableEpKeptAndKeysConsistent) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+    for (const char* m : {"e2e4", "d7d5", "e4e5", "f7f5"}) {
+        make_uci(pos, m);
+        EXPECT_EQ(pos.zobrist_key, Zobrist::compute(pos)) << m;
+    }
+    EXPECT_EQ(pos.ep_square, 45) << "f6 EP right is capturable by the e5 pawn";
+    make_uci(pos, "g1f3");  // EP expires
+    EXPECT_EQ(pos.ep_square, -1);
+    EXPECT_EQ(pos.zobrist_key, Zobrist::compute(pos));
+}
+
+// FEN input is normalized the same way, and a decorative EP square round-trips
+// to "-".
+TEST_F(AuditHelpersTest, FenEpNormalization) {
+    Position decorative;
+    ASSERT_TRUE(decorative.set_from_fen(
+        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"));
+    EXPECT_EQ(decorative.ep_square, -1);
+
+    Position plain;
+    ASSERT_TRUE(plain.set_from_fen(
+        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"));
+    EXPECT_EQ(decorative.zobrist_key, plain.zobrist_key);
+
+    Position capturable;
+    ASSERT_TRUE(capturable.set_from_fen(
+        "rnbqkb1r/ppp1p1pp/5n2/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 4"));
+    EXPECT_EQ(capturable.ep_square, 45);
+}
+
+// Polyglot spec anchors (book-format reference keys): startpos, and the
+// canonical capturable-EP line where the spec hashes the EP file.
+TEST_F(AuditHelpersTest, PolyglotCanonicalKeys) {
+    PolyglotBook book;
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+    EXPECT_EQ(book.get_polyglot_key(pos), 0x463B96181691FC9CULL);
+
+    for (const char* m : {"e2e4", "d7d5", "e4e5", "f7f5"}) make_uci(pos, m);
+    EXPECT_EQ(book.get_polyglot_key(pos), 0x22A48B5A8E47FF78ULL);
 }
 
 // ---- #57: pinned-position fixture (arm-agnostic sanity) ---------------------

@@ -80,16 +80,23 @@ TEST_F(FENTest, ParseKiwiPetePosition) {
 }
 
 TEST_F(FENTest, ParsePositionWithEnPassant) {
-    // Position with en passant square
+    // #59: the EP right is normalized at parse time — e3 after 1.e4 has no
+    // black capturer, so it is dropped; a genuinely capturable EP is kept.
     const std::string fen_with_ep = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
-    
+
     ASSERT_TRUE(pos.set_from_fen(fen_with_ep));
-    
+
     EXPECT_EQ(pos.side_to_move, Color::Black);
     EXPECT_EQ(pos.castling_rights, CASTLE_ALL);
-    EXPECT_EQ(pos.ep_square, sq64(File::E, Rank::R3));
+    EXPECT_EQ(pos.ep_square, -1);
     EXPECT_EQ(pos.halfmove_clock, 0);
     EXPECT_EQ(pos.fullmove_number, 1);
+
+    // Capturable EP (black f5-pawn beside the white e5... i.e. white e5 pawn
+    // can take f6 en passant) survives parsing.
+    ASSERT_TRUE(pos.set_from_fen(
+        "rnbqkb1r/ppp1p1pp/5n2/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 4"));
+    EXPECT_EQ(pos.ep_square, sq64(File::F, Rank::R6));
 }
 
 TEST_F(FENTest, ParsePositionWithPartialCastling) {
