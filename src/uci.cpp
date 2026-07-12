@@ -24,6 +24,7 @@
 #include "square.hpp"
 #include "uci_utils.hpp"
 #include "movegen.hpp"
+#include "input_checking.hpp"
 #include <fstream>
 #include <algorithm>
 
@@ -42,18 +43,19 @@
 UCIInterface::UCIInterface() {
     // Initialize the chess engine
     Huginn::init();
-    
+
     // Set starting position
     position.set_startpos();
-    
-    // Initialize tablebase
+
+    // #56: tablebases stay DISABLED until the GUI configures SyzygyPath.
+    // The old constructor auto-probed a hard-coded c:\TB\ and the tablebase
+    // layer wrote a raw status line to stdout before the GUI even sent `uci`
+    // — unsolicited startup output the protocol forbids.
     tablebase = std::make_unique<Huginn::SyzygyTablebase>();
-    // Automatically initialize with hardcoded path
-    tablebase->initialize("");  // Empty string will use the hardcoded d:\TB\ path
-    
+
     // Initialize search engine with tablebase
     search_engine = std::make_unique<Huginn::Engine>(tablebase.get());
-    
+
     // Load opening book if enabled
     if (own_book) {
         load_opening_book();
@@ -88,16 +90,32 @@ void UCIInterface::run() {
     // Set stdin and stdout to unbuffered mode for immediate GUI communication
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stdout, NULL, _IONBF, 0);
-    
+
     std::string line;
     while (std::getline(std::cin, line)) {
-        if (line.empty()) continue;
-        auto tokens = split_string(line);
-        if (tokens.empty()) continue;
-        const std::string& command = tokens[0];
+        if (!dispatch_command(line)) return;
+        // #56: commands the mid-search pump queued (position/go/setoption/...)
+        // replay in arrival order BEFORE reading stdin again — anything the GUI
+        // sent after them is still sitting in the stdin buffer, so global
+        // command order is preserved.
+        while (!pending_commands.empty()) {
+            std::string queued = std::move(pending_commands.front());
+            pending_commands.pop_front();
+            if (!dispatch_command(queued)) return;
+        }
+    }
+}
 
-        if (debug_mode) std::cout << "info string Received command: " << line << std::endl;
+bool UCIInterface::dispatch_command(const std::string& line) {
+    if (quit_received) return false;  // quit arrived mid-search: exit before anything else
+    if (line.empty()) return true;
+    auto tokens = split_string(line);
+    if (tokens.empty()) return true;
+    const std::string& command = tokens[0];
 
+    if (debug_mode) std::cout << "info string Received command: " << line << std::endl;
+
+    {
         if (command == "uci") {
             send_id();
             send_options();
@@ -186,25 +204,23 @@ void UCIInterface::run() {
             std::cout << "eval " << cp << std::endl;
         }
         else if (command == "stop") {
-            should_stop = true;
-            search_engine->stop();
-            Huginn::SearchInfo* info_ptr = running_info.load();
-            if (info_ptr) {
-                info_ptr->stop_time = std::chrono::steady_clock::now();
-                info_ptr->stopped = true;
-            }
-            std::cout.flush(); // Ensure immediate response to GUI
+            // #56: searches are synchronous — a `stop` DURING a search is
+            // consumed by the mid-search pump, so by the time this loop sees
+            // one there is no search running and the bestmove is already out.
+            // A stale stop is ignored per protocol.
+            if (debug_mode) std::cout << "info string stop with no search running (ignored)" << std::endl;
         }
         else if (command == "ponderhit") {
             if (debug_mode) std::cout << "info string Ponder hit" << std::endl;
         }
         else if (command == "quit") {
-            break;
+            return false;
         }
         else {
             if (debug_mode) std::cout << "info string Unknown command: " << command << std::endl;
         }
     }
+    return !quit_received;  // quit may also arrive via the mid-search pump
 }
 
 /**
@@ -225,10 +241,10 @@ void UCIInterface::send_id() {
  * This function declares the configurable options that the chess GUI can modify to
  * customize engine behavior. Each option includes its type, default value, and valid
  * range where applicable. The options include:
- * - Threads: Number of search threads (1-64)
- * - Ponder: Enable/disable pondering mode
+ * - Hash: Transposition table size in MB
  * - OwnBook: Enable/disable opening book usage
  * - BookFile: Path to the opening book file
+ * - SyzygyPath: Tablebase directory (default empty = disabled)
  */
 void UCIInterface::send_options() {
     std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
@@ -237,7 +253,9 @@ void UCIInterface::send_options() {
     // support that did not exist. Re-add when implemented.
     std::cout << "option name OwnBook type check default false" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
-    std::cout << "option name SyzygyPath type string default c:\\TB\\" << std::endl;
+    // #56: tablebases default to DISABLED — no hard-coded c:\TB\ auto-probe.
+    // `<empty>` is the UCI convention for an empty string default.
+    std::cout << "option name SyzygyPath type string default <empty>" << std::endl;
 }
 
 /**
@@ -358,17 +376,17 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
  */
 void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     if (debug_mode) std::cout << "info string Starting search" << std::endl;
-    should_stop = false;
 
     Huginn::MinimalLimits limits;
     limits.infinite = false;
     limits.max_time_ms = 0;  // Default to no time limit
     limits.max_depth = 25;   // Default search depth
-    
+
     if (debug_mode) std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
 
     // VICE Part 69: Parse go command parameters
     bool depth_specified = false;
+    bool infinite_requested = false;  // the literal `go infinite` token (#56)
     int winc = 0, binc = 0, movestogo = 0, wtime = -1, btime = -1;
     int movetime = -1;  // Track movetime separately for better debugging
     
@@ -447,12 +465,22 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         }
         else if (tokens[i] == "infinite") {
             limits.infinite = true;
+            infinite_requested = true;
             limits.max_time_ms = 0;
             if (debug_mode) std::cout << "info string Parsed infinite search mode" << std::endl;
         }
         else if (debug_mode) {
             std::cout << "info string Unknown go parameter: " << tokens[i] << std::endl;
         }
+    }
+
+    // #56: `go infinite` must run until `stop` — the old default depth cap of
+    // 25 let it return a bestmove on its own, which the protocol forbids. Give
+    // it the engine's full depth range (every ply-indexed structure is guarded
+    // at 64); if the loop still completes (mate/stalemate root), search_best_move
+    // parks in wait_for_stop() instead of emitting bestmove.
+    if (infinite_requested && !depth_specified) {
+        limits.max_depth = Huginn::MAX_DEPTH;
     }
 
     // VICE Part 69: Set search mode based on parsed parameters
@@ -504,11 +532,11 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     }
 
     if (debug_mode) {
-        std::cout << "info string Final search parameters: depth=" << limits.max_depth 
+        std::cout << "info string Final search parameters: depth=" << limits.max_depth
                   << " time=" << limits.max_time_ms << "ms infinite=" << (limits.infinite ? "true" : "false") << std::endl;
     }
 
-    search_best_move(limits);
+    search_best_move(limits, infinite_requested);
 }
 
 /**
@@ -617,20 +645,17 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
         }
         else if (option_name == "SyzygyPath") {
             if (tablebase) {
+                // #56: `info string` feedback is unconditional — it is a
+                // protocol-safe response to an explicit configuration action,
+                // and a silent failure here means playing without TBs the
+                // user thinks are on.
                 if (option_value.empty() || option_value == "<empty>") {
                     tablebase->shutdown();
-                    if (debug_mode) {
-                        std::cout << "info string Syzygy tablebases disabled" << std::endl;
-                    }
+                    std::cout << "info string Syzygy tablebases disabled" << std::endl;
+                } else if (tablebase->initialize(option_value)) {
+                    std::cout << "info string " << tablebase->get_info() << std::endl;
                 } else {
-                    bool success = tablebase->initialize(option_value);
-                    if (debug_mode) {
-                        if (success) {
-                            std::cout << "info string " << tablebase->get_info() << std::endl;
-                        } else {
-                            std::cout << "info string Failed to load Syzygy tablebases from: " << option_value << std::endl;
-                        }
-                    }
+                    std::cout << "info string Failed to load Syzygy tablebases from: " << option_value << std::endl;
                 }
             }
         }
@@ -649,24 +674,27 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
  *               and other search parameters that control how long and deep
  *               the engine should search.
  */
-void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // Changed from SearchLimits
-    is_searching = true;
-    
+void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool hold_for_stop) {
     // Reset the search engine
     search_engine->reset();
-    
+
     // Engine uses a different search interface - searchPosition
     Huginn::SearchInfo info;
     info.max_depth = limits.max_depth;
     info.stopped = false;
     info.infinite = limits.infinite;
-    
+
+    // #56: install the mid-search command pump. checkup() calls it when stdin
+    // has pending input: `isready` is answered without stopping, `stop`/`quit`
+    // flag this SearchInfo (on this thread — no cross-thread writes), and
+    // other commands queue for the run() loop to replay after bestmove.
+    info.on_input = [this](Huginn::SearchInfo& i) { pump_search_input(i); };
+
     // Convert time limits
     auto search_start = std::chrono::steady_clock::now();
     info.start_time = search_start;
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
-    
-    // Perform the search using Engine interface
+
     // Perform the search using Engine interface
     S_MOVE best_move;
     // Snapshot the pre-search root position. searchPosition() runs on
@@ -676,8 +704,6 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
     // forfeits the game on "Illegal move" — BACKLOG #12-followup). We validate
     // the chosen move against this clean snapshot before emitting bestmove.
     auto pre_search = position;
-    // Publish pointer to running SearchInfo so 'stop' can update it
-    running_info.store(&info);
     try {
         best_move = search_engine->searchPosition(position, info);  // Engine method
     } catch (const std::exception& e) {
@@ -689,9 +715,7 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
         std::cout.flush();
         best_move.move = 0; // Set to invalid move to trigger fallback
     }
-    // Clear running_info pointer
-    running_info.store(nullptr);
-    
+
     // Illegal-move / board-desync guard. Validate the search's chosen move
     // against a freshly generated *legal* move list for the clean pre-search
     // position. This catches both "no move returned" (best_move == 0) and the
@@ -732,21 +756,28 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits) {  // C
         position = pre_search;
     }
     
+    // #56: `go infinite` contract — bestmove must not be sent until the GUI
+    // says stop. If the search completed on its own (mate/stalemate root, or
+    // the full depth range exhausted) rather than being stopped, park here:
+    // keep answering `isready` and queueing commands until stop/quit arrives.
+    if (hold_for_stop && !info.stopped && !info.quit && !quit_received) {
+        wait_for_stop(info);
+    }
+    if (info.quit) quit_received = true;
+
     // Engine already outputs complete UCI info during search
     // No need for additional summary output here
-    
+
     // Send the best move - use Engine's move_to_uci
     if (best_move.move != 0) {
         std::string uci_move = search_engine->move_to_uci(best_move);  // Engine method
         std::cout << "bestmove " << uci_move << std::endl;
         std::cout.flush(); // Ensure immediate output
     } else {
-        // Last resort fallback - this should never happen
+        // Last resort fallback (no legal moves at root: mate or stalemate)
         std::cout << "bestmove 0000" << std::endl;
         std::cout.flush(); // Ensure immediate output
     }
-    
-    is_searching = false;
 }
 
 /**
@@ -803,19 +834,96 @@ void UCIInterface::load_opening_book() {
 }
 
 /**
- * @brief Signals the search engine to stop the current search operation.
+ * @brief Signals the running search to stop, safely from any thread.
  *
- * This function immediately terminates any ongoing search process when
- * the "stop" UCI command is received. It sets the stop flag, notifies
- * the search engine to halt, and records the stop time for accurate
- * performance tracking. This ensures responsive control from chess GUIs.
+ * #56: sets ONLY the engine's atomic stop flag. checkup() (and wait_for_stop)
+ * poll it on the searching thread and translate it into the local SearchInfo,
+ * so the stack SearchInfo has a single writer. The old implementation
+ * published a raw pointer to the stack SearchInfo and wrote its non-atomic
+ * stopped/stop_time fields from this thread — a data race and a lifetime
+ * hazard if the search unwound while the write was in flight.
  */
 void UCIInterface::signal_stop() {
-    should_stop = true;
     if (search_engine) search_engine->stop();
-    Huginn::SearchInfo* info_ptr = running_info.load();
-    if (info_ptr) {
-        info_ptr->stop_time = std::chrono::steady_clock::now();
-        info_ptr->stopped = true;
+}
+
+/**
+ * @brief #56 mid-search pump: handle one command line that arrived during a
+ *        search. See uci.hpp for the per-command contract.
+ */
+bool UCIInterface::handle_search_input_line(const std::string& line, Huginn::SearchInfo& info) {
+    auto tokens = split_string(line);
+    if (tokens.empty()) return true;
+    const std::string& command = tokens[0];
+
+    if (command == "isready") {
+        // The spec is explicit: isready sent while calculating must be
+        // answered immediately WITHOUT stopping the search.
+        std::cout << "readyok" << std::endl;
+        std::cout.flush();
+    }
+    else if (command == "stop") {
+        info.stopped = true;
+        return false;
+    }
+    else if (command == "quit") {
+        info.stopped = true;
+        info.quit = true;
+        quit_received = true;
+        return false;
+    }
+    else if (command == "debug") {
+        if (tokens.size() > 1) debug_mode = (tokens[1] == "on");
+    }
+    else if (command == "ponderhit") {
+        // No pondering support (not advertised) — nothing to switch.
+        if (debug_mode) std::cout << "info string ponderhit ignored (no ponder)" << std::endl;
+    }
+    else {
+        // position / go / setoption / ucinewgame / ... — NOT a reason to stop.
+        // Queue for the run() loop to replay in order after bestmove.
+        pending_commands.push_back(line);
+        if (debug_mode) std::cout << "info string queued during search: " << line << std::endl;
+    }
+    return true;
+}
+
+/**
+ * @brief Drain every line currently waiting on stdin through the pump.
+ *
+ * Installed as SearchInfo::on_input; called from checkup() on the searching
+ * thread whenever input_is_waiting(). Stops draining once stop/quit is seen —
+ * any lines still in the stdin buffer are read by the run() loop after
+ * bestmove, which drains pending_commands first, preserving arrival order.
+ * EOF (GUI closed the pipe) is treated as quit.
+ */
+void UCIInterface::pump_search_input(Huginn::SearchInfo& info) {
+    while (Huginn::input_is_waiting()) {
+        std::string line;
+        if (!std::getline(std::cin, line)) {
+            info.stopped = true;
+            info.quit = true;
+            quit_received = true;
+            return;
+        }
+        if (!handle_search_input_line(line, info)) return;
+    }
+}
+
+/**
+ * @brief Park after a naturally-completed `go infinite` search (#56).
+ *
+ * The UCI infinite contract forbids sending bestmove before `stop`. Poll both
+ * stdin (isready still answered, commands still queued) and the engine's
+ * atomic stop flag (signal_stop from tests / another thread) until released.
+ */
+void UCIInterface::wait_for_stop(Huginn::SearchInfo& info) {
+    while (!info.stopped && !info.quit && !quit_received) {
+        if (search_engine->should_stop.load(std::memory_order_relaxed)) break;
+        if (Huginn::input_is_waiting()) {
+            pump_search_input(info);
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
     }
 }

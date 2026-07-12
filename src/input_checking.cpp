@@ -165,6 +165,12 @@ bool input_is_waiting() {
  */
 
 void read_input(SearchInfo& info) {
+    // #56: this is now the FALLBACK path only — when the UCI layer drives the
+    // search it installs SearchInfo::on_input (UCIInterface::pump_search_input),
+    // which consumes and classifies mid-search lines properly (`isready`
+    // answered without stopping, `stop`/`quit` applied, the rest queued).
+    // Bare-Engine callers (tests, bench) keep the conservative behaviour below.
+    //
     // CRITICAL: do NOT consume the input line here.
     //
     // The old implementation called std::getline and discarded any line

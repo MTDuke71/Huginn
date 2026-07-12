@@ -26,7 +26,9 @@
 #include "transposition_table.hpp"
 #include "polyglot_book.hpp"
 #include "syzygy_tablebase.hpp"
+#include <atomic>
 #include <chrono>
+#include <functional>
 #include <vector>
 
 namespace Huginn {
@@ -148,6 +150,15 @@ struct SearchInfo {
     S_MOVE pv_line[64][64];
     int pv_length[64];
 
+    // #56: mid-search input pump installed by the UCI layer. When checkup()
+    // sees pending stdin input it calls this instead of read_input(); the UCI
+    // pump answers `isready` with `readyok` WITHOUT stopping the search,
+    // applies `stop`/`quit` to this SearchInfo, and queues everything else
+    // (`position`, `go`, `setoption`, ...) for the command loop to replay in
+    // order after `bestmove`. Empty (bare-Engine use: tests, bench) falls back
+    // to read_input()'s conservative any-input-stops behaviour.
+    std::function<void(SearchInfo&)> on_input;
+
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
                    quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
                    best_move(), fh(0), fhf(0), null_cut(0),
@@ -196,7 +207,12 @@ public:  // Make members public for easier access
         clear_search_tables();
     }
     
-    bool should_stop = false;
+    // #56: the ONE cross-thread cancellation channel. stop()/signal_stop()
+    // (any thread) set it; checkup() polls it and translates it into
+    // info.stopped ON the searching thread, so SearchInfo itself is never
+    // written cross-thread (the old path published a raw pointer to the
+    // stack SearchInfo and wrote its non-atomic fields from another thread).
+    std::atomic<bool> should_stop{false};
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;

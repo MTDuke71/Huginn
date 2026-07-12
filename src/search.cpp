@@ -1695,6 +1695,14 @@ void Engine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
 
+    // #56: race-free cancellation — stop()/signal_stop() (possibly another
+    // thread) raise the engine's atomic; it is translated into info.stopped
+    // HERE, on the searching thread, so SearchInfo has a single writer.
+    if (should_stop.load(std::memory_order_relaxed)) {
+        info.stopped = true;
+        return;
+    }
+
     // VICE Part 70: Check for GUI input during search (3:23).
     // The Windows console poll (GetNumberOfConsoleInputEvents / PeekConsoleInput)
     // is ~5us — profiling a `go depth` run showed ~6% of total time spent here
@@ -1704,7 +1712,11 @@ void Engine::checkup(SearchInfo& info) {
     // a multiple of checkup()'s 2048-node interval so it still lands on a call.
     constexpr uint64_t INPUT_CHECK_MASK = 32767;  // poll stdin every ~32768 nodes
     if ((info.nodes & INPUT_CHECK_MASK) == 0 && input_is_waiting()) {
-        read_input(info);
+        // #56: the UCI layer installs a pump that answers `isready` without
+        // stopping, applies `stop`/`quit`, and queues other commands. Bare
+        // Engine use keeps read_input()'s any-input-stops fallback.
+        if (info.on_input) info.on_input(info);
+        else read_input(info);
     }
 
     // Skip time management if this is a depth-only search (UCI go depth command)

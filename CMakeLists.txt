@@ -538,6 +538,8 @@ if(BUILD_TESTING)
     test/test_root_twofold_avoid.cpp
     test/test_audit_criticals.cpp
     test/test_audit_helpers.cpp
+    test/test_uci_search_control.cpp
+    test/test_uci_transcript.cpp
     )
 
     add_executable(huginn_tests
@@ -582,7 +584,7 @@ if(BUILD_TESTING)
     # needs -C on multi-config generators, and now FAILS on empty discovery.
     add_custom_target(check
         COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure --no-tests=error -LE heavy
-        DEPENDS huginn_tests perft_suite
+        DEPENDS huginn_tests perft_suite huginn
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running test suite (excluding heavy-labelled jobs)"
     )

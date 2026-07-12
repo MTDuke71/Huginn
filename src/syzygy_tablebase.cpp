@@ -14,8 +14,8 @@
 
 namespace Huginn {
 
-SyzygyTablebase::SyzygyTablebase() 
-    : tablebase_path("c:\\TB\\"), is_initialized(false), max_pieces(0) {
+SyzygyTablebase::SyzygyTablebase()
+    : tablebase_path(""), is_initialized(false), max_pieces(0) {
 }
 
 SyzygyTablebase::~SyzygyTablebase() {
@@ -25,44 +25,50 @@ SyzygyTablebase::~SyzygyTablebase() {
 bool SyzygyTablebase::initialize(const std::string& path) {
     // Shutdown any existing tablebase first
     shutdown();
-    
-    // Use hardcoded path if provided path is empty, otherwise use provided path
-    std::string target_path = path.empty() ? "c:\\TB\\" : path;
-    
+
+    // #56: no hard-coded fallback path — an empty path means tablebases are
+    // deliberately disabled (the UCI SyzygyPath default). All diagnostics go
+    // to stderr: this can run before/around UCI traffic, and raw lines on
+    // stdout corrupt the protocol stream.
+    if (path.empty()) {
+        return false;
+    }
+    const std::string& target_path = path;
+
     #if FATHOM_AVAILABLE
     // Real Fathom implementation
     if (!tb_init(target_path.c_str())) {
         std::cerr << "Failed to initialize Fathom tablebases at: " << target_path << std::endl;
         return false;
     }
-    
+
     unsigned max_tb_pieces = TB_LARGEST;
     if (max_tb_pieces == 0) {
         std::cerr << "No tablebase files found at: " << target_path << std::endl;
         tb_free();
         return false;
     }
-    
+
     tablebase_path = target_path;
     is_initialized = true;
     max_pieces = max_tb_pieces;
-    
-    std::cout << "Fathom tablebases initialized: " << target_path 
+
+    std::cerr << "Fathom tablebases initialized: " << target_path
               << " (max " << max_pieces << " pieces)" << std::endl;
     return true;
-    
+
     #else
     // Stub implementation - just check if path exists
     if (!std::filesystem::exists(target_path)) {
         std::cerr << "Warning: Tablebase path does not exist: " << target_path << std::endl;
         return false;
     }
-    
+
     tablebase_path = target_path;
     is_initialized = true;
     max_pieces = 5; // Assume 5-piece tables available
-    
-    std::cout << "Tablebase initialized (stub implementation): " << target_path << std::endl;
+
+    std::cerr << "Tablebase initialized (stub implementation): " << target_path << std::endl;
     return true;
     #endif
 }

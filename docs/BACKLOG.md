@@ -29,7 +29,7 @@
 | 53 | Rule-50-aware TT eligibility (#29 follow-up) | **SHIPPED (2026-07-10, `baseline-t26`)** — on correctness+tests (#50/#51 precedent); blitz SPRT sign-split ≈ −6 Elo pooled, accepted; flag default ON | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
-| 56 | UCI parser, options, timing, and search-control contract | **PART 1 DONE (2026-07-11)** — full setoption grammar (multi-token names/values), strict spin parser (no more stoi crash on junk), Threads/Ponder adverts removed; REMAINING: stop/isready command pump, go-infinite lifetime, startup-stdout/Syzygy default, clock math | bug/UCI | high |
+| 56 | UCI parser, options, timing, and search-control contract | **PARTS 1+2 DONE (2026-07-12)** — part 1: full setoption grammar, strict spin parser, honest adverts; part 2: mid-search command pump (isready answered without stopping, commands queued in order), race-free atomic-only cancellation (running_info raw pointer gone), go-infinite holds bestmove until stop, Syzygy default disabled + silent startup, subprocess transcript tests; REMAINING (part 3): clock math (64-bit, floor vs remaining time, 0/1/10/49/50/100 ms boundary tests) | bug/UCI | high |
 | 57 | Use legal-move ordinal for PVS / LMR | **SHIPPED (2026-07-11, `baseline-t27`)** — AMD-only H1-ACCEPT (+29.98 ± 15.53, LOS 99.99%, user call per #51 precedent); flag default ON | bug/search | high |
 | 58 | Make SEE sound before using it for hard pruning | **CANDIDATE (2026-07-11)** — first-recapture pin filter behind `ENABLE_SEE_LEGALITY` (default OFF, byte-identical off); branch `candidate/see-legality`. Both legs same-sign positive, tight agreement: AMD +5.56 ± 15.11 (LOS 76%), Intel +8.69 ± 14.65 (LOS 88%), each 1000g cap; **pooled ≈ +7.2 ± 10.5, LOS ≈ 91%, 2000g**. Clears cross-machine-agreement ship bar (#15 precedent) + correctness fix — ship-as-t28 or park, user call (arm sigs in SPRT_QUEUE_TEST_PLAN.md: OFF d14 = 7,484,807; ON d14 = 7,128,502 / e2e4) | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
@@ -299,6 +299,55 @@ and `go infinite` must run until `stop`.
   route diagnostics through protocol-safe `info string` or stderr.
 - Use checked 64-bit clock math; never allocate beyond safely usable remaining
   time. Add boundary cases at 0/1/10/49/50/100 ms and subprocess transcript tests.
+
+**Resolution (part 1, 2026-07-11): setoption robustness — shipped
+unconditionally** (protocol-only, d14 byte-identical). Full
+`name ... [value ...]` grammar with multi-token names/values,
+`parse_spin_clamped` (whole-token numeric, overflow guard, range clamp — the
+old naked `stoi` terminated the process on junk), Threads/Ponder adverts and
+handlers removed.
+
+**Resolution (part 2, 2026-07-12): search-control contract — shipped
+unconditionally** (protocol-only; startpos d14 = 5,485,978 / cp 26 / e2e4
+byte-identical to t29). What changed:
+
+- **Mid-search command pump.** `SearchInfo::on_input` hook: checkup() hands
+  pending stdin lines to the UCI layer instead of the old classify-anything-
+  as-stop poll. `isready` mid-search → immediate `readyok`, search continues;
+  `stop`/`quit` flag the SearchInfo on the searching thread; everything else
+  (`position`, `go`, `setoption`, …) queues and replays in arrival order after
+  `bestmove` (run() drains the queue before reading stdin again, so global
+  order is preserved). Bare-Engine use keeps the conservative `read_input`
+  fallback.
+- **One race-free cancellation channel.** `Engine::should_stop` is atomic and
+  is the only cross-thread signal (`signal_stop()` sets just that); checkup()
+  translates it into `info.stopped` on the searching thread. The
+  `running_info` published-raw-pointer path (cross-thread writes into a stack
+  `SearchInfo`'s non-atomic fields) is deleted. MSVC has no TSan; the race is
+  gone by construction (single writer) and a 12-round stop-stress test guards
+  the observable contract.
+- **`go infinite` lifetime.** Depth cap raised from the silent 25 to
+  `MAX_DEPTH` (64 — every ply-indexed structure is bounds-guarded), and a
+  naturally-completed infinite search parks in `wait_for_stop()` — still
+  answering `isready`, still queueing — until `stop`/`quit` releases exactly
+  one `bestmove`.
+- **Silent startup + Syzygy default disabled.** Constructor no longer
+  auto-probes `c:\TB\` (advertised default is now `<empty>`); the tablebase
+  layer's status lines moved stdout→stderr; `initialize("")` means disabled,
+  not a hard-coded path; SyzygyPath setoption feedback is an unconditional
+  protocol-safe `info string`.
+- **Tests.** In-process: per-line pump contract, infinite-hold (mated root —
+  instant natural completion), stop-stress, startup silence, honest adverts
+  (`test_uci_search_control.cpp`). Subprocess transcripts over real Win32
+  pipes against the huginn binary: silent-until-uci, isready-during-search
+  (readyok before bestmove, search survives), ChessBase-style batched
+  `stop`+`position`+`go` (two bestmoves, in order), infinite-holds-until-stop,
+  quit-mid-search exits (`test_uci_transcript.cpp`). 248 pass + 1 by-design
+  skip.
+
+**Remaining (part 3):** clock math — checked 64-bit limit arithmetic, the
+`max(50, alloc)` floor vs actually-remaining time, boundary cases at
+0/1/10/49/50/100 ms.
 
 ### #57: Use legal-move ordinal for PVS / LMR (high)
 
