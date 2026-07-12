@@ -18,7 +18,17 @@
 > king-safety round's delta; house note: new-feature MSE converts to Elo
 > better than re-fit MSE, and quiet-corpus MSE *under*-states terms that pay
 > in sharp positions (t16 corollary). SPRT decides.
-> **Result:** _pending — two-machine SPRT vs t29 per house ground rules._
+> **Result — AMD leg (2026-07-12): positive lean, no bound.** **+9.73 ±
+> 14.88** (nElo 14.09 ± 21.53), **LOS 90.02%**, 1000g round cap (LLR 0.75,
+> no bound crossed), 51.40% (W268/L240/D492), DrawRatio 41.60%, PairsRatio
+> 1.18, Ptnml(0-2) [29, 105, 208, 125, 33]. Clean run: zero time losses /
+> illegal moves / disconnects, 1h48m. Arms verified pre-run (test d14 =
+> 8,298,375; baseline huginn_t29.exe d14 = 5,485,978). PGN
+> `gauntlet/huginn_vs_t29_threatsr2_amd.pgn`. Same profile as #58's legs
+> (small positive, cap reached). **Note:** this run used the TB-parity fix
+> (explicit `option.SyzygyPath` both sides — #56 removed the c:\TB
+> auto-probe, which would have made the arms TB-asymmetric on this box).
+> **Intel leg pending — two-machine bar; pool after both legs land.**
 
 ---
 

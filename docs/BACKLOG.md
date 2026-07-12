@@ -619,8 +619,10 @@ outposts; king safety, safe mobility, and outposts are done — see archive):
   time is the SPRT's call); Kiwipete d13 = 1,846,915 / cp −83 / e2a6.
   7 regression tests (`test_eval_threats_r2.cpp`): mirror symmetry both
   arms, term behaviour + unsafe-push filter on the ON arm. Both arms full
-  suite green. **Next:** two-machine SPRT via branch `candidate/threats-r2`
-  — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+  suite green. **AMD leg (2026-07-12): +9.73 ± 14.88, LOS 90.02%, 1000g
+  cap (LLR 0.75, no bound), 51.40%, clean run** — same small-positive
+  profile as #58's legs. **Next:** Intel leg via `candidate/threats-r2`,
+  then pool — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. **Deprioritized**: #41 shows balanced-endgame
   play is already solid (fair-fight cp-loss 13.3). Not yet attempted.
