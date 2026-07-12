@@ -233,7 +233,7 @@ else()
     add_compile_definitions(ENABLE_SEE_LEGALITY=0)
 endif()
 
-option(ENABLE_THREATS_R2 "BACKLOG #9: threats round 2 — hanging / pawn-push / king (candidate)" OFF)
+option(ENABLE_THREATS_R2 "BACKLOG #9: threats round 2 — hanging / pawn-push / king (candidate)" ON)
 if(ENABLE_THREATS_R2)
     add_compile_definitions(ENABLE_THREATS_R2=1)
     message(STATUS "Threats round 2 enabled (BACKLOG #9 candidate — tune with huginn_tuner --only-new)")

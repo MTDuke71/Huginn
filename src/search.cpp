@@ -113,7 +113,7 @@
 // vector frozen so the OFF arm stays byte-identical to baseline). DEFAULT OFF
 // pending tune + SPRT; build the ON arm with -DENABLE_THREATS_R2=1.
 #ifndef ENABLE_THREATS_R2
-#define ENABLE_THREATS_R2 0
+#define ENABLE_THREATS_R2 1  // candidate/threats-r2: test arm defaults ON
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
