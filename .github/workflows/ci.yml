@@ -1,8 +1,16 @@
 # CI matrix (#60): Windows MSVC is the primary development platform and is
 # tested first-class; Linux GCC/Clang cover the portable build; Fathom is
-# exercised both ON and OFF; one Debug job runs under ASan+UBSan.
-# Heavy-labelled CTest jobs (full perft) are excluded — run those locally:
-#   ctest --test-dir <build> -C Release -L heavy
+# exercised both ON and OFF.
+#
+# The sanitizer leg is MANUAL-ONLY (workflow_dispatch): as a Debug+ASan job
+# on every push it took 4+ hours of runner time (the test suite is search-
+# heavy and Debug+ASan is a ~100x slowdown), which is why this workflow was
+# disabled for day-to-day solo development. It now builds RelWithDebInfo
+# (optimized ASan+UBSan, ~10x faster, same bug coverage) and is capped by
+# timeout-minutes. Trigger it when chasing a memory/UB bug:
+#   gh workflow run CI            (runs the full matrix + sanitizers)
+# Heavy-labelled CTest jobs (full perft) are excluded everywhere — run those
+# locally: ctest --test-dir <build> -C Release -L heavy
 name: CI
 
 on:
@@ -10,11 +18,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build-test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -34,13 +44,6 @@ jobs:
             configure: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_FATHOM=OFF
             build: cmake --build build -j4
             test: ctest --test-dir build -C Release --output-on-failure --no-tests=error -LE heavy
-          # Sanitizer leg: Debug + ASan/UBSan. Perft is excluded here too —
-          # kiwipete depth 5 under ASan blows the quick-test time budget.
-          - name: linux-clang-debug-sanitizers
-            os: ubuntu-latest
-            configure: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_FATHOM=OFF -DENABLE_SANITIZERS=ON
-            build: cmake --build build -j4
-            test: ctest --test-dir build -C Debug --output-on-failure --no-tests=error -LE "heavy|perft"
     steps:
       - uses: actions/checkout@v4
       - name: Configure
@@ -50,10 +53,28 @@ jobs:
       - name: Test
         run: ${{ matrix.test }}
 
+  # Sanitizer leg: manual-only (see header comment). RelWithDebInfo + ASan +
+  # UBSan + debug assertions — optimized enough to finish in minutes, still
+  # catches the memory/UB bugs the Release legs cannot.
+  sanitizers:
+    name: linux-clang-relwithdebinfo-sanitizers
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_FATHOM=OFF -DENABLE_SANITIZERS=ON -DENABLE_DEBUG_ASSERTIONS=ON
+      - name: Build
+        run: cmake --build build -j4
+      - name: Test
+        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure --no-tests=error -LE heavy
+
   engine-only:
     # BUILD_TESTING=OFF must build the engine with no GoogleTest fetch (#60).
     name: linux-gcc-engine-only-no-gtest
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Configure (BUILD_TESTING=OFF)

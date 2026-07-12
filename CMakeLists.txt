@@ -141,7 +141,7 @@ endif()
 
 # ---- Debug Mode Configuration ----
 option(ENABLE_DEBUG_ASSERTIONS "Enable debug assertions with file/line info" OFF)
-option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug builds only)" OFF)
+option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Debug/RelWithDebInfo builds)" OFF)
 option(ENABLE_SEARCH_INTEGRITY_ASSERTS "Enable BACKLOG #37 search make/unmake integrity diagnostics" OFF)
 option(ENABLE_SEE_ORDER_SPLIT "Enable BACKLOG #6 SEE good/bad capture ordering split" ON)
 
@@ -234,19 +234,24 @@ else()
 endif()
 
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
-# Debug-config only. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan unavailable).
+# Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
+# unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
+# optimizer makes the search-heavy test suite ~10x faster than Debug+ASan
+# (the Debug-only sanitizer CI leg took 4+ hours per push) while catching
+# the same memory/UB bugs.
 if(ENABLE_SANITIZERS)
+    set(SAN_CONFIGS "$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>")
     if(MSVC)
-        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
-        message(STATUS "AddressSanitizer enabled for Debug (MSVC; UBSan not available)")
+        add_compile_options("$<${SAN_CONFIGS}:/fsanitize=address>")
+        message(STATUS "AddressSanitizer enabled for Debug/RelWithDebInfo (MSVC; UBSan not available)")
     else()
-        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>
-                            $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
-        add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
-        message(STATUS "ASan + UBSan enabled for Debug builds")
+        add_compile_options("$<${SAN_CONFIGS}:-fsanitize=address,undefined>"
+                            "$<${SAN_CONFIGS}:-fno-omit-frame-pointer>")
+        add_link_options("$<${SAN_CONFIGS}:-fsanitize=address,undefined>")
+        message(STATUS "ASan + UBSan enabled for Debug/RelWithDebInfo builds")
     endif()
-    if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(WARNING "ENABLE_SANITIZERS is ON but CMAKE_BUILD_TYPE is not Debug — sanitizer flags only apply to Debug.")
+    if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$")
+        message(WARNING "ENABLE_SANITIZERS is ON but CMAKE_BUILD_TYPE is neither Debug nor RelWithDebInfo — sanitizer flags will not apply.")
     endif()
 endif()
 
