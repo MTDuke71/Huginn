@@ -1,0 +1,2436 @@
+Configuring + building current Huginn (msvc-x64-release, Fathom ON)...
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- === Compiler Detection ===
+-- Compiler ID: MSVC
+-- Compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe
+-- System: Windows
+-- Using MSVC toolchain
+-- Multi-config generator: Advanced MSVC optimizations enabled
+-- MSVC warning suppression enabled for safe conversions
+-- Root two-fold draw-avoidance enabled
+-- Check-aware quiescence enabled (BACKLOG #52, shipped t26)
+-- Rule-50 TT guard enabled (BACKLOG #53, shipped t26)
+-- Legal-move ordinal PVS/LMR enabled (BACKLOG #57, shipped t27)
+-- SEE first-recapture legality enabled (BACKLOG #58, shipped t28)
+-- Threats round 2 enabled (BACKLOG #9 candidate — tune with huginn_tuner --only-new)
+-- GoogleTest configured via FetchContent
+-- Fathom tablebase support enabled
+-- Tests enabled - use 'cmake --build . --target check' to run
+-- Configuring done (1.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/m_lad/Repos/Huginn/build/msvc-x64-release
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  huginn.vcxproj -> C:\Users\m_lad\Repos\Huginn\build\msvc-x64-release\bin\Release\huginn.exe
+        1 file(s) copied.
+        1 file(s) copied.
+
+[amd] baseline: Huginn_current vs Huginn_t29  tc=10+0.1  rounds-cap=500  cc=4
+  SPRT elo0=0 elo1=10 alpha=0.05 beta=0.05
+  results -> c:\Users\m_lad\Repos\Huginn\gauntlet\huginn_vs_t29_amd.pgn
+
+Indexing opening suite...
+Started game 3 of 1000 (Huginn_current vs Huginn_t29)
+Started game 4 of 1000 (Huginn_t29 vs Huginn_current)
+Started game 2 of 1000 (Huginn_t29 vs Huginn_current)
+Started game 1 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 1 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 5 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 4 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 6 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 2 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 7 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 3 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 8 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 7 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 9 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 5 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 10 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 8 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 11 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 6 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 12 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 9 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 13 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 10 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 14 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 11 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 15 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 13 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 16 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 12 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 17 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 14 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 18 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 15 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 19 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 16 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 20 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 17 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 21 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 18 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 22 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 19 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 23 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 21 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 24 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 20 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -126.97 +/- 160.07, nElo: -144.83 +/- 152.27
+LOS: 3.11 %, DrawRatio: 30.00 %, PairsRatio: 0.17
+Games: 20, Wins: 3, Losses: 10, Draws: 7, Points: 6.5 (32.50 %)
+Ptnml(0-2): [3, 3, 3, 0, 1], WL/DD Ratio: 0.50
+LLR: -0.20 (-6.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 25 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 22 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 26 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 23 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 27 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 24 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 28 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 25 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 29 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 26 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 30 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 27 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 31 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 29 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 32 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 28 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 33 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 31 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 34 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 30 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 35 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 33 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 36 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 32 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 37 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 34 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 38 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 35 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 39 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 36 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 40 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 37 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 41 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 38 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 42 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 39 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 43 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 41 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 44 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 40 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -98.07 +/- 82.00, nElo: -138.81 +/- 107.67
+LOS: 0.58 %, DrawRatio: 35.00 %, PairsRatio: 0.18
+Games: 40, Wins: 6, Losses: 17, Draws: 17, Points: 14.5 (36.25 %)
+Ptnml(0-2): [3, 8, 7, 1, 1], WL/DD Ratio: 0.75
+LLR: -0.38 (-13.0%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 45 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 42 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 46 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 43 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 47 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 45 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 48 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 44 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 49 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 46 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 50 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 47 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 51 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 48 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 52 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 49 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 53 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 50 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 54 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 51 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 55 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 52 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 56 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 53 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 57 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 54 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 58 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 55 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 59 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 57 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 60 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 56 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 61 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 58 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 62 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 59 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 63 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 60 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -58.45 +/- 60.95, nElo: -86.86 +/- 87.91
+LOS: 2.64 %, DrawRatio: 40.00 %, PairsRatio: 0.38
+Games: 60, Wins: 12, Losses: 22, Draws: 26, Points: 25.0 (41.67 %)
+Ptnml(0-2): [3, 10, 12, 4, 1], WL/DD Ratio: 1.00
+LLR: -0.42 (-14.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 64 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 61 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 65 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 62 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 66 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 63 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 67 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 64 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 68 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 65 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 69 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 66 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 70 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 69 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 71 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 67 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 72 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 68 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 73 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 70 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 74 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 72 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 75 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 71 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 76 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 73 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 77 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 74 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 78 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 75 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 79 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 76 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 80 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 77 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 81 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 78 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 82 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 80 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 83 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 79 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -30.48 +/- 53.14, nElo: -44.24 +/- 76.13
+LOS: 12.74 %, DrawRatio: 40.00 %, PairsRatio: 0.60
+Games: 80, Wins: 19, Losses: 26, Draws: 35, Points: 36.5 (45.62 %)
+Ptnml(0-2): [3, 12, 16, 7, 2], WL/DD Ratio: 1.00
+LLR: -0.32 (-10.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 84 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 81 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 85 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 82 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 86 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 84 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 87 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 83 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 88 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 85 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 89 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 86 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 90 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 87 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 91 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 89 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 92 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 88 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 93 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 90 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 94 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 93 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 95 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 94 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 96 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 91 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 97 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 92 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 98 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 96 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 99 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 95 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 100 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 97 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 101 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 98 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 102 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 102 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 103 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 99 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 104 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 100 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -10.43 +/- 45.90, nElo: -15.57 +/- 68.10
+LOS: 32.70 %, DrawRatio: 46.00 %, PairsRatio: 0.80
+Games: 100, Wins: 27, Losses: 30, Draws: 43, Points: 48.5 (48.50 %)
+Ptnml(0-2): [3, 12, 23, 9, 3], WL/DD Ratio: 1.09
+LLR: -0.17 (-5.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 105 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 101 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 106 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 103 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 107 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 104 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 108 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 105 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 109 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 109 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 110 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 106 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 111 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 107 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 112 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 108 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 113 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 111 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 114 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 112 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 115 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 110 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 116 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 113 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 117 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 114 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 118 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 115 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 119 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 116 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 120 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 118 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 121 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 119 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 122 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 117 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 123 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 120 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -8.69 +/- 40.68, nElo: -13.34 +/- 62.16
+LOS: 33.70 %, DrawRatio: 45.00 %, PairsRatio: 0.83
+Games: 120, Wins: 31, Losses: 34, Draws: 55, Points: 58.5 (48.75 %)
+Ptnml(0-2): [3, 15, 27, 12, 3], WL/DD Ratio: 0.93
+LLR: -0.18 (-6.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 124 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 121 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 125 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 124 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 126 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 122 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 127 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 123 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 128 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 125 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 129 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 127 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 130 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 126 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 131 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 128 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 132 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 129 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 133 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 130 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 134 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 132 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 135 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 131 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 136 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 133 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 137 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 134 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 138 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 136 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 139 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 135 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 140 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 137 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 141 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 138 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 142 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 139 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 143 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 140 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -17.39 +/- 40.48, nElo: -24.87 +/- 57.55
+LOS: 19.85 %, DrawRatio: 40.00 %, PairsRatio: 0.83
+Games: 140, Wins: 36, Losses: 43, Draws: 61, Points: 66.5 (47.50 %)
+Ptnml(0-2): [6, 17, 28, 16, 3], WL/DD Ratio: 1.00
+LLR: -0.35 (-11.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 144 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 141 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 145 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 142 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 146 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 143 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 147 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 145 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 148 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 147 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 149 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 144 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 150 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 146 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 151 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 149 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 152 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 148 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 153 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 151 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 154 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 150 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 155 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 152 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 156 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 153 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 157 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 154 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 158 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 157 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 159 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 155 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 160 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 156 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 161 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 158 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 162 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 159 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 163 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 160 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -6.52 +/- 37.97, nElo: -9.28 +/- 53.83
+LOS: 36.78 %, DrawRatio: 38.75 %, PairsRatio: 0.96
+Games: 160, Wins: 42, Losses: 45, Draws: 73, Points: 78.5 (49.06 %)
+Ptnml(0-2): [6, 19, 31, 20, 4], WL/DD Ratio: 0.82
+LLR: -0.19 (-6.4%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 164 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 162 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 165 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 161 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 166 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 165 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 167 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 166 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 168 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 163 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by fifty moves rule}
+Started game 169 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 164 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 170 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 167 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 171 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 168 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 172 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 170 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 173 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 169 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 174 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 171 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 175 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 172 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 176 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 173 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 177 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 174 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 178 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 175 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 179 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 177 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 180 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 176 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 181 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 179 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 182 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 178 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 183 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 180 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -7.72 +/- 34.35, nElo: -11.45 +/- 50.76
+LOS: 32.92 %, DrawRatio: 42.22 %, PairsRatio: 0.93
+Games: 180, Wins: 47, Losses: 51, Draws: 82, Points: 88.0 (48.89 %)
+Ptnml(0-2): [6, 21, 38, 21, 4], WL/DD Ratio: 0.90
+LLR: -0.25 (-8.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 184 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 181 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 185 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 183 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 186 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 182 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 187 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 184 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 188 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 186 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 189 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 185 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 190 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 187 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 191 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 188 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 192 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 189 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 193 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 191 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 194 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 192 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 195 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 190 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 196 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 195 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 197 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 193 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 198 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 194 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 199 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 196 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 200 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 200 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 201 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 199 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -1.75 +/- 32.90, nElo: -2.59 +/- 48.39
+LOS: 45.83 %, DrawRatio: 41.41 %, PairsRatio: 1.00
+Games: 198, Wins: 53, Losses: 54, Draws: 91, Points: 98.5 (49.75 %)
+Ptnml(0-2): [6, 23, 41, 24, 5], WL/DD Ratio: 0.86
+LLR: -0.12 (-4.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 202 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 198 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 203 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 197 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 204 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 202 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 205 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 201 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 206 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 203 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 207 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 204 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 208 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 207 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 209 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 206 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 210 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 208 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 211 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 205 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 212 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 210 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 213 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 209 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 214 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 212 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 215 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 211 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 216 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 213 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 217 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 214 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 218 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 217 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 219 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 215 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 220 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 216 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 221 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 218 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 222 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 219 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 223 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 220 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -0.00 +/- 31.35, nElo: -0.00 +/- 45.91
+LOS: 50.00 %, DrawRatio: 40.00 %, PairsRatio: 1.00
+Games: 220, Wins: 59, Losses: 59, Draws: 102, Points: 110.0 (50.00 %)
+Ptnml(0-2): [6, 27, 44, 27, 6], WL/DD Ratio: 0.83
+LLR: -0.09 (-3.1%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 224 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 221 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 225 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 222 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 226 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 223 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 227 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 224 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 228 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 226 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 229 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 225 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 230 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 227 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 231 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 228 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 232 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 230 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 233 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 229 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by fifty moves rule}
+Started game 234 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 231 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 235 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 233 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 236 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 232 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 237 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 235 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 238 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 236 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 239 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 234 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 240 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 237 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 241 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 238 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 242 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 239 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 243 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 241 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 244 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 240 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -5.79 +/- 30.09, nElo: -8.48 +/- 43.96
+LOS: 35.26 %, DrawRatio: 41.67 %, PairsRatio: 0.94
+Games: 240, Wins: 62, Losses: 66, Draws: 112, Points: 118.0 (49.17 %)
+Ptnml(0-2): [8, 28, 50, 28, 6], WL/DD Ratio: 0.79
+LLR: -0.27 (-9.1%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 245 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 242 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 246 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 244 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 247 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 246 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 248 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 245 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 249 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 247 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 250 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 243 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 251 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 249 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 252 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 248 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 253 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 250 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 254 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 251 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 255 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 252 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 256 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 253 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 257 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 254 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 258 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 255 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 259 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 256 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 260 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 257 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 261 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 258 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 262 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 260 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 263 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 261 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 264 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 259 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -0.00 +/- 29.70, nElo: 0.00 +/- 42.23
+LOS: 50.00 %, DrawRatio: 40.77 %, PairsRatio: 0.97
+Games: 260, Wins: 69, Losses: 69, Draws: 122, Points: 130.0 (50.00 %)
+Ptnml(0-2): [8, 31, 53, 29, 9], WL/DD Ratio: 0.71
+LLR: -0.11 (-3.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 265 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 262 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 266 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 263 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 267 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 264 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 268 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 265 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 269 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 266 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 270 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 267 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 271 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 269 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 272 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 270 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 273 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 268 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 274 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 272 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 275 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 271 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 276 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 274 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 277 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 275 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 278 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 273 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 279 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 276 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 280 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 277 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 281 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 278 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 282 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 279 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 283 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 280 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: -0.00 +/- 28.21, nElo: 0.00 +/- 40.70
+LOS: 50.00 %, DrawRatio: 40.71 %, PairsRatio: 0.98
+Games: 280, Wins: 74, Losses: 74, Draws: 132, Points: 140.0 (50.00 %)
+Ptnml(0-2): [8, 34, 57, 32, 9], WL/DD Ratio: 0.73
+LLR: -0.12 (-3.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 284 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 281 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 285 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 282 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 286 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 283 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 287 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 285 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 288 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 284 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 289 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 287 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 290 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 286 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 291 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 289 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 292 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 291 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 293 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 290 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 294 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 288 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 295 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 293 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 296 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 292 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 297 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 294 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 298 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 295 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 299 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 296 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by stalemate}
+Started game 300 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 297 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 301 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 298 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 302 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 299 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 303 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 300 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 5.79 +/- 27.19, nElo: 8.39 +/- 39.32
+LOS: 66.22 %, DrawRatio: 40.67 %, PairsRatio: 1.07
+Games: 300, Wins: 82, Losses: 77, Draws: 141, Points: 152.5 (50.83 %)
+Ptnml(0-2): [8, 35, 61, 36, 10], WL/DD Ratio: 0.74
+LLR: 0.08 (2.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 304 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 301 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 305 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 303 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 306 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 302 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 307 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 304 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 308 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 305 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 309 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 306 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 310 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 307 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 311 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 308 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 312 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 309 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 313 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 310 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 314 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 312 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 315 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 311 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 316 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 313 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 317 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 314 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 318 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 316 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 319 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 315 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 320 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 317 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 321 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 318 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 322 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 319 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 323 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 320 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 5.43 +/- 26.54, nElo: 7.80 +/- 38.07
+LOS: 65.61 %, DrawRatio: 40.62 %, PairsRatio: 1.07
+Games: 320, Wins: 89, Losses: 84, Draws: 147, Points: 162.5 (50.78 %)
+Ptnml(0-2): [9, 37, 65, 38, 11], WL/DD Ratio: 0.81
+LLR: 0.07 (2.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 324 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 321 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 325 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 322 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 326 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 323 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 327 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 325 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 328 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 324 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 329 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 326 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 330 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 329 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 331 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 328 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 332 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 327 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 333 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 330 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 334 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 331 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 335 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 333 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 336 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 332 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 337 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 334 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 338 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 335 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 339 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 336 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 340 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 337 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 341 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 338 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 342 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 339 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 343 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 340 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 4.09 +/- 25.85, nElo: 5.85 +/- 36.93
+LOS: 62.19 %, DrawRatio: 41.18 %, PairsRatio: 1.08
+Games: 340, Wins: 95, Losses: 91, Draws: 154, Points: 172.0 (50.59 %)
+Ptnml(0-2): [11, 37, 70, 41, 11], WL/DD Ratio: 0.84
+LLR: 0.02 (0.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 344 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 341 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 345 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 342 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 346 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 343 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 347 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 344 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 348 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 346 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 349 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 345 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 350 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 348 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 351 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 347 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 352 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 350 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 353 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 349 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 354 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 351 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 355 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 352 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 356 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 354 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 357 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 353 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 358 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 356 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 359 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 355 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 360 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 357 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 361 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 358 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 362 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 359 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 363 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 360 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 8.69 +/- 25.19, nElo: 12.40 +/- 35.89
+LOS: 75.09 %, DrawRatio: 41.67 %, PairsRatio: 1.14
+Games: 360, Wins: 103, Losses: 94, Draws: 163, Points: 184.5 (51.25 %)
+Ptnml(0-2): [11, 38, 75, 43, 13], WL/DD Ratio: 0.83
+LLR: 0.22 (7.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 364 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 361 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 365 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 362 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 366 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 365 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 367 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 363 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 368 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 366 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 369 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 368 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 370 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 364 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 371 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 367 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 372 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 370 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 373 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 371 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 374 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 369 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 375 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 372 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 376 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 373 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 377 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 375 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 378 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 376 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 379 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 377 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 380 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 374 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 381 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 380 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 382 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 379 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 10.11 +/- 24.25, nElo: 14.64 +/- 35.02
+LOS: 79.36 %, DrawRatio: 42.33 %, PairsRatio: 1.18
+Games: 378, Wins: 107, Losses: 96, Draws: 175, Points: 194.5 (51.46 %)
+Ptnml(0-2): [11, 39, 80, 46, 13], WL/DD Ratio: 0.78
+LLR: 0.30 (10.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 383 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 378 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 384 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 381 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 385 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 383 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 386 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 384 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 387 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 385 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 388 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 382 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 389 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 388 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 390 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 386 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 391 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 389 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 392 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 387 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 393 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 390 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 394 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 391 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by stalemate}
+Started game 395 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 392 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 396 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 393 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 397 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 397 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 398 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 394 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 399 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 395 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 400 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 396 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 401 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 398 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 402 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 399 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 403 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 400 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 7.82 +/- 23.43, nElo: 11.38 +/- 34.05
+LOS: 74.39 %, DrawRatio: 43.00 %, PairsRatio: 1.15
+Games: 400, Wins: 111, Losses: 102, Draws: 187, Points: 204.5 (51.12 %)
+Ptnml(0-2): [12, 41, 86, 48, 13], WL/DD Ratio: 0.76
+LLR: 0.21 (7.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 404 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 401 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 405 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 402 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 406 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 404 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 407 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 403 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 408 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 405 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 409 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 407 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 410 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 406 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 411 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 408 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 412 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 409 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 413 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 410 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 414 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 411 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 415 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 412 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 416 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 414 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 417 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 413 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 418 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 416 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 419 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 415 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 420 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 417 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 421 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 418 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 422 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 419 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 423 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 420 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 13.24 +/- 23.04, nElo: 19.14 +/- 33.23
+LOS: 87.06 %, DrawRatio: 42.38 %, PairsRatio: 1.24
+Games: 420, Wins: 120, Losses: 104, Draws: 196, Points: 218.0 (51.90 %)
+Ptnml(0-2): [12, 42, 89, 52, 15], WL/DD Ratio: 0.75
+LLR: 0.49 (16.6%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 424 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 422 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 425 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 423 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 426 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 421 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 427 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 424 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 428 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 427 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 429 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 425 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 430 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 426 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 431 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 428 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 432 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 429 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 433 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 433 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 434 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 431 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 435 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 432 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 436 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 430 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 437 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 435 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 438 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 434 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 439 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 436 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 440 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 437 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 441 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 439 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 442 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 438 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 443 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 440 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 12.64 +/- 22.53, nElo: 18.25 +/- 32.46
+LOS: 86.48 %, DrawRatio: 41.82 %, PairsRatio: 1.25
+Games: 440, Wins: 125, Losses: 109, Draws: 206, Points: 228.0 (51.82 %)
+Ptnml(0-2): [13, 44, 92, 56, 15], WL/DD Ratio: 0.74
+LLR: 0.48 (16.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 444 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 441 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 445 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 442 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 446 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 444 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 447 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 443 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 448 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 445 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 449 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 446 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 450 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 447 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 451 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 448 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 452 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 449 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 453 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 451 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 454 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 450 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 455 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 452 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 456 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 453 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 457 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 454 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 458 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 455 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 459 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 457 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 460 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 456 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 461 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 458 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 462 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 459 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 463 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 461 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 464 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 460 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 10.58 +/- 21.86, nElo: 15.39 +/- 31.75
+LOS: 82.90 %, DrawRatio: 43.04 %, PairsRatio: 1.22
+Games: 460, Wins: 129, Losses: 115, Draws: 216, Points: 237.0 (51.52 %)
+Ptnml(0-2): [14, 45, 99, 57, 15], WL/DD Ratio: 0.74
+LLR: 0.39 (13.4%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 465 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 463 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 466 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 464 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 467 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 465 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 468 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 462 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 469 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 466 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 470 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 467 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 471 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 468 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 472 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 469 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 473 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 471 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 474 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 472 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 475 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 470 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 476 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 473 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 477 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 474 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 478 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 475 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 479 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 476 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 480 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 477 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 481 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 479 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 482 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 478 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 483 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 480 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 10.14 +/- 21.24, nElo: 14.86 +/- 31.08
+LOS: 82.57 %, DrawRatio: 42.92 %, PairsRatio: 1.21
+Games: 480, Wins: 134, Losses: 120, Draws: 226, Points: 247.0 (51.46 %)
+Ptnml(0-2): [14, 48, 103, 60, 15], WL/DD Ratio: 0.75
+LLR: 0.39 (13.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 484 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 482 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 485 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 481 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 486 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 483 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 487 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 484 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 488 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 485 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 489 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 486 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 490 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 487 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 491 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 488 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 492 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 489 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 493 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 492 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 494 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 490 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 495 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 491 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 496 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 493 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 497 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 494 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 498 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 495 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 499 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 497 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 500 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 496 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 501 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 498 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 502 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 501 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 503 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 499 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 504 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 500 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 12.51 +/- 20.92, nElo: 18.26 +/- 30.45
+LOS: 88.00 %, DrawRatio: 42.80 %, PairsRatio: 1.23
+Games: 500, Wins: 142, Losses: 124, Draws: 234, Points: 259.0 (51.80 %)
+Ptnml(0-2): [14, 50, 107, 62, 17], WL/DD Ratio: 0.75
+LLR: 0.55 (18.6%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 505 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 504 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 506 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 503 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 507 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 502 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 508 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 505 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 509 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 506 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 510 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 508 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 511 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 507 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 512 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 511 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 513 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 509 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 514 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 510 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 515 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 512 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 516 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 513 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 517 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 514 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 518 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 515 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 519 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 516 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 520 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 517 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 521 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 518 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 522 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 519 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 523 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 520 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 8.69 +/- 20.59, nElo: 12.62 +/- 29.86
+LOS: 79.62 %, DrawRatio: 43.08 %, PairsRatio: 1.18
+Games: 520, Wins: 147, Losses: 134, Draws: 239, Points: 266.5 (51.25 %)
+Ptnml(0-2): [16, 52, 112, 63, 17], WL/DD Ratio: 0.81
+LLR: 0.33 (11.1%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 524 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 521 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 525 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 522 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 526 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 523 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 527 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 525 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 528 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 524 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 529 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 526 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 530 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 527 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 531 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 529 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 532 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 528 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 533 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 530 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 534 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 531 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 535 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 532 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 536 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 533 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 537 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 534 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 538 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 536 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 539 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 535 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 540 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 537 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 541 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 540 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 542 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 538 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 543 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 539 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 12.87 +/- 20.25, nElo: 18.67 +/- 29.30
+LOS: 89.41 %, DrawRatio: 43.33 %, PairsRatio: 1.25
+Games: 540, Wins: 156, Losses: 136, Draws: 248, Points: 280.0 (51.85 %)
+Ptnml(0-2): [16, 52, 117, 66, 19], WL/DD Ratio: 0.80
+LLR: 0.61 (20.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 544 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 541 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 545 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 543 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 546 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 542 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 547 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 544 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 548 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 546 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 549 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 545 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 550 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 547 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 551 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 548 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 552 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 549 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 553 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 551 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 554 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 552 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 555 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 550 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 556 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 553 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 557 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 555 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 558 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 554 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 559 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 556 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 560 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 557 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 561 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 559 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 562 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 558 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 563 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 561 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 564 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 562 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 565 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 560 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 12.99 +/- 20.01, nElo: 18.68 +/- 28.72
+LOS: 89.88 %, DrawRatio: 43.42 %, PairsRatio: 1.24
+Games: 562, Wins: 162, Losses: 141, Draws: 259, Points: 291.5 (51.87 %)
+Ptnml(0-2): [17, 54, 122, 67, 21], WL/DD Ratio: 0.77
+LLR: 0.63 (21.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 566 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 564 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 567 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 563 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 568 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 565 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 569 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 566 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 570 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 568 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 571 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 569 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 572 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 567 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 573 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 570 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 574 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 573 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 575 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 572 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 576 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 571 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 577 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 576 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 578 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 574 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 579 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 575 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 580 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 577 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 581 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 579 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 582 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 581 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 583 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 578 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 584 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 580 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 11.39 +/- 19.68, nElo: 16.39 +/- 28.28
+LOS: 87.20 %, DrawRatio: 43.45 %, PairsRatio: 1.22
+Games: 580, Wins: 164, Losses: 145, Draws: 271, Points: 299.5 (51.64 %)
+Ptnml(0-2): [18, 56, 126, 69, 21], WL/DD Ratio: 0.73
+LLR: 0.54 (18.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 585 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 582 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 586 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 583 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 587 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 584 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 588 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 585 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 589 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 586 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 590 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 588 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 591 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 587 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 592 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 590 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 593 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 591 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 594 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 593 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 595 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 589 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 596 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 592 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 597 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 594 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 598 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 597 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 599 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 595 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 600 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 596 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 601 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 599 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 602 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 598 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 603 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 600 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 13.32 +/- 19.35, nElo: 19.18 +/- 27.80
+LOS: 91.19 %, DrawRatio: 43.00 %, PairsRatio: 1.25
+Games: 600, Wins: 170, Losses: 147, Draws: 283, Points: 311.5 (51.92 %)
+Ptnml(0-2): [18, 58, 129, 73, 22], WL/DD Ratio: 0.70
+LLR: 0.70 (23.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 604 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 602 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 605 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 601 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 606 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 605 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 607 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 604 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 608 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 606 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 609 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 603 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 610 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 607 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 611 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 608 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 612 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 609 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 613 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 610 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 614 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 611 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 615 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 615 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 616 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 612 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 617 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 614 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 618 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 613 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 619 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 618 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 620 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 616 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 621 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 617 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 622 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 619 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 623 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 622 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 624 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 621 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 625 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 620 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 13.97 +/- 18.79, nElo: 20.35 +/- 27.30
+LOS: 92.79 %, DrawRatio: 43.73 %, PairsRatio: 1.27
+Games: 622, Wins: 175, Losses: 150, Draws: 297, Points: 323.5 (52.01 %)
+Ptnml(0-2): [18, 59, 136, 76, 22], WL/DD Ratio: 0.68
+LLR: 0.79 (26.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 626 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 623 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 627 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 624 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 628 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 626 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 629 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 625 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 630 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 627 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 631 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 629 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 632 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 631 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 633 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 628 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 634 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 630 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 635 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 632 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 636 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 633 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 637 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 634 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 638 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 635 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 639 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 636 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 640 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 637 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 641 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 638 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 642 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 639 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 643 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 640 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 16.30 +/- 18.65, nElo: 23.58 +/- 26.92
+LOS: 95.70 %, DrawRatio: 43.12 %, PairsRatio: 1.30
+Games: 640, Wins: 184, Losses: 154, Draws: 302, Points: 335.0 (52.34 %)
+Ptnml(0-2): [18, 61, 138, 79, 24], WL/DD Ratio: 0.70
+LLR: 0.98 (33.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 644 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 643 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 645 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 644 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 646 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 641 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 647 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 642 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 648 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 645 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 649 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 647 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 650 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 648 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 651 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 646 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 652 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 651 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 653 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 649 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 654 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 650 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 655 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 652 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 656 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 653 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 657 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 654 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 658 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 656 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 659 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 655 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 660 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 658 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 661 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 657 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 662 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 659 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 663 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 661 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 664 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 660 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 15.80 +/- 18.26, nElo: 23.00 +/- 26.51
+LOS: 95.55 %, DrawRatio: 43.03 %, PairsRatio: 1.29
+Games: 660, Wins: 188, Losses: 158, Draws: 314, Points: 345.0 (52.27 %)
+Ptnml(0-2): [18, 64, 142, 82, 24], WL/DD Ratio: 0.69
+LLR: 0.98 (33.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 665 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 663 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 666 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 662 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 667 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 664 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 668 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 666 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 669 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 665 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 670 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 667 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 671 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 668 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 672 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 669 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 673 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 670 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 674 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 671 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 675 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 672 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 676 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 675 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 677 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 674 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 678 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 673 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 679 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 677 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 680 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 676 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 681 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 679 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 682 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 678 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 683 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 680 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 13.80 +/- 17.98, nElo: 20.08 +/- 26.11
+LOS: 93.41 %, DrawRatio: 42.94 %, PairsRatio: 1.26
+Games: 680, Wins: 192, Losses: 165, Draws: 323, Points: 353.5 (51.99 %)
+Ptnml(0-2): [19, 67, 146, 84, 24], WL/DD Ratio: 0.70
+LLR: 0.84 (28.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 684 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 681 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 685 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 682 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 686 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 684 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 687 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 683 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 688 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 685 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 689 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 686 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 690 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 688 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 691 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 687 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 692 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 690 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 693 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 689 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 694 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 691 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 695 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 693 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 696 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 692 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 697 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 694 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 698 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 695 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 699 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 696 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 700 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 697 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 701 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 698 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 702 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 699 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 703 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 700 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 16.89 +/- 17.69, nElo: 24.63 +/- 25.74
+LOS: 96.96 %, DrawRatio: 42.86 %, PairsRatio: 1.33
+Games: 700, Wins: 199, Losses: 165, Draws: 336, Points: 367.0 (52.43 %)
+Ptnml(0-2): [19, 67, 150, 89, 25], WL/DD Ratio: 0.67
+LLR: 1.13 (38.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 704 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 701 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 705 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 704 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 706 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 702 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 707 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 705 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 708 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 703 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 709 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 707 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 710 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 706 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 711 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 708 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 712 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 711 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 713 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 709 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 714 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 712 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 715 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 710 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 716 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 713 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 717 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 715 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 718 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 714 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 719 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 716 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 720 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 717 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 721 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 718 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 722 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 720 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 723 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 719 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 16.90 +/- 17.43, nElo: 24.66 +/- 25.38
+LOS: 97.16 %, DrawRatio: 42.78 %, PairsRatio: 1.34
+Games: 720, Wins: 204, Losses: 169, Draws: 347, Points: 377.5 (52.43 %)
+Ptnml(0-2): [20, 68, 154, 93, 25], WL/DD Ratio: 0.66
+LLR: 1.16 (39.4%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 724 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 721 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 725 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 722 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 726 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 723 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 727 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 725 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 728 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 724 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 729 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 726 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 730 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 727 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 731 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 730 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 732 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 728 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 733 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 731 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 734 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 729 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 735 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 732 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 736 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 733 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 737 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 735 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 738 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 734 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 739 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 736 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 740 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 737 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 741 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 738 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 742 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 739 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 743 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 740 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 16.92 +/- 17.23, nElo: 24.63 +/- 25.03
+LOS: 97.31 %, DrawRatio: 42.97 %, PairsRatio: 1.34
+Games: 740, Wins: 212, Losses: 176, Draws: 352, Points: 388.0 (52.43 %)
+Ptnml(0-2): [21, 69, 159, 95, 26], WL/DD Ratio: 0.69
+LLR: 1.19 (40.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 744 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 741 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 745 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 743 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 746 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 742 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 747 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 744 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 748 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 745 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 749 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 748 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 750 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 746 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 751 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 747 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by fifty moves rule}
+Started game 752 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 749 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 753 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 750 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 754 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 751 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 755 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 753 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 756 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 752 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 757 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 754 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 758 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 757 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 759 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 755 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 760 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 756 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 761 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 758 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 762 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 759 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 763 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 760 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 18.76 +/- 16.98, nElo: 27.36 +/- 24.70
+LOS: 98.50 %, DrawRatio: 42.89 %, PairsRatio: 1.38
+Games: 760, Wins: 220, Losses: 179, Draws: 361, Points: 400.5 (52.70 %)
+Ptnml(0-2): [21, 70, 163, 99, 27], WL/DD Ratio: 0.70
+LLR: 1.39 (47.3%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 764 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 761 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 765 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 762 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 766 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 763 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 767 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 764 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 768 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 768 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 769 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 765 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 770 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 766 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 771 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 769 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 772 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 767 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 773 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 770 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 774 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 771 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 775 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 772 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 776 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 773 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 777 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 775 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 778 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 774 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 779 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 776 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 780 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 777 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 781 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 779 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 782 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 778 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 783 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 780 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 20.51 +/- 16.79, nElo: 29.89 +/- 24.38
+LOS: 99.19 %, DrawRatio: 43.08 %, PairsRatio: 1.41
+Games: 780, Wins: 227, Losses: 181, Draws: 372, Points: 413.0 (52.95 %)
+Ptnml(0-2): [21, 71, 168, 101, 29], WL/DD Ratio: 0.68
+LLR: 1.59 (53.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 784 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 781 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 785 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 783 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 786 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 782 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 787 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 785 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 788 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 784 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 789 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 787 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 790 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 786 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 791 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 788 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 792 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 789 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 793 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 791 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 794 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 790 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 795 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 792 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 796 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 795 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 797 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 793 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 798 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 794 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 799 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 796 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 800 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 797 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 801 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 798 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 802 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 799 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 803 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 802 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 804 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 800 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 19.13 +/- 16.51, nElo: 27.98 +/- 24.08
+LOS: 98.86 %, DrawRatio: 43.00 %, PairsRatio: 1.38
+Games: 800, Wins: 230, Losses: 186, Draws: 384, Points: 422.0 (52.75 %)
+Ptnml(0-2): [21, 75, 172, 103, 29], WL/DD Ratio: 0.67
+LLR: 1.51 (51.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 805 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 801 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 806 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 803 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 807 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 804 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 808 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 805 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 809 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 807 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 810 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 806 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 811 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 808 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 812 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 812 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 813 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 809 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 814 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 810 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 815 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 811 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 816 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 814 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 817 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 813 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 818 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 815 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 819 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 816 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 820 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 818 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 821 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 817 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 822 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 819 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 823 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 820 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 18.66 +/- 16.23, nElo: 27.41 +/- 23.78
+LOS: 98.81 %, DrawRatio: 42.93 %, PairsRatio: 1.36
+Games: 820, Wins: 233, Losses: 189, Draws: 398, Points: 432.0 (52.68 %)
+Ptnml(0-2): [21, 78, 176, 106, 29], WL/DD Ratio: 0.64
+LLR: 1.51 (51.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 824 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 821 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 825 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 822 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 826 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 823 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 827 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 824 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 828 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 825 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 829 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 826 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 830 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 827 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 831 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 829 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 832 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 830 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 833 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 828 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 834 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 831 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 835 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 835 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 836 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 834 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 837 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 832 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 838 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 833 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 839 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 836 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 840 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 837 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 841 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 838 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 842 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 839 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 843 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 840 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 16.97 +/- 16.20, nElo: 24.67 +/- 23.50
+LOS: 98.02 %, DrawRatio: 43.10 %, PairsRatio: 1.34
+Games: 840, Wins: 236, Losses: 195, Draws: 409, Points: 440.5 (52.44 %)
+Ptnml(0-2): [24, 78, 181, 107, 30], WL/DD Ratio: 0.62
+LLR: 1.36 (46.0%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 844 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 841 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 845 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 842 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 846 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 844 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 847 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 843 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 848 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 847 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 849 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 846 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 850 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 845 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 851 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 848 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 852 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 849 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 853 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 850 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 854 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 851 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 855 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 853 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 856 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 852 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 857 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 854 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 858 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 855 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 859 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 858 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 860 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 856 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 861 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 857 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 862 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 859 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 863 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 860 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 15.77 +/- 16.07, nElo: 22.83 +/- 23.22
+LOS: 97.30 %, DrawRatio: 43.02 %, PairsRatio: 1.31
+Games: 860, Wins: 240, Losses: 201, Draws: 419, Points: 449.5 (52.27 %)
+Ptnml(0-2): [25, 81, 185, 108, 31], WL/DD Ratio: 0.61
+LLR: 1.26 (42.8%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 864 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 863 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 865 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 861 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 866 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 862 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 867 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 866 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 868 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 865 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 869 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 864 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 870 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 867 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 871 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 868 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 872 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 871 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 873 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 869 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 874 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 870 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 875 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 872 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 876 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 873 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 877 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 874 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 878 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 876 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 879 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 875 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 880 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 877 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 881 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 880 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 882 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 878 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 883 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 881 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 884 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 879 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 15.01 +/- 15.95, nElo: 21.65 +/- 22.96
+LOS: 96.77 %, DrawRatio: 42.73 %, PairsRatio: 1.29
+Games: 880, Wins: 244, Losses: 206, Draws: 430, Points: 459.0 (52.16 %)
+Ptnml(0-2): [26, 84, 188, 110, 32], WL/DD Ratio: 0.59
+LLR: 1.20 (40.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 885 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 882 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 886 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 883 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 887 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 885 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 888 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 886 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 889 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 884 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 890 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 887 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 891 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 889 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 892 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 888 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 893 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 891 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 894 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 890 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 895 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 892 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 896 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 894 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 897 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 893 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 898 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 895 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 899 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 897 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 900 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 896 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 901 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 899 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 902 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 898 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 903 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 900 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 14.68 +/- 15.74, nElo: 21.20 +/- 22.70
+LOS: 96.64 %, DrawRatio: 42.22 %, PairsRatio: 1.28
+Games: 900, Wins: 249, Losses: 211, Draws: 440, Points: 469.0 (52.11 %)
+Ptnml(0-2): [26, 88, 190, 114, 32], WL/DD Ratio: 0.60
+LLR: 1.20 (40.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 904 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 903 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 905 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 901 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 906 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 902 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 907 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 906 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 908 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 904 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 909 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 905 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 910 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 907 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 911 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 909 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 912 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 910 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 913 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 911 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 914 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 908 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 915 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 913 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 916 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 912 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 917 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 914 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 918 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 916 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 919 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 915 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 920 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 917 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 921 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 918 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 922 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 920 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 923 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 919 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 15.49 +/- 15.48, nElo: 22.51 +/- 22.45
+LOS: 97.53 %, DrawRatio: 42.39 %, PairsRatio: 1.30
+Games: 920, Wins: 254, Losses: 213, Draws: 453, Points: 480.5 (52.23 %)
+Ptnml(0-2): [26, 89, 195, 118, 32], WL/DD Ratio: 0.59
+LLR: 1.32 (45.0%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 924 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 922 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 925 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 921 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 926 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 923 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 927 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 925 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 928 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 926 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 929 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 924 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 930 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 928 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 931 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 927 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 932 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 929 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 933 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 930 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 934 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 932 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 935 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 931 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 936 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 933 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 937 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 935 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 938 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 934 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 939 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 937 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 940 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 939 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 941 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 936 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 942 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 942 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 943 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 938 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+Started game 944 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 940 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 13.68 +/- 15.30, nElo: 19.90 +/- 22.21
+LOS: 96.04 %, DrawRatio: 41.91 %, PairsRatio: 1.26
+Games: 940, Wins: 257, Losses: 220, Draws: 463, Points: 488.5 (51.97 %)
+Ptnml(0-2): [26, 95, 197, 120, 32], WL/DD Ratio: 0.59
+LLR: 1.15 (39.2%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 945 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 941 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 946 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 943 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 947 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 945 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 948 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 944 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 949 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 946 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 950 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 947 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 951 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 949 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 952 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 948 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 953 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 950 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 954 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 951 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 955 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 953 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 956 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 952 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 957 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 954 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 958 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 955 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 959 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 956 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 960 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 957 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 961 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 958 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 962 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 959 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 963 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 962 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 964 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 961 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 965 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 960 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by fifty moves rule}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 12.65 +/- 15.19, nElo: 18.31 +/- 21.96
+LOS: 94.89 %, DrawRatio: 41.58 %, PairsRatio: 1.23
+Games: 962, Wins: 262, Losses: 227, Draws: 473, Points: 498.5 (51.82 %)
+Ptnml(0-2): [27, 99, 200, 122, 33], WL/DD Ratio: 0.59
+LLR: 1.06 (35.9%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 966 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 963 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by insufficient mating material}
+Started game 967 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 964 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 968 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 966 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 969 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 965 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 970 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 967 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 971 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 968 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 972 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 970 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 973 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 972 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 974 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 969 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 975 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 971 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 976 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 974 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 977 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 975 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 978 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 973 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 979 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 977 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 980 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 978 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 981 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 976 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 982 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 979 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 983 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 980 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by 3-fold repetition}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 10.64 +/- 15.06, nElo: 15.39 +/- 21.75
+LOS: 91.72 %, DrawRatio: 41.43 %, PairsRatio: 1.19
+Games: 980, Wins: 263, Losses: 233, Draws: 484, Points: 505.0 (51.53 %)
+Ptnml(0-2): [28, 103, 203, 123, 33], WL/DD Ratio: 0.57
+LLR: 0.84 (28.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Started game 984 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 981 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 985 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 982 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 986 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 983 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 987 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 984 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 988 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 985 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 989 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 987 (Huginn_current vs Huginn_t29): 1-0 {White mates}
+Started game 990 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 986 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Started game 991 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 989 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 992 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 988 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 993 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 990 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 994 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 993 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 995 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 991 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Started game 996 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 992 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 997 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 994 (Huginn_t29 vs Huginn_current): 1/2-1/2 {Draw by insufficient mating material}
+Started game 998 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 997 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 999 of 1000 (Huginn_current vs Huginn_t29)
+Finished game 996 (Huginn_t29 vs Huginn_current): 1-0 {White mates}
+Started game 1000 of 1000 (Huginn_t29 vs Huginn_current)
+Finished game 995 (Huginn_current vs Huginn_t29): 1/2-1/2 {Draw by fifty moves rule}
+Finished game 998 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+Finished game 999 (Huginn_current vs Huginn_t29): 0-1 {Black mates}
+Finished game 1000 (Huginn_t29 vs Huginn_current): 0-1 {Black mates}
+--------------------------------------------------
+Results of Huginn_current vs Huginn_t29 (10+0.1, NULL - 1t, 64MB, noob_3moves.epd):
+Elo: 9.73 +/- 14.88, nElo: 14.09 +/- 21.53
+LOS: 90.02 %, DrawRatio: 41.60 %, PairsRatio: 1.18
+Games: 1000, Wins: 268, Losses: 240, Draws: 492, Points: 514.0 (51.40 %)
+Ptnml(0-2): [29, 105, 208, 125, 33], WL/DD Ratio: 0.59
+LLR: 0.75 (25.5%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+Finished match
+Total Time: 01:48:20 (hours:minutes:seconds)
+
+Press any key to continue . . . 
