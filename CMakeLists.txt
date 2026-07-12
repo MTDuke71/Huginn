@@ -233,6 +233,14 @@ else()
     add_compile_definitions(ENABLE_SEE_LEGALITY=0)
 endif()
 
+option(ENABLE_THREATS_R2 "BACKLOG #9: threats round 2 — hanging / pawn-push / king (candidate)" OFF)
+if(ENABLE_THREATS_R2)
+    add_compile_definitions(ENABLE_THREATS_R2=1)
+    message(STATUS "Threats round 2 enabled (BACKLOG #9 candidate — tune with huginn_tuner --only-new)")
+else()
+    add_compile_definitions(ENABLE_THREATS_R2=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -546,6 +554,7 @@ if(BUILD_TESTING)
     test/test_uci_search_control.cpp
     test/test_uci_transcript.cpp
     test/test_uci_time_allocation.cpp
+    test/test_eval_threats_r2.cpp
     )
 
     add_executable(huginn_tests

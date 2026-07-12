@@ -105,6 +105,17 @@
 #define ENABLE_KING_SAFETY 1
 #endif
 
+// ENABLE_THREATS_R2: BACKLOG #9 threats round 2 — three classes layered on the
+// t15 attacker→target table: hanging units (attacked + undefended), safe
+// pawn-push threats (the tempo before t15's pawn-attacks-piece can see it),
+// and hanging units in our king's ring (EG-heavy: king activity). Tapered,
+// colour-symmetric, Texel-tunable (tuner --only-new keeps the rest of the
+// vector frozen so the OFF arm stays byte-identical to baseline). DEFAULT OFF
+// pending tune + SPRT; build the ON arm with -DENABLE_THREATS_R2=1.
+#ifndef ENABLE_THREATS_R2
+#define ENABLE_THREATS_R2 0
+#endif
+
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
 // against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
 // verification — a genuine over-pruning / tactical-leak suspect (the Stash
@@ -814,6 +825,83 @@ int Engine::evaluate(const Position& pos) {
         mg_pst += wmg - bmg;
         eg_pst += weg - beg;
     }
+
+#if ENABLE_THREATS_R2
+    // Threats round 2 (#9): hanging units, safe pawn-push threats, and hanging
+    // units in the king ring — layered on the t15 classes above (the tuner
+    // apportions the stacked magnitudes). Self-contained on purpose: it
+    // recomputes the attack unions it needs rather than restructuring the t15
+    // block, so the flag-OFF path is textually untouched (byte-identical
+    // baseline); fold the unions together as a speed pass if this ships.
+    // Colour-symmetric (each side's pawn directions mirror), so the eval
+    // mirror suite covers it.
+    {
+        const uint64_t occ = pos.occupied_bitboard;
+
+        // Full attack union per side: pawn span + N/B/R/Q + king.
+        auto attack_union = [&](Color c, uint64_t pawn_att) {
+            const auto& bb = pos.piece_bitboards[int(c)];
+            uint64_t att = pawn_att, b;
+            b = bb[int(PieceType::Knight)]; while (b) att |= knight_attacks[pop_lsb(b)];
+            b = bb[int(PieceType::Bishop)]; while (b) att |= bishop_attacks(pop_lsb(b), occ);
+            b = bb[int(PieceType::Rook)];   while (b) att |= rook_attacks(pop_lsb(b), occ);
+            b = bb[int(PieceType::Queen)];  while (b) att |= queen_attacks(pop_lsb(b), occ);
+            const int ksq = pos.king_sq[int(c)];
+            if (ksq >= 0) att |= king_attacks[ksq];
+            return att;
+        };
+        const uint64_t w_att = attack_union(Color::White, w_pawn_attacks);
+        const uint64_t b_att = attack_union(Color::Black, b_pawn_attacks);
+
+        auto threats_r2_for = [&](Color us, uint64_t our_att, uint64_t their_att,
+                                  uint64_t their_pawn_att, int& mg, int& eg) {
+            const Color them = (us == Color::White) ? Color::Black : Color::White;
+            const auto& mp = pos.piece_bitboards[int(us)];
+            const auto& ep = pos.piece_bitboards[int(them)];
+
+            const uint64_t e_pieces = ep[int(PieceType::Knight)] | ep[int(PieceType::Bishop)]
+                                    | ep[int(PieceType::Rook)]   | ep[int(PieceType::Queen)];
+            const uint64_t e_units = e_pieces | ep[int(PieceType::Pawn)];  // king excluded
+
+            // Hanging: attacked by us, defended by nothing of theirs.
+            const uint64_t hanging = e_units & our_att & ~their_att;
+            const int nh = popcount(hanging);
+
+            // King kicker: hanging units our king can simply take.
+            const int ksq = pos.king_sq[int(us)];
+            const int nk = (ksq >= 0) ? popcount(hanging & king_attacks[ksq]) : 0;
+
+            // Safe pawn pushes (single, or double from home rank, to an empty
+            // square an enemy pawn does not control) attacking enemy pieces.
+            const uint64_t pawns = mp[int(PieceType::Pawn)];
+            uint64_t push_att;
+            if (us == Color::White) {
+                const uint64_t p1 = (pawns << 8) & ~occ;
+                const uint64_t p2 = ((p1 & EvalParams::RANK_MASKS[2]) << 8) & ~occ;
+                const uint64_t p = (p1 | p2) & ~their_pawn_att;
+                push_att = ((p & ~FILE_A_BB) << 7) | ((p & ~FILE_H_BB) << 9);
+            } else {
+                const uint64_t p1 = (pawns >> 8) & ~occ;
+                const uint64_t p2 = ((p1 & EvalParams::RANK_MASKS[5]) >> 8) & ~occ;
+                const uint64_t p = (p1 | p2) & ~their_pawn_att;
+                push_att = ((p & ~FILE_A_BB) >> 9) | ((p & ~FILE_H_BB) >> 7);
+            }
+            const int np = popcount(push_att & e_pieces);
+
+            mg += nh * EvalParams::THREAT_HANGING_MG
+                + np * EvalParams::THREAT_PAWN_PUSH_MG
+                + nk * EvalParams::THREAT_BY_KING_MG;
+            eg += nh * EvalParams::THREAT_HANGING_EG
+                + np * EvalParams::THREAT_PAWN_PUSH_EG
+                + nk * EvalParams::THREAT_BY_KING_EG;
+        };
+        int wmg2 = 0, weg2 = 0, bmg2 = 0, beg2 = 0;
+        threats_r2_for(Color::White, w_att, b_att, b_pawn_attacks, wmg2, weg2);
+        threats_r2_for(Color::Black, b_att, w_att, w_pawn_attacks, bmg2, beg2);
+        mg_pst += wmg2 - bmg2;
+        eg_pst += weg2 - beg2;
+    }
+#endif // ENABLE_THREATS_R2
 
     // -----------------------------------------------------------------
     // Mobility: count squares each non-pawn, non-king piece can move to

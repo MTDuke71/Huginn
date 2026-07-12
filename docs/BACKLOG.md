@@ -607,7 +607,20 @@ outposts; king safety, safe mobility, and outposts are done — see archive):
 
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery,
-  proven. **Not yet attempted.**
+  proven. **CANDIDATE (2026-07-12) behind `ENABLE_THREATS_R2`** (default OFF,
+  flag-off byte-identical to t29 — startpos d14 = 5,485,978 unchanged).
+  Three classes layered on t15: hanging units (attacked + undefended), safe
+  pawn-push threats, hanging units in the king ring. Params Texel-fitted
+  `--only-new` (new tuner mode: the six new params fit while the rest of the
+  841-param vector stays frozen — clean SPRT attribution): HANGING 9/18,
+  PAWN_PUSH 10/4, BY_KING −5/34; **new-feature ΔMSE 0.056857 → 0.056459
+  (−0.000398, ~1.6× the t16 KS round)**. Bake-verified exact. Test-arm sigs:
+  startpos d14 = 8,298,375 / cp 26 / e2e4 (+51% — big tree reshape, fixed
+  time is the SPRT's call); Kiwipete d13 = 1,846,915 / cp −83 / e2a6.
+  7 regression tests (`test_eval_threats_r2.cpp`): mirror symmetry both
+  arms, term behaviour + unsafe-push filter on the ON arm. Both arms full
+  suite green. **Next:** two-machine SPRT via branch `candidate/threats-r2`
+  — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 - **Passed-pawn refinements** — king distance to the passer (own + enemy),
   blockade, rook-behind-passer. **Deprioritized**: #41 shows balanced-endgame
   play is already solid (fair-fight cp-loss 13.3). Not yet attempted.

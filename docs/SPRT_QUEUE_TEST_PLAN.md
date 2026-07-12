@@ -1,3 +1,27 @@
+# SPRT Queue Test Plan — threats round 2 (#9) candidate off baseline-t29
+
+> **Run:** `git checkout candidate/threats-r2` + `test_huginn_gauntlet.bat t29`.
+> Flag `ENABLE_THREATS_R2` (unstick: `cmake -UENABLE_THREATS_R2`).
+> **t29 baseline (OFF):** startpos d14 = **5,485,978** / cp 26 / e2e4;
+> Kiwipete d13 = **1,902,821** / cp −63 / e2a6.
+> **Threats-R2 arm (ON):** startpos d14 = **8,298,375** / cp 26 / e2e4
+> (+51% fixed-depth nodes — the new terms reshape the tree, PV switches to a
+> French line; nps −3.5% from the extra attack unions; the SPRT decides the
+> fixed-time trade, cf. #57's +12.8%); Kiwipete d13 = **1,846,915** /
+> cp −83 / e2a6 (−2.9%).
+> **What:** three eval threat classes layered on t15 — hanging units
+> (attacked + undefended), safe pawn-push threats, hanging units in our
+> king's ring. Params Texel-fitted `--only-new` on the 725k quiet corpus
+> (K=1.520, rest of the vector frozen so the OFF arm stays byte-identical
+> to t29): HANGING 9/18, PAWN_PUSH 10/4, BY_KING −5/34 (MG/EG).
+> **New-feature ΔMSE = 0.056857 → 0.056459 (−0.000398)** — ~1.6× the t16
+> king-safety round's delta; house note: new-feature MSE converts to Elo
+> better than re-fit MSE, and quiet-corpus MSE *under*-states terms that pay
+> in sharp positions (t16 corollary). SPRT decides.
+> **Result:** _pending — two-machine SPRT vs t29 per house ground rules._
+
+---
+
 # SPRT Queue Test Plan — #58 candidate off baseline-t27 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t28` SHIPPED (2026-07-11)** on cross-machine

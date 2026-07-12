@@ -94,6 +94,25 @@ double fit_k(Huginn::Engine& eng, const std::vector<Sample>& s) {
     return bestK;
 }
 
+// #9 threats round 2: the six new params, collectable on their own so a
+// new-feature tune (--only-new) keeps the rest of the vector frozen — the
+// flag-OFF engine then stays byte-identical to the shipped baseline while the
+// ON arm carries baseline + fitted new terms (clean SPRT attribution).
+// Requires the tuner build to have -DENABLE_THREATS_R2=1, otherwise the terms
+// are dead code in evaluate() and the MSE is blind to them.
+std::vector<int*> collect_threats_r2_params() {
+    std::vector<int*> p;
+#if defined(ENABLE_THREATS_R2) && ENABLE_THREATS_R2
+    p.push_back(&Huginn::EvalParams::THREAT_HANGING_MG);
+    p.push_back(&Huginn::EvalParams::THREAT_HANGING_EG);
+    p.push_back(&Huginn::EvalParams::THREAT_PAWN_PUSH_MG);
+    p.push_back(&Huginn::EvalParams::THREAT_PAWN_PUSH_EG);
+    p.push_back(&Huginn::EvalParams::THREAT_BY_KING_MG);
+    p.push_back(&Huginn::EvalParams::THREAT_BY_KING_EG);
+#endif
+    return p;
+}
+
 // Collect pointers to every tunable eval entry (mutable under HUGINN_TUNING).
 std::vector<int*> collect_params() {
     std::vector<int*> p;
@@ -175,6 +194,8 @@ std::vector<int*> collect_params() {
     for (int pt = int(PieceType::Knight); pt <= int(PieceType::Queen); ++pt)
         p.push_back(&Huginn::EvalParams::KS_ATTACK_WEIGHT[size_t(pt)]);
     p.push_back(&Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
+    // #9 threats round 2 (when the build has the flag on).
+    for (int* q : collect_threats_r2_params()) p.push_back(q);
     return p;
 }
 
@@ -301,6 +322,14 @@ void dump_results() {
         Huginn::EvalParams::KS_ATTACK_WEIGHT[4], Huginn::EvalParams::KS_ATTACK_WEIGHT[5],
         Huginn::EvalParams::KS_ATTACK_WEIGHT[6]);
     std::printf("KS_OPEN_FILE_PENALTY = %d;\n", Huginn::EvalParams::KS_OPEN_FILE_PENALTY);
+#if defined(ENABLE_THREATS_R2) && ENABLE_THREATS_R2
+    std::printf("THREAT_HANGING_MG = %d;\n",   Huginn::EvalParams::THREAT_HANGING_MG);
+    std::printf("THREAT_HANGING_EG = %d;\n",   Huginn::EvalParams::THREAT_HANGING_EG);
+    std::printf("THREAT_PAWN_PUSH_MG = %d;\n", Huginn::EvalParams::THREAT_PAWN_PUSH_MG);
+    std::printf("THREAT_PAWN_PUSH_EG = %d;\n", Huginn::EvalParams::THREAT_PAWN_PUSH_EG);
+    std::printf("THREAT_BY_KING_MG = %d;\n",   Huginn::EvalParams::THREAT_BY_KING_MG);
+    std::printf("THREAT_BY_KING_EG = %d;\n",   Huginn::EvalParams::THREAT_BY_KING_EG);
+#endif
     std::printf("=====================================================\n");
 }
 
@@ -315,11 +344,13 @@ int main(int argc, char** argv) {
     long max_positions = 0;       // 0 = all
     double fixed_k = 0.0;         // 0 = auto-fit
     int max_sweeps = 30;
+    bool only_new = false;        // #9 R2: tune only the new terms, rest frozen
     for (int i = 2; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--positions" && i + 1 < argc) max_positions = std::stol(argv[++i]);
         else if (a == "--k" && i + 1 < argc)    fixed_k = std::stod(argv[++i]);
         else if (a == "--max-sweeps" && i + 1 < argc) max_sweeps = std::stoi(argv[++i]);
+        else if (a == "--only-new") only_new = true;
     }
 
     Huginn::init();
@@ -352,7 +383,12 @@ int main(int argc, char** argv) {
     if (fixed_k > 0.0) { g_K = fixed_k; std::printf("using fixed K=%.3f\n", g_K); }
     else { std::printf("fitting K ...\n"); double k = fit_k(engine, samples); std::printf("K=%.3f\n", k); }
 
-    auto params = collect_params();
+    auto params = only_new ? collect_threats_r2_params() : collect_params();
+    if (only_new && params.empty()) {
+        std::fprintf(stderr, "--only-new has nothing to tune: build the tuner "
+                             "with -DENABLE_THREATS_R2=ON\n");
+        return 1;
+    }
     optimize(engine, samples, params, max_sweeps);
     dump_results();
     return 0;

@@ -167,6 +167,32 @@ EVAL_PARAM int THREAT_MINOR_ON_QUEEN_EG = 13; ///< Minor attacks queen, EG.
 EVAL_PARAM int THREAT_ROOK_ON_QUEEN_MG  = 80; ///< Rook attacks queen, MG.
 EVAL_PARAM int THREAT_ROOK_ON_QUEEN_EG  = 21; ///< Rook attacks queen, EG.
 
+/**
+ * @brief Threats round 2 (#9, ENABLE_THREATS_R2): three additional threat
+ *        classes layered on the round-6 attacker→target table. All counts are
+ *        per enemy unit, tapered MG/EG, colour-symmetric, Texel-tuned
+ *        (--only-new on the 725k quiet corpus, K=1.520, rest of the vector
+ *        frozen; MSE 0.057264(seeds)→0.056459. Quiet-corpus MG suppression
+ *        is expected — cf. the round-6 note — and BY_KING fits EG-heavy,
+ *        matching SF's shape):
+ *        - HANGING: enemy unit (any piece or pawn, not the king) attacked by
+ *          us and defended by nothing. Stacks with the round-6 class bonuses —
+ *          the tuner apportions the magnitudes.
+ *        - PAWN_PUSH: a safe pawn push (single, or double from home rank, to
+ *          an empty square not controlled by an enemy pawn) that would attack
+ *          an enemy non-pawn piece. The threat exists a tempo before the
+ *          round-6 pawn-attacks-piece bonus can see it.
+ *        - BY_KING: hanging enemy unit inside our king's attack ring — the
+ *          king can simply take it (EG-heavy: attacking with the king is an
+ *          endgame motif; seeding follows SF's S(24,89) shape).
+ */
+EVAL_PARAM int THREAT_HANGING_MG   = 9;  ///< Attacked + undefended enemy unit, MG.
+EVAL_PARAM int THREAT_HANGING_EG   = 18; ///< Attacked + undefended enemy unit, EG.
+EVAL_PARAM int THREAT_PAWN_PUSH_MG = 10; ///< Safe pawn push attacking a piece, MG.
+EVAL_PARAM int THREAT_PAWN_PUSH_EG = 4;  ///< Safe pawn push attacking a piece, EG.
+EVAL_PARAM int THREAT_BY_KING_MG   = -5; ///< Hanging unit in our king ring, MG.
+EVAL_PARAM int THREAT_BY_KING_EG   = 34; ///< Hanging unit in our king ring, EG.
+
 EVAL_PARAM int MOBILITY_WEIGHT_DEFAULT = 5;   ///< Flat mobility, MG (#9 r2). Used when ENABLE_SAFE_MOBILITY is OFF.
 EVAL_PARAM int MOBILITY_WEIGHT_ENDGAME = 2;   ///< Flat mobility, EG. Used when ENABLE_SAFE_MOBILITY is OFF.
 
