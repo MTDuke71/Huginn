@@ -29,7 +29,7 @@
 | 53 | Rule-50-aware TT eligibility (#29 follow-up) | **SHIPPED (2026-07-10, `baseline-t26`)** — on correctness+tests (#50/#51 precedent); blitz SPRT sign-split ≈ −6 Elo pooled, accepted; flag default ON | bug/search | critical |
 | 54 | Transactional, bounded FEN / `position` input | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/input | critical |
 | 55 | Bound every fixed-capacity move-list write | **CLOSED (2026-07-09)** — unconditional, regression-tested | bug/memory-safety | critical |
-| 56 | UCI parser, options, timing, and search-control contract | **PARTS 1+2 DONE (2026-07-12)** — part 1: full setoption grammar, strict spin parser, honest adverts; part 2: mid-search command pump (isready answered without stopping, commands queued in order), race-free atomic-only cancellation (running_info raw pointer gone), go-infinite holds bestmove until stop, Syzygy default disabled + silent startup, subprocess transcript tests; REMAINING (part 3): clock math (64-bit, floor vs remaining time, 0/1/10/49/50/100 ms boundary tests) | bug/UCI | high |
+| 56 | UCI parser, options, timing, and search-control contract | **CLOSED (2026-07-12, parts 1–3)** — part 1: full setoption grammar, strict spin parser, honest adverts; part 2: mid-search command pump, race-free atomic-only cancellation, go-infinite bestmove lifetime, Syzygy default disabled + silent startup, subprocess transcript tests; part 3: pure 64-bit `compute_time_budget_ms` (50 ms floor capped by safely-usable remainder — tiny clocks get a 1 ms emergency budget instead of the forfeit-bait overdraft), strict `go` numerics, bare-`go` 5 s default, 0/1/10/49/50/100 ms boundary tests | bug/UCI | high |
 | 57 | Use legal-move ordinal for PVS / LMR | **SHIPPED (2026-07-11, `baseline-t27`)** — AMD-only H1-ACCEPT (+29.98 ± 15.53, LOS 99.99%, user call per #51 precedent); flag default ON | bug/search | high |
 | 58 | Make SEE sound before using it for hard pruning | **CANDIDATE (2026-07-11)** — first-recapture pin filter behind `ENABLE_SEE_LEGALITY` (default OFF, byte-identical off); branch `candidate/see-legality`. Both legs same-sign positive, tight agreement: AMD +5.56 ± 15.11 (LOS 76%), Intel +8.69 ± 14.65 (LOS 88%), each 1000g cap; **pooled ≈ +7.2 ± 10.5, LOS ≈ 91%, 2000g**. Clears cross-machine-agreement ship bar (#15 precedent) + correctness fix — ship-as-t28 or park, user call (arm sigs in SPRT_QUEUE_TEST_PLAN.md: OFF d14 = 7,484,807; ON d14 = 7,128,502 / e2e4) | bug/search | high |
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
@@ -345,9 +345,39 @@ byte-identical to t29). What changed:
   quit-mid-search exits (`test_uci_transcript.cpp`). 248 pass + 1 by-design
   skip.
 
-**Remaining (part 3):** clock math — checked 64-bit limit arithmetic, the
-`max(50, alloc)` floor vs actually-remaining time, boundary cases at
-0/1/10/49/50/100 ms.
+**Resolution (part 3, 2026-07-12): clock math — shipped unconditionally**
+(startpos d14 = 5,485,978 / cp 26 / e2e4 byte-identical to t29; the #47
+allocation strategy is numerically unchanged on normal clocks — the house
+gauntlet TC allocation `60000/100/0 → 3050 ms` is pinned by test). What
+changed:
+
+- **Pure 64-bit allocator.** `compute_time_budget_ms(time, inc, movestogo)`
+  in uci_utils replaces the inline int math in `handle_go`. Same formulas
+  (classical `time/mtg + inc/2`, sudden-death `time/20 + inc/2`, reserve
+  `clamp(time/10, 50, 1000)`, 60% cap) with the floors fixed: `safe_max`
+  lost its bogus 50 ms floor, and the 50 ms quality floor is now capped by
+  the safely usable remainder — the old final `max(50, alloc)` budgeted
+  50 ms with 1–10 ms on the clock, overdrawing the reserve it had just
+  computed. A clock at/below the reserve now yields a 1 ms emergency budget
+  (instant depth-1 move beats a time forfeit). Unknown own-clock falls back
+  to `max(50, inc/4)`, or 5 s with no increment.
+- **Strict `go` numerics.** `parse_spin_clamped` promoted from uci.cpp's
+  anonymous namespace into uci_utils and used for depth/movetime/wtime/
+  btime/winc/binc/movestogo with sane ranges (depth 1–64, movestogo 1–500,
+  times 0–1e9). Junk is rejected whole-token (the old per-token `stoi`
+  prefix-parsed `12junk` as 12); negative clocks (flagging GUIs send them)
+  clamp to 0 → emergency budget; the 1e9 saturation guard bounds all
+  downstream 64-bit arithmetic.
+- **Bare `go` defined.** No limits at all → 5000 ms budget (previously
+  `max_time_ms` stayed 0 and the first checkup killed the search ~2048
+  nodes in — accidental, not a contract).
+- **Tests** (`test_uci_time_allocation.cpp`): the acceptance boundary cases
+  0/1/10/49/50/100 ms, a grid invariant (budget ≥ 1 and ≤ safely-usable
+  remainder for all time/inc/movestogo combinations), movestogo=1 not
+  spending the clock, hostile-magnitude overflow, parser junk/clamp/
+  saturation, and end-to-end tiny-clock/junk-token `handle_go` liveness;
+  plus a real-pipe transcript test (10 ms clock → instant bestmove, engine
+  alive after). 258 pass + 1 by-design skip.
 
 ### #57: Use legal-move ordinal for PVS / LMR (high)
 

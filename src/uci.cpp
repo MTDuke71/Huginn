@@ -384,85 +384,48 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
 
     if (debug_mode) std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
 
-    // VICE Part 69: Parse go command parameters
+    // #56 (part 3): strict numeric `go` parameters — whole-token parse with an
+    // overflow guard (saturates at 1e9 ≈ 11.6 days, which also bounds all the
+    // downstream 64-bit arithmetic), clamped to a sane range. Junk leaves the
+    // parameter unset instead of std::stoi's prefix-parse ("12junk" -> 12) or
+    // exception; negative clocks (GUIs send them when a side is flagging)
+    // clamp to 0 and get the emergency budget.
     bool depth_specified = false;
     bool infinite_requested = false;  // the literal `go infinite` token (#56)
-    int winc = 0, binc = 0, movestogo = 0, wtime = -1, btime = -1;
-    int movetime = -1;  // Track movetime separately for better debugging
-    
+    constexpr long long GO_TIME_MAX_MS = 1000000000LL;
+    long long winc = 0, binc = 0, movestogo = 0, wtime = -1, btime = -1;
+    long long movetime = -1;
+
+    // Consume the value token after `tokens[i]` into @p out (clamped to
+    // [lo, hi]); on junk the parameter stays unset and the token is skipped.
+    auto parse_go_number = [&](size_t& i, const char* name, long long lo,
+                               long long hi, long long& out) -> bool {
+        if (i + 1 >= tokens.size()) return false;
+        ++i;
+        long long v = 0;
+        if (!parse_spin_clamped(tokens[i], lo, hi, v)) {
+            if (debug_mode) std::cout << "info string Invalid " << name << " value: " << tokens[i] << std::endl;
+            return false;
+        }
+        out = v;
+        if (debug_mode) std::cout << "info string Parsed " << name << ": " << v << std::endl;
+        return true;
+    };
+
     for (size_t i = 1; i < tokens.size(); i++) {
-        if (tokens[i] == "depth" && i + 1 < tokens.size()) {
-            try {
-                limits.max_depth = std::stoi(tokens[i + 1]);
+        if (tokens[i] == "depth") {
+            long long depth = 0;
+            if (parse_go_number(i, "depth", 1, Huginn::MAX_DEPTH, depth)) {
+                limits.max_depth = static_cast<int>(depth);
                 depth_specified = true;
-                if (debug_mode) std::cout << "info string Parsed depth: " << limits.max_depth << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid depth value: " << tokens[i + 1] << std::endl;
-                i++;
             }
         }
-        else if (tokens[i] == "movetime" && i + 1 < tokens.size()) {
-            try {
-                movetime = std::stoi(tokens[i + 1]);
-                limits.max_time_ms = movetime;
-                if (debug_mode) std::cout << "info string Parsed movetime: " << movetime << "ms" << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid movetime value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
-        else if (tokens[i] == "wtime" && i + 1 < tokens.size()) {
-            try {
-                wtime = std::stoi(tokens[i + 1]);
-                if (debug_mode) std::cout << "info string Parsed wtime: " << wtime << "ms" << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid wtime value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
-        else if (tokens[i] == "btime" && i + 1 < tokens.size()) {
-            try {
-                btime = std::stoi(tokens[i + 1]);
-                if (debug_mode) std::cout << "info string Parsed btime: " << btime << "ms" << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid btime value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
-        else if (tokens[i] == "winc" && i + 1 < tokens.size()) {
-            try {
-                winc = std::stoi(tokens[i + 1]);
-                if (debug_mode) std::cout << "info string Parsed winc: " << winc << "ms" << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid winc value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
-        else if (tokens[i] == "binc" && i + 1 < tokens.size()) {
-            try {
-                binc = std::stoi(tokens[i + 1]);
-                if (debug_mode) std::cout << "info string Parsed binc: " << binc << "ms" << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid binc value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
-        else if (tokens[i] == "movestogo" && i + 1 < tokens.size()) {
-            try {
-                movestogo = std::stoi(tokens[i + 1]);
-                if (debug_mode) std::cout << "info string Parsed movestogo: " << movestogo << std::endl;
-                i++;
-            } catch (const std::exception&) {
-                if (debug_mode) std::cout << "info string Invalid movestogo value: " << tokens[i + 1] << std::endl;
-                i++;
-            }
-        }
+        else if (tokens[i] == "movetime")  parse_go_number(i, "movetime", 1, GO_TIME_MAX_MS, movetime);
+        else if (tokens[i] == "wtime")     parse_go_number(i, "wtime", 0, GO_TIME_MAX_MS, wtime);
+        else if (tokens[i] == "btime")     parse_go_number(i, "btime", 0, GO_TIME_MAX_MS, btime);
+        else if (tokens[i] == "winc")      parse_go_number(i, "winc", 0, GO_TIME_MAX_MS, winc);
+        else if (tokens[i] == "binc")      parse_go_number(i, "binc", 0, GO_TIME_MAX_MS, binc);
+        else if (tokens[i] == "movestogo") parse_go_number(i, "movestogo", 1, 500, movestogo);
         else if (tokens[i] == "infinite") {
             limits.infinite = true;
             infinite_requested = true;
@@ -490,45 +453,33 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
         if (debug_mode) std::cout << "info string Using depth-only search: " << limits.max_depth << std::endl;
     }
     else if (movetime > 0) {
-        // Fixed time per move
+        // Fixed time per move (parse already clamped to [1, GO_TIME_MAX_MS])
+        limits.max_time_ms = static_cast<int>(movetime);
         if (debug_mode) std::cout << "info string Using fixed movetime: " << movetime << "ms" << std::endl;
     }
-    else if (!limits.infinite && (wtime > 0 || btime > 0)) {
-        // Time control calculation (VICE Part 69 style with our enhancements)
-        int side_time = (position.side_to_move == Color::White) ? wtime : btime;
-        int side_inc = (position.side_to_move == Color::White) ? winc : binc;
-        
-        if (side_time > 0) {
-            int alloc;
-            if (movestogo > 0) {
-                // Classical time control: divide remaining time by moves to go
-                alloc = side_time / std::max(1, movestogo);
-                alloc += side_inc / 2;  // Add half the increment
-                if (debug_mode) std::cout << "info string Classical time control: " << side_time << "ms / " << movestogo << " moves" << std::endl;
-            } else {
-                // Sudden death or increment-only time control. Use half the
-                // increment (was a quarter) — with an increment you can safely
-                // spend ~the full increment each move plus a slice of the base.
-                // (#47, paired with the budget/2 iteration gate.)
-                alloc = side_time / 20 + side_inc / 2;
-                if (debug_mode) std::cout << "info string Sudden death time control: " << side_time << "ms base" << std::endl;
-            }
+    else if (!limits.infinite && (wtime >= 0 || btime >= 0)) {
+        // Clock-based allocation — pure, 64-bit, boundary-safe (#56 part 3;
+        // strategy itself unchanged from the gauntleted #47 tuning). A clock
+        // at/below the reserve yields a 1 ms emergency budget: an instant
+        // legal move beats the old 50 ms floor's overdraft time forfeit.
+        const bool white_to_move = (position.side_to_move == Color::White);
+        const long long side_time = white_to_move ? wtime : btime;  // -1 = our clock not sent
+        const long long side_inc = white_to_move ? winc : binc;
 
-            // Reserve some clock time so we don't flag in low-time scrambles.
-            // The reserve is a CAP on per-move usage, not a subtraction from it.
-            int reserve = std::min(1000, std::max(50, side_time / 10));
-            int safe_max = std::max(50, side_time - reserve);
-            alloc = std::min({alloc, safe_max, static_cast<int>(side_time * 0.6)});
-
-            limits.max_time_ms = std::max(50, alloc);
-            if (debug_mode) std::cout << "info string Calculated time allocation: " << limits.max_time_ms << "ms (reserve cap: " << reserve << "ms)" << std::endl;
-        } else {
-            // No time available, use increment if present
-            if (movestogo == 0 && (winc > 0 || binc > 0)) {
-                limits.max_time_ms += ((position.side_to_move == Color::White) ? winc : binc) / 4;
-                if (debug_mode) std::cout << "info string Using increment-only time: " << limits.max_time_ms << "ms" << std::endl;
-            }
+        limits.max_time_ms = static_cast<int>(compute_time_budget_ms(side_time, side_inc, movestogo));
+        if (debug_mode) {
+            std::cout << "info string Time allocation: " << limits.max_time_ms
+                      << "ms (clock " << side_time << "ms, inc " << side_inc
+                      << "ms, movestogo " << movestogo << ")" << std::endl;
         }
+    }
+    else if (!limits.infinite) {
+        // Bare `go` with no limits at all: a defined default budget. The old
+        // code left max_time_ms at 0, so the first checkup stopped the search
+        // ~2048 nodes in and the depth-1 move went out — accidental behaviour,
+        // not a contract.
+        limits.max_time_ms = 5000;
+        if (debug_mode) std::cout << "info string No limits given, using default 5000ms" << std::endl;
     }
 
     if (debug_mode) {
@@ -550,27 +501,8 @@ void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
  * @param tokens Vector containing the tokenized setoption command parts.
  *               Expected format: ["setoption", "name", option_name, "value", option_value]
  */
-namespace {
-/// #56: strict spin-option parser — the whole token must be numeric (no
-/// suffix junk, no empty string), with an overflow guard, then clamped to
-/// the advertised [lo, hi] range. Returns false on any malformed input so a
-/// bad `setoption` can never throw (the old naked std::stoi terminated the
-/// process on `setoption name Threads value nope`).
-bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long long& out) {
-    if (s.empty()) return false;
-    size_t idx = (s[0] == '-' || s[0] == '+') ? 1 : 0;
-    if (idx == s.size()) return false;
-    long long v = 0;
-    for (; idx < s.size(); ++idx) {
-        if (s[idx] < '0' || s[idx] > '9') return false;
-        v = v * 10 + (s[idx] - '0');
-        if (v > 1000000000LL) { v = 1000000000LL; break; }  // overflow guard
-    }
-    if (s[0] == '-') v = -v;
-    out = std::max(lo, std::min(hi, v));
-    return true;
-}
-} // namespace
+// #56: the strict numeric parser (parse_spin_clamped) lives in uci_utils.cpp —
+// shared between setoption spin values and `go` parameters since part 3.
 
 void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
     // #56: full `setoption name <name...> [value <value...>]` grammar —

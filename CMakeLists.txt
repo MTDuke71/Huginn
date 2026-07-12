@@ -545,6 +545,7 @@ if(BUILD_TESTING)
     test/test_audit_helpers.cpp
     test/test_uci_search_control.cpp
     test/test_uci_transcript.cpp
+    test/test_uci_time_allocation.cpp
     )
 
     add_executable(huginn_tests

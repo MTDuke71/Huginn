@@ -265,6 +265,30 @@ TEST(UciTranscript, GoInfiniteHoldsBestmoveUntilStop) {
     EXPECT_TRUE(eng.wait_exit(2000));
 }
 
+TEST(UciTranscript, TinyClockMovesInstantlyInsteadOfFlagging) {
+    EngineProc eng;
+    START_ENGINE_OR_SKIP(eng);
+    eng.send("uci");
+    ASSERT_TRUE(eng.wait_for("uciok", 3000));
+
+    // #56 part 3: 10 ms on the clock. The old allocator's max(50, alloc)
+    // floor budgeted 50 ms it did not have — in a real game the GUI forfeits.
+    // The fix collapses to a 1 ms emergency budget: the depth-1 move goes
+    // out essentially instantly and the engine stays alive.
+    eng.send("position startpos");
+    auto go_sent = Clock::now();
+    eng.send("go wtime 10 btime 10");
+    ASSERT_TRUE(eng.wait_for("bestmove", 1000))
+        << "tiny-clock go did not answer promptly:\n" << eng.transcript();
+    EXPECT_LT(ms_since(go_sent), 800);
+
+    eng.send("isready");
+    EXPECT_TRUE(eng.wait_for("readyok", 1000)) << "engine wedged after tiny-clock search";
+
+    eng.send("quit");
+    EXPECT_TRUE(eng.wait_exit(2000));
+}
+
 TEST(UciTranscript, QuitDuringSearchExitsPromptly) {
     EngineProc eng;
     START_ENGINE_OR_SKIP(eng);

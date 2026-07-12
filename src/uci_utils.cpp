@@ -5,6 +5,7 @@
 #include "uci_utils.hpp"
 #include "position.hpp"
 #include "move.hpp"
+#include <algorithm>
 
 /**
  * @brief Parses a UCI move string and returns the corresponding legal move.
@@ -134,4 +135,57 @@ bool validate_uci_position(const Position& pos, std::string* reason) {
 	}
 
 	return true;
+}
+
+bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long long& out) {
+	if (s.empty()) return false;
+	size_t idx = (s[0] == '-' || s[0] == '+') ? 1 : 0;
+	if (idx == s.size()) return false;
+	long long v = 0;
+	for (; idx < s.size(); ++idx) {
+		if (s[idx] < '0' || s[idx] > '9') return false;
+		v = v * 10 + (s[idx] - '0');
+		if (v > 1000000000LL) { v = 1000000000LL; break; }  // overflow guard: saturate
+	}
+	if (s[0] == '-') v = -v;
+	out = std::max(lo, std::min(hi, v));
+	return true;
+}
+
+long long compute_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo) {
+	if (inc_ms < 0) inc_ms = 0;
+	if (movestogo < 0) movestogo = 0;
+	if (movestogo > 500) movestogo = 500;
+
+	if (time_ms < 0) {
+		// Our clock was not sent (opponent-clock-only / increment-only `go`).
+		// Spend a conservative slice of the increment if there is one,
+		// otherwise fall back to the bare-`go` default budget.
+		return inc_ms > 0 ? std::max(50LL, inc_ms / 4) : 5000LL;
+	}
+
+	// Allocation strategy unchanged from #47 (gauntleted: t21 +127 self-play).
+	long long alloc = (movestogo > 0)
+	    ? time_ms / movestogo + inc_ms / 2   // classical: split the period
+	    : time_ms / 20 + inc_ms / 2;         // sudden death / increment
+
+	// Reserve a slice of the clock as a hard usage CAP (not a subtraction)
+	// so low-time scrambles never flag. No floor on safe_max: when the whole
+	// clock is inside the reserve, the safely usable remainder really is 0
+	// (the old max(50, ...) here is what let a 60 ms clock budget 50 ms).
+	long long reserve = std::max(50LL, std::min(1000LL, time_ms / 10));
+	long long safe_max = std::max(0LL, time_ms - reserve);
+	long long cap60 = (time_ms * 6) / 10;
+
+	alloc = std::min(alloc, std::min(safe_max, cap60));
+
+	// 50 ms quality floor for normal clocks — capped by the safely usable
+	// remainder, never above it (#56: the old FINAL max(50, alloc) overdrew
+	// tiny clocks by design). 1 ms absolute minimum: the first checkup stops
+	// the search almost immediately and the depth-1 move goes out — an
+	// instant legal move beats a time forfeit.
+	if (alloc < 50) alloc = 50;
+	if (alloc > safe_max) alloc = safe_max;
+	if (alloc < 1) alloc = 1;
+	return alloc;
 }
