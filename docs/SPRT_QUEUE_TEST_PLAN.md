@@ -1,4 +1,11 @@
-# SPRT Queue Test Plan — aspiration windows re-test (#17-r2) candidate off baseline-t31 (OPEN)
+# SPRT Queue Test Plan — aspiration windows re-test (#17-r2) candidate off baseline-t31 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t32` SHIPPED (2026-07-13)** — two-machine SPRT vs
+> t31, both legs positive (AMD +12.51 / Intel +16.34), pooled **+14.46 ±
+> 10.61, LOS ≈ 99.6%, 2000g**. `ENABLE_ASPIRATION` default flipped ON (source +
+> CMake); ship build reproduces d14 = 5,669,691 / e2e4; 271/272 green. The t15
+> attempt-1 rejection is formally superseded (contaminated verdict, #45
+> precedent). Writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Run:** `git checkout candidate/aspiration-r2` + `test_huginn_gauntlet.bat t31`.
 > Flag `ENABLE_ASPIRATION` (unstick: `cmake -UENABLE_ASPIRATION`).

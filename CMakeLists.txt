@@ -255,12 +255,11 @@ endif()
 # BACKLOG #17-r2: aspiration windows at the root, re-test (see ENABLE_ASPIRATION
 # in src/search.cpp — attempt 1's t15 rejection predates the #44/#50/#52/#57/#58
 # soundness fixes that removed its score-instability causes).
-# CANDIDATE — default OFF (byte-identical to baseline-t31);
-# -DENABLE_ASPIRATION=ON builds the test arm.
-option(ENABLE_ASPIRATION "BACKLOG #17-r2: aspiration windows at the root (candidate re-test)" OFF)
+# SHIPPED baseline-t32 (default ON); -DENABLE_ASPIRATION=0 builds the pre-t32 arm.
+option(ENABLE_ASPIRATION "BACKLOG #17-r2: aspiration windows at the root (shipped t32)" ON)
 if(ENABLE_ASPIRATION)
     add_compile_definitions(ENABLE_ASPIRATION=1)
-    message(STATUS "Aspiration windows enabled (BACKLOG #17-r2 candidate — SPRT pending)")
+    message(STATUS "Aspiration windows enabled (BACKLOG #17-r2, shipped baseline-t32)")
 else()
     add_compile_definitions(ENABLE_ASPIRATION=0)
 endif()

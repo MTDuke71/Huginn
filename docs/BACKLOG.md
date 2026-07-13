@@ -36,7 +36,7 @@
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
-| 17-r2 | Aspiration windows at the root (re-test) | **CANDIDATE (2026-07-13)** — behind `ENABLE_ASPIRATION` (default OFF, byte-identical off); branch `candidate/aspiration-r2`. Both legs positive: AMD +12.51 ± 15.12 (LOS 94.78%) / Intel +16.34 ± 14.88 (LOS 98.45%), each 1000g cap; **pooled +14.46 ± 10.61, LOS ≈ 99.6%** — clears the two-machine bar (#62 precedent), ship-as-t32 pending user call | feature/search | high |
+| 17-r2 | Aspiration windows at the root (re-test) | **SHIPPED (2026-07-13, `baseline-t32`)** — two-machine same-sign positive (AMD +12.51 / Intel +16.34, pooled +14.46 ± 10.61, LOS ≈ 99.6%); flag default ON; t15 attempt-1 rejection formally superseded | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -658,8 +658,12 @@ each 1000g cap, both clean ~1h52m runs. **Pooled +14.46 ± 10.61, LOS ≈ 99.6%,
 standard two-machine bar; same ship profile as #62 (+14.90) and threats-r2
 (+17.0). The t15 attempt-1 rejection is formally superseded — with the
 soundness stack fixed, aspiration converts exactly as the contaminated-verdict
-hypothesis predicted. **Ship-as-t32 pending user call** — run-sheet in
-[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+hypothesis predicted. **SHIPPED `baseline-t32` (2026-07-13)** —
+`ENABLE_ASPIRATION` default flipped ON (source `#ifndef` + CMake option); ship
+build verified d14 = 5,669,691 / cp 33 / e2e4 exact from a clean no-override
+configure; 271/272 green (1 by-design skip); huginn_t32 snapshotted. Run-sheet
+in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md); writeup in
+[BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 

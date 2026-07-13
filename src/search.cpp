@@ -147,10 +147,10 @@
 // From ASPIRATION_MIN_DEPTH on, search [prev-50, prev+50] around the previous
 // depth's score; on fail-low/high widen that side geometrically (x2), snapping
 // to the full window once delta exceeds ASPIRATION_MAX_DELTA or on mate-range
-// scores. DEFAULT OFF pending SPRT; the OFF arm is byte-identical to
-// baseline-t31. Build the ON arm with -DENABLE_ASPIRATION=1.
+// scores. SHIPPED baseline-t32 (default ON); build the pre-t32 OFF arm with
+// -DENABLE_ASPIRATION=0.
 #ifndef ENABLE_ASPIRATION
-#define ENABLE_ASPIRATION 0
+#define ENABLE_ASPIRATION 1  // shipped t32 (two-machine SPRT vs t31, pooled +14.46, LOS ~99.6%)
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

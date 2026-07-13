@@ -9,6 +9,43 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t32 — #17-r2 aspiration windows at the root (re-test ship)
+= t31 + aspiration windows behind `ENABLE_ASPIRATION` (default ON as of this
+ship). From depth ≥ 6 the root searches a `[prev−50, prev+50]` window around
+the previous iteration's score; a fail-low/high widens the failing side
+geometrically (×2) around `best_score`, snapping to the full window once
+delta exceeds 800 or on mate-range scores (|score| ≥ 27000).
+`info.aspiration_researches` counts window fails.
+
+**A contaminated-verdict re-test, vindicated.** Attempt 1 (2026-04,
+`228817b`) was H0-rejected at t15 (−33.8 ± 18.0, LOS 0.01%) and reverted —
+but that verdict predates every soundness fix that followed: #44 repetition
+blindness (t17), #50 Zobrist OOB (t23), #52 check-blind qsearch (t26), #57
+broken PVS re-search (t27), #58 SEE pin legality (t28) — all direct sources
+of the inter-iteration score instability that makes aspiration thrash.
+Measured pre-implementation on t31: startpos swings ≤ 9cp/iteration from d6
+on — a ±50cp window holds. Design change from attempt 1: opens at depth 6
+(attempt 1 opened at 4, inside the noisy zone).
+
+**Two-machine SPRT vs t31 — both legs positive, pooled clears the bar:**
+- AMD **+12.51 ± 15.12** (nElo 17.84), LOS 94.78%, 1000g cap (LLR 1.07),
+  51.80% (W261/L225/D514), Ptnml [22,123,192,123,40].
+- Intel **+16.34 ± 14.88** (nElo 23.70), LOS 98.45%, 1000g cap (LLR 1.53),
+  52.35% (W273/L226/D501), Ptnml [25,112,183,151,29].
+- **Pooled (inverse-variance): +14.46 ± 10.61, LOS ≈ 99.6%, 52.08% / 2000g**
+  (W534/L451/D1015, Ptnml [47,235,375,274,69]).
+
+Same ship profile as #62 (+14.90 / 99.7%) and threats-r2 (+17.0 / 99.9%);
+shipped on same-sign two-machine agreement (standard bar). Both runs clean,
+~1h52m each; arms verified pre-run on each box. Ship build verified from a
+clean no-override configure: startpos d14 = **5,669,691** / cp 33 / e2e4
+(−13.9% vs t31's 6,583,846 — cheaper root iterations); Kiwipete d13 =
+2,768,609 / cp −88 / e2a6 (−19.6%); 271/272 tests green (1 by-design skip).
+Flip: `ENABLE_ASPIRATION` default ON in source `#ifndef` + CMake option.
+PGNs `gauntlet/huginn_vs_t31_aspiration_{amd,intel}.pgn`. The t30→t32 run
+(threats-r2 +17.0, singular-ext +14.9, aspiration +14.5 pooled) sums to
+~+46 Elo of two-machine-confirmed self-play gain in three days.
+
 ### baseline-t31 — #62 singular extensions (the SF18-gap-study EBF lever)
 = t30 + singular extensions behind `ENABLE_SINGULAR_EXT` (default ON as of
 this ship). Motivation: the SF18 gap study measured Huginn's effective

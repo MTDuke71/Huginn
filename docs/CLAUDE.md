@@ -13,7 +13,21 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t31` — **#62 singular extensions: the
+- ✅ **Baseline tag**: `baseline-t32` — **#17-r2 aspiration windows at the
+  root** (`ENABLE_ASPIRATION`, default ON). From depth ≥ 6 the root searches
+  a `[prev−50, prev+50]` window around the previous iteration's score; a
+  fail-low/high widens that side ×2 around `best_score`, snapping to the full
+  window past delta 800 or on mate-range scores. RE-TEST ship: attempt 1 was
+  H0-rejected at t15 (−33.8) and reverted, but that verdict predates the
+  #44/#50/#52/#57/#58 soundness fixes that caused the inter-iteration score
+  instability aspiration thrashes on — the contaminated-verdict hypothesis
+  (#45 precedent) predicted today's outcome. **Two-machine SPRT vs t31, both
+  legs positive: AMD +12.51 ± 15.12 (LOS 94.78%) / Intel +16.34 ± 14.88 (LOS
+  98.45%), pooled +14.46 ± 10.61, LOS ≈ 99.6%, 2000g.** Signature: startpos
+  d14 = **5,669,691** / cp 33 / e2e4 (−13.9% vs t31 — cheaper root
+  iterations); Kiwipete d13 = 2,768,609 / cp −88 / e2a6; 271/272 green (1
+  by-design skip). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t31` — **#62 singular extensions: the
   SF18-gap-study EBF lever** (`ENABLE_SINGULAR_EXT`, default ON). At a
   non-root, non-check node with depth ≥ 8 whose TT entry has a
   LOWER_BOUND/EXACT non-mate score at `tt_depth >= depth−3` and a best move,
@@ -132,7 +146,9 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t29 EP key semantics · t28 SEE pin legality · t27 legal-move
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t32 aspiration windows ·
+  t31 singular extensions · t30 threats round 2 ·
+  t29 EP key semantics · t28 SEE pin legality · t27 legal-move
   ordinal PVS/LMR · t26 check-aware
   qsearch + rule-50 TT guard · t25 history-heuristic
   collision fix · t24 SEE ordering + root-twofold · t23 zobrist OOB fix ·
