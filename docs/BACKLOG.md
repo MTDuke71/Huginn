@@ -36,6 +36,7 @@
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
+| 17-r2 | Aspiration windows at the root (re-test) | **CANDIDATE (2026-07-13)** — behind `ENABLE_ASPIRATION` (default OFF, byte-identical off); branch `candidate/aspiration-r2`; t15 rejection was a contaminated verdict (predates #44/#50/#52/#57/#58); ON arm −13.9% startpos / −19.6% Kiwipete fixed-depth nodes; SPRT vs t31 pending | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -618,6 +619,42 @@ clears the two-machine bar (threats-r2 precedent). **SHIPPED as
 search-shape ship since t27; full leg detail in
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
+### #17-r2: Aspiration windows at the root — RE-TEST off t31 (high)
+
+**Motivation (2026-07-13).** Attempt 1 (`228817b`, MTLChess-guided) was
+H0-rejected at t15 (−33.8 ± 18.0 AMD, LOS 0.01%) and reverted (`df4ccdb`),
+falsifying the then-current "stronger eval stabilizes scores" hypothesis. But
+that verdict predates **every** search-soundness fix that followed: #44
+repetition blindness (t17), #50 Zobrist OOB corrupting TT scores (t23), #52
+check-blind qsearch (t26), #57 the broken PVS re-search condition (t27), #58
+SEE pin legality (t28). Aspiration's failure mode is inter-iteration score
+instability → fail-low/high re-search storms, and those five bugs were all
+direct sources of it — a contaminated verdict (#45 precedent: falsified
+diagnoses hide behind since-fixed bugs). The SF18 gap study's EBF thesis
+(1.90 → toward 1.37) makes it the on-thesis follow-up to #62. Measured on t31
+before implementing: startpos swings ≤ 9cp between iterations, Kiwipete
+≤ 31cp from depth 6 on — a ±50cp window holds where it didn't at t15.
+
+**What (2026-07-13): CANDIDATE behind `ENABLE_ASPIRATION` (default OFF,
+flag-off byte-identical — startpos d14 = 6,583,846 unchanged).** From depth
+≥ 6 (attempt 1 opened at 4, inside the measured noisy zone) the root searches
+`[prev−50, prev+50]` around the previous depth's score; a fail widens the
+failed side ×2 around `best_score`; delta > 800 or a mate-range centre
+(|score| ≥ 27000) snaps to the full window. Interrupted passes are discarded
+by the existing stopped-check (bestmove never publishes from a failed pass).
+`info.aspiration_researches` counts window fails.
+
+**Verified:** OFF arm byte-identical to t31 (d14 = 6,583,846 / cp 24 / e2e4
+exact); ON arm startpos d14 = **5,669,691** / cp 33 / e2e4 (−13.9%), Kiwipete
+d13 = **2,768,609** / cp −88 / e2a6 (−19.6% — same best moves, cheaper tree
+at fixed depth); 3 regressions in
+[test_aspiration.cpp](../test/test_aspiration.cpp) (deep-search mate
+integrity + determinism both arms, window-fails-fire on the ON arm,
+counter-dead on the baseline arm); full suite 271/272 green both arms (1
+by-design skip). **Next:** two-machine SPRT via branch
+`candidate/aspiration-r2` — run-sheet in
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 
 The main strength thread. A `game_phase_256` tapered eval foundation (#35) plus
@@ -817,7 +854,8 @@ One-liners; full detail + evidence in the archives
   flag off, kept in-tree (`experiment/continuation-history`).
 - **#7 — LMP (late move pruning) fix.** Deferred (`experiment/lmp-quiet-count`).
 - **#8 — Aspiration step (b), narrow-window search.** Deferred; folds into #17
-  (rejected — see archive).
+  (t15 rejection — see archive; **re-opened 2026-07-13 as #17-r2**, the t15
+  verdict predates the soundness-fix stack — see the live table).
 - **#20 — Trapped-bishop eval pattern.** Tested 2026-07-03 (CPW locks,
   tuner-wired seeds 100/120 + 50/60) — **PARKED, clean two-machine neutral**
   (AMD +2.08/LOS 60.8%, Intel −5.21/LOS 24.7%, both noise-level, exactly the

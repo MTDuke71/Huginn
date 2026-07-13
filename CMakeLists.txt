@@ -252,6 +252,19 @@ else()
     add_compile_definitions(ENABLE_SINGULAR_EXT=0)
 endif()
 
+# BACKLOG #17-r2: aspiration windows at the root, re-test (see ENABLE_ASPIRATION
+# in src/search.cpp — attempt 1's t15 rejection predates the #44/#50/#52/#57/#58
+# soundness fixes that removed its score-instability causes).
+# CANDIDATE — default OFF (byte-identical to baseline-t31);
+# -DENABLE_ASPIRATION=ON builds the test arm.
+option(ENABLE_ASPIRATION "BACKLOG #17-r2: aspiration windows at the root (candidate re-test)" OFF)
+if(ENABLE_ASPIRATION)
+    add_compile_definitions(ENABLE_ASPIRATION=1)
+    message(STATUS "Aspiration windows enabled (BACKLOG #17-r2 candidate — SPRT pending)")
+else()
+    add_compile_definitions(ENABLE_ASPIRATION=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -567,6 +580,7 @@ if(BUILD_TESTING)
     test/test_uci_time_allocation.cpp
     test/test_eval_threats_r2.cpp
     test/test_singular_ext.cpp
+    test/test_aspiration.cpp
     )
 
     add_executable(huginn_tests

@@ -134,6 +134,25 @@
 #define ENABLE_SINGULAR_EXT 1  // shipped t31 (two-machine SPRT vs t30, pooled +14.9, LOS ~99.7%)
 #endif
 
+// ENABLE_ASPIRATION: BACKLOG #17-r2 — aspiration windows at the root, RE-TEST.
+// Attempt 1 (228817b) was H0-rejected at t15 (-33.8 AMD / -29.95 Intel) and
+// reverted (df4ccdb) — but that verdict predates every search-soundness fix
+// that followed: #44 repetition blindness (t17), #50 Zobrist OOB corrupting TT
+// scores (t23), #52 check-blind qsearch (t26), #57 the broken PVS re-search
+// condition (t27), #58 SEE pin legality (t28). Aspiration's failure mode is
+// inter-iteration score instability (fail-low/high re-search storms), and
+// those five bugs were all direct sources of it — the rejection is a
+// contaminated verdict (#45-precedent). Measured on t31: startpos swings <= 9cp
+// between iterations, Kiwipete <= 31cp from depth 6 on; a +/-50cp window holds.
+// From ASPIRATION_MIN_DEPTH on, search [prev-50, prev+50] around the previous
+// depth's score; on fail-low/high widen that side geometrically (x2), snapping
+// to the full window once delta exceeds ASPIRATION_MAX_DELTA or on mate-range
+// scores. DEFAULT OFF pending SPRT; the OFF arm is byte-identical to
+// baseline-t31. Build the ON arm with -DENABLE_ASPIRATION=1.
+#ifndef ENABLE_ASPIRATION
+#define ENABLE_ASPIRATION 0
+#endif
+
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
 // against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
 // verification — a genuine over-pruning / tactical-leak suspect (the Stash
@@ -2990,7 +3009,13 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
     const int root_static_eval = evalPosition(pos);
-    
+
+#if ENABLE_ASPIRATION
+    // #17-r2: centre of the next iteration's aspiration window — the score
+    // from the last completed depth (used from ASPIRATION_MIN_DEPTH on).
+    int prev_score = 0;
+#endif
+
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
@@ -3060,6 +3085,116 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             }
         }
 
+#if ENABLE_ASPIRATION
+        // #17-r2: aspiration windows. From ASPIRATION_MIN_DEPTH on, search a
+        // narrow window centred on the previous depth's score — the deep
+        // iterations that dominate total cost then run with far more cutoffs.
+        // On a fail (best <= alpha fail-low / best >= beta fail-high) widen the
+        // failed side geometrically (x2) and re-run the root loop; snap to the
+        // full window once delta outgrows ASPIRATION_MAX_DELTA. Mate-range
+        // centres skip the window entirely (mate scores move by ply, not cp).
+        constexpr int ASPIRATION_MIN_DEPTH  = 6;    // measured on t31: >50cp swings persist through d5
+        constexpr int ASPIRATION_DELTA      = 50;   // initial half-width (startpos <=9cp, Kiwipete <=31cp from d6)
+        constexpr int ASPIRATION_MAX_DELTA  = 800;  // escape hatch: stop nibbling, open full
+        constexpr int ASPIRATION_MATE_BOUND = 27000; // below the TB clamp (28000) and mate range
+
+        const bool use_window =
+            current_depth >= ASPIRATION_MIN_DEPTH &&
+            prev_score > -ASPIRATION_MATE_BOUND && prev_score < ASPIRATION_MATE_BOUND;
+        int delta = ASPIRATION_DELTA;
+        int alpha = use_window ? std::max(prev_score - delta, -30000) : -30000;
+        int beta  = use_window ? std::min(prev_score + delta,  30000) :  30000;
+
+        while (true) {
+            best_score = -30000;
+            depth_best_move.move = 0;
+            legal_count = 0;
+            info.pv_length[0] = 0;  // reset root PV for this (re-)search pass
+
+            // PVS-style alpha tightening within the window: local_alpha rises
+            // as root moves improve it, so sibling subtrees cut against the
+            // best score found so far instead of the window floor.
+            int local_alpha = alpha;
+
+            for (int i = 0; i < move_list.count; ++i) {
+                if (info.stopped || info.quit) break;
+
+                if (pos.MakeMove(move_list.moves[i]) != 1) {
+                    assert_search_position_integrity(pos, "after illegal root MakeMove rollback");
+                    continue; // Skip illegal moves
+                }
+                assert_search_position_integrity(pos, "after root MakeMove");
+                ++legal_count;
+#if ENABLE_ROOT_TWOFOLD_AVOID
+                // BACKLOG #44 follow-up: same gate as the baseline arm — see
+                // the flag-off loop below for the full rationale.
+                const bool immediate_repetition =
+                    (repetition_count_in_history(pos) >= 2);
+#else
+                const bool immediate_repetition = isRepetition(pos);
+#endif
+
+                // Track move in search stack for counter-move heuristic.
+                // info.ply is 0 at root; this writes search_stack[0].
+                if (info.ply >= 0 && info.ply < 64) {
+                    info.search_stack[info.ply] = move_list.moves[i];
+                }
+
+                ++info.ply;
+                const auto child = capture_search_position(pos);
+                int score = -AlphaBeta(pos, -beta, -local_alpha, current_depth - 1, info, true, false);
+                --info.ply;
+                assert_search_position_unchanged(pos, child, "after root child search");
+
+                if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
+                    score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
+                }
+
+                pos.TakeMove();
+                assert_search_position_integrity(pos, "after root TakeMove");
+
+                if (info.stopped || info.quit) break;
+
+                if (score > best_score) {
+                    best_score = score;
+                    depth_best_move = move_list.moves[i];
+
+                    // Triangular PV at the root (ply 0): this move + the child's
+                    // line, which the recursion stored at ply 1.
+                    info.pv_line[0][0] = move_list.moves[i];
+                    int child_len = info.pv_length[1];
+                    for (int j = 0; j < child_len; ++j) {
+                        info.pv_line[0][j + 1] = info.pv_line[1][j];
+                    }
+                    info.pv_length[0] = child_len + 1;
+
+                    if (best_score > local_alpha) local_alpha = best_score;
+                    if (best_score >= beta) break; // fail-high → widen beta and re-search
+                }
+            }
+
+            // Don't widen or loop on an interrupted or terminal pass — the
+            // shared post-loop code below discards it / handles mate+stalemate.
+            if (info.stopped || info.quit) break;
+            if (legal_count == 0) break;
+
+            if (best_score <= alpha) {             // fail-low: widen the lower side
+                ++info.aspiration_researches;
+                alpha = std::max(best_score - delta, -30000);
+                delta *= 2;
+            } else if (best_score >= beta) {       // fail-high: widen the upper side
+                ++info.aspiration_researches;
+                beta = std::min(best_score + delta, 30000);
+                delta *= 2;
+            } else {
+                break;                              // accepted: score inside the window
+            }
+            if (delta > ASPIRATION_MAX_DELTA) {
+                alpha = -30000;
+                beta  =  30000;
+            }
+        }
+#else
         // Try each move at the root with PVS-style alpha tightening:
         // pass local_alpha (the best score found so far at root) as the
         // recursion's alpha, so subsequent subtrees can produce alpha-beta
@@ -3129,6 +3264,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                 if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
             }
         }
+#endif
 
         // If search was interrupted, return previous best move (time management benefit)
         if (info.stopped || info.quit) {
@@ -3138,14 +3274,20 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // No legal moves at root: mate or stalemate. Stop iterative deepening
         // since deeper iterations would just repeat the same empty result.
         if (legal_count == 0) break;
-        
+
         // Update best move for this iteration
         if (depth_best_move.move != 0) {
             best_move = depth_best_move;
             // Store in PV table for next iteration's move ordering
             store_pv_move(pos.zobrist_key, depth_best_move);
         }
-        
+
+#if ENABLE_ASPIRATION
+        // Centre the next depth's aspiration window on this depth's accepted
+        // score (only completed, in-window iterations reach this point).
+        prev_score = best_score;
+#endif
+
         // Calculate elapsed time for output
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);

@@ -1,3 +1,34 @@
+# SPRT Queue Test Plan — aspiration windows re-test (#17-r2) candidate off baseline-t31 (OPEN)
+
+> **Run:** `git checkout candidate/aspiration-r2` + `test_huginn_gauntlet.bat t31`.
+> Flag `ENABLE_ASPIRATION` (unstick: `cmake -UENABLE_ASPIRATION`).
+> **t31 baseline (OFF):** startpos d14 = **6,583,846** / cp 24 / e2e4;
+> Kiwipete d13 = **3,442,234** / cp −75 / e2a6.
+> **#17-r2 arm (ON):** startpos d14 = **5,669,691** / cp 33 / e2e4 (−13.9% —
+> ⚠ root move does NOT discriminate, node count does); Kiwipete d13 =
+> **2,768,609** / cp −88 / e2a6 (−19.6% — same best move, cheaper tree at
+> fixed depth; the SPRT decides the fixed-time trade).
+> **What:** aspiration windows at the root — RE-TEST. Attempt 1 (`228817b`)
+> was H0-rejected at t15 (−33.8 ± 18.0 AMD, LOS 0.01%) and reverted
+> (`df4ccdb`) — but that verdict predates every soundness fix that followed:
+> #44 repetition blindness (t17), #50 Zobrist OOB corrupting TT scores (t23),
+> #52 check-blind qsearch (t26), #57 broken PVS re-search condition (t27),
+> #58 SEE pin legality (t28) — all direct sources of the inter-iteration
+> score instability that makes aspiration thrash (contaminated-verdict
+> re-test, #45 precedent). Measured on t31 pre-implementation: startpos
+> swings ≤ 9cp/iteration, Kiwipete ≤ 31cp from d6 on — a ±50cp window holds.
+> Design: from depth ≥ 6 (attempt 1 opened at 4, inside the measured noisy
+> zone), window `[prev−50, prev+50]`; a fail-low/high widens that side ×2
+> around `best_score`; delta > 800 or a mate-range centre (|score| ≥ 27000)
+> snaps to the full window. `info.aspiration_researches` counts window fails.
+> Fixture: counter > 0 in a d8 Kiwipete search (the measured d5→d6 −57cp
+> swing must fail the first window) — test
+> `Aspiration.WindowFailuresFireInDeepSearch` tracks the built arm; counter
+> stone-dead on the baseline arm. Both arms 271/272 green (1 by-design skip).
+> **Result:** two-machine SPRT vs t31 pending — AMD leg first, Intel to follow.
+> **Decision:** standard two-machine ship bar. If it ships, flip the flag
+> default ON on `main` (source `#ifndef` + CMake option — both) as t32.
+
 # SPRT Queue Test Plan — singular extensions (#62) candidate off baseline-t30 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t31` SHIPPED (2026-07-13)** — two-machine SPRT vs
