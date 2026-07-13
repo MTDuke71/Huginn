@@ -116,6 +116,24 @@
 #define ENABLE_THREATS_R2 1  // shipped t30 (two-machine SPRT vs t29, pooled +17.0, LOS ~99.9%)
 #endif
 
+// ENABLE_SINGULAR_EXT: BACKLOG #62 singular extensions — the SF18 gap study
+// (docs/SF18_GAP_STUDY.md) measured Huginn's effective branching factor at
+// ~1.90/ply vs SF18's ~1.37; extensions concentrated on forced lines are the
+// classic EBF lever. At a non-root, non-check node whose TT entry has a real
+// (LOWER_BOUND/EXACT, non-mate) score at depth >= depth-3 and a best move, run
+// a reduced-depth EXCLUSION search of every OTHER move with a null window just
+// below the TT score; if nothing else comes close (fail low), the TT move is
+// "singular" — the position's value hangs on one move — and it is searched one
+// ply deeper. The exclusion search passes `excluded_move` through AlphaBeta:
+// at that pseudo-node the TT is neither cut from nor stored to (its entry
+// describes the FULL move set), null-move is off (a null move in a "position
+// minus one move" has no meaning), and a no-other-legal-move result fails low
+// (maximally singular), not mate. DEFAULT OFF pending SPRT; the OFF arm is
+// byte-identical to baseline-t30. Build the ON arm with -DENABLE_SINGULAR_EXT=1.
+#ifndef ENABLE_SINGULAR_EXT
+#define ENABLE_SINGULAR_EXT 0
+#endif
+
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
 // against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
 // verification — a genuine over-pruning / tactical-leak suspect (the Stash
@@ -1873,7 +1891,10 @@ void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
  *               cutoff, and enables the root draw-avoidance / move bookkeeping.
  * @return Score from the side-to-move's perspective; mate scores as `MATE − ply`.
  */
-int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot) {
+int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot, uint32_t excluded_move) {
+#if !ENABLE_SINGULAR_EXT
+    (void)excluded_move;  // baseline arm: parameter is inert (always 0)
+#endif
     // Increment node count for every position visited (except root calls)
     if (!isRoot) {
         info.nodes++;
@@ -1995,7 +2016,16 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     uint32_t tt_best_move;
     bool tt_hit = tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_node_type, tt_best_move);
 
-    if (tt_hit && tt_depth >= depth && !isRoot && !rule50_tt_unsafe) {
+#if ENABLE_SINGULAR_EXT
+    // BACKLOG #62: an exclusion search re-visits this position *minus* one
+    // move; the TT entry describes the full move set, so taking a cutoff from
+    // it would just echo the excluded move's score. No cutoff here (and no
+    // store below); tt_best_move stays usable for ordering — the loop skips it.
+    const bool tt_cutoff_ok = (excluded_move == 0);
+#else
+    constexpr bool tt_cutoff_ok = true;
+#endif
+    if (tt_hit && tt_depth >= depth && !isRoot && !rule50_tt_unsafe && tt_cutoff_ok) {
 #if ENABLE_PLY_TRACKED_TT_MATE
         // Adjust mate scores to current ply (VICE Part 84: 5:13)
         if (tt_score > MATE - 1000) {
@@ -2228,6 +2258,46 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
     }
 
+#if ENABLE_SINGULAR_EXT
+    // BACKLOG #62: singular-extension decision (see the flag comment at the
+    // top of this file). Runs a reduced-depth exclusion search of every move
+    // EXCEPT the TT move at a null window just below the TT score; a fail-low
+    // means nothing else comes close, so the TT move is searched 1 ply deeper.
+    // Skipped when in check (already extended above), at exclusion nodes (no
+    // recursion), and for mate-band TT scores (their ply encoding is relative;
+    // the in-place adjustment in the cutoff block above only touches the mate
+    // band, so an SE-eligible tt_score is always the raw stored value).
+    bool singular_extend = false;
+    if (excluded_move == 0 && !isRoot && !in_check) {
+        const int SINGULAR_MIN_DEPTH = 8;       // deep nodes only — probe cost amortizes
+        const int SINGULAR_TT_DEPTH_SLACK = 3;  // entry depth >= depth - 3
+        const int SINGULAR_MARGIN_PER_PLY = 2;  // window: tt_score - 2*depth
+        if (depth >= SINGULAR_MIN_DEPTH &&
+            tt_hit && tt_best_move != 0 &&
+            (tt_node_type == TTEntry::LOWER_BOUND || tt_node_type == TTEntry::EXACT) &&
+            int(tt_depth) >= depth - SINGULAR_TT_DEPTH_SLACK &&
+            tt_score > -MATE + 1000 && tt_score < MATE - 1000) {
+            const int singular_beta = tt_score - SINGULAR_MARGIN_PER_PLY * depth;
+            const int exclusion_depth = (depth - 1) / 2;
+            // Same position, same ply (this is a probe of THIS node, not a
+            // child): info.ply is not incremented. doNull=false — a null move
+            // in a "position minus one move" has no meaning.
+            const auto se_probe = capture_search_position(pos);
+            int exclusion_score = AlphaBeta(pos, singular_beta - 1, singular_beta,
+                                            exclusion_depth, info, false, false,
+                                            tt_best_move);
+            assert_search_position_unchanged(pos, se_probe, "after singular exclusion search");
+            if (info.stopped || info.quit) {
+                return 0;
+            }
+            if (exclusion_score < singular_beta) {
+                singular_extend = true;
+                info.singular_exts++;
+            }
+        }
+    }
+#endif
+
     // Generate pseudo-legal moves; legality is checked per-move via MakeMove
     // below, and mate/stalemate is detected after the loop via legal_count.
     S_MOVELIST move_list;
@@ -2264,6 +2334,13 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         // ordering TT move is the one from the node-entry probe above — no re-probe.
         pick_next_move(move_list, i, pos, info, depth, iid_move, tt_hit ? tt_best_move : 0u);
 
+#if ENABLE_SINGULAR_EXT
+        // BACKLOG #62: exclusion search — pretend the TT move doesn't exist.
+        if (excluded_move != 0 && move_list.moves[i].move == excluded_move) {
+            continue;
+        }
+#endif
+
         if (pos.MakeMove(move_list.moves[i]) != 1) {
             assert_search_position_integrity(pos, "after illegal AlphaBeta MakeMove rollback");
             continue; // Skip illegal moves
@@ -2291,6 +2368,16 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         const int move_ordinal = i;
         const bool pvs_full_window = (i == 0 || alpha == best_score);
         const bool first_move_for_fhf = (i == 0);
+#endif
+
+#if ENABLE_SINGULAR_EXT
+        // BACKLOG #62: the singular TT move is searched one ply deeper. Every
+        // child call below uses child_depth so the extension follows the move
+        // through the LMR-reduced, full-window, and PVS paths alike.
+        const int child_depth = depth - 1 +
+            ((singular_extend && move_list.moves[i].move == tt_best_move) ? 1 : 0);
+#else
+        const int child_depth = depth - 1;
 #endif
 
         int score;
@@ -2349,7 +2436,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             reduction = std::min(reduction, depth - 2);
 
             // Try reduced search first
-            int reduced_depth = depth - 1 - reduction;
+            int reduced_depth = child_depth - reduction;
             if (reduced_depth >= 1) {
 #if ENABLE_INFO_DIAGNOSTICS
                 info.lmr_attempts++;
@@ -2378,21 +2465,21 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 // Full window (see the per-arm definition above)
                 ++info.ply;
                 const auto child = capture_search_position(pos);
-                score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+                score = -AlphaBeta(pos, -beta, -alpha, child_depth, info, true, false);
                 --info.ply;
                 assert_search_position_unchanged(pos, child, "after full-window child search");
             } else {
                 // PVS: Try null window first, then re-search if it fails high
                 ++info.ply;
                 const auto child = capture_search_position(pos);
-                score = -AlphaBeta(pos, -alpha - 1, -alpha, depth - 1, info, true, false);
+                score = -AlphaBeta(pos, -alpha - 1, -alpha, child_depth, info, true, false);
                 --info.ply;
                 assert_search_position_unchanged(pos, child, "after PVS null-window child search");
                 if (score > alpha && score < beta) {
                     // Null window search failed high, re-search with full window
                     ++info.ply;
                     const auto research_child = capture_search_position(pos);
-                    score = -AlphaBeta(pos, -beta, -alpha, depth - 1, info, true, false);
+                    score = -AlphaBeta(pos, -beta, -alpha, child_depth, info, true, false);
                     --info.ply;
                     assert_search_position_unchanged(pos, research_child, "after PVS re-search child search");
                 }
@@ -2425,6 +2512,11 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 }
 
                 // Store best move in PV table (VICE tutorial style)
+#if ENABLE_SINGULAR_EXT
+                // BACKLOG #62: not during exclusion search — the "best move
+                // minus the TT move" is not this position's best move.
+                if (excluded_move == 0)
+#endif
                 store_pv_move(pos.zobrist_key, move_list.moves[i]);
                 
                 // VICE Part 64: Update history heuristic for non-capture moves that improve alpha
@@ -2484,6 +2576,15 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // since pseudo-legal generation can yield moves that all turn out to be
     // illegal (king-into-check, pinned piece, EP self-check).
     if (legal_count == 0 && !info.stopped && !info.quit) {
+#if ENABLE_SINGULAR_EXT
+        // BACKLOG #62: exclusion search where the TT move was the ONLY legal
+        // move — maximally singular. Fail low at the exclusion window (alpha
+        // here is still singular_beta - 1), NOT a mate score: the position is
+        // not mate, we merely pretended its one move away.
+        if (excluded_move != 0) {
+            return alpha;
+        }
+#endif
         int king_sq = pos.king_sq[int(pos.side_to_move)];
         if (king_sq >= 0 && SqAttackedBB(king_sq, pos, !pos.side_to_move)) {
 #if ENABLE_PLY_TRACKED_TT_MATE
@@ -2498,6 +2599,15 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
         return -CONTEMPT; // Stalemate — contempt-biased (BACKLOG #16)
     }
+
+#if ENABLE_SINGULAR_EXT
+    // BACKLOG #62: an exclusion-search result describes "this position minus
+    // one move" — storing it under the position's key would poison every
+    // normal probe of this position. Return without touching the TT.
+    if (excluded_move != 0) {
+        return best_score;
+    }
+#endif
 
     // VICE Part 84: Store result in transposition table (6:38)
     // NOTE: must compare against `original_alpha` (captured pre-loop), not the

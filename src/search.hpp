@@ -136,6 +136,11 @@ struct SearchInfo {
     // Advanced search optimization statistics
     uint64_t razoring_cuts;  // Razoring depth reductions applied
 
+    // Singular extensions (ENABLE_SINGULAR_EXT): TT moves extended after the
+    // exclusion search failed low. Always present (tests read it on the ON
+    // arm); never incremented on the baseline arm.
+    uint64_t singular_exts;
+
     // Counter-move heuristic: track moves played to update counter-move table
     S_MOVE search_stack[64];  // Stack of moves made during search (max 64 plies)
 
@@ -162,7 +167,8 @@ struct SearchInfo {
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
                    quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
                    best_move(), fh(0), fhf(0), null_cut(0),
-                   futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0) {
+                   futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0),
+                   singular_exts(0) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();
@@ -366,9 +372,13 @@ public:  // Make members public for easier access
      * @param info Shared per-search state/statistics.
      * @param doNull Whether null-move pruning is permitted at this node.
      * @param isRoot True at the root (enables root-specific handling).
+     * @param excluded_move Singular-extension exclusion search (ENABLE_SINGULAR_EXT):
+     *        when non-zero, this node searches the same position *minus* this move
+     *        (no TT cutoff, no TT store — the entry describes the full move set).
+     *        0 (the default) everywhere else; inert on the baseline arm.
      * @return The negamax score from the side-to-move's perspective.
      */
-    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false);
+    int AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo& info, bool doNull, bool isRoot = false, uint32_t excluded_move = 0);
 
     /**
      * @brief Quiescence search — extends the leaf with captures/checks until quiet.

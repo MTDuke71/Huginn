@@ -35,6 +35,7 @@
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
+| 62 | Singular extensions (SF18-study EBF lever) | **CANDIDATE (2026-07-12)** — behind `ENABLE_SINGULAR_EXT` (default OFF, byte-identical off); branch `candidate/singular-ext`; SPRT vs t30 pending (arm sigs in SPRT_QUEUE_TEST_PLAN.md) | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -579,6 +580,39 @@ with `add_piece_sq64` and DEBUG-asserts kings are never cleared. Focused
 regressions in [test_audit_helpers.cpp](../test/test_audit_helpers.cpp)
 (8 tests, all four contracts). Verified: 226/226, d14 = 6,634,033
 byte-identical.
+
+### #62: Singular extensions — the SF18-study EBF lever (high)
+
+**Motivation ([SF18_GAP_STUDY.md](SF18_GAP_STUDY.md), 2026-07-12).** The gap
+study measured Huginn's effective branching factor at **~1.90/ply vs SF18's
+~1.37** — at equal depth SF's tree is 112× smaller by d16, and that compounding
+is most of the non-eval strength gap. Extensions concentrated on forced lines
+are the classic EBF attack, and the #57 family already proved selectivity work
+converts on this codebase (+30 solo).
+
+**What (2026-07-12): CANDIDATE behind `ENABLE_SINGULAR_EXT` (default OFF,
+flag-off byte-identical — startpos d14 = 8,298,375 unchanged).** At a non-root,
+non-check node with `depth >= 8` whose TT entry has a LOWER_BOUND/EXACT
+non-mate score at `tt_depth >= depth − 3` and a best move, run a reduced-depth
+(`(depth−1)/2`) **exclusion search** of every *other* move at a null window
+just below `tt_score − 2·depth`; if it fails low, nothing else comes close —
+the TT move is *singular* and is searched one ply deeper. Plumbing: a defaulted
+`excluded_move` parameter through `AlphaBeta`; at exclusion nodes there is no
+TT cutoff and no TT store (the entry describes the full move set), no
+null-move (`doNull=false` — meaningless in a "position minus one move"), no
+PV-table write, and a no-other-legal-move result fails low at the exclusion
+window (maximally singular), not mate. `info.singular_exts` counts fires.
+
+**Verified:** OFF arm byte-identical to t30 (d14 = 8,298,375 / cp 26 / e2e4
+exact); ON arm startpos d14 = **6,583,846** / cp 24 / e2e4 (−20.7% — sharper
+tree), Kiwipete d13 = **3,442,234** / cp −75 / e2a6 (+86%, seldepth 30 vs 25 —
+tactical lines verified much deeper); 4 regressions in
+[test_singular_ext.cpp](../test/test_singular_ext.cpp) (deep-search mate
+integrity + determinism both arms, extensions-fire on the ON arm,
+counter-dead on the baseline arm); full suite 268/269 green both arms (1
+by-design skip). **Next:** two-machine SPRT via branch
+`candidate/singular-ext` — run-sheet in
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 

@@ -241,6 +241,17 @@ else()
     add_compile_definitions(ENABLE_THREATS_R2=0)
 endif()
 
+# BACKLOG #62: singular extensions (see ENABLE_SINGULAR_EXT in src/search.cpp).
+# CANDIDATE — default OFF (byte-identical to baseline-t30);
+# -DENABLE_SINGULAR_EXT=ON builds the test arm.
+option(ENABLE_SINGULAR_EXT "BACKLOG #62: singular extensions — extend the TT move when nothing else comes close (candidate)" OFF)
+if(ENABLE_SINGULAR_EXT)
+    add_compile_definitions(ENABLE_SINGULAR_EXT=1)
+    message(STATUS "Singular extensions enabled (BACKLOG #62 candidate — SPRT pending)")
+else()
+    add_compile_definitions(ENABLE_SINGULAR_EXT=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -555,6 +566,7 @@ if(BUILD_TESTING)
     test/test_uci_transcript.cpp
     test/test_uci_time_allocation.cpp
     test/test_eval_threats_r2.cpp
+    test/test_singular_ext.cpp
     )
 
     add_executable(huginn_tests

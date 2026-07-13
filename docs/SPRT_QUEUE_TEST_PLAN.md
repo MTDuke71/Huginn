@@ -1,3 +1,25 @@
+# SPRT Queue Test Plan — singular extensions (#62) candidate off baseline-t30 (OPEN)
+
+> **Run:** `git checkout candidate/singular-ext` + `test_huginn_gauntlet.bat t30`.
+> Flag `ENABLE_SINGULAR_EXT` (unstick: `cmake -UENABLE_SINGULAR_EXT`).
+> **t30 baseline (OFF):** startpos d14 = **8,298,375** / cp 26 / e2e4;
+> Kiwipete d13 = **1,846,915** / cp −83 / e2a6.
+> **#62 arm (ON):** startpos d14 = **6,583,846** / cp 24 / e2e4 (−20.7% —
+> ⚠ root move does NOT discriminate, node count does); Kiwipete d13 =
+> **3,442,234** / cp −75 / e2a6 (+86%, seldepth 30 vs 25 — forced lines
+> verified deeper; the SPRT decides the fixed-time trade).
+> **What:** singular extensions (the SF18-gap-study EBF lever, EBF 1.90 →
+> toward 1.37): at depth ≥ 8, non-root, non-check, with a LOWER_BOUND/EXACT
+> non-mate TT score at depth ≥ depth−3, a reduced-depth `(depth−1)/2`
+> exclusion search of every OTHER move at a null window below
+> `tt_score − 2·depth`; fail-low ⇒ the TT move is singular ⇒ +1 ply. At
+> exclusion nodes: no TT cut/store, no null-move, no PV write; only-legal-move
+> ⇒ fail low (not mate). Fixture: `info.singular_exts > 0` in a d10 Kiwipete
+> search (test `SingularExt.ExtensionsFireInDeepSearch` tracks the built arm).
+> **Result:** two-machine SPRT vs t30 pending — Intel leg first, AMD to follow.
+> **Decision:** standard two-machine ship bar. If it ships, flip the flag
+> default ON on `main` (source `#ifndef` + CMake option — both).
+
 # SPRT Queue Test Plan — threats round 2 (#9) candidate off baseline-t29 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t30` SHIPPED (2026-07-12)** — two-machine SPRT vs
