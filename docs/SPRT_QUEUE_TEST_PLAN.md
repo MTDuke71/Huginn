@@ -16,7 +16,13 @@
 > exclusion nodes: no TT cut/store, no null-move, no PV write; only-legal-move
 > ⇒ fail low (not mate). Fixture: `info.singular_exts > 0` in a d10 Kiwipete
 > search (test `SingularExt.ExtensionsFireInDeepSearch` tracks the built arm).
-> **Result:** two-machine SPRT vs t30 pending — Intel leg first, AMD to follow.
+> **Result — Intel leg (2026-07-12): positive, CI excludes zero.** **+17.39 ±
+> 14.67** (nElo 25.59 ± 21.53), **LOS 99.01%**, 1000g round cap (LLR 1.70, no
+> bound crossed), 52.50% (W266/L216/D518), DrawRatio 38.00%, PairsRatio 1.25,
+> Ptnml(0-2) [18, 120, 190, 138, 34]. Clean run, 1h49m. Arms verified pre-run
+> (test d14 = 6,583,846; baseline huginn_t30.exe d14 = 8,298,375). PGN
+> `gauntlet/huginn_vs_t30_singular_intel.pgn`. **AMD leg pending — two-machine
+> bar; pool after both legs land.**
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both).
 
