@@ -13,7 +13,21 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t30` — **#9 threats round 2: hanging /
+- ✅ **Baseline tag**: `baseline-t31` — **#62 singular extensions: the
+  SF18-gap-study EBF lever** (`ENABLE_SINGULAR_EXT`, default ON). At a
+  non-root, non-check node with depth ≥ 8 whose TT entry has a
+  LOWER_BOUND/EXACT non-mate score at `tt_depth >= depth−3` and a best move,
+  a reduced-depth `(depth−1)/2` exclusion search of every *other* move at a
+  null window below `tt_score − 2·depth`; fail-low ⇒ the TT move is singular
+  ⇒ searched one ply deeper (no TT cut/store, no null-move, no PV write at
+  exclusion nodes). **Two-machine SPRT vs t30, both legs positive: AMD
+  +12.17 ± 15.39 (LOS 93.97%) / Intel +17.39 ± 14.67 (LOS 99.01%), pooled
+  +14.90 ± 10.62, LOS ≈ 99.7%, 2000g** — first search-shape ship since t27.
+  Signature: startpos d14 = **6,583,846** / cp 24 / e2e4 (−20.7% vs t30's
+  8,298,375 — sharper tree, forced lines verified deeper: Kiwipete seldepth
+  30 vs 25); 268 tests green (1 by-design skip). **Full writeup:**
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t30` — **#9 threats round 2: hanging /
   pawn-push / king-ring eval terms** (`ENABLE_THREATS_R2`, default ON).
   Three eval threat classes layered on t15's threats round 1: hanging units
   (attacked + undefended), safe pawn-push threats, hanging units in our

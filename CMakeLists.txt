@@ -242,12 +242,12 @@ else()
 endif()
 
 # BACKLOG #62: singular extensions (see ENABLE_SINGULAR_EXT in src/search.cpp).
-# CANDIDATE — default OFF (byte-identical to baseline-t30);
-# -DENABLE_SINGULAR_EXT=ON builds the test arm.
-option(ENABLE_SINGULAR_EXT "BACKLOG #62: singular extensions — extend the TT move when nothing else comes close (candidate)" OFF)
+# SHIPPED baseline-t31 — default ON; -DENABLE_SINGULAR_EXT=OFF builds the
+# pre-t31 arm (byte-identical to baseline-t30).
+option(ENABLE_SINGULAR_EXT "BACKLOG #62: singular extensions — extend the TT move when nothing else comes close (shipped t31)" ON)
 if(ENABLE_SINGULAR_EXT)
     add_compile_definitions(ENABLE_SINGULAR_EXT=1)
-    message(STATUS "Singular extensions enabled (BACKLOG #62 candidate — SPRT pending)")
+    message(STATUS "Singular extensions enabled (BACKLOG #62, shipped baseline-t31)")
 else()
     add_compile_definitions(ENABLE_SINGULAR_EXT=0)
 endif()

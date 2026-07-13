@@ -35,7 +35,7 @@
 | 59 | En-passant key semantics (repetition + Polyglot) | **FIXED on main (2026-07-11)** — EP right normalized at source (MakeMove + set_from_fen, X-FEN convention); Polyglot wrong-rank check replaced, spec anchor keys pass; **SHIPPED (2026-07-11, `baseline-t29`)** — unconditional; AMD regression gate clean (+8.34 ± 15.32, LOS 85.73%, 1000g); Polyglot spec anchors pass | bug/rules/book | high |
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
-| 62 | Singular extensions (SF18-study EBF lever) | **CANDIDATE (2026-07-12)** — behind `ENABLE_SINGULAR_EXT` (default OFF, byte-identical off); branch `candidate/singular-ext`; **both legs positive** (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**) — clears the two-machine bar, ship decision pending | feature/search | high |
+| 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -613,8 +613,9 @@ counter-dead on the baseline arm); full suite 268/269 green both arms (1
 by-design skip). **SPRT — BOTH LEGS DONE (2026-07-12), same-sign positive:**
 AMD +12.17 ± 15.39 (LOS 93.97%) / Intel +17.39 ± 14.67 (LOS 99.01%), both
 1000g caps, clean runs; **pooled +14.90 ± 10.62, LOS ≈ 99.7%, 2000g** —
-clears the two-machine bar (threats-r2 precedent). Ship decision pending;
-full leg detail in
+clears the two-machine bar (threats-r2 precedent). **SHIPPED as
+`baseline-t31` (2026-07-13)** — flag default ON (source + CMake), first
+search-shape ship since t27; full leg detail in
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)

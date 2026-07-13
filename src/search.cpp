@@ -128,10 +128,10 @@
 // at that pseudo-node the TT is neither cut from nor stored to (its entry
 // describes the FULL move set), null-move is off (a null move in a "position
 // minus one move" has no meaning), and a no-other-legal-move result fails low
-// (maximally singular), not mate. DEFAULT OFF pending SPRT; the OFF arm is
-// byte-identical to baseline-t30. Build the ON arm with -DENABLE_SINGULAR_EXT=1.
+// (maximally singular), not mate. SHIPPED baseline-t31 (default ON); build the
+// pre-t31 OFF arm with -DENABLE_SINGULAR_EXT=0.
 #ifndef ENABLE_SINGULAR_EXT
-#define ENABLE_SINGULAR_EXT 0
+#define ENABLE_SINGULAR_EXT 1  // shipped t31 (two-machine SPRT vs t30, pooled +14.9, LOS ~99.7%)
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

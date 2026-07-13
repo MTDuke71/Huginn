@@ -1,4 +1,10 @@
-# SPRT Queue Test Plan — singular extensions (#62) candidate off baseline-t30 (OPEN)
+# SPRT Queue Test Plan — singular extensions (#62) candidate off baseline-t30 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t31` SHIPPED (2026-07-13)** — two-machine SPRT vs
+> t30, both legs positive (AMD +12.17 / Intel +17.39), pooled **+14.90 ± 10.62,
+> LOS ≈ 99.7%, 2000g**. `ENABLE_SINGULAR_EXT` default flipped ON (source +
+> CMake); ship build reproduces d14 = 6,583,846 / e2e4. First search-shape ship
+> since t27. Writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Run:** `git checkout candidate/singular-ext` + `test_huginn_gauntlet.bat t30`.
 > Flag `ENABLE_SINGULAR_EXT` (unstick: `cmake -UENABLE_SINGULAR_EXT`).
@@ -34,8 +40,9 @@
 > Arms verified pre-run on each box (test d14 = 6,583,846; baseline
 > huginn_t30.exe d14 = 8,298,375; AMD also MD5-matched huginn_t30.exe to
 > the t30 release build).
-> **Decision:** standard two-machine ship bar. If it ships, flip the flag
-> default ON on `main` (source `#ifndef` + CMake option — both).
+> **Verdict: SHIPPED as `baseline-t31` (2026-07-13)** — standard two-machine
+> ship bar cleared; `ENABLE_SINGULAR_EXT` default flipped ON on `main` (source
+> `#ifndef` + CMake option — both), tagged, `huginn_t31.exe` snapshotted.
 
 # SPRT Queue Test Plan — threats round 2 (#9) candidate off baseline-t29 (CLOSED)
 

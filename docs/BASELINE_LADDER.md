@@ -9,6 +9,39 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t31 — #62 singular extensions (the SF18-gap-study EBF lever)
+= t30 + singular extensions behind `ENABLE_SINGULAR_EXT` (default ON as of
+this ship). Motivation: the SF18 gap study measured Huginn's effective
+branching factor at ~1.90/ply vs SF18's ~1.37 — extensions concentrated on
+forced lines are the classic EBF attack. At a non-root, non-check node with
+`depth >= 8` whose TT entry has a LOWER_BOUND/EXACT non-mate score at
+`tt_depth >= depth − 3` and a best move, a reduced-depth `(depth−1)/2`
+exclusion search of every *other* move at a null window just below
+`tt_score − 2·depth`; if it fails low, the TT move is singular and is
+searched one ply deeper. At exclusion nodes: no TT cutoff/store, no
+null-move, no PV write; a no-other-legal-move result fails low (maximally
+singular), not mate.
+
+**Two-machine SPRT vs t30 — both legs positive, pooled clears the bar:**
+- AMD **+12.17 ± 15.39** (nElo 17.05), LOS 93.97%, 1000g cap (LLR 0.99),
+  51.75% (W290/L255/D455), Ptnml [31,107,196,128,38].
+- Intel **+17.39 ± 14.67** (nElo 25.59), LOS 99.01%, 1000g cap (LLR 1.70),
+  52.50% (W266/L216/D518), Ptnml [18,120,190,138,34].
+- **Pooled (inverse-variance): +14.90 ± 10.62, LOS ≈ 99.7%, 52.13% / 2000g**
+  (W556/L471/D973, Ptnml [49,227,386,266,72]).
+
+Neither leg crossed the SPRT LLR bound before the 1000-game cap, but the
+pooled two-machine estimate clears the strict 95% LOS bar decisively —
+shipped on same-sign two-machine agreement (standard bar, threats-r2
+precedent). First search-shape ship since t27's legal-move ordinal. Both
+runs clean (zero forfeits/illegal/disconnects, ~1h50m each); arms verified
+pre-run on each box. Ship build verified: startpos d14 = **6,583,846** /
+cp 24 / e2e4 (−20.7% fixed-depth vs t30's 8,298,375 — a sharper tree);
+Kiwipete d13 = 3,442,234 / cp −75 / e2a6 (seldepth 30 vs 25 — forced lines
+verified deeper); 268 tests green (1 by-design skip). Flip:
+`ENABLE_SINGULAR_EXT` default ON in source `#ifndef` + CMake option.
+PGNs `gauntlet/huginn_vs_t30_singular_{amd,intel}.pgn`.
+
 ### baseline-t30 — #9 threats round 2 (hanging / pawn-push / king-ring)
 = t29 + three eval threat classes layered on t15's threats round 1, behind
 `ENABLE_THREATS_R2` (default ON as of this ship): hanging units (attacked +
