@@ -36,7 +36,7 @@
 | 60 | Make CMake / CTest / CI a trustworthy safety net | **CORE CLOSED (2026-07-11)** — `check` runs the real suite (fails on empty discovery), quick perft registered, BUILD_TESTING=OFF engine-only, real sanitizer flags, CI matrix incl. Windows; REMAINING: parser-purity test refactor + randomized invariants (see section) | build/test | medium |
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
-| 17-r2 | Aspiration windows at the root (re-test) | **CANDIDATE (2026-07-13)** — behind `ENABLE_ASPIRATION` (default OFF, byte-identical off); branch `candidate/aspiration-r2`; t15 rejection was a contaminated verdict (predates #44/#50/#52/#57/#58); ON arm −13.9% startpos / −19.6% Kiwipete fixed-depth nodes; SPRT vs t31 pending | feature/search | high |
+| 17-r2 | Aspiration windows at the root (re-test) | **CANDIDATE (2026-07-13)** — behind `ENABLE_ASPIRATION` (default OFF, byte-identical off); branch `candidate/aspiration-r2`; t15 rejection was a contaminated verdict (predates #44/#50/#52/#57/#58); AMD leg +12.51 ± 15.12, LOS 94.78%, 1000g cap (positive lean, no bound); Intel leg pending | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -651,9 +651,10 @@ at fixed depth); 3 regressions in
 [test_aspiration.cpp](../test/test_aspiration.cpp) (deep-search mate
 integrity + determinism both arms, window-fails-fire on the ON arm,
 counter-dead on the baseline arm); full suite 271/272 green both arms (1
-by-design skip). **Next:** two-machine SPRT via branch
-`candidate/aspiration-r2` — run-sheet in
-[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
+by-design skip). **SPRT — AMD leg (2026-07-13): positive lean, no bound** —
++12.51 ± 15.12, LOS 94.78%, 1000g cap (LLR 1.07), clean run; same profile as
+the #62 and threats-r2 AMD legs. **Next:** Intel leg, then pool — run-sheet
+in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 

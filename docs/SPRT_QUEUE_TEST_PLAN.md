@@ -25,7 +25,18 @@
 > swing must fail the first window) — test
 > `Aspiration.WindowFailuresFireInDeepSearch` tracks the built arm; counter
 > stone-dead on the baseline arm. Both arms 271/272 green (1 by-design skip).
-> **Result:** two-machine SPRT vs t31 pending — AMD leg first, Intel to follow.
+> **Result — AMD leg (2026-07-13): positive lean, no bound.** **+12.51 ±
+> 15.12** (nElo 17.84 ± 21.53), **LOS 94.78%**, 1000g round cap (LLR 1.07,
+> no bound crossed), 51.80% (W261/L225/D514), DrawRatio 38.40%, PairsRatio
+> 1.12, Ptnml(0-2) [22, 123, 192, 123, 40]. Clean run: zero time losses /
+> illegal moves / disconnects, 1h51m. Arm verified pre-run (test d14 =
+> 5,669,691 exact + "Aspiration windows enabled" configure line — NOTE: run
+> the cache unstick ON THE BRANCH; an off-branch `-U` reconfigures with the
+> main default and bakes OFF into the cache, which silently builds a
+> baseline-vs-baseline match). PGN
+> `gauntlet/huginn_vs_t31_aspiration_amd.pgn`. Same leg profile as #62 and
+> threats-r2 (small positive, cap reached).
+> **Intel leg pending — two-machine bar; pool after both legs land.**
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both) as t32.
 
