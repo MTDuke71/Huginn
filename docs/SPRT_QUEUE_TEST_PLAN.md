@@ -16,15 +16,24 @@
 > exclusion nodes: no TT cut/store, no null-move, no PV write; only-legal-move
 > ⇒ fail low (not mate). Fixture: `info.singular_exts > 0` in a d10 Kiwipete
 > search (test `SingularExt.ExtensionsFireInDeepSearch` tracks the built arm).
-> **Result — AMD leg (2026-07-12): positive lean, no bound.** **+12.17 ±
-> 15.39** (nElo 17.05 ± 21.53), **LOS 93.97%**, 1000g round cap (LLR 0.99,
-> no bound crossed), 51.75% (W290/L255/D455), DrawRatio 39.20%, PairsRatio
-> 1.20, Ptnml(0-2) [31, 107, 196, 128, 38]. Clean run: zero time losses /
-> illegal moves / disconnects, 1h50m. Arms verified pre-run (test-arm d14 =
-> 6,583,846 exact; baseline `huginn_t30.exe` MD5-identical to the t30
-> release build). PGN `gauntlet/huginn_vs_t30_singular_amd.pgn`. Same
-> profile as the threats-r2 and #58 AMD legs (small positive, cap reached).
-> **Intel leg pending — two-machine bar; pool after both legs land.**
+> **Result — BOTH LEGS DONE, same-sign positive, pooled clears the bar:**
+> - **AMD (2026-07-12):** **+12.17 ± 15.39** (nElo 17.05), LOS 93.97%, 1000g
+>   round cap (LLR 0.99, no bound), 51.75% (W290/L255/D455), DrawRatio
+>   39.20%, PairsRatio 1.20, Ptnml [31,107,196,128,38]. Clean run (zero
+>   forfeits/illegal/disconnects, 1h50m).
+>   PGN `gauntlet/huginn_vs_t30_singular_amd.pgn`.
+> - **Intel (2026-07-12):** **+17.39 ± 14.67** (nElo 25.59), **LOS 99.01%**,
+>   1000g round cap (LLR 1.70, no bound), 52.50% (W266/L216/D518), DrawRatio
+>   38.00%, PairsRatio 1.25, Ptnml [18,120,190,138,34]. Clean run, 1h49m.
+>   PGN `gauntlet/huginn_vs_t30_singular_intel.pgn`.
+> - **Pooled (inverse-variance): +14.90 ± 10.62 Elo, LOS ≈ 99.7%, 2000g,
+>   52.13%** (W556/L471/D973, Ptnml [49,227,386,266,72]). Both legs positive;
+>   neither crossed the SPRT LLR bound before the 1000g cap, but the pooled
+>   two-machine estimate clears the strict 95% LOS bar decisively — same
+>   shape as the threats-r2 ship (pooled +17.0 ± 10.4).
+> Arms verified pre-run on each box (test d14 = 6,583,846; baseline
+> huginn_t30.exe d14 = 8,298,375; AMD also MD5-matched huginn_t30.exe to
+> the t30 release build).
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both).
 
