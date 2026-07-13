@@ -150,7 +150,7 @@
 // scores. DEFAULT OFF pending SPRT; the OFF arm is byte-identical to
 // baseline-t31. Build the ON arm with -DENABLE_ASPIRATION=1.
 #ifndef ENABLE_ASPIRATION
-#define ENABLE_ASPIRATION 0
+#define ENABLE_ASPIRATION 1  // candidate/aspiration-r2: test arm defaults ON
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

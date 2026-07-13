@@ -257,7 +257,7 @@ endif()
 # soundness fixes that removed its score-instability causes).
 # CANDIDATE — default OFF (byte-identical to baseline-t31);
 # -DENABLE_ASPIRATION=ON builds the test arm.
-option(ENABLE_ASPIRATION "BACKLOG #17-r2: aspiration windows at the root (candidate re-test)" OFF)
+option(ENABLE_ASPIRATION "BACKLOG #17-r2: aspiration windows at the root (candidate re-test)" ON)  # candidate branch default
 if(ENABLE_ASPIRATION)
     add_compile_definitions(ENABLE_ASPIRATION=1)
     message(STATUS "Aspiration windows enabled (BACKLOG #17-r2 candidate — SPRT pending)")
