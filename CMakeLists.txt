@@ -244,7 +244,7 @@ endif()
 # BACKLOG #62: singular extensions (see ENABLE_SINGULAR_EXT in src/search.cpp).
 # CANDIDATE — default OFF (byte-identical to baseline-t30);
 # -DENABLE_SINGULAR_EXT=ON builds the test arm.
-option(ENABLE_SINGULAR_EXT "BACKLOG #62: singular extensions — extend the TT move when nothing else comes close (candidate)" OFF)
+option(ENABLE_SINGULAR_EXT "BACKLOG #62: singular extensions — extend the TT move when nothing else comes close (candidate)" ON)  # candidate branch default
 if(ENABLE_SINGULAR_EXT)
     add_compile_definitions(ENABLE_SINGULAR_EXT=1)
     message(STATUS "Singular extensions enabled (BACKLOG #62 candidate — SPRT pending)")

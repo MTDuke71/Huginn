@@ -131,7 +131,7 @@
 // (maximally singular), not mate. DEFAULT OFF pending SPRT; the OFF arm is
 // byte-identical to baseline-t30. Build the ON arm with -DENABLE_SINGULAR_EXT=1.
 #ifndef ENABLE_SINGULAR_EXT
-#define ENABLE_SINGULAR_EXT 0
+#define ENABLE_SINGULAR_EXT 1  // candidate/singular-ext: test arm defaults ON
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
