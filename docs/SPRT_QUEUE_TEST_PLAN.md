@@ -1,3 +1,37 @@
+# SPRT Queue Test Plan — TT clusters (#42b) candidate off baseline-t34 (OPEN)
+
+> **Run:** `git checkout candidate/tt-clusters` + `test_huginn_gauntlet.bat t34`.
+> Flag `ENABLE_TT_CLUSTERS` (unstick ON THE BRANCH: `cmake -UENABLE_TT_CLUSTERS`
+> — per the #17-r2 AMD-leg warning, an off-branch `-U` bakes the main default
+> OFF into the cache and silently builds baseline-vs-baseline).
+> **t34 baseline (OFF):** startpos d14 = **3,481,582** / cp 31 / e2e4;
+> Kiwipete d13 = **1,958,182** / cp −85 / e2a6.
+> **#42b arm (ON):** startpos d14 = **3,367,661** / cp 34 / e2e4 (−3.3% —
+> ⚠ root move does NOT discriminate, node count does); Kiwipete d13 =
+> **1,956,522** / cp −85 / e2a6 (−0.08% — too close to eyeball; verify with
+> startpos). Unlike the aging candidate, the arms DIVERGE from the first
+> search (replacement changes within a single search), so startpos d14 IS a
+> valid arm discriminator; backups: the "TT clusters enabled (BACKLOG #42b,
+> candidate)" configure line and the suite size (286 tests ON vs 284 OFF —
+> 6 cluster-gated cases replace 4 single-slot cases).
+> **What:** #42 idea 2 (Fruit/Toga), the queued follow-up to the t34 aging
+> ship. The TT index unit becomes a 4-entry 64-byte cluster (`alignas(64)` —
+> one cache line, same memory traffic as a single-entry probe; same total
+> entries at any Hash size). Probe scans the cluster for a full-key match;
+> store refreshes a same-key slot, else fills an empty slot, else ALWAYS
+> replaces the least-valuable resident by Fruit's `age_dist*256 − depth`
+> (stale-dated first, then shallowest — composes with t34's aging). The
+> direct-mapped drop-shallower-store rule is gone: deep residents are
+> protected by victim choice instead of write rejection, and two hot
+> positions sharing an index no longer thrash one slot.
+> **Expect:** small blitz effect. A single fresh d14 search fills 64MB to
+> only ~43‰ hashfull — collision pressure builds as the persistent table
+> fills over a game, so the profile could be aging-like (blitz-flat /
+> LTC-positive). Blitz screen first, both machines, standard SPRT [0,10].
+> **Decision (pre-registered):** standard two-machine bar (same-sign +
+> pooled ≥95% LOS) → ship. Flat-but-positive blitz → one LTC leg (60+0.6,
+> 500g cap, idea-1 precedent) as the park/ship call. Negative → park.
+
 # SPRT Queue Test Plan — TT aging LTC re-test (#42) candidate off baseline-t33 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t34` SHIPPED (2026-07-14)** on the pre-registered

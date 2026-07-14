@@ -288,6 +288,20 @@ else()
     add_compile_definitions(ENABLE_TT_AGING=0)
 endif()
 
+# BACKLOG #42 idea 2 ("#42b"): 4-way TT clusters (see ENABLE_TT_CLUSTERS in
+# src/transposition_table.hpp) — the queued follow-up to the t34 aging ship.
+# The index unit becomes a 4-entry 64-byte cluster: probe scans for a key
+# match, store replaces the least-valuable slot (stale-then-shallow, Fruit's
+# age*256 - depth). CANDIDATE — default OFF; flag-off is byte-identical to
+# baseline-t34. -DENABLE_TT_CLUSTERS=1 builds the test arm.
+option(ENABLE_TT_CLUSTERS "BACKLOG #42b: 4-way TT clusters — set-associative probe/store (candidate)" OFF)
+if(ENABLE_TT_CLUSTERS)
+    add_compile_definitions(ENABLE_TT_CLUSTERS=1)
+    message(STATUS "TT clusters enabled (BACKLOG #42b, candidate)")
+else()
+    add_compile_definitions(ENABLE_TT_CLUSTERS=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the

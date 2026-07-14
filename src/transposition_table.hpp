@@ -12,12 +12,13 @@
  * **Hash Table Design:**
  * - Power-of-2 sizing so the table index is `zobrist_key & (size-1)` — a single
  *   AND replaces a modulo on the hot path.
- * - **One entry per index** (no clusters): a store collides directly with
+ * - **One entry per index** on the baseline arm: a store collides directly with
  *   whatever shares its index. Verification stores the *full* 64-bit Zobrist key
  *   and compares it on probe, so a wrong-position hit is effectively impossible
- *   (no separate index/lock split).
+ *   (no separate index/lock split). ENABLE_TT_CLUSTERS (#42b) changes the index
+ *   unit to a 4-entry cluster — see the flag block below.
  * - 16-byte entries (8 key + 2 score + 1 depth + 1 type + 4 move) for cache-line
- *   friendliness.
+ *   friendliness (4 entries = one 64-byte line, the #42b cluster).
  *
  * @par Replacement (and the aging gap)
  * Slots are scarce, so a store must sometimes evict. The base policy is
@@ -28,7 +29,8 @@
  * blocking fresher shallow results. ENABLE_TT_AGING (BACKLOG #42 idea 1) adds
  * date-based aging on top: entries carry a 6-bit search date in the node_type
  * byte, any stale-dated entry is evictable regardless of depth, and probe hits
- * re-date the entry. N-way clusters (#42 idea 2) remain future work.
+ * re-date the entry. ENABLE_TT_CLUSTERS (#42 idea 2, "#42b") makes the table
+ * 4-way set-associative so colliding hot positions stop thrashing one slot.
  * 
  * **Entry Structure (16 bytes):**
  * - Zobrist Key (8 bytes): Position identifier for collision detection
@@ -94,6 +96,27 @@
 #define ENABLE_TT_AGING 1  // shipped t34 (LTC leg vs t33, +15.99, LOS 96.77%)
 #endif
 
+// ENABLE_TT_CLUSTERS: BACKLOG #42 idea 2 ("#42b") — N-way clusters (Fruit/Toga
+// design), the queued follow-up to the t34 aging ship. The baseline table is
+// direct-mapped (one entry per index), so two hot positions sharing an index
+// evict each other every time regardless of policy — the only tiebreak is who
+// wrote last with enough depth. Fix: the index unit becomes a 4-entry cluster
+// (4 × 16B = one 64-byte cache line, alignas(64), so the whole cluster costs
+// the same memory traffic as one baseline probe). Probe scans the cluster for
+// a full-key match; store refreshes a same-key slot, else fills an empty slot,
+// else ALWAYS replaces the least-valuable resident by Fruit's replaceability
+// value `age_dist*256 - depth` (stale-dated first, then shallowest — composes
+// with ENABLE_TT_AGING; with aging off the formula collapses to min-depth).
+// Note the deliberate semantic change vs the baseline arm: a full cluster of
+// current-date deeper entries no longer DROPS an incoming shallower store —
+// victim choice replaces the drop rule (the deep residents are protected by
+// being more valuable than their cluster-mates, not by rejecting writes).
+// Same total entry count at any Hash size (the index just loses 2 bits).
+// Candidate, default OFF — flag-off is byte-identical to baseline-t34.
+#ifndef ENABLE_TT_CLUSTERS
+#define ENABLE_TT_CLUSTERS 0  // candidate #42b (default OFF)
+#endif
+
 /**
  * @struct TTEntry
  * @brief Transposition table entry storing complete search result information
@@ -149,11 +172,24 @@ struct TTEntry {
  */
 class TranspositionTable {
 private:
+#if ENABLE_TT_CLUSTERS
+    /// #42b: the index unit — 4 × 16B entries = exactly one 64-byte cache
+    /// line, so a whole-cluster probe scan costs the same memory traffic as a
+    /// single-entry probe on the baseline arm.
+    static constexpr size_t CLUSTER_SIZE = 4;
+    struct alignas(64) TTCluster { TTEntry e[CLUSTER_SIZE]; };
+#endif
+
     // mutable: probe() is logically a read but re-dates the hit entry under
     // ENABLE_TT_AGING (#42 touch) — same const-method bookkeeping class as the
     // mutable hits/misses counters below.
+#if ENABLE_TT_CLUSTERS
+    mutable std::vector<TTCluster> table;  ///< Main hash table storage (#42b: cluster-indexed)
+    size_t size_mask;              ///< Bit mask for fast modulo (cluster count - 1)
+#else
     mutable std::vector<TTEntry> table;    ///< Main hash table storage
     size_t size_mask;              ///< Bit mask for fast modulo (table.size() - 1)
+#endif
 
     // #42: global search date, bumped by new_search() once per search. 6-bit
     // (wraps at 64) to fit the upper bits of TTEntry::node_type. Unused
@@ -178,6 +214,19 @@ public:
         // Calculate number of entries for given size in MB
         size_t num_entries = (size_mb * 1024 * 1024) / sizeof(TTEntry);
 
+#if ENABLE_TT_CLUSTERS
+        // #42b: round the CLUSTER count down to a power of 2 (minimum 1
+        // cluster). Total entries match the baseline arm at any Hash size —
+        // the index just addresses 4-entry lines instead of single entries.
+        size_t num_clusters = num_entries / CLUSTER_SIZE;
+        size_t power_of_2 = 1;
+        while (power_of_2 * 2 <= num_clusters) {
+            power_of_2 *= 2;
+        }
+
+        table.assign(power_of_2, TTCluster());  // resize + zero-initialize
+        size_mask = power_of_2 - 1;
+#else
         // Round down to nearest power of 2 for fast indexing (minimum 1 entry)
         size_t power_of_2 = 1;
         while (power_of_2 * 2 <= num_entries) {
@@ -186,6 +235,7 @@ public:
 
         table.assign(power_of_2, TTEntry());  // resize + zero-initialize
         size_mask = power_of_2 - 1;
+#endif
         current_age = 0;  // #42: fresh table, fresh date
         hits = misses = writes = 0;
     }
@@ -220,9 +270,53 @@ public:
      * stale-dated resident (stored under an earlier search) is also replaced
      * regardless of depth; without aging, a strictly-shallower store into a
      * different deep entry is dropped and that deep entry is never evicted by
-     * depth alone.
+     * depth alone. Under ENABLE_TT_CLUSTERS (#42b) the store ALWAYS lands —
+     * same-key slot > empty slot > least-valuable resident (stale-dated first,
+     * then shallowest); the baseline arm's drop rule does not exist there.
      */
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
+#if ENABLE_TT_CLUSTERS
+        TTEntry* const cluster = table[zobrist_key & size_mask].e;
+
+        // Victim selection (#42b, Fruit): same key always refreshes in place;
+        // otherwise the most replaceable slot by `age_dist*256 - depth` —
+        // empty beats everything, then stale-dated (any age distance dwarfs
+        // any depth), then shallowest. With ENABLE_TT_AGING off, ages are all
+        // 0 and the value collapses to plain min-depth.
+        TTEntry* victim = nullptr;
+        int victim_value = -256;            // below any real slot's value
+        for (size_t i = 0; i < CLUSTER_SIZE; ++i) {
+            TTEntry& e = cluster[i];
+            if (e.zobrist_key == zobrist_key) {
+                victim = &e;                // same position — refresh with newer info
+                break;
+            }
+            const int value = (e.zobrist_key == 0)
+                ? (1 << 30)                 // empty slot wins outright
+                : static_cast<int>((current_age - e.get_age()) & AGE_MASK) * 256
+                      - static_cast<int>(e.depth);
+            if (value > victim_value) {
+                victim_value = value;
+                victim = &e;
+            }
+        }
+
+        TTEntry& entry = *victim;
+        entry.zobrist_key = zobrist_key;
+        entry.score = score;
+        entry.depth = depth;
+#if ENABLE_TT_AGING
+        // Pack the current date above the 2-bit bound type (entry stays 16B).
+        entry.node_type = static_cast<uint8_t>((node_type & TTEntry::TYPE_MASK)
+                                               | (current_age << 2));
+#else
+        entry.node_type = node_type;
+#endif
+        entry.best_move = best_move;
+#if ENABLE_INFO_DIAGNOSTICS
+        writes++;  // Track write operations
+#endif
+#else  // !ENABLE_TT_CLUSTERS — baseline direct-mapped arm
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
 
@@ -260,6 +354,7 @@ public:
             writes++;  // Track write operations
 #endif
         }
+#endif  // ENABLE_TT_CLUSTERS
     }
 
     /**
@@ -272,6 +367,32 @@ public:
      * @return true on a full-key match (hit); false otherwise (out-params untouched).
      */
     bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
+#if ENABLE_TT_CLUSTERS
+        // #42b: scan the 4-slot cluster for a full-key match — all four
+        // candidates live in the same 64-byte cache line as a baseline probe.
+        TTEntry* const cluster = table[zobrist_key & size_mask].e;
+        for (size_t i = 0; i < CLUSTER_SIZE; ++i) {
+            TTEntry& entry = cluster[i];
+            if (entry.zobrist_key != zobrist_key) continue;
+            score = entry.score;
+            depth = entry.depth;
+            // Masked read: callers always see EXACT/LOWER/UPPER (0..2), never
+            // the #42 age bits (which are 0 anyway when the flag is off).
+            node_type = entry.get_type();
+            best_move = entry.best_move;
+#if ENABLE_TT_AGING
+            entry.set_age(current_age);  // touch: keep hot entries current (#42)
+#endif
+#if ENABLE_INFO_DIAGNOSTICS
+            hits++;  // Track successful probes
+#endif
+            return true;
+        }
+#if ENABLE_INFO_DIAGNOSTICS
+        misses++;  // Track failed probes
+#endif
+        return false;
+#else  // !ENABLE_TT_CLUSTERS — baseline direct-mapped arm
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
 
@@ -294,19 +415,32 @@ public:
         misses++;  // Track failed probes
 #endif
         return false;
+#endif  // ENABLE_TT_CLUSTERS
     }
     
     // Clear all entries (ucinewgame, #46)
     void clear() {
+#if ENABLE_TT_CLUSTERS
+        for (auto& cluster : table) {
+            for (auto& entry : cluster.e) entry = TTEntry();
+        }
+#else
         for (auto& entry : table) {
             entry = TTEntry();
         }
+#endif
         current_age = 0;  // #42: new game restarts the search-date clock
         // Reset statistics
         hits = misses = writes = 0;
     }
-    
+
+    // Total ENTRY capacity on both arms (#42b: clusters × 4), so the UCI
+    // "Hash resized" info line keeps reporting the same unit.
+#if ENABLE_TT_CLUSTERS
+    size_t get_size() const { return table.size() * CLUSTER_SIZE; }
+#else
     size_t get_size() const { return table.size(); }
+#endif
 
     // UCI standard `hashfull` — fraction of TT in use expressed in permill
     // (0..1000). Loop is O(N) but only called once per iterative-deepening
@@ -314,14 +448,22 @@ public:
     // regardless of the diagnostics gate; UCI GUIs use this to colour
     // time-pressure indicators and decide adjudication.
     int permill_full() const {
+#if ENABLE_TT_CLUSTERS
+        const size_t n = table.size() * CLUSTER_SIZE;
+#else
         const size_t n = table.size();
+#endif
         if (n == 0) return 0;
         // Sample-based estimate to keep cost negligible on huge TTs (e.g. 256MB).
         // Walk the first 1000 entries; spec only requires accuracy to ~1‰.
         const size_t sample = n < 1000 ? n : 1000;
         size_t filled = 0;
         for (size_t i = 0; i < sample; ++i) {
+#if ENABLE_TT_CLUSTERS
+            if (table[i / CLUSTER_SIZE].e[i % CLUSTER_SIZE].zobrist_key != 0) ++filled;
+#else
             if (table[i].zobrist_key != 0) ++filled;
+#endif
         }
         return static_cast<int>((filled * 1000ULL) / sample);
     }

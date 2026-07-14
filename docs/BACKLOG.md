@@ -40,7 +40,7 @@
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
-| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 (clusters) queued as follow-up candidate | feature/search | medium |
+| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. **Idea 2 ("#42b") CANDIDATE (2026-07-14) behind `ENABLE_TT_CLUSTERS`** (default OFF) — 4-way clusters, run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -811,10 +811,33 @@ out fresh results. Two portable ideas from the Fruit/Toga TT:
    exactly. SHIPPED `baseline-t34` (2026-07-14)** per the pre-registered
    decision rule; `ENABLE_TT_AGING` default ON on `main`. PGN
    `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`.
-2. **Clusters** — each index addresses an N-way contiguous cluster (probe
-   scans for a lock match; store replaces the least-valuable slot). Fewer
-   collision evictions → higher hit rate, at the cost of a small per-probe
-   scan. **Untried.**
+2. **Clusters ("#42b")** — each index addresses an N-way contiguous cluster
+   (probe scans for a lock match; store replaces the least-valuable slot).
+   Fewer collision evictions → higher hit rate, at the cost of a small
+   per-probe scan. **CANDIDATE (2026-07-14) behind `ENABLE_TT_CLUSTERS`**
+   (default OFF; flag-off byte-identical to t34 — startpos d14 = 3,481,582 /
+   Kiwipete d13 = 1,958,182 both reproduce exactly, verified again after the
+   cache unstick). Design: the index unit becomes a **4-entry cluster**
+   (4 × 16B = one 64-byte cache line, `alignas(64)` — a whole-cluster scan
+   costs the same memory traffic as a single-entry probe); probe scans for a
+   full-key match; store refreshes a same-key slot, else fills an empty slot,
+   else ALWAYS replaces the least-valuable resident by Fruit's
+   `age_dist*256 − depth` (stale-dated first, then shallowest — composes with
+   idea 1's shipped aging; with aging off it collapses to min-depth). The
+   single-slot drop-shallower-store rule is deliberately gone on this arm:
+   deep residents are protected by victim choice, not write rejection. Same
+   total entries at any Hash size (the index just loses 2 bits). Test-arm
+   sigs: startpos d14 = **3,367,661** / cp 34 / e2e4 (−3.3%); Kiwipete d13 =
+   **1,956,522** / cp −85 / e2a6 (−0.08%) — unlike idea 1, the arms diverge
+   from the FIRST search (replacement changes within a single search), so
+   startpos node counts DO discriminate the arms. 6 cluster-gated tests
+   (capacity, shallowest-victim, same-key refresh, stale-beats-depth,
+   probe-touch protection, age-wrap fallback); ON arm 286/286, OFF arm
+   284/284 (each incl. the 1 by-design skip). ⚠ TC caveat: a single fresh
+   d14 search fills 64MB to only ~43‰ hashfull — collision pressure (the
+   thing clusters fix) builds over a GAME as the persistent table fills, so
+   like idea 1 blitz may understate; idea-1 precedent (blitz flat → LTC +16)
+   makes an LTC leg the natural follow-up on a flat-positive blitz read.
 
 Pairs naturally with #31's Hash sweep (test aging + size together).
 
