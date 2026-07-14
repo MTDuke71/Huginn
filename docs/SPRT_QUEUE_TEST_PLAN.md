@@ -1,4 +1,16 @@
-# SPRT Queue Test Plan — TT clusters (#42b) candidate off baseline-t34 (OPEN)
+# SPRT Queue Test Plan — TT clusters r1 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
+
+> **r1 PARKED (2026-07-14) on the AMD blitz leg:** **−9.38 ± 14.81** (nElo
+> −13.66 ± 21.53), LOS 10.69%, 1000g cap (LLR −1.55, leaning H0, no bound),
+> 48.65% (W222/L249/D529), DrawRatio 38.40%, PairsRatio 0.90, Ptnml
+> [33,129,192,124,22]. Clean run. PGN
+> `gauntlet/huginn_vs_t34_ttclusters_amd.pgn`. No Intel leg — parked on the
+> mechanistic read (user call): always-store is the one semantic delta vs
+> baseline; it admits every depth-1/2 store, each displacing the cluster's
+> 4th-deepest resident, washing out the mid-depth entries that feed TT
+> cutoffs / IID / singular eligibility. **Superseded by r2** (weakest-resident
+> drop gate — section above), the single-knob test of that hypothesis.
+> Branch `candidate/tt-clusters` kept parked as the r1 record.
 
 > **Run:** `git checkout candidate/tt-clusters` + `test_huginn_gauntlet.bat t34`.
 > Flag `ENABLE_TT_CLUSTERS` (unstick ON THE BRANCH: `cmake -UENABLE_TT_CLUSTERS`

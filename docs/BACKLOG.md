@@ -40,7 +40,7 @@
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
-| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. **Idea 2 ("#42b") CANDIDATE (2026-07-14) behind `ENABLE_TT_CLUSTERS`** (default OFF) — 4-way clusters, run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
+| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: **r1 (always-store) PARKED** (AMD blitz −9.38 ± 14.81, LOS 10.69%, 1000g); **r2 (weakest-resident drop gate) CANDIDATE** behind `ENABLE_TT_CLUSTERS` — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -838,6 +838,28 @@ out fresh results. Two portable ideas from the Fruit/Toga TT:
    thing clusters fix) builds over a GAME as the persistent table fills, so
    like idea 1 blitz may understate; idea-1 precedent (blitz flat → LTC +16)
    makes an LTC leg the natural follow-up on a flat-positive blitz read.
+   **r1 AMD blitz leg (2026-07-14): NEGATIVE-LEAN — r1 PARKED.** **−9.38 ±
+   14.81** (nElo −13.66 ± 21.53), LOS 10.69%, 1000g cap (LLR −1.55, leaning
+   H0, no bound), 48.65% (W222/L249/D529), DrawRatio 38.40%, PairsRatio
+   0.90, Ptnml [33,129,192,124,22]. PGN
+   `gauntlet/huginn_vs_t34_ttclusters_amd.pgn`. No Intel leg — parked on
+   the mechanistic read (user call). Diagnosis: always-store is the one
+   semantic delta vs baseline, and it admits EVERY depth-1/2 store (the
+   exponential bulk of all stores), each displacing the cluster's
+   4th-deepest resident — continuously washing out the mid-depth entries
+   that feed TT cutoffs, IID, and singular-extension eligibility
+   (`tt_depth >= depth−3`) on re-visits. The baseline arm dropped those
+   shallow colliding stores outright. Fruit's design, but Huginn's stack is
+   tuned to Huginn's dynamics (#53 lesson: design-faithful ≠ Elo-positive).
+   **r2 QUEUED: same clusters + the baseline drop gate applied to the
+   weakest resident** — a store lands only on a same-key / empty /
+   stale-dated victim, or when `depth >= victim.depth`. Strictly fewer
+   dropped stores than baseline (the weakest-of-4 is ≤ the single random
+   occupant the baseline compares against) and never a shallow-over-deep
+   eviction within a search; single-knob delta from r1 for clean
+   attribution. If r2 recovers to ≥ 0 the always-store hypothesis is
+   confirmed; if it still loses, the geometry itself is implicated and
+   #42b parks for good.
 
 Pairs naturally with #31's Hash sweep (test aging + size together).
 
