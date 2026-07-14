@@ -294,7 +294,7 @@ endif()
 # match, store replaces the least-valuable slot (stale-then-shallow, Fruit's
 # age*256 - depth). CANDIDATE — default OFF; flag-off is byte-identical to
 # baseline-t34. -DENABLE_TT_CLUSTERS=1 builds the test arm.
-option(ENABLE_TT_CLUSTERS "BACKLOG #42b: 4-way TT clusters — set-associative probe/store (candidate)" OFF)
+option(ENABLE_TT_CLUSTERS "BACKLOG #42b: 4-way TT clusters — set-associative probe/store (candidate)" ON)
 if(ENABLE_TT_CLUSTERS)
     add_compile_definitions(ENABLE_TT_CLUSTERS=1)
     message(STATUS "TT clusters enabled (BACKLOG #42b, candidate)")
