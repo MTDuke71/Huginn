@@ -37,7 +37,7 @@
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
 | 17-r2 | Aspiration windows at the root (re-test) | **SHIPPED (2026-07-13, `baseline-t32`)** — two-machine same-sign positive (AMD +12.51 / Intel +16.34, pooled +14.46 ± 10.61, LOS ≈ 99.6%); flag default ON; t15 attempt-1 rejection formally superseded | feature/search | high |
-| 63 | History-modulated LMR (road-to-2.3 item 1) | **CANDIDATE (2026-07-13)** — behind `ENABLE_HISTORY_LMR` (default OFF, byte-identical off); branch `candidate/history-lmr`; SPRT vs t32 pending (arm sigs in SPRT_QUEUE_TEST_PLAN.md) | feature/search | high |
+| 63 | History-modulated LMR (road-to-2.3 item 1) | **CANDIDATE (2026-07-13)** — behind `ENABLE_HISTORY_LMR` (default OFF, byte-identical off); branch `candidate/history-lmr`; SPRT Intel leg positive (+18.43 ± 15.05, LOS 99.19%, 1000g cap), AMD leg pending | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -695,8 +695,10 @@ discriminates, not the root move); 4 regressions in
 [test_history_lmr.cpp](../test/test_history_lmr.cpp) (deep-search mate
 integrity + determinism both arms, modulation-fires on the ON arm,
 counter-dead on the baseline arm); full suite 274/275 green both arms (1
-by-design skip). **Next:** two-machine SPRT via branch
-`candidate/history-lmr` — run-sheet in
+by-design skip). **Intel leg (2026-07-13): positive, CI excludes zero —
++18.43 ± 15.05, LOS 99.19%, 1000g cap (LLR 1.76, no bound), 52.65%
+(W278/L225/D497), Ptnml [26,108,186,147,33], clean 1h51m run.** AMD leg
+pending — two-machine bar, pool after both legs; run-sheet in
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)

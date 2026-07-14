@@ -17,7 +17,13 @@
 > `info.history_lmr_adjusts > 0` in a d12 Kiwipete search (test
 > `HistoryLmr.ModulationFiresInDeepSearch` tracks the built arm); counter
 > stone-dead on the baseline arm. Both arms 274/275 green (1 by-design skip).
-> **Result:** two-machine SPRT vs t32 pending.
+> **Result — Intel leg (2026-07-13): positive, CI excludes zero.** **+18.43 ±
+> 15.05** (nElo 26.43 ± 21.53), **LOS 99.19%**, 1000g round cap (LLR 1.76, no
+> bound crossed), 52.65% (W278/L225/D497), DrawRatio 37.20%, PairsRatio 1.34,
+> Ptnml(0-2) [26, 108, 186, 147, 33]. Clean run, 1h51m. Arms verified pre-run
+> (test d14 = 3,481,582; baseline huginn_t32.exe d14 = 5,669,691). PGN
+> `gauntlet/huginn_vs_t32_histlmr_intel.pgn`. **AMD leg pending — two-machine
+> bar; pool after both legs land.**
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both) as t33.
 
