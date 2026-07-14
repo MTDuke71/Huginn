@@ -114,7 +114,7 @@
 // Same total entry count at any Hash size (the index just loses 2 bits).
 // Candidate, default OFF — flag-off is byte-identical to baseline-t34.
 #ifndef ENABLE_TT_CLUSTERS
-#define ENABLE_TT_CLUSTERS 0  // candidate #42b (default OFF)
+#define ENABLE_TT_CLUSTERS 1  // candidate/tt-clusters branch: test arm (default ON)
 #endif
 
 /**
