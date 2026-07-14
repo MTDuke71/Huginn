@@ -17,13 +17,23 @@
 > `info.history_lmr_adjusts > 0` in a d12 Kiwipete search (test
 > `HistoryLmr.ModulationFiresInDeepSearch` tracks the built arm); counter
 > stone-dead on the baseline arm. Both arms 274/275 green (1 by-design skip).
-> **Result — Intel leg (2026-07-13): positive, CI excludes zero.** **+18.43 ±
-> 15.05** (nElo 26.43 ± 21.53), **LOS 99.19%**, 1000g round cap (LLR 1.76, no
-> bound crossed), 52.65% (W278/L225/D497), DrawRatio 37.20%, PairsRatio 1.34,
-> Ptnml(0-2) [26, 108, 186, 147, 33]. Clean run, 1h51m. Arms verified pre-run
-> (test d14 = 3,481,582; baseline huginn_t32.exe d14 = 5,669,691). PGN
-> `gauntlet/huginn_vs_t32_histlmr_intel.pgn`. **AMD leg pending — two-machine
-> bar; pool after both legs land.**
+> **Result — BOTH LEGS DONE, same-sign positive, pooled clears the bar:**
+> - **AMD (2026-07-13):** **+8.69 ± 15.27** (nElo 12.26), LOS 86.78%, 1000g
+>   round cap (LLR 0.60, no bound), 51.25% (W269/L244/D487), DrawRatio
+>   39.00%, PairsRatio 1.15, Ptnml [31,111,195,128,35]. Clean run (zero
+>   forfeits/illegal/disconnects, 1h53m). Arm verified pre-run (test d14 =
+>   3,481,582 exact + configure line, unstick run on the branch). Softest
+>   AMD leg of the selectivity series.
+>   PGN `gauntlet/huginn_vs_t32_historylmr_amd.pgn`.
+> - **Intel (2026-07-13):** **+18.43 ± 15.05** (nElo 26.43), **LOS 99.19%**,
+>   1000g round cap (LLR 1.76, no bound), 52.65% (W278/L225/D497), DrawRatio
+>   37.20%, PairsRatio 1.34, Ptnml [26,108,186,147,33]. Clean run, 1h51m.
+>   PGN `gauntlet/huginn_vs_t32_histlmr_intel.pgn`.
+> - **Pooled (inverse-variance): +13.63 ± 10.72, LOS ≈ 99.4%, 51.95% / 2000g**
+>   (W547/L469/D984, Ptnml [57,219,381,275,68]). Same ship profile as the
+>   whole selectivity series — threats-r2 +17.0 / 99.9%, #62 +14.90 / 99.7%,
+>   #17-r2 +14.46 / 99.6% — with the widest per-leg spread so far (AMD 86.78%
+>   / Intel 99.19%, both positive; #58-precedent agreement holds).
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both) as t33.
 
