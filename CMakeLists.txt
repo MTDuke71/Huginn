@@ -275,6 +275,19 @@ else()
     add_compile_definitions(ENABLE_HISTORY_LMR=0)
 endif()
 
+# BACKLOG #42 idea 1: date-based TT aging (see ENABLE_TT_AGING in
+# src/transposition_table.hpp). CANDIDATE re-test at LTC off t33 — the t23
+# blitz verdict was inconclusive (AMD flat / Intel +11 lean); aging's value
+# should concentrate in long games. ON here (candidate branch default);
+# -DENABLE_TT_AGING=OFF rebuilds the t33 arm (byte-identical first search).
+option(ENABLE_TT_AGING "BACKLOG #42: date-based TT aging — stale entries evictable regardless of depth (candidate)" ON)  # candidate branch default
+if(ENABLE_TT_AGING)
+    add_compile_definitions(ENABLE_TT_AGING=1)
+    message(STATUS "TT aging enabled (BACKLOG #42 candidate — LTC verdict pending)")
+else()
+    add_compile_definitions(ENABLE_TT_AGING=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -592,6 +605,7 @@ if(BUILD_TESTING)
     test/test_singular_ext.cpp
     test/test_aspiration.cpp
     test/test_history_lmr.cpp
+    test/test_transposition_table.cpp
     )
 
     add_executable(huginn_tests

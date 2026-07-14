@@ -1886,11 +1886,16 @@ void Engine::checkup(SearchInfo& info) {
 
 /// @brief Reset per-search state before a new `go`: PV table, node counts, stop
 ///        flags, ply. **Does NOT clear the TT** (it persists across searches in
-///        a game — see #42 on aging). VICE Part 57.
+///        a game); it does bump the TT's search date so stale entries become
+///        evictable (#42, ENABLE_TT_AGING). VICE Part 57.
 void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
     // Clear the history and killers arrays (0:57)
     engine.clear_search_tables();
-    
+
+    // BACKLOG #42: advance the TT search date (no-op when ENABLE_TT_AGING=0)
+    // so entries from earlier searches this game age out of their slots.
+    engine.tt_table.new_search();
+
     // Clear the principal variation (PV) table (2:17)
     engine.pv_table.clear();
     

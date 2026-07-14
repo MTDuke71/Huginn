@@ -20,13 +20,15 @@
  *   friendliness.
  *
  * @par Replacement (and the aging gap)
- * Slots are scarce, so a store must sometimes evict. The policy is
+ * Slots are scarce, so a store must sometimes evict. The base policy is
  * **depth-preferred**: overwrite on an empty slot, the same position, or a new
  * search at `depth >= stored depth`; otherwise keep the existing (deeper) entry.
- * Note the table is **not cleared between searches** within a game, and there is
- * **no aging** — so a deep entry stored early can squat in its slot for the rest
- * of the game, blocking fresher shallow results. A date/age scheme (replace by
- * `age*256 - depth`) plus N-way clusters would fix this; see BACKLOG #42.
+ * The table is **not cleared between searches** within a game, so without aging
+ * a deep entry stored early can squat in its slot for the rest of the game,
+ * blocking fresher shallow results. ENABLE_TT_AGING (BACKLOG #42 idea 1) adds
+ * date-based aging on top: entries carry a 6-bit search date in the node_type
+ * byte, any stale-dated entry is evictable regardless of depth, and probe hits
+ * re-date the entry. N-way clusters (#42 idea 2) remain future work.
  * 
  * **Entry Structure (16 bytes):**
  * - Zobrist Key (8 bytes): Position identifier for collision detection
@@ -72,6 +74,24 @@
 #define ENABLE_INFO_DIAGNOSTICS 0
 #endif
 
+// ENABLE_TT_AGING: BACKLOG #42 idea 1 — date-based TT aging (Fruit/Toga
+// design). The table persists across searches within a game (only `ucinewgame`
+// clears it, #46), and the t22 replacement policy is depth-preferred only — so
+// a deep entry stored early in a game squats in its slot forever (shallow
+// stores can't evict: `depth >=` fails), crowding out fresh results. Fix: pack
+// a 6-bit search date into the upper 6 bits of the node_type byte (bound types
+// are 0..2 = 2 bits; entry stays 16 bytes). `new_search()` bumps the global
+// date once per search (clearForSearch); a store may then evict any entry
+// whose date isn't current, regardless of depth; a probe hit refreshes the
+// entry's date so hot entries stay alive. Aging changes only WHICH entries
+// survive, never the correctness of a returned entry (bound logic untouched;
+// probe still masks the type, so callers are unchanged). Default ON on
+// experiment/tt-aging (the test arm); build the t22 arm with
+// -DENABLE_TT_AGING=0 (byte-identical baseline behavior).
+#ifndef ENABLE_TT_AGING
+#define ENABLE_TT_AGING 1
+#endif
+
 /**
  * @struct TTEntry
  * @brief Transposition table entry storing complete search result information
@@ -85,14 +105,27 @@ struct TTEntry {
     uint64_t zobrist_key;    ///< Zobrist hash for position identification and collision detection
     int16_t score;           ///< Evaluation score (adjusted for mate distance when stored)
     uint8_t depth;           ///< Search depth used to compute this result
-    uint8_t node_type;       ///< Node type: EXACT, LOWER_BOUND, or UPPER_BOUND for pruning
+    uint8_t node_type;       ///< Bits 0-1: EXACT/LOWER/UPPER bound; bits 2-7: search date (#42, ENABLE_TT_AGING)
     uint32_t best_move;      ///< Best move found during search (encoded S_MOVE format)
-    
+
     /// Node types for alpha-beta bounds management
     static constexpr uint8_t EXACT = 0;        ///< Exact score within alpha-beta window
     static constexpr uint8_t LOWER_BOUND = 1;  ///< Beta cutoff (score >= beta)
     static constexpr uint8_t UPPER_BOUND = 2;  ///< Alpha never improved (score <= alpha)
-    
+
+    /// Bound type occupies the low 2 bits of node_type; the age lives above it.
+    static constexpr uint8_t TYPE_MASK = 0x3;
+
+    /// Bound type (EXACT/LOWER_BOUND/UPPER_BOUND) — always read node_type
+    /// through this so the #42 age bits never leak into bound comparisons.
+    uint8_t get_type() const { return node_type & TYPE_MASK; }
+    /// Search date this entry was stored/refreshed under (6-bit, #42).
+    uint8_t get_age() const { return static_cast<uint8_t>(node_type >> 2); }
+    /// Re-date the entry without touching its bound type (#42 probe touch).
+    void set_age(uint8_t age) {
+        node_type = static_cast<uint8_t>((node_type & TYPE_MASK) | (age << 2));
+    }
+
     /// Default constructor initializes empty entry
     TTEntry() : zobrist_key(0), score(0), depth(0), node_type(EXACT), best_move(0) {}
 };
@@ -114,14 +147,23 @@ struct TTEntry {
  */
 class TranspositionTable {
 private:
-    std::vector<TTEntry> table;    ///< Main hash table storage
+    // mutable: probe() is logically a read but re-dates the hit entry under
+    // ENABLE_TT_AGING (#42 touch) — same const-method bookkeeping class as the
+    // mutable hits/misses counters below.
+    mutable std::vector<TTEntry> table;    ///< Main hash table storage
     size_t size_mask;              ///< Bit mask for fast modulo (table.size() - 1)
-    
+
+    // #42: global search date, bumped by new_search() once per search. 6-bit
+    // (wraps at 64) to fit the upper bits of TTEntry::node_type. Unused
+    // (stays 0) when ENABLE_TT_AGING is 0.
+    static constexpr uint8_t AGE_MASK = 0x3F;
+    uint8_t current_age = 0;
+
     // Statistics tracking for performance analysis
     mutable uint64_t hits = 0;      // Successful probes
-    mutable uint64_t misses = 0;    // Failed probes  
+    mutable uint64_t misses = 0;    // Failed probes
     uint64_t writes = 0;            // Store operations
-    
+
 public:
     explicit TranspositionTable(size_t size_mb = 64) {
         resize_mb(size_mb);
@@ -142,8 +184,26 @@ public:
 
         table.assign(power_of_2, TTEntry());  // resize + zero-initialize
         size_mask = power_of_2 - 1;
+        current_age = 0;  // #42: fresh table, fresh date
         hits = misses = writes = 0;
     }
+
+    // #42 (ENABLE_TT_AGING): advance the global search date. Called once per
+    // search (Engine::clearForSearch); entries stored under an older date
+    // become evictable by ANY store regardless of depth. 6-bit wraparound —
+    // after 64 searches an untouched survivor's date reads current again and
+    // depth-preferred replacement re-applies until the next bump (acceptable:
+    // a slot that survives 64 searches untouched is vanishingly rare).
+    // Compiles to a no-op when the flag is off, so the t22 arm's replacement
+    // policy is untouched.
+    void new_search() {
+#if ENABLE_TT_AGING
+        current_age = (current_age + 1) & AGE_MASK;
+#endif
+    }
+
+    // #42: current search date (test hook; 0 when ENABLE_TT_AGING is 0).
+    uint8_t get_current_age() const { return current_age; }
     
     /**
      * @brief Stores a search result, using depth-preferred replacement.
@@ -154,33 +214,45 @@ public:
      * @param best_move Best move found, for ordering future probes.
      *
      * Replaces the slot when it is empty, holds the same position (refresh), or
-     * the incoming search is at least as deep. A strictly-shallower store into a
-     * different deep entry is dropped — see the @ref TranspositionTable "aging
-     * gap" note: without aging, that deep entry is never evicted by depth alone
-     * (BACKLOG #42).
+     * the incoming search is at least as deep. Under ENABLE_TT_AGING (#42) a
+     * stale-dated resident (stored under an earlier search) is also replaced
+     * regardless of depth; without aging, a strictly-shallower store into a
+     * different deep entry is dropped and that deep entry is never evicted by
+     * depth alone.
      */
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
         size_t index = zobrist_key & size_mask;
         TTEntry& entry = table[index];
 
-        // Depth-preferred replacement: empty | same position | deeper-or-equal.
+        // Depth-preferred replacement: empty | same position | deeper-or-equal
+        // (#42 aging arm adds: | stale date).
         bool should_replace = false;
 
         if (entry.zobrist_key == 0) {
             should_replace = true;          // empty slot
         } else if (entry.zobrist_key == zobrist_key) {
             should_replace = true;          // same position — refresh with newer info
+#if ENABLE_TT_AGING
+        } else if (entry.get_age() != current_age) {
+            should_replace = true;          // stale resident from an earlier search (#42)
+#endif
         } else if (depth >= entry.depth) {
             should_replace = true;          // collision, but ours is at least as deep
         } else {
-            should_replace = false;         // keep the deeper resident (no aging — see #42)
+            should_replace = false;         // keep the deeper current-date resident
         }
-        
+
         if (should_replace) {
             entry.zobrist_key = zobrist_key;
             entry.score = score;
             entry.depth = depth;
+#if ENABLE_TT_AGING
+            // Pack the current date above the 2-bit bound type (entry stays 16B).
+            entry.node_type = static_cast<uint8_t>((node_type & TTEntry::TYPE_MASK)
+                                                   | (current_age << 2));
+#else
             entry.node_type = node_type;
+#endif
             entry.best_move = best_move;
 #if ENABLE_INFO_DIAGNOSTICS
             writes++;  // Track write operations
@@ -199,13 +271,18 @@ public:
      */
     bool probe(uint64_t zobrist_key, int& score, uint8_t& depth, uint8_t& node_type, uint32_t& best_move) const {
         size_t index = zobrist_key & size_mask;
-        const TTEntry& entry = table[index];
+        TTEntry& entry = table[index];
 
         if (entry.zobrist_key == zobrist_key) {
             score = entry.score;
             depth = entry.depth;
-            node_type = entry.node_type;
+            // Masked read: callers always see EXACT/LOWER/UPPER (0..2), never
+            // the #42 age bits (which are 0 anyway when the flag is off).
+            node_type = entry.get_type();
             best_move = entry.best_move;
+#if ENABLE_TT_AGING
+            entry.set_age(current_age);  // touch: keep hot entries current (#42)
+#endif
 #if ENABLE_INFO_DIAGNOSTICS
             hits++;  // Track successful probes
 #endif
@@ -217,11 +294,12 @@ public:
         return false;
     }
     
-    // Clear all entries
+    // Clear all entries (ucinewgame, #46)
     void clear() {
         for (auto& entry : table) {
             entry = TTEntry();
         }
+        current_age = 0;  // #42: new game restarts the search-date clock
         // Reset statistics
         hits = misses = writes = 0;
     }
