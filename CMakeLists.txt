@@ -276,14 +276,14 @@ else()
 endif()
 
 # BACKLOG #42 idea 1: date-based TT aging (see ENABLE_TT_AGING in
-# src/transposition_table.hpp). CANDIDATE re-test at LTC off t33 — the t23
-# blitz verdict was inconclusive (AMD flat / Intel +11 lean); aging's value
-# should concentrate in long games. ON here (candidate branch default);
-# -DENABLE_TT_AGING=OFF rebuilds the t33 arm (byte-identical first search).
-option(ENABLE_TT_AGING "BACKLOG #42: date-based TT aging — stale entries evictable regardless of depth (candidate)" ON)  # candidate branch default
+# src/transposition_table.hpp). SHIPPED baseline-t34 on the LTC verdict
+# (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6 — blitz was inconclusive, long
+# games are where staleness accumulates). -DENABLE_TT_AGING=OFF rebuilds the
+# t33 arm (byte-identical first search).
+option(ENABLE_TT_AGING "BACKLOG #42: date-based TT aging — stale entries evictable regardless of depth (shipped t34)" ON)
 if(ENABLE_TT_AGING)
     add_compile_definitions(ENABLE_TT_AGING=1)
-    message(STATUS "TT aging enabled (BACKLOG #42 candidate — LTC verdict pending)")
+    message(STATUS "TT aging enabled (BACKLOG #42, shipped baseline-t34)")
 else()
     add_compile_definitions(ENABLE_TT_AGING=0)
 endif()

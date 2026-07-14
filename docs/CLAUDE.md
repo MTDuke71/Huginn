@@ -13,7 +13,21 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t33` — **#63 history-modulated LMR**
+- ✅ **Baseline tag**: `baseline-t34` — **#42 idea 1: date-based TT aging**
+  (`ENABLE_TT_AGING`, default ON; road-to-2.3 item 2). A 6-bit search date
+  packed in the TT entry's node_type byte; `new_search()` bumps the global
+  date per search; stale-dated entries are evictable regardless of depth;
+  probe hits re-date. Fixes the depth-preferred-only squatting problem (a
+  deep entry stored early in a game blocked its slot forever). **Shipped on
+  the LTC verdict** (pre-registered rule): blitz was inconclusive at t23
+  (AMD +0.69 flat / Intel +11.12 lean) but the 60+0.6 leg — where searches
+  per game accumulate the staleness aging fixes — came in **+15.99 ± 17.00,
+  LOS 96.77%, 500g** (52.30%, DrawRatio 51.6%). ⚠ Signature: first-search
+  d14 = **3,481,582** IDENTICAL to t33 by design (aging acts only from the
+  second search of a process on) — verify this arm via the 8 gated TT tests
+  (`test_transposition_table.cpp`), not node counts; 282/283 green (1
+  by-design skip). **Full writeup:** [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t33` — **#63 history-modulated LMR**
   (`ENABLE_HISTORY_LMR`, default ON; road-to-2.3 item 1). At the LMR site
   the mover's butterfly-history score adjusts the static `log·log` table
   reduction by ±1 ply (grain ±4096, `[1, depth−2]` clamps still apply):
@@ -159,7 +173,8 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t33 history-modulated
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t34 TT aging ·
+  t33 history-modulated
   LMR · t32 aspiration windows ·
   t31 singular extensions · t30 threats round 2 ·
   t29 EP key semantics · t28 SEE pin legality · t27 legal-move

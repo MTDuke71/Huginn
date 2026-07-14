@@ -40,7 +40,7 @@
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
-| 42 | TT aging + clusters (Fruit/Toga design) | **LTC LEG RUNNING (2026-07-13, road-to-2.3 item 2)** — idea 1 ported to `candidate/tt-aging-ltc` off t33; 60+0.6 SPRT vs t33 on the Intel box (500g cap); park/ship on this verdict. Idea 2 (clusters) untried | feature/search | medium |
+| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 (clusters) queued as follow-up candidate | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -800,16 +800,17 @@ out fresh results. Two portable ideas from the Fruit/Toga TT:
    multi-search-in-one-process A/B with a small hash showed the arms diverging
    from the second search onward). **Reading:** aging's value should
    concentrate in LONG games (many searches per game accumulate more staleness
-   for it to fix) — blitz may genuinely understate it. **LTC leg RUNNING
-   (2026-07-13, road-to-2.3 item 2):** ported to `candidate/tt-aging-ltc` off
-   t33 (cherry-pick `4c54c96`, clean — zero TT-header drift since t22;
-   282/283 tests green incl. the 8 aging cases; first-search d14 = 3,481,582
-   matches t33 exactly BY DESIGN — aging only acts from the second search of
-   a process on, so the arm discriminator is the gated TT tests, not node
-   counts). Custom fastchess run on the Intel box: **60+0.6**, SPRT [0,10],
-   1t, 64MB, noob_3moves.epd, cc=4, 250-round cap (500g), TB both sides →
-   `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`. Final park/ship call on
-   this leg's verdict.
+   for it to fix) — blitz may genuinely understate it. **LTC re-test
+   (road-to-2.3 item 2): ported to `candidate/tt-aging-ltc` off t33
+   (cherry-pick `4c54c96`, clean — zero TT-header drift since t22; 282/283
+   tests green incl. the 8 aging cases; first-search d14 = 3,481,582 matches
+   t33 exactly BY DESIGN — the arm discriminator is the gated TT tests, not
+   node counts). Intel LTC leg (60+0.6, SPRT [0,10], 500g cap):
+   +15.99 ± 17.00, LOS 96.77% — POSITIVE, and the TC profile (blitz AMD flat
+   / blitz Intel +11 lean / LTC +16) matches the staleness hypothesis
+   exactly. SHIPPED `baseline-t34` (2026-07-14)** per the pre-registered
+   decision rule; `ENABLE_TT_AGING` default ON on `main`. PGN
+   `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`.
 2. **Clusters** — each index addresses an N-way contiguous cluster (probe
    scans for a lock match; store replaces the least-valuable slot). Fewer
    collision evictions → higher hit rate, at the cost of a small per-probe

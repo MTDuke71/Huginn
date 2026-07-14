@@ -1,4 +1,14 @@
-# SPRT Queue Test Plan — TT aging LTC re-test (#42) candidate off baseline-t33 (OPEN)
+# SPRT Queue Test Plan — TT aging LTC re-test (#42) candidate off baseline-t33 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t34` SHIPPED (2026-07-14)** on the pre-registered
+> LTC decision rule: **+15.99 ± 17.00 (nElo 28.72), LOS 96.77%, 500g @
+> 60+0.6** (52.30%, W107/L84/D309, DrawRatio 51.60%, Ptnml [5,45,129,64,7],
+> LLR 0.97, 5h19m clean). The staleness hypothesis confirmed: blitz AMD flat
+> (+0.69) / blitz Intel lean (+11.12) / **LTC +15.99 @ LOS ~97%** — aging
+> pays where searches accumulate. `ENABLE_TT_AGING` default ON on `main`;
+> ship build reproduces d14 = 3,481,582 (= t33, by design); 282/283 green.
+> Clusters (idea 2) queued as a follow-up candidate. Writeup:
+> [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Run (custom — the gauntlet bat is 10+0.1 only):** `git checkout
 > candidate/tt-aging-ltc`, build (branch default ON), then fastchess with
@@ -19,10 +29,14 @@
 > each) — aging's value should concentrate in long games (more searches per
 > game accumulate more staleness), so this LTC leg is the final park/ship
 > call (road-to-2.3 item 2).
-> **Result:** Intel LTC leg running (2026-07-13) →
+> **Result — Intel LTC leg (2026-07-14): POSITIVE.** **+15.99 ± 17.00** (nElo
+> 28.72 ± 30.45), **LOS 96.77%**, 500g cap (LLR 0.97, no bound), 52.30%
+> (W107/L84/D309), DrawRatio 51.60% (LTC-typical), PairsRatio 1.42, Ptnml
+> [5,45,129,64,7]. Clean run, 5h19m. PGN
 > `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`.
-> **Decision:** positive → ship as t34 (and queue clusters/idea 2 as a quick
-> follow-up); flat/negative at LTC too → definitive park (both TCs agree).
+> **Decision applied: SHIPPED as `baseline-t34`** per the pre-registered rule
+> (positive → ship; the TC-profile matches the staleness hypothesis exactly).
+> Clusters (idea 2) queued as a quick follow-up candidate.
 
 # SPRT Queue Test Plan — history-modulated LMR (#63) candidate off baseline-t32 (CLOSED)
 

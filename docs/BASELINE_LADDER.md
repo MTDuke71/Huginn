@@ -9,6 +9,47 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t34 — #42 idea 1: date-based TT aging (road-to-2.3 item 2, LTC ship)
+= t33 + date-based TT aging behind `ENABLE_TT_AGING` (default ON as of this
+ship). Fruit/Toga design: a 6-bit search date packed into the upper bits of
+the TT entry's node_type byte (bound types need 2 bits; entry stays 16
+bytes); `new_search()` bumps the global date once per search
+(`clearForSearch`); a store may evict any stale-dated entry regardless of
+depth; a probe hit re-dates the entry so hot entries stay alive. Fixes the
+depth-preferred-only squatting problem: the TT persists across searches
+within a game (#46 clears only on `ucinewgame`), so a deep entry stored
+early used to block its slot for the rest of the game. Aging changes only
+WHICH entries survive, never the correctness of a returned entry.
+
+**The first LTC-verdict ship.** The t23-queue blitz test was inconclusive —
+AMD +0.69 ± 15.24 (dead flat) / Intel +11.12 ± 15.01 (LOS 92.71%, lean) —
+with the recorded reading that aging's value should concentrate in LONG
+games (more searches per game accumulate more staleness for it to fix).
+Ported to `candidate/tt-aging-ltc` off t33 (clean cherry-pick of `4c54c96`;
+zero TT-header drift since t22) and re-tested at 60+0.6 with a
+pre-registered decision rule (positive → ship; flat/negative → definitive
+park):
+
+- **Intel LTC leg (60+0.6, SPRT [0,10], 1t, 64MB, noob_3moves.epd, cc=4,
+  TB both sides): +15.99 ± 17.00** (nElo 28.72 ± 30.45), **LOS 96.77%**,
+  500g cap (LLR 0.97), 52.30% (W107/L84/D309), DrawRatio 51.60%
+  (LTC-typical), PairsRatio 1.42, Ptnml [5,45,129,64,7]. Clean, 5h19m.
+
+The TC profile — blitz-flat → blitz-lean → LTC-positive — matches the
+staleness hypothesis exactly; shipped on the pre-registered rule (single
+LTC leg, #51/#57 single-leg precedent family). ⚠ **Signature caveat (#53
+class):** first-search node counts are IDENTICAL to t33 by design (startpos
+d14 = **3,481,582** / cp 31 / e2e4 on BOTH arms — from a fresh table every
+entry carries the current date; aging acts only from the second search of a
+process on). Verify this arm via the 8 gated TT tests
+(`test_transposition_table.cpp`: cross-search eviction, probe-touch
+keep-alive, date wraparound) and the "TT aging enabled" configure line —
+never startpos nodes. Ship build verified from a clean no-override
+configure; 282/283 tests green (1 by-design skip). Flip: `ENABLE_TT_AGING`
+default ON in source `#ifndef` + CMake option. PGN
+`gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`. Clusters (#42 idea 2)
+queued as a follow-up candidate.
+
 ### baseline-t33 — #63 history-modulated LMR (road-to-2.3 item 1)
 = t32 + history-modulated LMR behind `ENABLE_HISTORY_LMR` (default ON as of
 this ship). The LMR table is static `log·log` over (depth, move-ordinal) —

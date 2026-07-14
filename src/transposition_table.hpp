@@ -85,11 +85,13 @@
 // whose date isn't current, regardless of depth; a probe hit refreshes the
 // entry's date so hot entries stay alive. Aging changes only WHICH entries
 // survive, never the correctness of a returned entry (bound logic untouched;
-// probe still masks the type, so callers are unchanged). Default ON on
-// experiment/tt-aging (the test arm); build the t22 arm with
-// -DENABLE_TT_AGING=0 (byte-identical baseline behavior).
+// probe still masks the type, so callers are unchanged). SHIPPED baseline-t34
+// (default ON) on the LTC verdict — blitz was inconclusive (t23 queue: AMD
+// flat / Intel +11 lean) but the 60+0.6 leg confirmed aging pays where
+// staleness accumulates (+15.99 ± 17.00, LOS 96.77%, 500g). Build the
+// pre-t34 arm with -DENABLE_TT_AGING=0 (byte-identical baseline behavior).
 #ifndef ENABLE_TT_AGING
-#define ENABLE_TT_AGING 1
+#define ENABLE_TT_AGING 1  // shipped t34 (LTC leg vs t33, +15.99, LOS 96.77%)
 #endif
 
 /**
