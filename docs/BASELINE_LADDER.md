@@ -9,6 +9,41 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### baseline-t33 — #63 history-modulated LMR (road-to-2.3 item 1)
+= t32 + history-modulated LMR behind `ENABLE_HISTORY_LMR` (default ON as of
+this ship). The LMR table is static `log·log` over (depth, move-ordinal) —
+every quiet at the same slot got the same reduction regardless of how that
+move has actually performed. Now the mover's butterfly-history score
+(`search_history`, ±depth² updates, aged ÷4 across searches) modulates the
+table value by ±1 ply: `hist >= +4096` reduces one ply less, `hist <= −4096`
+one ply more; the `[1, depth−2]` clamps still bound the result. Read at the
+LMR site post-MakeMove from the TO square (promotions are LMR-exempt, so
+`at_sq64(to)` is always the mover). `info.history_lmr_adjusts` counts
+modulations. Third and final leg of the SF18-study selectivity program
+(extensions #62 → root windows #17-r2 → reduction modulation #63); needs no
+continuation history (falsified, #3) — the butterfly table was already there.
+
+**Two-machine SPRT vs t32 — both legs positive, pooled clears the bar:**
+- AMD **+8.69 ± 15.27** (nElo 12.26), LOS 86.78%, 1000g cap (LLR 0.60),
+  51.25% (W269/L244/D487), Ptnml [31,111,195,128,35].
+- Intel **+18.43 ± 15.05** (nElo 26.43), LOS 99.19%, 1000g cap (LLR 1.76),
+  52.65% (W278/L225/D497), Ptnml [26,108,186,147,33].
+- **Pooled (inverse-variance): +13.63 ± 10.72, LOS ≈ 99.4%, 51.95% / 2000g**
+  (W547/L469/D984, Ptnml [57,219,381,275,68]).
+
+Widest per-leg spread of the selectivity series (86.78% / 99.19%) but both
+positive — shipped on same-sign two-machine agreement (standard bar). Both
+runs clean, ~1h52m each; arms verified pre-run on each box (node count
+discriminates, not the root move). Ship build verified from a clean
+no-override configure: startpos d14 = **3,481,582** / cp 31 / e2e4 (−38.6%
+vs t32's 5,669,691 — the biggest fixed-depth cut of the series); Kiwipete
+d13 = 1,958,182 / cp −85 / e2a6 (−29.3%); 274/275 tests green (1 by-design
+skip). Flip: `ENABLE_HISTORY_LMR` default ON in source `#ifndef` + CMake
+option. PGNs `gauntlet/huginn_vs_t32_historylmr_amd.pgn` /
+`huginn_vs_t32_histlmr_intel.pgn`. The t29→t33 selectivity run (threats-r2
++17.0, singular-ext +14.9, aspiration +14.5, history-LMR +13.6 pooled) sums
+to ~+60 Elo of two-machine-confirmed self-play gain in four rounds.
+
 ### baseline-t32 — #17-r2 aspiration windows at the root (re-test ship)
 = t31 + aspiration windows behind `ENABLE_ASPIRATION` (default ON as of this
 ship). From depth ≥ 6 the root searches a `[prev−50, prev+50]` window around

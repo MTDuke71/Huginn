@@ -13,7 +13,20 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t32` — **#17-r2 aspiration windows at the
+- ✅ **Baseline tag**: `baseline-t33` — **#63 history-modulated LMR**
+  (`ENABLE_HISTORY_LMR`, default ON; road-to-2.3 item 1). At the LMR site
+  the mover's butterfly-history score adjusts the static `log·log` table
+  reduction by ±1 ply (grain ±4096, `[1, depth−2]` clamps still apply):
+  proven-good quiets are reduced less, history-hated quiets more. Fourth
+  straight ship of the SF18-study selectivity program (#62 → #17-r2 → #63).
+  **Two-machine SPRT vs t32, both legs positive: AMD +8.69 ± 15.27 (LOS
+  86.78%) / Intel +18.43 ± 15.05 (LOS 99.19%), pooled +13.63 ± 10.72, LOS
+  ≈ 99.4%, 2000g** — widest per-leg spread of the series, both positive.
+  Signature: startpos d14 = **3,481,582** / cp 31 / e2e4 (−38.6% vs t32 —
+  the biggest fixed-depth cut of the series); Kiwipete d13 = 1,958,182 /
+  cp −85 / e2a6; 274/275 green (1 by-design skip). **Full writeup:**
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).
+  Prior: `baseline-t32` — **#17-r2 aspiration windows at the
   root** (`ENABLE_ASPIRATION`, default ON). From depth ≥ 6 the root searches
   a `[prev−50, prev+50]` window around the previous iteration's score; a
   fail-low/high widens that side ×2 around `best_score`, snapping to the full
@@ -146,7 +159,8 @@ location is derived from the bitboards via `Position::at_sq64()`.
   `baseline-t21` — **TT-clear-on-newgame (#46) + time-management fix (#47)**,
   both surfaced by watching a real 5+2 game; **+126.97 ± 24.60 vs t20** (10+0.1,
   400g, LOS 100%, zero time-forfeits). **Full history in
-  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t32 aspiration windows ·
+  [BASELINE_LADDER.md](BASELINE_LADDER.md).** Recent: t33 history-modulated
+  LMR · t32 aspiration windows ·
   t31 singular extensions · t30 threats round 2 ·
   t29 EP key semantics · t28 SEE pin legality · t27 legal-move
   ordinal PVS/LMR · t26 check-aware

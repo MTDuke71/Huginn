@@ -163,11 +163,11 @@
 // (hist <= −HISTORY_LMR_GRAIN) one ply more; the existing [1, depth−2] clamps
 // still bound the result. Read at the LMR site post-MakeMove, so the mover is
 // read from the TO square (promotions are LMR-exempt, so at_sq64(to) is always
-// the mover). `info.history_lmr_adjusts` counts modulations. DEFAULT OFF
-// pending SPRT; the OFF arm is byte-identical to baseline-t32. Build the ON
-// arm with -DENABLE_HISTORY_LMR=1.
+// the mover). `info.history_lmr_adjusts` counts modulations. SHIPPED
+// baseline-t33 (default ON); build the pre-t33 OFF arm with
+// -DENABLE_HISTORY_LMR=0.
 #ifndef ENABLE_HISTORY_LMR
-#define ENABLE_HISTORY_LMR 0
+#define ENABLE_HISTORY_LMR 1  // shipped t33 (two-machine SPRT vs t32, pooled +13.6, LOS ~99.4%)
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

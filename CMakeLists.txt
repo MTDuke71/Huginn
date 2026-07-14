@@ -265,12 +265,12 @@ else()
 endif()
 
 # BACKLOG #63: history-modulated LMR (see ENABLE_HISTORY_LMR in src/search.cpp).
-# CANDIDATE — default OFF (byte-identical to baseline-t32);
-# -DENABLE_HISTORY_LMR=ON builds the test arm.
-option(ENABLE_HISTORY_LMR "BACKLOG #63: history-modulated LMR — butterfly history adjusts reductions ±1 (candidate)" OFF)
+# SHIPPED baseline-t33 — default ON; -DENABLE_HISTORY_LMR=OFF builds the
+# pre-t33 arm (byte-identical to baseline-t32).
+option(ENABLE_HISTORY_LMR "BACKLOG #63: history-modulated LMR — butterfly history adjusts reductions ±1 (shipped t33)" ON)
 if(ENABLE_HISTORY_LMR)
     add_compile_definitions(ENABLE_HISTORY_LMR=1)
-    message(STATUS "History-modulated LMR enabled (BACKLOG #63 candidate — SPRT pending)")
+    message(STATUS "History-modulated LMR enabled (BACKLOG #63, shipped baseline-t33)")
 else()
     add_compile_definitions(ENABLE_HISTORY_LMR=0)
 endif()

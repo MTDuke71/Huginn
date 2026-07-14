@@ -1,4 +1,11 @@
-# SPRT Queue Test Plan — history-modulated LMR (#63) candidate off baseline-t32 (OPEN)
+# SPRT Queue Test Plan — history-modulated LMR (#63) candidate off baseline-t32 (CLOSED)
+
+> **QUEUE CLOSED, `baseline-t33` SHIPPED (2026-07-13)** — two-machine SPRT vs
+> t32, both legs positive (AMD +8.69 / Intel +18.43), pooled **+13.63 ±
+> 10.72, LOS ≈ 99.4%, 2000g**. `ENABLE_HISTORY_LMR` default flipped ON
+> (source + CMake); ship build reproduces d14 = 3,481,582 / e2e4. Fourth
+> straight selectivity ship (t30→t33 ≈ +60 pooled self-play in four rounds).
+> Writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md).
 
 > **Run:** `git checkout candidate/history-lmr` + `test_huginn_gauntlet.bat t32`.
 > Flag `ENABLE_HISTORY_LMR` (unstick: `cmake -UENABLE_HISTORY_LMR` — ON THE
@@ -34,8 +41,9 @@
 >   whole selectivity series — threats-r2 +17.0 / 99.9%, #62 +14.90 / 99.7%,
 >   #17-r2 +14.46 / 99.6% — with the widest per-leg spread so far (AMD 86.78%
 >   / Intel 99.19%, both positive; #58-precedent agreement holds).
-> **Decision:** standard two-machine ship bar. If it ships, flip the flag
-> default ON on `main` (source `#ifndef` + CMake option — both) as t33.
+> **Verdict: SHIPPED as `baseline-t33` (2026-07-13)** — standard two-machine
+> ship bar cleared; `ENABLE_HISTORY_LMR` default flipped ON on `main` (source
+> `#ifndef` + CMake option — both), tagged, `huginn_t33.exe` snapshotted.
 
 # SPRT Queue Test Plan — aspiration windows re-test (#17-r2) candidate off baseline-t31 (CLOSED)
 
