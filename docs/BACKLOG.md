@@ -40,7 +40,7 @@
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
-| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: **r1 (always-store) PARKED** (AMD blitz −9.38 ± 14.81, LOS 10.69%, 1000g); **r2 (weakest-resident drop gate) CANDIDATE** behind `ENABLE_TT_CLUSTERS` — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
+| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: r1 (always-store) PARKED (AMD −9.38); **r2 (drop gate) AMD blitz DEAD-FLAT (+0.69 ± 15.18, LOS 53.58%, 1000g — the ~10-Elo r1 regression recovered); LTC leg queued as the park/ship call** (idea-1 precedent: aging's AMD blitz was also +0.69, LTC shipped it) — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -860,6 +860,21 @@ out fresh results. Two portable ideas from the Fruit/Toga TT:
    attribution. If r2 recovers to ≥ 0 the always-store hypothesis is
    confirmed; if it still loses, the geometry itself is implicated and
    #42b parks for good.
+   **r2 AMD blitz leg (2026-07-14): DEAD-FLAT, hypothesis supported.**
+   **+0.69 ± 15.18** (nElo 0.99 ± 21.53), LOS 53.58%, 1000g cap (LLR
+   −0.33), 50.10% (W230/L228/D542), DrawRatio 38.60%, PairsRatio 1.05,
+   Ptnml [34,116,193,128,29]. PGN
+   `gauntlet/huginn_vs_t34_ttclusters_r2_amd.pgn`. The single-knob drop
+   gate recovered the full ~10-Elo r1 regression on the same box/baseline
+   (−9.38 → +0.69; directionally decisive, CIs overlap) — always-store
+   was the r1 problem. r2's blitz profile now exactly mirrors idea 1's
+   (aging AMD blitz was also +0.69 dead-flat; LTC +15.99 shipped it), and
+   the mechanism predicts the same TC-dependence: clusters pay only where
+   the table actually fills (a blitz search runs at ~43‰ hashfull; 60+0.6
+   searches are ~10× deeper into the fill curve). **Next (pre-registered
+   flat-but-positive path): one Intel LTC leg (60+0.6, SPRT [0,10], 500g
+   cap) vs huginn_t34.exe as the park/ship call** — skip the Intel blitz
+   leg (aging precedent says it adds ~nothing over the LTC read).
 
 Pairs naturally with #31's Hash sweep (test aging + size together).
 

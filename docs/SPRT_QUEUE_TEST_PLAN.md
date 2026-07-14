@@ -28,6 +28,25 @@
 > **Decision (pre-registered):** standard two-machine bar (same-sign + pooled
 > ≥95% LOS) → ship. Flat-but-positive blitz → one LTC leg (60+0.6, 500g cap,
 > idea-1 precedent) as the park/ship call. Negative → park, item closed.
+> **Result — AMD blitz leg (2026-07-14): DEAD-FLAT, hypothesis supported.**
+> **+0.69 ± 15.18** (nElo 0.99 ± 21.53), LOS 53.58%, 1000g cap (LLR −0.33,
+> no bound), 50.10% (W230/L228/D542), DrawRatio 38.60%, PairsRatio 1.05,
+> Ptnml [34,116,193,128,29]. Clean run. PGN
+> `gauntlet/huginn_vs_t34_ttclusters_r2_amd.pgn`. The drop gate recovered
+> the full r1 regression on the same box/baseline (−9.38 → +0.69) —
+> always-store confirmed as the r1 problem. Blitz profile now mirrors
+> idea 1 exactly (aging AMD blitz: +0.69; aging LTC: +15.99 → shipped).
+> **NEXT — LTC leg as the park/ship call (custom run, the gauntlet bat is
+> 10+0.1 only; mirror the idea-1 LTC procedure):** on the Intel box,
+> `git fetch origin && git checkout candidate/tt-clusters-r2`, unstick ON
+> THE BRANCH (`cmake -UENABLE_TT_CLUSTERS` + reconfigure), build, verify
+> the arm (startpos d14 = 3,367,661 + the TT-clusters configure line;
+> build `huginn_t34.exe` from the tag if not yet snapshotted there — d14 =
+> 3,481,582), then fastchess with **tc=60+0.6**, SPRT [0,10], 1t, 64MB,
+> noob_3moves.epd, cc=4, 250-round cap (500g),
+> `option.SyzygyPath=c:\TB\` both sides, vs `huginn_t34.exe`.
+> **Pre-registered rule (same as idea 1): LTC positive → ship; LTC flat or
+> negative → park, #42b closed.**
 
 # SPRT Queue Test Plan — TT clusters r1 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
 
