@@ -1,3 +1,29 @@
+# SPRT Queue Test Plan — TT aging LTC re-test (#42) candidate off baseline-t33 (OPEN)
+
+> **Run (custom — the gauntlet bat is 10+0.1 only):** `git checkout
+> candidate/tt-aging-ltc`, build (branch default ON), then fastchess with
+> **tc=60+0.6**, SPRT [0,10], 1t, 64MB, noob_3moves.epd, cc=4, 250-round cap,
+> `option.SyzygyPath=c:\TB\` both sides, vs per-machine `huginn_t33.exe`.
+> Flag `ENABLE_TT_AGING` (unstick ON THE BRANCH: `cmake -UENABLE_TT_AGING`).
+> **⚠ Signature caveat (like #53):** first-search node counts are IDENTICAL on
+> both arms BY DESIGN (startpos d14 = 3,481,582 = t33 exact — from a fresh
+> table every entry carries the current date, so the age clause can't fire;
+> aging acts only from the second search of a process on). Do NOT use startpos
+> nodes to verify the arm — the discriminators are the 8 gated TT tests
+> (`test_transposition_table.cpp`, cross-search eviction cases) and the
+> "TT aging enabled" configure line. 282/283 green on the branch.
+> **What:** #42 idea 1, date-based aging (Fruit/Toga): 6-bit search date packed
+> in the node_type byte; `new_search()` bumps it per search; stale-dated
+> entries evictable regardless of depth; probe hits re-date. Idea-1 blitz
+> verdict at t23 was inconclusive (AMD +0.69 flat / Intel +11.12 lean, 1000g
+> each) — aging's value should concentrate in long games (more searches per
+> game accumulate more staleness), so this LTC leg is the final park/ship
+> call (road-to-2.3 item 2).
+> **Result:** Intel LTC leg running (2026-07-13) →
+> `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`.
+> **Decision:** positive → ship as t34 (and queue clusters/idea 2 as a quick
+> follow-up); flat/negative at LTC too → definitive park (both TCs agree).
+
 # SPRT Queue Test Plan — history-modulated LMR (#63) candidate off baseline-t32 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t33` SHIPPED (2026-07-13)** — two-machine SPRT vs
