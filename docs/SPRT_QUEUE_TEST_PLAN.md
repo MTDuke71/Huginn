@@ -17,7 +17,17 @@
 > `info.history_lmr_adjusts > 0` in a d12 Kiwipete search (test
 > `HistoryLmr.ModulationFiresInDeepSearch` tracks the built arm); counter
 > stone-dead on the baseline arm. Both arms 274/275 green (1 by-design skip).
-> **Result:** two-machine SPRT vs t32 pending.
+> **Result — AMD leg (2026-07-13): positive lean, no bound.** **+8.69 ±
+> 15.27** (nElo 12.26 ± 21.53), **LOS 86.78%**, 1000g round cap (LLR 0.60,
+> no bound crossed), 51.25% (W269/L244/D487), DrawRatio 39.00%, PairsRatio
+> 1.15, Ptnml(0-2) [31, 111, 195, 128, 35]. Clean run: zero time losses /
+> illegal moves / disconnects, 1h53m. Arm verified pre-run (test d14 =
+> 3,481,582 exact + "History-modulated LMR enabled" configure line, unstick
+> run on the branch). PGN `gauntlet/huginn_vs_t32_historylmr_amd.pgn`.
+> Softest AMD leg of the selectivity series (t30 threats-r2 was +9.73 and
+> pooled to a ship; #58 pooled to 91% and shipped on agreement) — the Intel
+> leg decides.
+> **Intel leg pending — two-machine bar; pool after both legs land.**
 > **Decision:** standard two-machine ship bar. If it ships, flip the flag
 > default ON on `main` (source `#ifndef` + CMake option — both) as t33.
 
