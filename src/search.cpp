@@ -167,7 +167,7 @@
 // pending SPRT; the OFF arm is byte-identical to baseline-t32. Build the ON
 // arm with -DENABLE_HISTORY_LMR=1.
 #ifndef ENABLE_HISTORY_LMR
-#define ENABLE_HISTORY_LMR 0
+#define ENABLE_HISTORY_LMR 1  // candidate/history-lmr: test arm defaults ON
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
