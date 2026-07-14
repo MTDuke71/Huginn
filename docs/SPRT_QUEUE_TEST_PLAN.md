@@ -36,15 +36,15 @@
 > the full r1 regression on the same box/baseline (−9.38 → +0.69) —
 > always-store confirmed as the r1 problem. Blitz profile now mirrors
 > idea 1 exactly (aging AMD blitz: +0.69; aging LTC: +15.99 → shipped).
-> **NEXT — LTC leg as the park/ship call (custom run, the gauntlet bat is
-> 10+0.1 only; mirror the idea-1 LTC procedure):** on the Intel box,
-> `git fetch origin && git checkout candidate/tt-clusters-r2`, unstick ON
-> THE BRANCH (`cmake -UENABLE_TT_CLUSTERS` + reconfigure), build, verify
-> the arm (startpos d14 = 3,367,661 + the TT-clusters configure line;
-> build `huginn_t34.exe` from the tag if not yet snapshotted there — d14 =
-> 3,481,582), then fastchess with **tc=60+0.6**, SPRT [0,10], 1t, 64MB,
-> noob_3moves.epd, cc=4, 250-round cap (500g),
-> `option.SyzygyPath=c:\TB\` both sides, vs `huginn_t34.exe`.
+> **LTC leg RUNNING (2026-07-14, Intel box) — the park/ship call.** Procedure
+> followed as specified: checkout `candidate/tt-clusters-r2`, on-branch
+> unstick + reconfigure, arm verified (startpos d14 = **3,367,661** exact,
+> "TT clusters enabled" configure line, suite 284/285 green + the r2
+> discriminator `FullClusterDropGateThenEvictsShallowest` passes — the r1
+> binary fails it by design). Opponent `huginn_t34.exe` (d14 = 3,481,582,
+> snapshotted at the t34 ship on this box). Custom fastchess: **60+0.6**,
+> SPRT [0,10], 1t, 64MB, noob_3moves.epd, cc=4, 250-round cap (500g), TB
+> both sides → `gauntlet/huginn_vs_t34_ttclusters_r2_ltc_intel.pgn`.
 > **Pre-registered rule (same as idea 1): LTC positive → ship; LTC flat or
 > negative → park, #42b closed.**
 
