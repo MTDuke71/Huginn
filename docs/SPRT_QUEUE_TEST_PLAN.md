@@ -1,4 +1,17 @@
-# SPRT Queue Test Plan — TT clusters r2 (#42b) candidate off baseline-t34 (OPEN)
+# SPRT Queue Test Plan — TT clusters r2 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
+
+> **r2 PARKED (2026-07-14) on the Intel LTC leg — #42b closed for good.**
+> **−2.78 ± 17.77** (nElo −4.77 ± 30.45), LOS 37.95%, 500g cap (LLR −0.40, no
+> bound), 49.60% (W85/L89/D326), DrawRatio 48.80%, Ptnml [6,61,122,53,8].
+> Clean run, 5h25m. PGN `gauntlet/huginn_vs_t34_ttclusters_r2_ltc_intel.pgn`.
+> Two-TC verdict is now complete and consistent: **blitz dead-flat (+0.69) +
+> LTC dead-flat (−2.78)** — the r2 drop gate fully recovered r1's ~10-Elo
+> regression, but 4-way geometry adds nothing on top of t34's aging in
+> Huginn's current shape (contrast idea 1: blitz-flat → LTC +15.99 →
+> shipped). Pre-registered rule applied: park. Code stays in-tree behind
+> `ENABLE_TT_CLUSTERS` (default OFF, byte-identical off) with the 10 gated
+> tests for a future revisit (e.g. post-NNUE, when eval quality changes what
+> the TT is worth).
 
 > **Run:** `git checkout candidate/tt-clusters-r2` + `test_huginn_gauntlet.bat t34`.
 > Flag `ENABLE_TT_CLUSTERS` (unstick ON THE BRANCH: `cmake -UENABLE_TT_CLUSTERS`).
@@ -36,17 +49,16 @@
 > the full r1 regression on the same box/baseline (−9.38 → +0.69) —
 > always-store confirmed as the r1 problem. Blitz profile now mirrors
 > idea 1 exactly (aging AMD blitz: +0.69; aging LTC: +15.99 → shipped).
-> **LTC leg RUNNING (2026-07-14, Intel box) — the park/ship call.** Procedure
-> followed as specified: checkout `candidate/tt-clusters-r2`, on-branch
-> unstick + reconfigure, arm verified (startpos d14 = **3,367,661** exact,
-> "TT clusters enabled" configure line, suite 284/285 green + the r2
+> **Result — Intel LTC leg (2026-07-14): DEAD-FLAT → PARKED.** Procedure
+> followed as specified: arm verified pre-run (startpos d14 = **3,367,661**
+> exact, "TT clusters enabled" configure line, suite 284/285 green + the r2
 > discriminator `FullClusterDropGateThenEvictsShallowest` passes — the r1
-> binary fails it by design). Opponent `huginn_t34.exe` (d14 = 3,481,582,
-> snapshotted at the t34 ship on this box). Custom fastchess: **60+0.6**,
-> SPRT [0,10], 1t, 64MB, noob_3moves.epd, cc=4, 250-round cap (500g), TB
-> both sides → `gauntlet/huginn_vs_t34_ttclusters_r2_ltc_intel.pgn`.
-> **Pre-registered rule (same as idea 1): LTC positive → ship; LTC flat or
-> negative → park, #42b closed.**
+> binary fails it by design); opponent `huginn_t34.exe` (d14 = 3,481,582).
+> Custom fastchess 60+0.6, SPRT [0,10], 1t, 64MB, cc=4, TB both sides:
+> **−2.78 ± 17.77, LOS 37.95%, 500g** (49.60%, W85/L89/D326, LLR −0.40).
+> An early −40 @ 120g proved to be small-sample noise; the run converged to
+> flat. Pre-registered rule applied: **park, #42b closed** (see the header
+> block above).
 
 # SPRT Queue Test Plan — TT clusters r1 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
 

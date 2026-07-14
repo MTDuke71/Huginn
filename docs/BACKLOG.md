@@ -40,7 +40,7 @@
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
-| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: r1 (always-store) PARKED (AMD −9.38); **r2 (drop gate) AMD blitz DEAD-FLAT (+0.69 ± 15.18, LOS 53.58%, 1000g — the ~10-Elo r1 regression recovered); LTC leg RUNNING on the Intel box (2026-07-14, 60+0.6, 500g cap) as the park/ship call** (idea-1 precedent: aging's AMD blitz was also +0.69, LTC shipped it) — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
+| 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: r1 (always-store) PARKED (AMD −9.38); **r2 (drop gate) PARKED (2026-07-14) — two-TC flat: AMD blitz +0.69 (LOS 53.58%, 1000g) / Intel LTC −2.78 (LOS 37.95%, 500g @ 60+0.6). The drop gate recovered r1's ~10-Elo regression but 4-way geometry adds nothing on top of aging; kept in-tree behind `ENABLE_TT_CLUSTERS` (default OFF) + 10 gated tests for a post-NNUE revisit. ITEM #42 CLOSED** (idea 1 shipped t34, idea 2 parked) — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t26 (2026-07-11)** — ~2571 ± 19 CCRL-blitz (Stash 19/20 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)); re-run near ~2650 with a new rung | maintenance | medium |
 | 31 | TT-size (`Hash`) SPRT sweep | **OPEN** | tuning | low |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -871,10 +871,20 @@ out fresh results. Two portable ideas from the Fruit/Toga TT:
    (aging AMD blitz was also +0.69 dead-flat; LTC +15.99 shipped it), and
    the mechanism predicts the same TC-dependence: clusters pay only where
    the table actually fills (a blitz search runs at ~43‰ hashfull; 60+0.6
-   searches are ~10× deeper into the fill curve). **Next (pre-registered
-   flat-but-positive path): one Intel LTC leg (60+0.6, SPRT [0,10], 500g
-   cap) vs huginn_t34.exe as the park/ship call** — skip the Intel blitz
-   leg (aging precedent says it adds ~nothing over the LTC read).
+   searches are ~10× deeper into the fill curve).
+   **r2 Intel LTC leg (2026-07-14): DEAD-FLAT — PARKED, #42b closed.**
+   **−2.78 ± 17.77** (nElo −4.77 ± 30.45), LOS 37.95%, 500g cap (LLR −0.40),
+   49.60% (W85/L89/D326), DrawRatio 48.80%, Ptnml [6,61,122,53,8]. Clean,
+   5h25m; arm verified pre-run (d14 = 3,367,661 exact + the r2 drop-gate
+   discriminator test). An early −40 @ 120g converged to flat — noise. PGN
+   `gauntlet/huginn_vs_t34_ttclusters_r2_ltc_intel.pgn`. The idea-1 analogy
+   broke exactly where the mechanisms differ: aging CLEANS a filling table
+   (LTC +16), clusters only re-shape collisions in it — and with aging
+   already shipped, 4-way geometry adds nothing at either TC (blitz +0.69 /
+   LTC −2.78). Pre-registered rule applied: **park**; code stays in-tree
+   behind `ENABLE_TT_CLUSTERS` (default OFF, byte-identical off, 10 gated
+   tests) for a post-NNUE revisit. **Item #42 CLOSED** — idea 1 shipped
+   (t34), idea 2 parked with a complete two-TC verdict.
 
 Pairs naturally with #31's Hash sweep (test aging + size together).
 
