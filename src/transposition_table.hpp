@@ -104,13 +104,17 @@
 // (4 × 16B = one 64-byte cache line, alignas(64), so the whole cluster costs
 // the same memory traffic as one baseline probe). Probe scans the cluster for
 // a full-key match; store refreshes a same-key slot, else fills an empty slot,
-// else ALWAYS replaces the least-valuable resident by Fruit's replaceability
-// value `age_dist*256 - depth` (stale-dated first, then shallowest — composes
-// with ENABLE_TT_AGING; with aging off the formula collapses to min-depth).
-// Note the deliberate semantic change vs the baseline arm: a full cluster of
-// current-date deeper entries no longer DROPS an incoming shallower store —
-// victim choice replaces the drop rule (the deep residents are protected by
-// being more valuable than their cluster-mates, not by rejecting writes).
+// else replaces the least-valuable resident by Fruit's replaceability value
+// `age_dist*256 - depth` (stale-dated first, then shallowest — composes with
+// ENABLE_TT_AGING; with aging off the formula collapses to min-depth).
+// REVISION 2: r1 was Fruit-faithful always-store (a full current-date cluster
+// never dropped an incoming shallower store) and measured NEGATIVE at blitz
+// (AMD −9.38 ± 14.81, LOS 10.69%, 1000g vs t34) — every depth-1/2 store
+// churned the cluster's 4th-deepest entry, washing out mid-depth results.
+// r2 restores the baseline drop gate against the WEAKEST resident: a
+// current-date victim is only displaced by an at-least-as-deep store. That
+// still drops strictly fewer stores than the baseline arm (weakest-of-4 ≤
+// the one random slot occupant) while never evicting deep work for junk.
 // Same total entry count at any Hash size (the index just loses 2 bits).
 // Candidate, default OFF — flag-off is byte-identical to baseline-t34.
 #ifndef ENABLE_TT_CLUSTERS
@@ -270,9 +274,11 @@ public:
      * stale-dated resident (stored under an earlier search) is also replaced
      * regardless of depth; without aging, a strictly-shallower store into a
      * different deep entry is dropped and that deep entry is never evicted by
-     * depth alone. Under ENABLE_TT_CLUSTERS (#42b) the store ALWAYS lands —
-     * same-key slot > empty slot > least-valuable resident (stale-dated first,
-     * then shallowest); the baseline arm's drop rule does not exist there.
+     * depth alone. Under ENABLE_TT_CLUSTERS (#42b r2) the victim is same-key
+     * slot > empty slot > least-valuable resident (stale-dated first, then
+     * shallowest), and a current-date victim is only displaced by an
+     * at-least-as-deep store (the baseline drop rule, applied to the weakest
+     * resident — r1's always-store variant measured Elo-negative).
      */
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
 #if ENABLE_TT_CLUSTERS
@@ -299,6 +305,23 @@ public:
                 victim_value = value;
                 victim = &e;
             }
+        }
+
+        // r2 drop gate (the r1 park's diagnosis): a current-date victim is
+        // only displaced by an at-least-as-deep store — the baseline arm's
+        // drop rule, applied to the WEAKEST resident. r1's always-store let
+        // every depth-1/2 store (the exponential bulk) churn the cluster's
+        // 4th-deepest entry, washing out the mid-depth results that feed TT
+        // cutoffs / IID / singular eligibility on re-visits (AMD blitz
+        // −9.38, LOS 10.69%, 1000g). Same-key refreshes, empty slots, and
+        // stale-dated victims still always land, so this drops strictly
+        // FEWER stores than the baseline (weakest-of-4 ≤ the one random
+        // occupant baseline compares against). With aging off, ages are all
+        // 0 and the gate reduces to the baseline depth rule.
+        if (victim->zobrist_key != 0 && victim->zobrist_key != zobrist_key
+            && victim->get_age() == current_age
+            && depth < victim->depth) {
+            return;                         // keep the deeper current-date resident
         }
 
         TTEntry& entry = *victim;

@@ -7,10 +7,11 @@
  * table (1 entry, or 1 four-entry cluster under ENABLE_TT_CLUSTERS) — so ANY
  * distinct keys collide on index 0 and the replacement policy is exercised
  * directly. Compile-gating: aging-specific cases on ENABLE_TT_AGING;
- * single-slot semantics (drop-shallower-store) on !ENABLE_TT_CLUSTERS (the
- * cluster arm replaces the drop rule with least-valuable victim choice, so
- * those scenarios legitimately behave differently there); cluster-specific
- * cases on ENABLE_TT_CLUSTERS.
+ * single-slot semantics on !ENABLE_TT_CLUSTERS (colliding keys get their own
+ * slots on the cluster arm, so those scenarios legitimately behave
+ * differently there); cluster-specific cases on ENABLE_TT_CLUSTERS (r2
+ * semantics: least-valuable victim choice + the baseline drop gate applied
+ * to the weakest current-date resident).
  */
 
 #include <gtest/gtest.h>
@@ -194,19 +195,23 @@ TEST(TranspositionTableClusters, ClusterHoldsFourCollidingKeys) {
     EXPECT_TRUE(hit(tt, KEY_D));
 }
 
-// A store into a full same-date cluster ALWAYS lands (no drop rule on this
-// arm) and evicts the shallowest resident — the deep entries are protected by
-// victim choice, not by rejecting the write.
-TEST(TranspositionTableClusters, FullClusterEvictsShallowestSameDate) {
+// r2: a store into a full same-date cluster lands only when at least as deep
+// as the WEAKEST resident (the baseline drop rule, applied per-cluster —
+// r1's always-store measured Elo-negative); when it lands, the shallowest
+// resident is the victim.
+TEST(TranspositionTableClusters, FullClusterDropGateThenEvictsShallowest) {
     TranspositionTable tt(0);
     tt.new_search();
     tt.store(KEY_A, 1, 10, TTEntry::EXACT, 1);
-    tt.store(KEY_B, 2, 2,  TTEntry::EXACT, 2);  // shallowest — the victim
+    tt.store(KEY_B, 2, 2,  TTEntry::EXACT, 2);  // weakest resident
     tt.store(KEY_C, 3, 5,  TTEntry::EXACT, 3);
     tt.store(KEY_D, 4, 3,  TTEntry::EXACT, 4);
 
-    tt.store(KEY_E, 5, 1,  TTEntry::EXACT, 5);  // shallower than everything — still lands
+    tt.store(KEY_E, 5, 1,  TTEntry::EXACT, 5);  // shallower than everything → DROPPED (r2 gate)
+    EXPECT_FALSE(hit(tt, KEY_E));
+    EXPECT_TRUE(hit(tt, KEY_B));
 
+    tt.store(KEY_E, 5, 2,  TTEntry::EXACT, 5);  // equal to the weakest → lands, evicts KEY_B
     EXPECT_TRUE(hit(tt, KEY_E));
     EXPECT_FALSE(hit(tt, KEY_B));
     EXPECT_TRUE(hit(tt, KEY_A));
@@ -283,8 +288,8 @@ TEST(TranspositionTableClustersAging, ProbeTouchProtectsHotSlot) {
 }
 
 // 6-bit wrap analogue of AgeWrapsAt64WithoutBreakingReplacement: 64 bumps
-// later an untouched survivor's date reads current again, so victim choice
-// falls back to plain shallowest-depth among the (apparently) same-date slots.
+// later an untouched survivor's date reads current again, so the r2 depth
+// gate re-applies among the (apparently) same-date slots.
 TEST(TranspositionTableClustersAging, AgeWrapFallsBackToDepthRule) {
     TranspositionTable tt(0);
     tt.new_search();                               // date 1
@@ -295,8 +300,10 @@ TEST(TranspositionTableClustersAging, AgeWrapFallsBackToDepthRule) {
 
     for (int i = 0; i < 64; ++i) tt.new_search();  // full wrap: date reads 1 again
     EXPECT_EQ(tt.get_current_age(), 1);
-    tt.store(KEY_E, 5, 1,  TTEntry::EXACT, 5);     // all read current → shallowest = KEY_D
+    tt.store(KEY_E, 5, 1,  TTEntry::EXACT, 5);     // all read current → depth gate → DROPPED
+    EXPECT_FALSE(hit(tt, KEY_E));
 
+    tt.store(KEY_E, 5, 7,  TTEntry::EXACT, 5);     // ≥ the weakest (d7) → lands, evicts KEY_D
     EXPECT_TRUE(hit(tt, KEY_E));
     EXPECT_FALSE(hit(tt, KEY_D));
     EXPECT_TRUE(hit(tt, KEY_A));

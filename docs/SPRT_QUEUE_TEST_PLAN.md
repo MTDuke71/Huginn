@@ -1,3 +1,34 @@
+# SPRT Queue Test Plan — TT clusters r2 (#42b) candidate off baseline-t34 (OPEN)
+
+> **Run:** `git checkout candidate/tt-clusters-r2` + `test_huginn_gauntlet.bat t34`.
+> Flag `ENABLE_TT_CLUSTERS` (unstick ON THE BRANCH: `cmake -UENABLE_TT_CLUSTERS`).
+> **t34 baseline (OFF):** startpos d14 = **3,481,582** / cp 31 / e2e4;
+> Kiwipete d13 = **1,958,182** / cp −85 / e2a6.
+> **#42b-r2 arm (ON):** startpos d14 = **3,367,661** / cp 34 / e2e4 (−3.3%);
+> Kiwipete d13 = **1,956,522** / cp −85 / e2a6. ⚠ These are IDENTICAL to the
+> r1 arm's numbers BY MEASUREMENT: the r2 drop gate fires only in a full
+> current-date cluster, which a single fresh search at ~43‰ fill essentially
+> never produces — its effect accumulates over a game. So startpos d14
+> discriminates candidate-vs-baseline but NOT r1-vs-r2; discriminate r1/r2
+> by branch identity and the gated test
+> (`FullClusterDropGateThenEvictsShallowest` — r2 expects the shallow store
+> DROPPED; the r1 binary fails it). Suite: 286 ON / 284 OFF.
+> **What:** r2 of #42 idea 2 — same 4-way 64-byte clusters as r1 (probe scans
+> for a full-key match; victim = same-key > empty > stale-then-shallowest by
+> `age_dist*256 − depth`), plus the r1-park diagnosis fix: **a current-date
+> victim is only displaced by an at-least-as-deep store** (the baseline drop
+> rule applied to the weakest resident). r1's Fruit-faithful always-store let
+> every depth-1/2 store churn the cluster's 4th-deepest entry (AMD −9.38 ±
+> 14.81, LOS 10.69%, 1000g). r2 still drops strictly fewer stores than the
+> direct-mapped baseline (weakest-of-4 ≤ the one random occupant) while never
+> evicting deep work for junk.
+> **Hypothesis test:** r2 ≥ 0 confirms always-store was the r1 regression;
+> r2 still negative implicates the cluster geometry itself → park #42b for
+> good.
+> **Decision (pre-registered):** standard two-machine bar (same-sign + pooled
+> ≥95% LOS) → ship. Flat-but-positive blitz → one LTC leg (60+0.6, 500g cap,
+> idea-1 precedent) as the park/ship call. Negative → park, item closed.
+
 # SPRT Queue Test Plan — TT clusters r1 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
 
 > **r1 PARKED (2026-07-14) on the AMD blitz leg:** **−9.38 ± 14.81** (nElo
