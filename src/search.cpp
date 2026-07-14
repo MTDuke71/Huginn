@@ -153,6 +153,23 @@
 #define ENABLE_ASPIRATION 1  // shipped t32 (two-machine SPRT vs t31, pooled +14.46, LOS ~99.6%)
 #endif
 
+// ENABLE_HISTORY_LMR: BACKLOG #63 — history-modulated LMR (the next EBF lever
+// after #62/#17-r2; road-to-2.3 item 1). The LMR table is static log·log over
+// (depth, move-ordinal): every quiet at the same slot gets the same reduction
+// regardless of how it has actually performed. Flag ON: the mover's butterfly-
+// history score (search_history[piece][to], ±depth² updates, aged across
+// searches) modulates the table value by ±1 ply — proven-good quiets
+// (hist >= +HISTORY_LMR_GRAIN) are reduced one ply less, history-hated quiets
+// (hist <= −HISTORY_LMR_GRAIN) one ply more; the existing [1, depth−2] clamps
+// still bound the result. Read at the LMR site post-MakeMove, so the mover is
+// read from the TO square (promotions are LMR-exempt, so at_sq64(to) is always
+// the mover). `info.history_lmr_adjusts` counts modulations. DEFAULT OFF
+// pending SPRT; the OFF arm is byte-identical to baseline-t32. Build the ON
+// arm with -DENABLE_HISTORY_LMR=1.
+#ifndef ENABLE_HISTORY_LMR
+#define ENABLE_HISTORY_LMR 0
+#endif
+
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
 // against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
 // verification — a genuine over-pruning / tactical-leak suspect (the Stash
@@ -2451,6 +2468,28 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             int d_idx = std::min(depth, 63);
             int m_idx = std::min(move_ordinal, 63);
             int reduction = LMR_TABLE[d_idx][m_idx];
+
+#if ENABLE_HISTORY_LMR
+            // BACKLOG #63: modulate the table reduction by the mover's
+            // butterfly history — reduce proven-good quiets one ply less,
+            // history-hated quiets one ply more (see the flag comment at the
+            // top of this file). MakeMove already ran, so the mover sits on
+            // `to` (promotions are LMR-exempt, at_sq64(to) is the mover).
+            {
+                const int HISTORY_LMR_GRAIN = 4096;
+                const int to = move_list.moves[i].get_to();
+                const int hist =
+                    search_history[history_piece_row(pos.at_sq64(to))][to];
+                if (hist >= HISTORY_LMR_GRAIN) {
+                    --reduction;
+                    info.history_lmr_adjusts++;
+                } else if (hist <= -HISTORY_LMR_GRAIN) {
+                    ++reduction;
+                    info.history_lmr_adjusts++;
+                }
+            }
+#endif
+
             reduction = std::max(reduction, 1);
             reduction = std::min(reduction, depth - 2);
 

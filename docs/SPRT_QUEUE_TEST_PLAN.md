@@ -1,3 +1,26 @@
+# SPRT Queue Test Plan — history-modulated LMR (#63) candidate off baseline-t32 (OPEN)
+
+> **Run:** `git checkout candidate/history-lmr` + `test_huginn_gauntlet.bat t32`.
+> Flag `ENABLE_HISTORY_LMR` (unstick: `cmake -UENABLE_HISTORY_LMR` — ON THE
+> BRANCH, per the #17-r2 AMD-leg warning).
+> **t32 baseline (OFF):** startpos d14 = **5,669,691** / cp 33 / e2e4;
+> Kiwipete d13 = **2,768,609** / cp −88 / e2a6.
+> **#63 arm (ON):** startpos d14 = **3,481,582** / cp 31 / e2e4 (−38.6% —
+> ⚠ root move does NOT discriminate, node count does); Kiwipete d13 =
+> **1,958,182** / cp −85 / e2a6 (−29.3%; the SPRT decides the fixed-time
+> trade).
+> **What:** history-modulated LMR (road-to-2.3 item 1; third leg of the
+> SF18-study selectivity program after #62 + #17-r2). At the LMR site the
+> mover's butterfly-history score adjusts the static table reduction ±1 ply
+> (grain ±4096; `[1, depth−2]` clamps still apply): proven-good quiets are
+> reduced less, history-hated quiets more. Fixture:
+> `info.history_lmr_adjusts > 0` in a d12 Kiwipete search (test
+> `HistoryLmr.ModulationFiresInDeepSearch` tracks the built arm); counter
+> stone-dead on the baseline arm. Both arms 274/275 green (1 by-design skip).
+> **Result:** two-machine SPRT vs t32 pending.
+> **Decision:** standard two-machine ship bar. If it ships, flip the flag
+> default ON on `main` (source `#ifndef` + CMake option — both) as t33.
+
 # SPRT Queue Test Plan — aspiration windows re-test (#17-r2) candidate off baseline-t31 (CLOSED)
 
 > **QUEUE CLOSED, `baseline-t32` SHIPPED (2026-07-13)** — two-machine SPRT vs

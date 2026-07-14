@@ -264,6 +264,17 @@ else()
     add_compile_definitions(ENABLE_ASPIRATION=0)
 endif()
 
+# BACKLOG #63: history-modulated LMR (see ENABLE_HISTORY_LMR in src/search.cpp).
+# CANDIDATE — default OFF (byte-identical to baseline-t32);
+# -DENABLE_HISTORY_LMR=ON builds the test arm.
+option(ENABLE_HISTORY_LMR "BACKLOG #63: history-modulated LMR — butterfly history adjusts reductions ±1 (candidate)" OFF)
+if(ENABLE_HISTORY_LMR)
+    add_compile_definitions(ENABLE_HISTORY_LMR=1)
+    message(STATUS "History-modulated LMR enabled (BACKLOG #63 candidate — SPRT pending)")
+else()
+    add_compile_definitions(ENABLE_HISTORY_LMR=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -580,6 +591,7 @@ if(BUILD_TESTING)
     test/test_eval_threats_r2.cpp
     test/test_singular_ext.cpp
     test/test_aspiration.cpp
+    test/test_history_lmr.cpp
     )
 
     add_executable(huginn_tests

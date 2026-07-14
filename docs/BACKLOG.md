@@ -37,6 +37,7 @@
 | 61 | Repair or remove divergent public helper APIs | **CLOSED (2026-07-11)** — all four contracts fixed/removed + focused regressions (`test_audit_helpers.cpp`); d14 signature byte-identical | maintenance | low |
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
 | 17-r2 | Aspiration windows at the root (re-test) | **SHIPPED (2026-07-13, `baseline-t32`)** — two-machine same-sign positive (AMD +12.51 / Intel +16.34, pooled +14.46 ± 10.61, LOS ≈ 99.6%); flag default ON; t15 attempt-1 rejection formally superseded | feature/search | high |
+| 63 | History-modulated LMR (road-to-2.3 item 1) | **CANDIDATE (2026-07-13)** — behind `ENABLE_HISTORY_LMR` (default OFF, byte-identical off); branch `candidate/history-lmr`; SPRT vs t32 pending (arm sigs in SPRT_QUEUE_TEST_PLAN.md) | feature/search | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **INCONCLUSIVE** — idea 1 tested, weak positive lean, LTC check recommended; idea 2 (clusters) untried | feature/search | medium |
@@ -664,6 +665,39 @@ build verified d14 = 5,669,691 / cp 33 / e2e4 exact from a clean no-override
 configure; 271/272 green (1 by-design skip); huginn_t32 snapshotted. Run-sheet
 in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md); writeup in
 [BASELINE_LADDER.md](BASELINE_LADDER.md).
+
+### #63: History-modulated LMR — road-to-2.3 item 1 (high)
+
+**Motivation.** The LMR table is static `log·log` over (depth, move-ordinal):
+every quiet at the same slot gets the same reduction regardless of how that
+move has actually performed. Modulating reductions by move history is the
+standard next EBF cut after extensions (#62) and aspiration (#17-r2) — the
+third leg of the SF18-study selectivity program — and it needs no
+continuation history (falsified, #3): the butterfly table
+(`search_history[13][64]`, ±depth² updates, aged ÷4 across searches) is
+already there.
+
+**What (2026-07-13): CANDIDATE behind `ENABLE_HISTORY_LMR` (default OFF,
+flag-off byte-identical — startpos d14 = 5,669,691 unchanged).** At the LMR
+site, after the table lookup and before the `[1, depth−2]` clamps, the
+mover's butterfly-history score adjusts the reduction by ±1 ply:
+`hist >= +4096` (proven-good quiet) ⇒ reduce one ply less;
+`hist <= −4096` (history-hated quiet) ⇒ reduce one ply more
+(`HISTORY_LMR_GRAIN = 4096`). Read post-MakeMove from the TO square
+(promotions are LMR-exempt, so `at_sq64(to)` is always the mover).
+`info.history_lmr_adjusts` counts modulations.
+
+**Verified:** OFF arm byte-identical to t32 (d14 = 5,669,691 / cp 33 / e2e4
+exact); ON arm startpos d14 = **3,481,582** / cp 31 / e2e4 (−38.6% — the
+biggest fixed-depth cut of the selectivity series), Kiwipete d13 =
+**1,958,182** / cp −85 / e2a6 (−29.3%; same best moves — node count
+discriminates, not the root move); 4 regressions in
+[test_history_lmr.cpp](../test/test_history_lmr.cpp) (deep-search mate
+integrity + determinism both arms, modulation-fires on the ON arm,
+counter-dead on the baseline arm); full suite 274/275 green both arms (1
+by-design skip). **Next:** two-machine SPRT via branch
+`candidate/history-lmr` — run-sheet in
+[SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md).
 
 ### #9 / #35: Eval program — Texel tuning + tapered eval (IN-PROGRESS, paused)
 
