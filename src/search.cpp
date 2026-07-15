@@ -189,7 +189,7 @@
 // `info.lmp_prunes` counts skips. DEFAULT OFF pending SPRT; the OFF arm is
 // byte-identical to baseline-t34. Build the ON arm with -DENABLE_LMP=1.
 #ifndef ENABLE_LMP
-#define ENABLE_LMP 0
+#define ENABLE_LMP 1  // candidate/lmp-r2: test arm defaults ON
 #endif
 
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff

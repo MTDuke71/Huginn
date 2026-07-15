@@ -306,7 +306,7 @@ endif()
 # the 2026-04 rejections predate the t24-t33 ordering stack; Fix #3's non-PV
 # gate was never tested). CANDIDATE — default OFF (byte-identical to
 # baseline-t34); -DENABLE_LMP=ON builds the test arm.
-option(ENABLE_LMP "BACKLOG #7: late move pruning — skip late quiets at shallow non-PV nodes (candidate)" OFF)
+option(ENABLE_LMP "BACKLOG #7: late move pruning — skip late quiets at shallow non-PV nodes (candidate)" ON)  # candidate branch default
 if(ENABLE_LMP)
     add_compile_definitions(ENABLE_LMP=1)
     message(STATUS "Late move pruning enabled (BACKLOG #7 candidate — SPRT pending)")
