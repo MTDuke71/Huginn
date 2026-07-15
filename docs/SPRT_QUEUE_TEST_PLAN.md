@@ -1,3 +1,29 @@
+# SPRT Queue Test Plan — LMP re-test (#7) candidate off baseline-t34 (OPEN)
+
+> **Run:** `git checkout candidate/lmp-r2` + `test_huginn_gauntlet.bat t34`.
+> Flag `ENABLE_LMP` (unstick ON THE BRANCH: `cmake -UENABLE_LMP`).
+> **t34 baseline (OFF):** startpos d14 = **3,481,582** / cp 31 / e2e4;
+> Kiwipete d13 = **1,958,182** / cp −85 / e2a6.
+> **#7 arm (ON):** startpos d14 = **3,840,019** / cp 29 / e2e4 (+10.3% —
+> ⚠ root move does NOT discriminate, node count does; pruning reshapes the
+> tree rather than shrinking it at fixed depth, the SPRT decides fixed time);
+> Kiwipete d13 = **1,920,353** / cp −85 / e2a6 (−1.9%).
+> **What:** LMP re-test (road-to-2.3 item 3). At a shallow (depth 3–6)
+> NON-PV node (entry window == 1, Fix #3's never-tested gate), once
+> `4 + depth²` quiets have been SEARCHED (post-MakeMove count — not the
+> pseudo-legal index, the original bug), remaining quiets are skipped
+> pre-MakeMove. Guards: not at root / in check / during singular exclusion;
+> ≥1 legal move searched (mate detection); best_score above the mated band.
+> The 2026-04 rejections (−254 → −56, asymptoting negative, vs t1) predate
+> SEE ordering (t24), legal-move ordinals (t27), aspiration (t32), and
+> history-modulated LMR (t33) — contaminated-verdict re-test, #17-r2
+> precedent. Fixture: `info.lmp_prunes > 0` in a d10 Kiwipete search (test
+> `Lmp.PruningFiresInDeepSearch` tracks the built arm); counter stone-dead
+> baseline. Both arms 286/287 green (1 by-design skip).
+> **Result:** two-machine SPRT vs t34 pending — Intel leg first.
+> **Decision:** standard two-machine ship bar → t35. Negative → the ordering
+> stack still isn't enough; re-park with the two-era verdict.
+
 # SPRT Queue Test Plan — TT clusters r2 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
 
 > **r2 PARKED (2026-07-14) on the Intel LTC leg — #42b closed for good.**

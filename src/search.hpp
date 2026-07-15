@@ -151,6 +151,11 @@ struct SearchInfo {
     // the ON arm); never incremented on the baseline arm.
     uint64_t history_lmr_adjusts;
 
+    // Late move pruning (ENABLE_LMP, #7 re-test): quiets skipped pre-MakeMove
+    // at shallow non-PV nodes. Always present (tests read it on the ON arm);
+    // never incremented on the baseline arm.
+    uint64_t lmp_prunes;
+
     // Counter-move heuristic: track moves played to update counter-move table
     S_MOVE search_stack[64];  // Stack of moves made during search (max 64 plies)
 
@@ -178,7 +183,8 @@ struct SearchInfo {
                    quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
                    best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0),
-                   singular_exts(0), aspiration_researches(0), history_lmr_adjusts(0) {
+                   singular_exts(0), aspiration_researches(0), history_lmr_adjusts(0),
+                   lmp_prunes(0) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();

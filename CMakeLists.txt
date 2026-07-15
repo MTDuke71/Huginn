@@ -302,6 +302,18 @@ else()
     add_compile_definitions(ENABLE_TT_CLUSTERS=0)
 endif()
 
+# BACKLOG #7: late move pruning re-test (see ENABLE_LMP in src/search.cpp —
+# the 2026-04 rejections predate the t24-t33 ordering stack; Fix #3's non-PV
+# gate was never tested). CANDIDATE — default OFF (byte-identical to
+# baseline-t34); -DENABLE_LMP=ON builds the test arm.
+option(ENABLE_LMP "BACKLOG #7: late move pruning — skip late quiets at shallow non-PV nodes (candidate)" OFF)
+if(ENABLE_LMP)
+    add_compile_definitions(ENABLE_LMP=1)
+    message(STATUS "Late move pruning enabled (BACKLOG #7 candidate — SPRT pending)")
+else()
+    add_compile_definitions(ENABLE_LMP=0)
+endif()
+
 # ---- Sanitizers for enhanced debugging (#60: real flags, not a no-op) ----
 # Debug or RelWithDebInfo configs. GCC/Clang: ASan+UBSan. MSVC: ASan (UBSan
 # unavailable). RelWithDebInfo+ASan is the CI-friendly combination: the
@@ -619,6 +631,7 @@ if(BUILD_TESTING)
     test/test_singular_ext.cpp
     test/test_aspiration.cpp
     test/test_history_lmr.cpp
+    test/test_lmp.cpp
     test/test_transposition_table.cpp
     )
 

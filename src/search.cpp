@@ -170,6 +170,28 @@
 #define ENABLE_HISTORY_LMR 1  // shipped t33 (two-machine SPRT vs t32, pooled +13.6, LOS ~99.4%)
 #endif
 
+// ENABLE_LMP: BACKLOG #7 — late move pruning, RE-TEST (road-to-2.3 item 3).
+// At a shallow NON-PV node, once enough quiet moves have been searched
+// without improving alpha, the remaining quiets are skipped outright (pre-
+// MakeMove — cheaper than the move-level futility that culls them post-make).
+// The 2026-04 attempts regressed (-254 → -56, asymptoting negative) and were
+// deferred with the diagnosis "ordering isn't reliable enough for the top-K
+// quiets to be safely exhaustive" — measured against t1, before SEE ordering
+// (t24), correct legal-move ordinals (t27), aspiration-stable scores (t32),
+// and history-modulated LMR (t33). Contaminated-verdict re-test (#17-r2
+// precedent). Design = the old run's planned-but-never-tested Fix #3:
+// per-node quiet_count of SEARCHED quiets (not the pseudo-legal index i —
+// the original bug), threshold 4 + depth², depth 3..6 only, PLUS the non-PV
+// gate (beta − alpha == 1). Guards: never at root / in check / during a
+// singular exclusion search; never before one legal move has been searched
+// (mate/stalemate detection needs legal_count); never when best_score is in
+// the mated band (don't prune potential defenses while getting mated).
+// `info.lmp_prunes` counts skips. DEFAULT OFF pending SPRT; the OFF arm is
+// byte-identical to baseline-t34. Build the ON arm with -DENABLE_LMP=1.
+#ifndef ENABLE_LMP
+#define ENABLE_LMP 0
+#endif
+
 // ENABLE_NMP_VERIFICATION: BACKLOG #43 sub-lever 1. Guard the null-move cutoff
 // against zugzwang false-positives. Huginn's NMP is flat R=4 with NO
 // verification — a genuine over-pruning / tactical-leak suspect (the Stash
@@ -2361,6 +2383,9 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     S_MOVE best_move;  // Track best move for transposition table storage
     best_move.move = 0;
     int legal_count = 0;  // For mate/stalemate detection after the loop
+#if ENABLE_LMP
+    int quiet_count = 0;  // BACKLOG #7: quiet moves SEARCHED at this node
+#endif
 
     // Capture alpha as it was on entry — the move loop below mutates `alpha`
     // when a move improves it, but TT bound classification must compare
@@ -2382,12 +2407,40 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         }
 #endif
 
+#if ENABLE_LMP
+        // BACKLOG #7: late move pruning (see the flag comment at the top of
+        // this file). Shallow non-PV node, enough quiets already searched
+        // without a cutoff → skip the remaining quiets before MakeMove.
+        {
+            const int LMP_MIN_DEPTH = 3;
+            const int LMP_MAX_DEPTH = 6;
+            const bool lmp_quiet = !move_list.moves[i].is_capture() &&
+                                   !move_list.moves[i].is_promotion();
+            if (lmp_quiet && !isRoot && !in_check &&
+                depth >= LMP_MIN_DEPTH && depth <= LMP_MAX_DEPTH &&
+                beta - original_alpha == 1 &&     // non-PV node (Fix #3 gate; entry window, not the loop-mutated alpha)
+                legal_count > 0 &&                // mate detection needs one legal move
+                best_score > -MATE + 1000 &&      // don't prune defenses in the mated band
+                quiet_count >= 4 + depth * depth) {
+                info.lmp_prunes++;
+                continue;  // pruned — no MakeMove
+            }
+        }
+#endif
+
         if (pos.MakeMove(move_list.moves[i]) != 1) {
             assert_search_position_integrity(pos, "after illegal AlphaBeta MakeMove rollback");
             continue; // Skip illegal moves
         }
         assert_search_position_integrity(pos, "after AlphaBeta MakeMove");
         ++legal_count;
+#if ENABLE_LMP
+        // BACKLOG #7: count quiets actually searched (post-MakeMove — illegal
+        // pseudo-legal entries never inflate the threshold, the original bug).
+        if (!move_list.moves[i].is_capture() && !move_list.moves[i].is_promotion()) {
+            ++quiet_count;
+        }
+#endif
 
         // Track move in search stack for counter-move heuristic
         if (info.ply >= 0 && info.ply < 64) {
