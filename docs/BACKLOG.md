@@ -41,12 +41,28 @@
 **Remaining:**
 
 5. **Hygiene (no gauntlet needed):**
-   - **Tactical sweep on the t34 build**: WAC300 + LCT2 @ 5s/position
-     ([test/WAC300.epd](../test/WAC300.epd), [test/lct2.epd](../test/lct2.epd)).
-     Reference: **270/300 WAC @ 5s on t9** — 25 baselines stale; record the
-     new number in [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) as the fresh
-     tactical reference (expect a large jump; investigate any WAC position
-     that REGRESSED vs t9 before shrugging).
+   - **Tactical sweep on the t34 build: DONE (2026-07-15)** — WAC300 @
+     5s/position: **294/300 (98.0%)**, up from 274/300 (91.3%, the
+     2026-06-03 t9/t10-era reference). 21 of 26 old failures fixed; 1 new
+     miss (WAC.248) investigated and found to be a dual-solution WAC-300
+     entry (excluded from `wac201.epd`), not a real regression. Full
+     writeup + WAC201 cross-check in
+     [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md#wac300-tactical-solving-snapshot-2026-07-15-baseline-t34--current).
+     **LCT2: DONE (2026-07-15)** — first-ever run (new `test/lct2_test.py`
+     harness, mirrors `wac_test.py`): **21/35 (60.0%)**, no prior baseline
+     to compare against. By category: POS 8/14, CMB 7/12, FIN 6/9 — fairly
+     even, no sharp weak spot. Along the way, found + fixed a malformed
+     castling flag in `lct2.epd` (`CMB.06`) that was silently rejected by
+     `validate_uci_position` with zero visible signal — **also fixed the
+     underlying observability gap**: `uci.cpp`'s position-rejection
+     diagnostics now always print as `info string`, not just under
+     `debug_mode` (288/288 tests green, no regressions). Stockfish
+     depth-18 verdict on all 14 failures says the honest picture is ~22/35
+     (one is a dual-solution, two are noise-level) with 11 genuine misses,
+     the sharpest being `CMB.06`/`CMB.07`/`CMB.11`/`FIN.03`/`FIN.09` — not
+     being chased now, kept as a reference pool for a future eval/search
+     round. Full writeup + table in
+     [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md#lct2-tacticalpositional-snapshot-2026-07-15-baseline-t34--first-measurement).
    - **#60 leftovers**: parser-purity test refactor + randomized make/unmake
      invariants (see the #60 section below).
    - **CHANGELOG_2.3.md**: the t22 → t34 ladder (v2.2 stopped at t21) — one
@@ -777,7 +793,13 @@ archive) redirected the active thread from eval to search-soundness, which
 dwarfed any eval term in the same period (#45 +510, #47 +127 vs the ~+30 from
 t16–t19 combined). Round 7+ HCE roadmap remains, priority order set by the
 #41 calibration study (king safety → threats round 2 → safe mobility →
-outposts; king safety, safe mobility, and outposts are done — see archive):
+outposts; king safety, safe mobility, and outposts are done — see archive).
+**Re-diagnosed again vs t34 (2026-07-15)**, same reading a third time: SF
+move-match 48.5%→51.8%, fair cp-loss 15.6→12.3cp, middlegame over-optimism
+29.0→22.7cp, this time WITH a real depth jump (+3.1 ply) — search/EBF work
+(t22→t34) keeps dominating the one eval ship (threats round 2) in this
+window; full numbers in
+[BACKLOG-archive-2.1.md](BACKLOG-archive-2.1.md#41-played-game-calibration-study--round-7-priority-evidence-done-2026-06-14):
 
 - **Threats round 2** — extend the +54 t15 cluster: hanging pieces (attacked
   *and* undefended), pawn-push threats, threat-by-king. Same machinery,

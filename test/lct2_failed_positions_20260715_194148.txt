@@ -1,0 +1,18 @@
+# Failed LCT2 position line numbers
+# Use: python lct2_test.py --failed-file lct2_failed_positions_XXXXXX.txt
+# to retest only these positions
+
+3
+4
+5
+10
+12
+14
+20
+21
+24
+25
+26
+29
+34
+35

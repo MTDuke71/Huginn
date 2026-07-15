@@ -316,12 +316,19 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
         }
 
         if (fen.empty()) {
-            if (debug_mode) std::cout << "info string Empty FEN string" << std::endl;
+            // Position-command rejections are always surfaced (not gated behind
+            // debug_mode): silently keeping the previous root while giving the
+            // caller zero signal is worse than one extra info-string line — a
+            // GUI/harness that doesn't send "debug on" would otherwise have no
+            // way to notice it's now analysing the wrong position (found via a
+            // malformed castling field in a WAC/LCT2 EPD entry, road-to-v2.3
+            // item 5 hygiene sweep).
+            std::cout << "info string Empty FEN string" << std::endl;
             return;
         }
 
         if (!new_position.set_from_fen(fen)) {
-            if (debug_mode) std::cout << "info string Invalid FEN: " << fen << std::endl;
+            std::cout << "info string Invalid FEN: " << fen << std::endl;
             return;
         }
 
@@ -330,14 +337,14 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
         // coherence — see validate_uci_position)
         std::string why;
         if (!validate_uci_position(new_position, &why)) {
-            if (debug_mode) std::cout << "info string Illegal position (" << why << "): " << fen << std::endl;
+            std::cout << "info string Illegal position (" << why << "): " << fen << std::endl;
             return;
         }
 
         move_index = i; // Points to "moves" or end of tokens
     }
     else {
-        if (debug_mode) std::cout << "info string Unknown position type: " << tokens[1] << std::endl;
+        std::cout << "info string Unknown position type: " << tokens[1] << std::endl;
         return;
     }
 
@@ -347,13 +354,13 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
         for (size_t i = move_index + 1; i < tokens.size(); ++i) {
             S_MOVE move = parse_uci_move(tokens[i], new_position);
             if (move.move == 0 || new_position.MakeMove(move) != 1) {
-                if (debug_mode) std::cout << "info string Rejecting position command, bad move: " << tokens[i] << std::endl;
+                std::cout << "info string Rejecting position command, bad move: " << tokens[i] << std::endl;
                 return;
             }
         }
     }
     else if (move_index < tokens.size()) {
-        if (debug_mode) std::cout << "info string Rejecting position command, unexpected token: " << tokens[move_index] << std::endl;
+        std::cout << "info string Rejecting position command, unexpected token: " << tokens[move_index] << std::endl;
         return;
     }
 

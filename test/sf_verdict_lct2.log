@@ -1,0 +1,33 @@
+14 failed position(s); Stockfish depth 18 verdict:
+
+  LCTII.POS.03     done
+  LCTII.POS.04     done
+  LCTII.POS.05     done
+  LCTII.POS.10     done
+  LCTII.POS.12     done
+  LCTII.POS.14     done
+  LCTII.CMB.06     done
+  LCTII.CMB.07     done
+  LCTII.CMB.10     done
+  LCTII.CMB.11     done
+  LCTII.CMB.12     done
+  LCTII.FIN.03     done
+  LCTII.FIN.08     done
+  LCTII.FIN.09     done
+
+id               SF best      SF cp   expected    exp cp   played   played cp   gap
+----------------------------------------------------------------------------------------------------
+  LCTII.POS.03     Qc5            197   Qc5            200   e1e2            12   +188
+  LCTII.POS.04     e5             -50   e5             -45   b8c6           -76   +31
+  LCTII.POS.05     Bb5             75   Bb5             77   f8d8             0   +77
+  LCTII.POS.10     Ne5             57   Bf8             29   c6e5            71   -42
+  LCTII.POS.12     Rb6             22   Rb6             26   c6c3            16   +10
+  LCTII.POS.14     d5             201   d5             225   c1g5           175   +50
+  LCTII.CMB.06     exf6           405   exf6           433   c2e4           182   +251
+  LCTII.CMB.07     Qe7            294   Rxc3           566   h4e7           344   +222
+  LCTII.CMB.10     Rf1            242   Bxh6           324   g1f1           252   +72
+  LCTII.CMB.11     Nxh7           553   Nxh7           548   e1h4           341   +207
+  LCTII.CMB.12     Nce2           286   e5             301   g2h3           160   +141
+  LCTII.FIN.03     Bb7            133   Bxe4           556   c6b7           142   +414
+  LCTII.FIN.08     c5              86   c5             242   f2g1            83   +159
+  LCTII.FIN.09     Kg4            396   Kg4            428   f4g5             4   +424

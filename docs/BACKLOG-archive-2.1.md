@@ -271,6 +271,38 @@ positions (`run_cc_analysis_t21.bat`, reusing the t15 SF ground truth by FEN;
   isolated search-only delta (no t19 cc-baseline exists), but the eval ships were
   tiny vs the search fixes, so the attribution holds.
 
+**RE-DIAGNOSIS vs t34 (2026-07-15) — same direction continues, but this leg
+adds real depth too.** Re-ran the harness again on the same 6649 positions
+(`run_cc_analysis_t34.bat`, reusing t21's SF ground truth by FEN — itself
+carried forward unchanged from t15 — so the ground truth is identical across
+the whole t15/t21/t34 lineage; `tools/cc_analysis_t34.csv` vs
+`tools/cc_analysis_t21.csv`). t21→t34 deltas:
+- **Huginn==SF 48.5%→51.8% (+3.3)**; middlegame 47.7→51.1 (+3.4), quiet
+  39.2→43.5 (+4.2), tactical 76.2→76.9 (+0.7), endgame 52.6→57.3 (+4.7),
+  opening 46.2→48.2 (+1.9); **fair cp-loss 15.6→12.3 (−3.3)**.
+- **Over-optimism: middlegame 29.0→22.7cp (−6.4)**, opening 17.9→14.8,
+  endgame 15.6→11.0. **Mean depth 11.9→15.0 (+3.1 ply)** — unlike the
+  t15→t21 leg (near-flat depth, +0.6 ply), this leg's gain comes WITH a real
+  depth jump.
+- **Reading:** the only new *eval* term shipped in this whole window is
+  threats round 2 (`baseline-t30`); everything else between t21 and t34 is
+  search/correctness/TT (legal-move-ordinal PVS, SEE pin legality, EP-key
+  fix, check-aware qsearch + rule50 TT guard, history-index fix, SEE
+  ordering + root-twofold, speed pair, zobrist OOB fix, singular extensions,
+  aspiration re-ship, history-modulated LMR, TT aging). So this confirms
+  the t15→t21 reading rather than flipping it again: match% up, cp-loss
+  down, optimism down across every phase, driven almost entirely by search.
+  The depth jump (+3.1 ply, vs +0.6 for t15→t21) is new — the t22-t34 stack
+  leans more on selectivity/EBF wins (aspiration, singular extensions,
+  history-LMR) that buy real plies at fixed time, on top of the earlier
+  soundness recoveries — so this leg is genuine deeper search *and*
+  continued soundness, not just recovered blind spots.
+- **Not fully closed:** quiet-move match (43.5%) still trails tactical
+  (76.9%) by 33 points, and middlegame optimism (22.7cp), while down from
+  29.0, isn't gone — the #41 positional headroom still exists, just smaller
+  each re-diagnosis. Unscientific caveat unchanged: one 6649-position
+  correspondence-game tree, not a controlled eval-only A/B.
+
 ## MTLChess v0.6 source comparison (2026-06-14) — adds a *search* track to #41
 
 Read MTLChess v0.6's `search.zig` + `eval.zig` as an answer key (it's the same

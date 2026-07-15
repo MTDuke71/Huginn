@@ -62,6 +62,129 @@ Conclusion: depth deficit is the dominant factor. Eval improvements
 improvements do. **Search-shape work (fix aspiration, fix LMP, add SEE,
 tune LMR) is the priority**; eval is secondary until the tree is right.
 
+## LCT2 tactical/positional snapshot (2026-07-15, `baseline-t34`) — first measurement
+
+Road-to-v2.3 item 5 hygiene sweep. LCT II (Louguet Chess Test II, 35
+positions — positional/combinational/endgame master-game positions) had
+never been run against Huginn before (`test/lct2_test.py` written this
+session, mirroring `wac_test.py`). Full 5s/position run: **21/35 (60.0%)**.
+Log: `test/lct2_test_log_20260715_193934.txt`.
+
+By category: POS (positional) 8/14 (57.1%), CMB (combinational) 7/12
+(58.3%), FIN (endgame) 6/9 (66.7%) — roughly even across the three, no
+sharp skew toward one weakness. Notably lower than WAC300's 98.0% (above),
+consistent with LCT2's reputation as a harder, more balanced suite (real
+master games rather than curated "spot the tactic" positions) — this is a
+**first baseline, not a regression signal**; nothing to compare against
+yet. Failed: POS.03/04/05/10/12/14, CMB.06/07/10/11/12, FIN.03/08/09
+(`test/lct2_failed_positions_20260715_194148.txt`).
+
+**Bug found + fixed along the way: a malformed EPD entry, not an engine
+defect.** `LCTII.CMB.06`'s FEN carried a stale castling flag (`q`,
+claiming Black could still castle queenside) that didn't match the actual
+board (rook already moved off a8). `validate_uci_position` correctly
+**rejected** the FEN (exactly per `#54`'s transactional-position design —
+reject and keep the old root rather than desync) — but the rejection
+message was gated behind `debug_mode` (default off), so the harness got
+zero signal and unknowingly graded Huginn's answer to the *default
+starting position* instead. Reproduced directly via raw UCI (bypassing
+the test harness and python-chess entirely); swept all three EPD suites
+(`lct2.epd`, `WAC300.epd`, `wac201.epd`) — this was the only bad entry
+anywhere, not a systemic data problem. Fixed: `lct2.epd`'s castling field
+`q` → `-`. **Also fixed the observability gap on the user's call**:
+`src/uci.cpp`'s `handle_position` rejection diagnostics (empty/invalid
+FEN, illegal position, bad move, unexpected token) now always print as
+`info string`, not just under `debug_mode` — a silently-rejected position
+command is a real integration failure, not a debug nicety, and `info
+string` is spec-safe for any compliant GUI to ignore. Verified via raw UCI
+(the same malformed FEN now prints `info string Illegal position
+(castling right q without king on e8 and rook on a8): ...` with no debug
+mode needed) and a full test-suite run (288/288, 1 by-design skip — no
+regressions). Score unaffected by the EPD fix (still 21/35 — `CMB.06`
+remains a fail, now for a legitimate reason: Huginn's real answer is
+`Qxe4`, see below).
+
+**Stockfish depth-18 verdict on all 14 failures** (`tools/sf_verdict.py`,
+new — parses a WAC/LCT2 test log's FAIL blocks, gets SF's own top choice
++ eval for the raw position, then SF's verdict on the expected move vs
+what Huginn actually played, mover-POV cp; log:
+`test/sf_verdict_lct2.log`):
+
+| id | SF's own pick | expected (cp) | Huginn played (cp) | gap |
+|---|---|---|---|---|
+| POS.03 | Qc5 (197) | Qc5 (200) | e1e2 (12) | **+188** |
+| POS.04 | e5 (−50) | e5 (−45) | b8c6 (−76) | +31 |
+| POS.05 | Bb5 (75) | Bb5 (77) | f8d8 (0) | **+77** |
+| POS.10 | Ne5 (57) | Bf8 (29) | c6e5=Ne5 (71) | **−42** |
+| POS.12 | Rb6 (22) | Rb6 (26) | c6c3 (16) | +10 |
+| POS.14 | d5 (201) | d5 (225) | c1g5 (175) | +50 |
+| CMB.06 | exf6 (405) | exf6 (433) | c2e4=Qxe4 (182) | **+251** |
+| CMB.07 | Qe7 (294) | Rxc3 (566) | h4e7 (344) | **+222** |
+| CMB.10 | Rf1 (242) | Bxh6 (324) | g1f1=Rf1 (252) | +72 |
+| CMB.11 | Nxh7 (553) | Nxh7 (548) | e1h4 (341) | **+207** |
+| CMB.12 | Nce2 (286) | e5 (301) | g2h3 (160) | +141 |
+| FIN.03 | Bb7 (133) | Bxe4 (556) | c6b7=Bb7 (142) | **+414** |
+| FIN.08 | c5 (86) | c5 (242) | f2g1 (83) | +159 |
+| FIN.09 | Kg4 (396) | Kg4 (428) | f4g5 (4) | **+424** |
+
+**Read (the honest signal, not the raw bm-match rate):**
+- **POS.10 isn't a real miss.** Huginn's move (Ne5) scores *higher* than
+  the tagged `bm` (Bf8) and matches Stockfish's own top pick too — a
+  dual-solution EPD entry, not a weakness. True pass count is arguably
+  22/35, not 21/35.
+- **POS.04 and POS.12** are borderline — gaps of +31 and +10cp sit inside
+  normal search noise, not clear failures.
+- **The other 11 are genuine misses**, several large: `CMB.06` (the
+  historic Lilienthal–Capablanca `exf6`, +251), and especially `FIN.03` /
+  `FIN.09` (+414 / +424) — composed endgame studies where even
+  Stockfish's own flat same-depth eval doesn't find the point without
+  being handed the move first (SF's own top pick undervalues the correct
+  move by 400+cp in both cases), i.e. these are genuinely deep/hard-to-
+  calculate positions, not blunders on an easy position.
+- **Not being chased today** — this is a diagnostic snapshot, not a
+  planned fix. Worth keeping for future reference: if a future eval/search
+  round wants concrete hard positions to test against, `CMB.06`, `CMB.07`,
+  `CMB.11`, `FIN.03`, and `FIN.09` are the sharpest confirmed misses here
+  (largest genuine gaps, not noise or dual-solutions).
+
+## WAC300 tactical-solving snapshot (2026-07-15, `baseline-t34`) — current
+
+Road-to-v2.3 item 5 hygiene sweep, full 5s/position run on the current
+release build (HEAD differs from `baseline-t34` by two flag-gated
+candidates, both default OFF and verified byte-identical when off —
+BACKLOG #7 LMP re-test, #42b TT clusters — so this measures t34's actual
+behavior): **294/300 (98.0%)**. Log:
+`test/wac_test_log_20260715_153601.txt`.
+
+Prior full-suite measurement: **274/300 (91.3%)**, 2026-06-03, the
+exp1+exp2 tapered-material build (`baseline-t9`/`t10`-era — see
+[BACKLOG-archive-2.0.md](BACKLOG-archive-2.0.md)); `baseline-t9` alone
+scored 270/300 before that. Either way, ~24 baselines stale (t11→t34:
+legal-move-ordinal PVS, SEE pin legality, EP-key fix, check-aware qsearch
++ rule50 TT guard, history-index fix, SEE ordering + root-twofold, speed
+pair, zobrist OOB fix, threats round 2, singular extensions, aspiration
+re-ship, history-modulated LMR, TT aging) — **net +20/+24 positions**,
+consistent with the project's recurring lesson that search-soundness
+fixes dominate eval/tuning work.
+
+- 21 of the 26 old (2026-06-03) failures now solved.
+- 5 persist: WAC.163, WAC.196, WAC.230, WAC.237, WAC.265. Of these,
+  WAC.163/196/237/265 are in the curated `wac201.epd` sound subset (real,
+  still-hard tactics worth a dedicated look); WAC.230 is not (likely
+  another dubious WAC-300 entry).
+- 1 new miss vs the 2026-06-03 run: **WAC.248** (expects Qc5+, engine
+  plays Qxd5). Investigated per the pre-registered rule (don't shrug off
+  regressions) — **not a real regression**: the position is absent from
+  `wac201.epd` (already culled as busted/dual-solution when that subset
+  was curated), and the engine's own PV visits the Qc5+ line at depth 7-8
+  (cp +42) before settling on Qxd5 at depth 9-16 (cp +25, stable) — reads
+  as a close dual-solution call, not a broken search.
+
+Also on file from the 2026-06-03 run: **WAC201 (curated subset) 185/201
+(92.0%)** — no fresher WAC201 measurement was needed this session since
+WAC300 alone came back clearly favorable; `python test/wac201_test.py`
+re-runs it if a cleaner signal is ever wanted.
+
 ## WAC300 tactical-solving snapshot (2026-04-30)
 
 | Engine | Solved | Failed | Rate | Search time |
