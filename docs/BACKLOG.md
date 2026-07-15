@@ -38,7 +38,7 @@
 | 62 | Singular extensions (SF18-study EBF lever) | **SHIPPED (2026-07-13, `baseline-t31`)** — `ENABLE_SINGULAR_EXT` default ON; two-machine same-sign positive (AMD +12.17 / Intel +17.39, pooled **+14.90 ± 10.62, LOS ≈ 99.7%, 2000g**); first search-shape ship since t27; ship sig d14 = 6,583,846 / cp 24 / e2e4 | feature/search | high |
 | 17-r2 | Aspiration windows at the root (re-test) | **SHIPPED (2026-07-13, `baseline-t32`)** — two-machine same-sign positive (AMD +12.51 / Intel +16.34, pooled +14.46 ± 10.61, LOS ≈ 99.6%); flag default ON; t15 attempt-1 rejection formally superseded | feature/search | high |
 | 63 | History-modulated LMR (road-to-2.3 item 1) | **SHIPPED (2026-07-13, `baseline-t33`)** — `ENABLE_HISTORY_LMR` default ON; two-machine same-sign positive (AMD +8.69 / Intel +18.43, pooled **+13.63 ± 10.72, LOS ≈ 99.4%, 2000g**); fourth straight selectivity ship; ship sig d14 = 3,481,582 / cp 31 / e2e4 | feature/search | high |
-| 7 | Late move pruning re-test (road-to-2.3 item 3) | **CANDIDATE (2026-07-14)** — behind `ENABLE_LMP` (default OFF, byte-identical off); branch `candidate/lmp-r2`; the 2026-04 rejections (−254 → −56 vs t1) predate the t24–t33 ordering stack, and Fix #3's non-PV gate was never tested — contaminated-verdict re-test (#17-r2 precedent); SPRT vs t34 pending (arm sigs in SPRT_QUEUE_TEST_PLAN.md) | feature/search | high |
+| 7 | Late move pruning re-test (road-to-2.3 item 3) | **RE-PARKED (2026-07-14)** — Intel blitz leg negative lean (−6.60 ± 15.09, LOS 19.54%, 1000g; no AMD leg, cannot pool to the bar). Two-era verdict: −254→−56 vs t1, −6.6 vs t34 — five ordering ships moved LMP toward zero but never across; Huginn's shallow tree is already thin (RFP/null/razoring/futility/history-LMR). In-tree behind `ENABLE_LMP` (default OFF); revisit needs a NEW ordering signal, not dialing | feature/search | medium |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS** — t10→t19 shipped (see archive); **threats round 2 SHIPPED `baseline-t30` (2026-07-12)**, pooled +17.0 two-machine; roadmap continues below | feature/eval | high |
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 42 | TT aging + clusters (Fruit/Toga design) | **IDEA 1 SHIPPED (2026-07-14, `baseline-t34`)** — LTC verdict positive (+15.99 ± 17.00, LOS 96.77%, 500g @ 60+0.6; blitz-flat/LTC-positive matches the staleness hypothesis); flag default ON. Idea 2 ("#42b") 4-way clusters: r1 (always-store) PARKED (AMD −9.38); **r2 (drop gate) PARKED (2026-07-14) — two-TC flat: AMD blitz +0.69 (LOS 53.58%, 1000g) / Intel LTC −2.78 (LOS 37.95%, 500g @ 60+0.6). The drop gate recovered r1's ~10-Elo regression but 4-way geometry adds nothing on top of aging; kept in-tree behind `ENABLE_TT_CLUSTERS` (default OFF) + 10 gated tests for a post-NNUE revisit. ITEM #42 CLOSED** (idea 1 shipped t34, idea 2 parked) — run-sheet in [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md) | feature/search | medium |
@@ -980,11 +980,14 @@ One-liners; full detail + evidence in the archives
 - **#2 — King safety on top of mobility.** Shipped (t16) — see archive.
 - **#3 — Continuation history.** 1-ply additive falsified (w16 neutral, w64 −9);
   flag off, kept in-tree (`experiment/continuation-history`).
-- **#7 — LMP (late move pruning) fix.** Deferred 2026-04 (`experiment/
-  lmp-quiet-count`) — **re-opened 2026-07-14 as a road-to-2.3 candidate**
-  (`candidate/lmp-r2`, see the live table): the rejections were measured vs
-  t1, before the entire t24–t33 ordering stack, and Fix #3's non-PV gate was
-  never tested.
+- **#7 — LMP (late move pruning).** Deferred 2026-04, re-tested and
+  **RE-PARKED 2026-07-14** (`candidate/lmp-r2`, Intel −6.60 ± 15.09 vs t34,
+  LOS 19.54%): the two-era verdict (−254→−56 vs t1; −6.6 vs t34 with the
+  full t24–t33 ordering stack + the never-tested non-PV gate) shows ordering
+  improvements converge LMP toward zero but not across it — Huginn's shallow
+  tree is already thin without it. In-tree behind `ENABLE_LMP` (default OFF);
+  a future revisit needs a genuinely new ordering signal (e.g. a working
+  conthist redesign), not more threshold dialing.
 - **#8 — Aspiration step (b), narrow-window search.** Deferred; folds into #17
   (t15 rejection — see archive; **re-opened 2026-07-13 as #17-r2**, the t15
   verdict predates the soundness-fix stack — see the live table).
