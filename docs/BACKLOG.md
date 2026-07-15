@@ -21,6 +21,56 @@
 > `baseline-t25` history-index fix in [BASELINE_LADDER.md](BASELINE_LADDER.md),
 > so new IDs start at #52.
 
+## Road to v2.3 (release checklist — runnable from either box, no chat context)
+
+> **Version roadmap (agreed 2026-07-13):** **v2.3** = the recalibrated
+> classical-engine peak (this checklist); **v2.4** = Lazy SMP (infrastructure,
+> same eval — note SMP breaks fixed-depth signature ship-discipline, plan a
+> new verification method); **v3.0** = NNUE (identity change: trained net
+> ships with the binary — deliberately major-versioned). Don't fold SMP or
+> NNUE work into 2.3.
+
+**Done (items 1–4, 2026-07-13 → 07-15):**
+1. ✅ History-modulated LMR → **`baseline-t33`** (pooled +13.63, LOS ≈ 99.4%).
+2. ✅ TT aging → **`baseline-t34`** (LTC-verdict ship, +15.99 @ 60+0.6);
+   clusters follow-up parked two-TC-flat — **#42 closed**.
+3. ✅ LMP re-test → **re-parked** on a two-machine sign-split (pooled −0.87 ±
+   10.33) — **#7 closed** with the two-era verdict.
+4. ✅ Hash sweep → **flat on both boxes**, default stays 64MB — **#31 closed**.
+
+**Remaining:**
+
+5. **Hygiene (no gauntlet needed):**
+   - **Tactical sweep on the t34 build**: WAC300 + LCT2 @ 5s/position
+     ([test/WAC300.epd](../test/WAC300.epd), [test/lct2.epd](../test/lct2.epd)).
+     Reference: **270/300 WAC @ 5s on t9** — 25 baselines stale; record the
+     new number in [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md) as the fresh
+     tactical reference (expect a large jump; investigate any WAC position
+     that REGRESSED vs t9 before shrugging).
+   - **#60 leftovers**: parser-purity test refactor + randomized make/unmake
+     invariants (see the #60 section below).
+   - **CHANGELOG_2.3.md**: the t22 → t34 ladder (v2.2 stopped at t21) — one
+     row per baseline with the shipped feature + pooled result; mirror
+     [CHANGELOG_2.2.md](CHANGELOG_2.2.md)'s format. Sources:
+     [BASELINE_LADDER.md](BASELINE_LADDER.md).
+   - #37 (board-desync) stays open — guarded at the UCI boundary, does NOT
+     gate the release.
+6. **#5 recalibration → tag `v2.3`:**
+   - Build the release binary from the final baseline tag (t34 unless
+     something ships meanwhile) per-machine as usual.
+   - Calibration matches, mirroring the t26 measurement: `stash19` + `stash20`
+     via `test_huginn_gauntlet.bat` (cc=1, 500g per anchor, 10+0.1, no book);
+     inverse-variance pool the two pins. t26 measured **~2571 ± 19**; the
+     t27→t34 ladder adds ≈ +105 self-play (× ~0.86 external compression ≈
+     +90) → **expect ~2650–2670**.
+   - ⚠ If Huginn scores > ~65% vs Stash 20.0.1 (2509), the anchor is
+     saturating — add a stronger rung (Stash 21+ or another CCRL ~2650–2750
+     UCI-clean engine) to the fastchess dir + the bat's calibration table
+     before trusting the pin.
+   - Then: tag `v2.3`, update [CLAUDE.md](CLAUDE.md) strength line +
+     [BASELINE_LADDER.md](BASELINE_LADDER.md) + CHANGELOG_2.3, and snapshot
+     the release build.
+
 ## Open / in-progress
 
 | # | Title | Status | Type | Priority |
