@@ -981,13 +981,14 @@ One-liners; full detail + evidence in the archives
 - **#3 — Continuation history.** 1-ply additive falsified (w16 neutral, w64 −9);
   flag off, kept in-tree (`experiment/continuation-history`).
 - **#7 — LMP (late move pruning).** Deferred 2026-04, re-tested and
-  **RE-PARKED 2026-07-14** (`candidate/lmp-r2`, Intel −6.60 ± 15.09 vs t34,
-  LOS 19.54%): the two-era verdict (−254→−56 vs t1; −6.6 vs t34 with the
-  full t24–t33 ordering stack + the never-tested non-PV gate) shows ordering
-  improvements converge LMP toward zero but not across it — Huginn's shallow
-  tree is already thin without it. In-tree behind `ENABLE_LMP` (default OFF);
-  a future revisit needs a genuinely new ordering signal (e.g. a working
-  conthist redesign), not more threshold dialing.
+  **RE-PARKED 2026-07-14** (`candidate/lmp-r2` vs t34, two-machine pooled
+  **−0.87 ± 10.33, LOS ≈ 46.6%** — AMD +4.17 ± 14.16 / Intel −6.60 ± 15.09, a
+  sign-split that pools to dead-flat): the two-era verdict (−254→−56 vs t1;
+  ≈0 vs t34 with the full t24–t33 ordering stack + the never-tested non-PV
+  gate) shows ordering improvements converge LMP essentially to zero —
+  Huginn's shallow tree is already thin without it. In-tree behind
+  `ENABLE_LMP` (default OFF); a future revisit needs a genuinely new ordering
+  signal (e.g. a working conthist redesign), not more threshold dialing.
 - **#8 — Aspiration step (b), narrow-window search.** Deferred; folds into #17
   (t15 rejection — see archive; **re-opened 2026-07-13 as #17-r2**, the t15
   verdict predates the soundness-fix stack — see the live table).

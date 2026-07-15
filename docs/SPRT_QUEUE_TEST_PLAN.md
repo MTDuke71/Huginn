@@ -1,17 +1,27 @@
 # SPRT Queue Test Plan — LMP re-test (#7) candidate off baseline-t34 (CLOSED — RE-PARKED)
 
-> **#7 RE-PARKED (2026-07-14) on the Intel blitz leg:** **−6.60 ± 15.09**
-> (nElo −9.43 ± 21.53), LOS 19.54%, 1000g cap (LLR −1.19, leaning H0),
-> 49.05% (W217/L236/D547), Ptnml [32,130,192,117,29]. Clean run, 1h52m.
-> PGN `gauntlet/huginn_vs_t34_lmp_intel.pgn`. No AMD leg — even a flat
-> second leg cannot pool this to the ship bar. **The two-era verdict:**
-> vs t1 with broken ordering, −254 → −56 (dialed); vs t34 with the full
-> t24–t33 ordering stack + the never-tested non-PV gate, −6.6. The ordering
-> improvements moved LMP a long way toward zero but never across it —
-> Huginn's shallow tree is already thin enough (RFP + null-move + razoring +
-> move-level futility + history-LMR) that skipping late quiets only removes
-> defenses, exactly the MTLChess-doesn't-need-LMP reading from the original
-> deferral. Code stays in-tree behind `ENABLE_LMP` (default OFF,
+> **#7 RE-PARKED (2026-07-14) on the pooled two-machine verdict** — corrects
+> the earlier Intel-only call, which was made believing no AMD leg existed;
+> one was in flight concurrently on the other box. **AMD blitz:** **+4.17 ±
+> 14.16** (nElo 6.35 ± 21.53), LOS 71.82%, 1000g cap (LLR 0.11, no bound),
+> 50.60% (W224/L212/D564), DrawRatio 41.20%, PairsRatio 1.07, Ptnml
+> [22,120,206,128,24]. Clean run, 1h50m07s, zero forfeits/illegal/disconnects.
+> PGN `gauntlet/huginn_vs_t34_lmp_amd.pgn`. **Intel blitz:** **−6.60 ± 15.09**
+> (nElo −9.43 ± 21.53), LOS 19.54%, 1000g cap (LLR −1.19, leaning H0), 49.05%
+> (W217/L236/D547), Ptnml [32,130,192,117,29]. Clean run, 1h52m. PGN
+> `gauntlet/huginn_vs_t34_lmp_intel.pgn`. **Pooled (inverse-variance): −0.87 ±
+> 10.33 Elo, LOS ≈ 46.6%, 49.83% / 2000g** (W441/L448/D1111, Ptnml
+> [54,250,398,245,53]) — a sign-split (AMD leans positive, Intel leans
+> negative) that pools to dead-flat, nowhere near the ≥95% LOS ship bar; no
+> correctness angle to ship on regardless (unlike the #53 rule50 precedent).
+> **The two-era verdict, now on complete evidence:** vs t1 with broken
+> ordering, −254 → −56 (dialed); vs t34 with the full t24–t33 ordering stack
+> + the never-tested non-PV gate, pooled ≈ −0.9 — essentially zero, not just
+> "closer to zero." The ordering improvements moved LMP the rest of the way
+> to flat — Huginn's shallow tree is already thin enough (RFP + null-move +
+> razoring + move-level futility + history-LMR) that skipping late quiets
+> only removes defenses, exactly the MTLChess-doesn't-need-LMP reading from
+> the original deferral. Code stays in-tree behind `ENABLE_LMP` (default OFF,
 > byte-identical off, 5 gated tests) — a future revisit needs a genuinely
 > new ordering signal (e.g. a working conthist redesign), not more dialing.
 
@@ -35,10 +45,13 @@
 > precedent. Fixture: `info.lmp_prunes > 0` in a d10 Kiwipete search (test
 > `Lmp.PruningFiresInDeepSearch` tracks the built arm); counter stone-dead
 > baseline. Both arms 286/287 green (1 by-design skip).
-> **Result — Intel blitz leg (2026-07-14): NEGATIVE LEAN → RE-PARKED** (see
-> the header block above for the full numbers and the two-era verdict).
-> **Decision applied:** pre-registered negative path — re-park; no AMD leg
-> (cannot pool to the bar from −6.6).
+> **Result — AMD blitz leg (2026-07-14): DEAD-FLAT** (see the header block
+> above for the full numbers).
+> **Result — Intel blitz leg (2026-07-14): NEGATIVE LEAN** (see the header
+> block above for the full numbers).
+> **Decision applied:** pooled two-machine verdict is a sign-split landing at
+> ≈0 (see header) — nowhere near the ship bar and no correctness carve-out
+> applies here (unlike #53) — RE-PARK confirmed, now on complete evidence.
 
 # SPRT Queue Test Plan — TT clusters r2 (#42b) candidate off baseline-t34 (CLOSED — PARKED)
 
