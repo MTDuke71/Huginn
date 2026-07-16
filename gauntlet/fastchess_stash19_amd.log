@@ -1,10 +1,25 @@
-[INFO  ] [00:14:15.246494] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
-[INFO  ] [00:14:15.246600] <   > fastchess --- Setting seed to: 17232325370409332798
-[INFO  ] [00:14:15.278122] <   > fastchess --- Indexing opening suite...
+[INFO  ] [20:51:38.352995] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [20:51:38.353145] <   > fastchess --- Setting seed to: 10982477254897121128
+[INFO  ] [20:51:38.382936] <   > fastchess --- Indexing opening suite...
 
-[INFO  ] [00:14:15.284823] <   > fastchess --- Starting tournament...
-[INFO  ] [04:05:31.423577] <   > fastchess --- Finished match
+[INFO  ] [20:51:38.390095] <   > fastchess --- Starting tournament...
+[WARN  ] [22:52:59.535021] <   > fastchess --- Warning; No bestmove found in the last line from Stash_19.0 because: Element 'bestmove' not found
 
-[INFO  ] [04:05:31.423669] <   > fastchess --- Total Time: 03:51:16 (hours:minutes:seconds)
+[WARN  ] [22:52:59.535086] <  2> fastchess --- Engine Stash_19.0 loses on time
+[INFO  ] [23:17:01.598941] <   > fastchess --- 
+
+[INFO  ] [23:17:01.599118] <   > fastchess --- Player: Stash_19.0
+
+[INFO  ] [23:17:01.599213] <   > fastchess ---   Timeouts: 1
+
+[INFO  ] [23:17:01.599296] <   > fastchess ---   Crashed: 0
+
+[INFO  ] [23:17:01.599358] <   > fastchess --- 
+
+[INFO  ] [23:17:01.829015] <   > fastchess --- Tournament was interrupted. To resume the tournament, run: C:\Users\m_lad\Documents\fastchess-windows-x86-64\fastchess.exe -config file=config.json
+
+[INFO  ] [23:17:01.829219] <   > fastchess --- Finished match
+
+[INFO  ] [23:17:01.829335] <   > fastchess --- Total Time: 02:25:23 (hours:minutes:seconds)
 
 

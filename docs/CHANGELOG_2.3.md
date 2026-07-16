@@ -1,14 +1,13 @@
 # Huginn 2.3 — Changelog (2.2 → 2.3)
 
-**DRAFT — not yet tagged.** Road-to-v2.3 item 6 (final `#5` recalibration
-vs Stash 19/20, then `git tag v2.3`) is still open; the release date and
-external CCRL-scale calibration number below are placeholders to be filled
-in when that step completes. Everything else — the per-baseline ladder,
-the WAC300/LCT2/`#41` corroborating evidence — is final as of this session.
+**Released 2026-07-16.** Tagged `v2.3`; the release binary is snapshotted
+separately per the usual per-machine convention.
 
-2.3 = 2.2 content (`baseline-t21`) + thirteen baselines (t22–t34). Binary
-identical to `baseline-t34`; the only diff vs t34 is the UCI id string
-(once tagged).
+2.3 = 2.2 content (`baseline-t21`) + thirteen baselines (t22–t34) + the
+road-to-v2.3 item-5 UCI hygiene changes (always-visible position-rejection
+diagnostics, `parse_go_command` extraction) — both search-behavior-
+identical to `t34` (verified byte-for-byte: startpos d14 = 3,481,582 / cp
+31 / e2e4, unchanged) — plus the `id name Huginn 2.3` version bump.
 
 ## Headline
 
@@ -23,10 +22,18 @@ identical to `baseline-t34`; the only diff vs t34 is the UCI id string
   kept out of the blitz sum above — different time control, not
   comparable.
 - **External calibration: ~2571 ± 19 CCRL-blitz at `t26`** (measured
-  2026-07-11, Stash 19.0/20.0.1 anchors, [BASELINE_LADDER.md](BASELINE_LADDER.md)) →
-  **TBD at `t34`** (road-to-v2.3 item 6; expected ~2650–2670 per the
-  t27→t34 self-play addend of ≈ +105, × the ~0.86 blitz/self-play-to-CCRL
-  compression observed at t26).
+  2026-07-11, Stash 19.0/20.0.1 anchors) → **~2600–2680 (pooled ~2625 ±
+  18) at `t34`/pre-2.3** (measured 2026-07-16, Stash 19.0/20.0.1/21.0 —
+  full numbers, and why this is a range and not a point,
+  in [BASELINE_LADDER.md](BASELINE_LADDER.md)). Net gain **≈ +33 to +54**,
+  well under the naive ~+90 the t27→t34 self-play addend (≈ +122) would
+  suggest at t26's ~0.86 compression — this ladder's selectivity-heavy
+  gains compressed harder (~0.3–0.4) going external. The weak/strong
+  anchor split (19/20 agree within 2 Elo; 21 pins ~72 Elo higher) also
+  **reproduces BACKLOG #5's 2026-06-15 "score compression" finding** — the
+  per-anchor pin climbing with opponent strength — on an entirely
+  different, higher-strength anchor pair. **Next recalibration: drop
+  Stash 19, use 20/21/21.2.**
 - **Mix shifted from 2.2's "three latent bugs" story to a more even split**:
   three correctness fixes (`#50` Zobrist OOB, `#51` history-index collision,
   `#59` EP-key semantics), one bundled audit pair (`#52`/`#53`), one pure
@@ -101,7 +108,9 @@ is not yet done finding them.
 - No architectural change — still pure-bitboard hand-crafted eval,
   single-thread. `2.4` is reserved for Lazy SMP (`#40`), `3.0` for NNUE
   (`#39`); see the version roadmap in
-  [BACKLOG.md](BACKLOG.md#road-to-v23-release-checklist--runnable-from-either-box-no-chat-context).
+  [BACKLOG.md](BACKLOG.md#version-roadmap) (full road-to-v2.3 checklist
+  detail archived in
+  [BACKLOG-archive-2.2.md](BACKLOG-archive-2.2.md#road-to-v23-release-checklist--complete)).
 - 295/295 GoogleTest cases pass (1 by-design skip).
 - `#42` idea 2 (4-way TT clusters) was tested and parked (two-TC flat) —
   in-tree behind `ENABLE_TT_CLUSTERS` (default OFF) for a post-NNUE

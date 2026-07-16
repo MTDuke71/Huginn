@@ -1,23 +1,23 @@
-[INFO  ] [04:05:33.264491] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
-[INFO  ] [04:05:33.264574] <   > fastchess --- Setting seed to: 5785270764995375547
-[INFO  ] [04:05:33.293267] <   > fastchess --- Indexing opening suite...
+[INFO  ] [23:17:21.823413] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [23:17:21.823496] <   > fastchess --- Setting seed to: 11602350475158222800
+[INFO  ] [23:17:21.853487] <   > fastchess --- Indexing opening suite...
 
-[INFO  ] [04:05:33.298743] <   > fastchess --- Starting tournament...
-[WARN  ] [04:25:02.348427] <   > fastchess --- Warning; No bestmove found in the last line from Stash_20.0.1 because: Element 'bestmove' not found
+[INFO  ] [23:17:21.861271] <   > fastchess --- Starting tournament...
+[WARN  ] [00:29:57.073185] <   > fastchess --- Warning; No bestmove found in the last line from Stash_20.0.1 because: Element 'bestmove' not found
 
-[WARN  ] [04:25:02.348520] <  2> fastchess --- Engine Stash_20.0.1 loses on time
-[INFO  ] [07:53:42.040111] <   > fastchess --- 
+[WARN  ] [00:29:57.073270] <  2> fastchess --- Engine Stash_20.0.1 loses on time
+[INFO  ] [03:10:28.454771] <   > fastchess --- 
 
-[INFO  ] [07:53:42.040227] <   > fastchess --- Player: Stash_20.0.1
+[INFO  ] [03:10:28.454944] <   > fastchess --- Player: Stash_20.0.1
 
-[INFO  ] [07:53:42.040250] <   > fastchess ---   Timeouts: 1
+[INFO  ] [03:10:28.455044] <   > fastchess ---   Timeouts: 1
 
-[INFO  ] [07:53:42.040262] <   > fastchess ---   Crashed: 0
+[INFO  ] [03:10:28.455140] <   > fastchess ---   Crashed: 0
 
-[INFO  ] [07:53:42.040273] <   > fastchess --- 
+[INFO  ] [03:10:28.455188] <   > fastchess --- 
 
-[INFO  ] [07:53:42.150299] <   > fastchess --- Finished match
+[INFO  ] [03:10:28.672717] <   > fastchess --- Finished match
 
-[INFO  ] [07:53:42.150346] <   > fastchess --- Total Time: 03:48:08 (hours:minutes:seconds)
+[INFO  ] [03:10:28.672898] <   > fastchess --- Total Time: 03:53:06 (hours:minutes:seconds)
 
 

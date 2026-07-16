@@ -231,7 +231,7 @@ bool UCIInterface::dispatch_command(const std::string& line) {
  * for engine selection and tournament management.
  */
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 2.2" << std::endl;
+    std::cout << "id name Huginn 2.3" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 

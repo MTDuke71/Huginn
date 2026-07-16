@@ -50,6 +50,59 @@ default ON in source `#ifndef` + CMake option. PGN
 `gauntlet/huginn_vs_t33_ttaging_ltc_intel.pgn`. Clusters (#42 idea 2)
 queued as a follow-up candidate.
 
+**External recalibration (2026-07-16, AMD box) — road-to-v2.3 item 6.**
+Binary = `t34` + the UCI-only changes from the road-to-v2.3 item-5 hygiene
+sweep (always-visible position-rejection diagnostics, `parse_go_command`
+extraction — both search-behavior-identical; startpos d14 = 3,481,582 / cp
+31 / e2e4, unchanged) + the `id name Huginn 2.3` version bump. Three-anchor
+calibration (10+0.1, cc=1, no book):
+
+- **Stash 19.0 (CCRL 2473): +132.28 ± 33.41** (nElo 171.89 ± 39.32), LOS
+  100%, **68.17%** (W170/L61/D69, 300g — user-stopped short of the 500g
+  cap), Ptnml [3,13,50,40,44] → pin ~2605.
+- **Stash 20.0.1 (CCRL 2509): +93.95 ± 26.75** (nElo 112.51 ± 30.45), LOS
+  100%, **63.20%** (W249/L117/D134, full 500g), Ptnml [14,32,73,70,61] →
+  pin ~2603. One Stash timeout, zero Huginn.
+- **Stash 21.0 (CCRL 2714): −38.37 ± 33.22** (nElo −45.93 ± 39.32), LOS
+  1.10%, **44.50%** (W92/L125/D83, 300g — user-stopped short of the 500g
+  cap), Ptnml [24,36,55,19,16] → pin ~2676.
+
+**Inverse-variance pool of all three: ≈2625 ± 17.7.** But the honest
+picture is a range, not a false-precision point: Stash 19 and 20 agree
+within ~2 Elo of each other (pins 2605 / 2603), while Stash 21 — a
+different engine generation, not just the next rating-ladder rung — pins
+~72 Elo higher. That gap is a real lean (difference 72, combined SE
+√(21²+33.22²) ≈ 39.3, so ~1.8 combined SE) rather than pure sampling
+noise, consistent with the non-transitivity this ladder has seen before
+(CDrill bogey, MTL favorable — see CLAUDE.md's external-rating notes).
+Whether it's Stash 21's own rating estimate carrying more uncertainty
+(newer/thinner CCRL sample) or a genuine style mismatch isn't resolved by
+this data alone — though it's worth noting this is a **second occurrence**
+of BACKLOG #5's 2026-06-15 "score compression / monotonic anchor drift"
+finding (the per-anchor pin climbs with opponent strength), now reproduced
+on a completely different, much higher-strength anchor pair, which weighs
+against "one anchor's rating is just noisy" and toward a real conversion-
+strength effect. **Reported range: ~2600-2680 CCRL-blitz, pooled point
+estimate ~2625 ± 18.**
+
+**Net change vs `t26`'s 2571 ± 19: ≈ +33 to +54**, against **≈ +122
+summed self-play across t27→t34** (see the per-baseline table in
+[CHANGELOG_2.3.md](CHANGELOG_2.3.md)) — a much tighter compression
+(~0.3–0.4) than t26's own ~0.86 vs t21. This round's ladder leaned heavily
+on search selectivity (extensions, aspiration, LMR modulation, TT aging)
+rather than eval breadth; the data says that kind of gain transfers to
+external opponents less linearly than the correctness-bug-driven gains in
+the t21→t26 window did — plausibly because a tighter, more selective tree
+is more sensitive to the opponent's own move choices (less robust against
+an opponent that navigates differently than "generic weaker self-play"),
+though this is a read of one recalibration, not a proven mechanism.
+
+Zero Huginn timeouts across all three legs. **Going forward: drop Stash
+19 (least informative rung now that Huginn is well past it) and use
+20/21/21.2 as the three-anchor bracket** (user call, 2026-07-16) — 21.2
+(CCRL 2785) wasn't run this session but is already wired into
+`test_huginn_gauntlet.bat` (`stash212`).
+
 ### baseline-t33 — #63 history-modulated LMR (road-to-2.3 item 1)
 = t32 + history-modulated LMR behind `ENABLE_HISTORY_LMR` (default ON as of
 this ship). The LMR table is static `log·log` over (depth, move-ordinal) —
@@ -250,7 +303,8 @@ audit, SPRT'd separately per the standard queue process (run-sheet:
 [SPRT_QUEUE_TEST_PLAN.md](SPRT_QUEUE_TEST_PLAN.md)) and shipped together by
 flipping both flag defaults ON (`ENABLE_QSEARCH_CHECK_EVASIONS`,
 `ENABLE_RULE50_TT_GUARD` — source + CMake option + test mirror, all three,
-each). Full findings/resolutions in [BACKLOG.md](BACKLOG.md) #52/#53.
+each). Full findings/resolutions in
+[BACKLOG-archive-2.2.md](BACKLOG-archive-2.2.md) #52/#53.
 
 - **#52 — check-aware quiescence** (the Elo carrier; same "blind at the
   horizon" soundness class as #44/#45). Qsearch detects check at entry; in

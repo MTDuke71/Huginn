@@ -188,8 +188,27 @@ location is derived from the bitboards via `Position::at_sq64()`.
   skip — the `RootTwofoldAvoid` opposite-arm test pair) plus a registered
   `perft_quick` CTest job (startpos + Kiwipete to depth 5). `--target check`
   runs all of it and fails on empty discovery (#60)
-- ✅ **Strength**: **t26 ≈ 2571 ± 19 CCRL-blitz** (2026-07-11, AMD box,
-  10+0.1, 500g per anchor, cc=1) — two-anchor inverse-variance pool of
+- ✅ **Strength**: **pre-`v2.3` (`t34` + UCI-only changes) ≈ 2600–2680
+  CCRL-blitz, pooled point estimate ~2625 ± 18** (2026-07-16, AMD box,
+  10+0.1, cc=1) — three-anchor calibration, road-to-v2.3 item 6: Stash
+  19.0 (2473) +132.28 ± 33.41 (68.17%, 300g, user-stopped) → ~2605; Stash
+  20.0.1 (2509) +93.95 ± 26.75 (63.20%, 500g) → ~2603; Stash 21.0 (2714)
+  −38.37 ± 33.22 (44.50%, 300g, user-stopped) → ~2676. **Reported as a
+  range, not a false-precision point:** the 19/20 pair agrees within ~2
+  Elo of each other, but Stash 21 — a different engine generation, not
+  just a rating-ladder rung — pins ~72 Elo higher, a real lean (~1.8
+  combined SE) rather than noise, the same non-transitivity pattern seen
+  elsewhere on this ladder (CDrill bogey, MTL favorable). Zero Huginn
+  timeouts (Stash 21.0 had one). Externally measured gain since t26's 2571
+  is **≈ +33 to +54** against **≈ +122 summed self-play (t27→t34)** — a
+  much stronger compression (~0.3–0.4) than t26's own ~0.86, i.e. this
+  round's selectivity-heavy gains (extensions, aspiration, LMR modulation,
+  TT aging) transferred to external play less linearly than prior rounds.
+  **Next recalibration: drop Stash 19 (least informative rung now), use
+  20/21/21.2 as the three-anchor bracket** (user call, 2026-07-16). Full
+  writeup: [BASELINE_LADDER.md](BASELINE_LADDER.md). Prior: **t26 ≈ 2571 ±
+  19 CCRL-blitz** (2026-07-11, AMD box, 10+0.1, 500g per anchor, cc=1) —
+  two-anchor inverse-variance pool of
   Stash 19.0 (2473) +102.97 ± 25.74 (64.40%) → ~2576 and Stash 20.0.1
   (2509) +56.07 ± 27.03 (58.00%) → ~2565; the two pins agree within 11 Elo
   (same-author anchor family, so style non-transitivity is minimized).
