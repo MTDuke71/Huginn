@@ -1,4 +1,4 @@
-# Huginn 2.2
+# Huginn 2.3
 
 <p align="center">
   <img src="images/Huginn.png" alt="Huginn Logo" width="320">
@@ -10,23 +10,30 @@ Huginn is a UCI-compliant chess engine in modern C++17/20 — a **pure-bitboard*
 single-threaded, hand-crafted-evaluation engine. It runs in any UCI GUI (Arena,
 Cute Chess, BanksiaGUI, ChessBase, …).
 
-**Strength: ~2434 CCRL-Blitz-ladder scale** (v2.2 / `baseline-t21`, measured vs the
-Stash engine ladder). Version 2.2 is **~+508 Elo over 2.1** — a pooled two-machine
-gauntlet (AMD +557 / Intel +470) scored 94.9% with a single loss in 314 games.
+**Strength: ~2600–2680 CCRL-Blitz-ladder scale** (v2.3 / `baseline-t34`, pooled
+~2625 from a three-anchor Stash calibration). Version 2.3 ships thirteen
+baselines since 2.2 (`t22`–`t34`), each individually two-machine confirmed —
+summing to **~+275 Elo blitz self-play** — headlined by a search-selectivity
+program (singular extensions, aspiration windows, history-modulated LMR) and a
+check-aware-quiescence fix that alone was the single largest jump this cycle
+(pooled ≈+42 Elo).
 
 ➡️ **[Download the latest release](https://github.com/MTDuke71/Huginn/releases/latest)**
- · **[2.2 changelog](docs/CHANGELOG_2.2.md)** · **[baseline ladder](docs/BASELINE_LADDER.md)**
+ · **[2.3 changelog](docs/CHANGELOG_2.3.md)** · **[baseline ladder](docs/BASELINE_LADDER.md)**
 
 ---
 
 ## Features
 
 **Search** ([src/search.cpp](src/search.cpp))
-- Negamax / alpha-beta with **PVS**, iterative deepening, and a transposition table
-- Quiescence search with **SEE** pruning
-- Pruning stack: null-move (R=4), reverse futility, **move-level futility**,
-  razoring, **mate-distance pruning**
-- **LMR** with a `log·log` reduction table, check extension, IID
+- Negamax / alpha-beta with **PVS**, iterative deepening, and a transposition
+  table with **date-based aging**
+- **Check-aware quiescence** search with **pin-aware SEE** pruning
+- Pruning stack: null-move (R=4), reverse futility, move-level futility,
+  razoring, mate-distance pruning
+- **Singular extensions**, **aspiration windows** at the root, **history-modulated
+  LMR** (`log·log` reduction table + butterfly-history adjustment), check
+  extension, IID
 - Move ordering: TT move, MVV-LVA, killers, history, counter-move
 - **Polyglot** opening book + **Syzygy** WDL tablebase probing
 
@@ -36,7 +43,8 @@ gauntlet (AMD +557 / Intel +470) scored 94.9% with a single loss in 314 games.
 - Material + piece-square tables (separate MG/EG king table)
 - Pawn structure: isolated, doubled, passed, connected, backward
 - Bishop pair, rook/queen on open & semi-open files, rook on the 7th
-- Mobility (safe-area weighted), threats, king safety, tempo, insufficient-material draw
+- Mobility (safe-area weighted), threats (round 2: hanging pieces, safe
+  pawn-push, king-ring), king safety, tempo, insufficient-material draw
 
 **Architecture**
 - **Pure bitboard**: per-piece bitboards are the sole source of truth; piece-on-square
@@ -47,8 +55,8 @@ gauntlet (AMD +557 / Intel +470) scored 94.9% with a single loss in 314 games.
 - **~3.55 Mnps** single-threaded; modern C++17/20 (type-safe enums, `constexpr`)
 
 **Quality**
-- **203 GoogleTest** cases + WAC300 / LCT2 tactical EPD sweeps + evaluation-symmetry
-  (mirror) tests
+- **295 GoogleTest** cases (incl. randomized make/unmake/null-move invariants) +
+  WAC300 (98%) / LCT2 tactical EPD sweeps + evaluation-symmetry (mirror) tests
 - Illegal-move guard at the UCI bestmove boundary
 
 ## UCI options
@@ -56,13 +64,14 @@ gauntlet (AMD +557 / Intel +470) scored 94.9% with a single loss in 314 games.
 | Option | Default | Notes |
 |--------|---------|-------|
 | `Hash` | 64 MB | transposition table size |
-| `Threads` | 1 | single-threaded engine |
 | `OwnBook` | **false** | set `true` to use the Polyglot book (2.1 defaulted this on) |
 | `BookFile` | `src/performance.bin` | Polyglot book path |
-| `SyzygyPath` | `c:\TB\` | Syzygy tablebase directory |
+| `SyzygyPath` | *(disabled)* | Syzygy tablebase directory; set a path to enable |
 
 > The release ships `performance.bin`. To use it, place it next to the exe and set
-> `OwnBook=true`; otherwise Huginn plays bookless by default.
+> `OwnBook=true`; otherwise Huginn plays bookless by default. Huginn is
+> single-threaded — `Threads`/`Ponder` are not advertised since neither is
+> implemented.
 
 ---
 
