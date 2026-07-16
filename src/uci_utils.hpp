@@ -5,7 +5,9 @@
 #pragma once
 #include "movegen.hpp"
 #include "position.hpp"
+#include "search.hpp"
 #include <string>
+#include <vector>
 
 /// @brief Parse a UCI move string (e.g. "e2e4", "e7e8q") against @p position
 ///        into a fully-flagged S_MOVE by matching it to a generated legal move.
@@ -50,3 +52,21 @@ bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long l
 /// @param movestogo Moves to the next time control; 0 = sudden death.
 /// @return The per-move budget in ms, always >= 1.
 long long compute_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo);
+
+/// @brief BACKLOG #60 parser-purity refactor: pure parse of the UCI `go`
+///        command tokens into search limits, with no side effects (does not
+///        start a search). `handle_go` calls this and hands the result to
+///        `search_best_move`; tests call it directly to assert exact parsed
+///        results instead of wrapping a real search in `EXPECT_NO_THROW`.
+/// @param tokens Tokenized `go` command (tokens[0] == "go"; parsing starts
+///               at tokens[1]).
+/// @param side_to_move Selects wtime/winc vs btime/binc for clock-based
+///                      time allocation.
+/// @param[out] infinite_requested Set true iff the literal `go infinite`
+///             token was present — distinct from the returned limits'
+///             `infinite` flag, which is also set for a depth-only search.
+/// @return The computed MinimalLimits (mirrors the precedence `handle_go`
+///         used: depth > movetime > clock-based > bare-`go` default).
+Huginn::MinimalLimits parse_go_command(const std::vector<std::string>& tokens,
+                                        Color side_to_move,
+                                        bool& infinite_requested);

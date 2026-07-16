@@ -152,6 +152,79 @@ bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long l
 	return true;
 }
 
+Huginn::MinimalLimits parse_go_command(const std::vector<std::string>& tokens,
+                                        Color side_to_move,
+                                        bool& infinite_requested) {
+	Huginn::MinimalLimits limits;
+	limits.infinite = false;
+	limits.max_time_ms = 0;
+	limits.max_depth = 25;
+
+	bool depth_specified = false;
+	infinite_requested = false;
+	constexpr long long GO_TIME_MAX_MS = 1000000000LL;
+	long long winc = 0, binc = 0, movestogo = 0, wtime = -1, btime = -1;
+	long long movetime = -1;
+
+	auto parse_go_number = [&](size_t& i, long long lo, long long hi, long long& out) -> bool {
+		if (i + 1 >= tokens.size()) return false;
+		++i;
+		long long v = 0;
+		if (!parse_spin_clamped(tokens[i], lo, hi, v)) return false;
+		out = v;
+		return true;
+	};
+
+	for (size_t i = 1; i < tokens.size(); i++) {
+		if (tokens[i] == "depth") {
+			long long depth = 0;
+			if (parse_go_number(i, 1, Huginn::MAX_DEPTH, depth)) {
+				limits.max_depth = static_cast<int>(depth);
+				depth_specified = true;
+			}
+		}
+		else if (tokens[i] == "movetime")  parse_go_number(i, 1, GO_TIME_MAX_MS, movetime);
+		else if (tokens[i] == "wtime")     parse_go_number(i, 0, GO_TIME_MAX_MS, wtime);
+		else if (tokens[i] == "btime")     parse_go_number(i, 0, GO_TIME_MAX_MS, btime);
+		else if (tokens[i] == "winc")      parse_go_number(i, 0, GO_TIME_MAX_MS, winc);
+		else if (tokens[i] == "binc")      parse_go_number(i, 0, GO_TIME_MAX_MS, binc);
+		else if (tokens[i] == "movestogo") parse_go_number(i, 1, 500, movestogo);
+		else if (tokens[i] == "infinite") {
+			limits.infinite = true;
+			infinite_requested = true;
+			limits.max_time_ms = 0;
+		}
+	}
+
+	// #56: `go infinite` must run until `stop` — give it the engine's full
+	// depth range unless a depth was also specified.
+	if (infinite_requested && !depth_specified) {
+		limits.max_depth = Huginn::MAX_DEPTH;
+	}
+
+	if (depth_specified) {
+		limits.infinite = true;  // Depth-only search ignores time
+		limits.max_time_ms = 0;
+	}
+	else if (movetime > 0) {
+		limits.max_time_ms = static_cast<int>(movetime);
+	}
+	else if (!limits.infinite && (wtime >= 0 || btime >= 0)) {
+		// Clock-based allocation — strategy unchanged from the gauntleted #47
+		// tuning.
+		const bool white_to_move = (side_to_move == Color::White);
+		const long long side_time = white_to_move ? wtime : btime;  // -1 = our clock not sent
+		const long long side_inc = white_to_move ? winc : binc;
+		limits.max_time_ms = static_cast<int>(compute_time_budget_ms(side_time, side_inc, movestogo));
+	}
+	else if (!limits.infinite) {
+		// Bare `go` with no limits at all: a defined default budget.
+		limits.max_time_ms = 5000;
+	}
+
+	return limits;
+}
+
 long long compute_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo) {
 	if (inc_ms < 0) inc_ms = 0;
 	if (movestogo < 0) movestogo = 0;

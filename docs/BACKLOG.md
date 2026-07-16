@@ -63,12 +63,17 @@
      being chased now, kept as a reference pool for a future eval/search
      round. Full writeup + table in
      [SEARCH_AND_EVAL.md](SEARCH_AND_EVAL.md#lct2-tacticalpositional-snapshot-2026-07-15-baseline-t34--first-measurement).
-   - **#60 leftovers**: parser-purity test refactor + randomized make/unmake
-     invariants (see the #60 section below).
-   - **CHANGELOG_2.3.md**: the t22 → t34 ladder (v2.2 stopped at t21) — one
-     row per baseline with the shipped feature + pooled result; mirror
-     [CHANGELOG_2.2.md](CHANGELOG_2.2.md)'s format. Sources:
-     [BASELINE_LADDER.md](BASELINE_LADDER.md).
+   - **#60 leftovers: DONE (2026-07-15)** — parser-purity test refactor +
+     randomized make/unmake/null-move invariants (see the #60 section
+     below); 295/295 tests green.
+   - **CHANGELOG_2.3.md: DRAFTED (2026-07-15)** — full t22 → t34 ladder,
+     one row per baseline with the shipped feature + result, mirroring
+     [CHANGELOG_2.2.md](CHANGELOG_2.2.md)'s format, plus the fresh
+     WAC300/LCT2/`#41` corroborating evidence from this session.
+     **Marked DRAFT** pending item 6 below — the release date and external
+     CCRL calibration number are placeholders until the final
+     recalibration runs and `v2.3` is tagged. See
+     [CHANGELOG_2.3.md](CHANGELOG_2.3.md).
    - #37 (board-desync) stays open — guarded at the UCI boundary, does NOT
      gate the release.
 6. **#5 recalibration → tag `v2.3`:**
@@ -608,10 +613,26 @@ single global C++20 (per-target `cxx_std_17` minimums dropped); the
 (`.github/workflows/ci.yml`): Windows MSVC + Linux GCC/Clang, Fathom ON/OFF,
 a Debug ASan+UBSan leg, and a BUILD_TESTING=OFF engine-only + UCI smoke job.
 Verified: 226/226 CTest entries pass locally, startpos d14 = 6,634,033
-byte-identical. **REMAINING (this item stays open at medium):** the
-parser-purity refactor (exact-result FEN/UCI parser assertions instead of
-EXPECT_NO_THROW), randomized make/unmake/null-move invariants, and exact
-eval-mirror properties.
+byte-identical. **Parser-purity refactor + randomized invariants: DONE
+(2026-07-15, road-to-v2.3 item 5).** `test_uci_go_parsing.cpp` /
+`test_uci_position_parsing.cpp` no longer wrap a real search/`EXPECT_NO_THROW`
+— `handle_go`'s token parsing was extracted into a pure, side-effect-free
+`parse_go_command` (`uci_utils.cpp`) so tests assert the exact resulting
+`MinimalLimits`; position tests assert the exact resulting FEN via
+`current_position()` (the #54 pattern), including a case for the
+LCTII.CMB.06 malformed-castling-flag bug class found this session. New
+`test_randomized_invariants.cpp`: fixed-seed random legal-move walks (5
+structurally varied seed positions incl. Kiwipete and near-promotion
+endgames, 200 walks × 40 plies) asserting `is_consistent()` and exact
+FEN+Zobrist restoration at every unwound ply, plus a `MakeNullMove`/
+`TakeNullMove` no-op check wherever legal. (Caught one bug along the way —
+in the test itself, not the engine: an invalid `uniform_int_distribution`
+range when a walk hit checkmate/stalemate before checking move count.)
+295/295 tests green (1 by-design skip). **REMAINING (this item stays open
+at low):** exact eval-mirror properties are covered by
+`test_evaluation_symmetry.cpp` but only over 8 hand-picked positions, not
+randomized — a natural extension of the same pattern, not a currently
+known gap.
 
 ### #61: Repair or remove divergent public helper APIs (low)
 

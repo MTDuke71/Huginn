@@ -384,110 +384,12 @@ void UCIInterface::handle_position(const std::vector<std::string>& tokens) {
 void UCIInterface::handle_go(const std::vector<std::string>& tokens) {
     if (debug_mode) std::cout << "info string Starting search" << std::endl;
 
-    Huginn::MinimalLimits limits;
-    limits.infinite = false;
-    limits.max_time_ms = 0;  // Default to no time limit
-    limits.max_depth = 25;   // Default search depth
-
-    if (debug_mode) std::cout << "info string Debug: Parsing go command with " << tokens.size() << " tokens" << std::endl;
-
-    // #56 (part 3): strict numeric `go` parameters — whole-token parse with an
-    // overflow guard (saturates at 1e9 ≈ 11.6 days, which also bounds all the
-    // downstream 64-bit arithmetic), clamped to a sane range. Junk leaves the
-    // parameter unset instead of std::stoi's prefix-parse ("12junk" -> 12) or
-    // exception; negative clocks (GUIs send them when a side is flagging)
-    // clamp to 0 and get the emergency budget.
-    bool depth_specified = false;
-    bool infinite_requested = false;  // the literal `go infinite` token (#56)
-    constexpr long long GO_TIME_MAX_MS = 1000000000LL;
-    long long winc = 0, binc = 0, movestogo = 0, wtime = -1, btime = -1;
-    long long movetime = -1;
-
-    // Consume the value token after `tokens[i]` into @p out (clamped to
-    // [lo, hi]); on junk the parameter stays unset and the token is skipped.
-    auto parse_go_number = [&](size_t& i, const char* name, long long lo,
-                               long long hi, long long& out) -> bool {
-        if (i + 1 >= tokens.size()) return false;
-        ++i;
-        long long v = 0;
-        if (!parse_spin_clamped(tokens[i], lo, hi, v)) {
-            if (debug_mode) std::cout << "info string Invalid " << name << " value: " << tokens[i] << std::endl;
-            return false;
-        }
-        out = v;
-        if (debug_mode) std::cout << "info string Parsed " << name << ": " << v << std::endl;
-        return true;
-    };
-
-    for (size_t i = 1; i < tokens.size(); i++) {
-        if (tokens[i] == "depth") {
-            long long depth = 0;
-            if (parse_go_number(i, "depth", 1, Huginn::MAX_DEPTH, depth)) {
-                limits.max_depth = static_cast<int>(depth);
-                depth_specified = true;
-            }
-        }
-        else if (tokens[i] == "movetime")  parse_go_number(i, "movetime", 1, GO_TIME_MAX_MS, movetime);
-        else if (tokens[i] == "wtime")     parse_go_number(i, "wtime", 0, GO_TIME_MAX_MS, wtime);
-        else if (tokens[i] == "btime")     parse_go_number(i, "btime", 0, GO_TIME_MAX_MS, btime);
-        else if (tokens[i] == "winc")      parse_go_number(i, "winc", 0, GO_TIME_MAX_MS, winc);
-        else if (tokens[i] == "binc")      parse_go_number(i, "binc", 0, GO_TIME_MAX_MS, binc);
-        else if (tokens[i] == "movestogo") parse_go_number(i, "movestogo", 1, 500, movestogo);
-        else if (tokens[i] == "infinite") {
-            limits.infinite = true;
-            infinite_requested = true;
-            limits.max_time_ms = 0;
-            if (debug_mode) std::cout << "info string Parsed infinite search mode" << std::endl;
-        }
-        else if (debug_mode) {
-            std::cout << "info string Unknown go parameter: " << tokens[i] << std::endl;
-        }
-    }
-
-    // #56: `go infinite` must run until `stop` — the old default depth cap of
-    // 25 let it return a bestmove on its own, which the protocol forbids. Give
-    // it the engine's full depth range (every ply-indexed structure is guarded
-    // at 64); if the loop still completes (mate/stalemate root), search_best_move
-    // parks in wait_for_stop() instead of emitting bestmove.
-    if (infinite_requested && !depth_specified) {
-        limits.max_depth = Huginn::MAX_DEPTH;
-    }
-
-    // VICE Part 69: Set search mode based on parsed parameters
-    if (depth_specified) {
-        limits.infinite = true;  // Depth-only search ignores time
-        limits.max_time_ms = 0;
-        if (debug_mode) std::cout << "info string Using depth-only search: " << limits.max_depth << std::endl;
-    }
-    else if (movetime > 0) {
-        // Fixed time per move (parse already clamped to [1, GO_TIME_MAX_MS])
-        limits.max_time_ms = static_cast<int>(movetime);
-        if (debug_mode) std::cout << "info string Using fixed movetime: " << movetime << "ms" << std::endl;
-    }
-    else if (!limits.infinite && (wtime >= 0 || btime >= 0)) {
-        // Clock-based allocation — pure, 64-bit, boundary-safe (#56 part 3;
-        // strategy itself unchanged from the gauntleted #47 tuning). A clock
-        // at/below the reserve yields a 1 ms emergency budget: an instant
-        // legal move beats the old 50 ms floor's overdraft time forfeit.
-        const bool white_to_move = (position.side_to_move == Color::White);
-        const long long side_time = white_to_move ? wtime : btime;  // -1 = our clock not sent
-        const long long side_inc = white_to_move ? winc : binc;
-
-        limits.max_time_ms = static_cast<int>(compute_time_budget_ms(side_time, side_inc, movestogo));
-        if (debug_mode) {
-            std::cout << "info string Time allocation: " << limits.max_time_ms
-                      << "ms (clock " << side_time << "ms, inc " << side_inc
-                      << "ms, movestogo " << movestogo << ")" << std::endl;
-        }
-    }
-    else if (!limits.infinite) {
-        // Bare `go` with no limits at all: a defined default budget. The old
-        // code left max_time_ms at 0, so the first checkup stopped the search
-        // ~2048 nodes in and the depth-1 move went out — accidental behaviour,
-        // not a contract.
-        limits.max_time_ms = 5000;
-        if (debug_mode) std::cout << "info string No limits given, using default 5000ms" << std::endl;
-    }
+    // BACKLOG #60 parser-purity refactor: the actual token parsing lives in
+    // the pure, side-effect-free parse_go_command (uci_utils.cpp) so tests
+    // can assert exact MinimalLimits results without spinning up a real
+    // search. handle_go is now just: parse, log, search.
+    bool infinite_requested = false;
+    Huginn::MinimalLimits limits = parse_go_command(tokens, position.side_to_move, infinite_requested);
 
     if (debug_mode) {
         std::cout << "info string Final search parameters: depth=" << limits.max_depth

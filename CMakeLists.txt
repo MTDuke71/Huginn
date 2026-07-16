@@ -633,6 +633,7 @@ if(BUILD_TESTING)
     test/test_history_lmr.cpp
     test/test_lmp.cpp
     test/test_transposition_table.cpp
+    test/test_randomized_invariants.cpp
     )
 
     add_executable(huginn_tests
