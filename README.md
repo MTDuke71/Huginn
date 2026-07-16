@@ -10,10 +10,10 @@ Huginn is a UCI-compliant chess engine in modern C++17/20 — a **pure-bitboard*
 single-threaded, hand-crafted-evaluation engine. It runs in any UCI GUI (Arena,
 Cute Chess, BanksiaGUI, ChessBase, …).
 
-**Strength: ~2600–2680 CCRL-Blitz-ladder scale** (v2.3 / `baseline-t34`, pooled
-~2625 from a three-anchor Stash calibration). Version 2.3 ships thirteen
+**Strength: ≈2600–2680 CCRL-Blitz-ladder scale** (v2.3 / `baseline-t34`, pooled
+≈2625 from a three-anchor Stash calibration). Version 2.3 ships thirteen
 baselines since 2.2 (`t22`–`t34`), each individually two-machine confirmed —
-summing to **~+275 Elo blitz self-play** — headlined by a search-selectivity
+summing to **≈+275 Elo blitz self-play** — headlined by a search-selectivity
 program (singular extensions, aspiration windows, history-modulated LMR) and a
 check-aware-quiescence fix that alone was the single largest jump this cycle
 (pooled ≈+42 Elo).
@@ -52,7 +52,7 @@ check-aware-quiescence fix that alone was the single largest jump this cycle
 - Squares indexed **0–63** (a1 = 0, h8 = 63); **magic bitboards** for slider attacks
 - **S_MOVE**: 25-bit packed move encoding with O(1) incremental make/unmake
   (bitboards, Zobrist key, material)
-- **~3.55 Mnps** single-threaded; modern C++17/20 (type-safe enums, `constexpr`)
+- **≈3.55 Mnps** single-threaded; modern C++17/20 (type-safe enums, `constexpr`)
 
 **Quality**
 - **295 GoogleTest** cases (incl. randomized make/unmake/null-move invariants) +
