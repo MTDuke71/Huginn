@@ -3165,17 +3165,42 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
 #endif
 
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
-    //
-    // #40 phase 3 depth skew: odd-numbered helpers start one ply ahead, so the
-    // threads desynchronise instead of all racing through the same iterations
-    // in lockstep. Desynchronisation is the entire mechanism of Lazy SMP — the
-    // threads explore differently-shaped trees and cross-pollinate through the
-    // shared TT. The driver (thread_id 0) always starts at 1.
-    const int start_depth = 1 + (info.thread_id % 2);
-    for (int current_depth = start_depth; current_depth <= info.max_depth; ++current_depth) {
+    for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
         if (info.stopped || info.quit) {
             break;
+        }
+
+        // #40 phase 3 (r2) — per-helper ITERATION SKIPPING.
+        //
+        // Desynchronisation is the entire mechanism of Lazy SMP: threads must
+        // search differently-shaped trees so their TT entries are worth
+        // something to each other. r1 skewed only the START depth by
+        // `thread_id % 2`, which has exactly TWO distinct schedules — so at 8
+        // threads, workers 1/3/5/7 were all running one identical schedule and
+        // 2/4/6 another. Measured on Kiwipete: time-to-depth saturated at 2
+        // threads (t2 and t8 both 1.49x at d17) while node counts still scaled
+        // 3.2x — the extra workers were re-deriving each other's results.
+        //
+        // Fix (Stockfish's scheme): each helper gets its own (size, phase) pair
+        // and sits out the iterations where `((depth + phase) / size)` is odd.
+        // With 19 distinct pairs, helpers spread across genuinely different
+        // depth sequences instead of collapsing onto two.
+        //
+        // The driver (thread_id 0) NEVER skips — it must complete every
+        // iteration, since its result is the move that gets played and its
+        // schedule is what the Threads=1 bit-identity contract pins.
+        if (info.thread_id > 0) {
+            static constexpr int SKIP_SIZE[]  = {1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
+                                                 3, 3, 3, 3, 3, 3, 3, 3, 3};
+            static constexpr int SKIP_PHASE[] = {0, 1, 0, 1, 2, 3, 0, 1, 2, 3,
+                                                 4, 5, 6, 7, 8, 9, 10, 11, 12};
+            constexpr int SKIP_N = static_cast<int>(sizeof(SKIP_SIZE) / sizeof(SKIP_SIZE[0]));
+
+            const int i = (info.thread_id - 1) % SKIP_N;
+            if (((current_depth + SKIP_PHASE[i]) / SKIP_SIZE[i]) % 2 != 0) {
+                continue;  // this helper sits this depth out
+            }
         }
 
         // Reset per-iteration UCI counters so each `info` line reports
@@ -3259,7 +3284,14 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         const bool use_window =
             current_depth >= ASPIRATION_MIN_DEPTH &&
             prev_score > -ASPIRATION_MATE_BOUND && prev_score < ASPIRATION_MATE_BOUND;
-        int delta = ASPIRATION_DELTA;
+        // #40 phase 3 (r2) — the SECOND diversification axis, alongside
+        // iteration skipping. Helpers widen their initial window by a
+        // thread-dependent amount, so they fail high/low at different scores
+        // than the driver and re-search different windows. Without this, two
+        // helpers landing on the same depth still search near-identical trees.
+        // Exactly 0 for the driver, so the Threads=1 signature is untouched.
+        const int aspiration_skew = info.is_helper ? ((info.thread_id * 13) % 45) : 0;
+        int delta = ASPIRATION_DELTA + aspiration_skew;
         int alpha = use_window ? std::max(prev_score - delta, -30000) : -30000;
         int beta  = use_window ? std::min(prev_score + delta,  30000) :  30000;
 
