@@ -49,7 +49,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
-| 40 | Lazy SMP / multithreading | **DEFERRED** (HCE first) — big lever | feature/speed | — |
+| 40 | Lazy SMP / multithreading | **IN-PROGRESS (2026-08-04)** — phases 1+2 (refactors) landed + gauntleted; phase 3 (threading) drafted, not started | feature/speed | high |
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
@@ -178,7 +178,69 @@ the strategic picture is explicit.
   justifies an AVX-512 code path. (Intel consumer 12–14th gen lacks AVX-512 →
   the fast path would be a build-gated AMD variant with an AVX2 fallback.)
 
-### #40: Lazy SMP / multithreading (deferred)
+### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
+
+**Branch:** `smp-phase1-lockless-tt`. Kickoff decisions (2026-08-04): proceed
+without first root-causing #37 (it stays guarded + instrumented; accepted cost
+is that a future desync report is ambiguous between #37 and a new SMP race),
+and land each prerequisite refactor as its own signature-gated commit rather
+than folding them into a threading branch.
+
+**Phase ladder** — the two refactors are semantics-preserving, so each is gated
+on the `baseline-t34` fixed-depth signatures (startpos d14 = 3,481,582 / cp 31
+/ e2e4; Kiwipete d13 = 1,958,182 / cp −85 / e2a6) and expected to measure
+*zero*. Both were run as fixed-round gauntlets rather than SPRT: the question
+is "is it not worse", not "is it better", and an early-stopping SPRT returns a
+loose CI on a true null.
+
+| Phase | Commit | Signatures | Tests | NPS vs t34 | Gauntlet vs t34 (10+0.1, cc=4, AMD) |
+|---|---|---|---|---|---|
+| 1. Lockless-safe TT (Hyatt XOR key) | `3ea44d2` | identical | 295/295 | +0.1% | **+0.12 ± 8.29**, LOS 51.1%, 3000g |
+| 2. Shared TT/book across Engines | `50439da` | identical | 300/300 | −0.45% | **+4.75 ± 8.41**, LOS 86.6%, 3000g |
+| 3. Spawn helper threads | — | *n/a from here* | — | — | not started |
+| 4. Re-advertise `Threads` option | — | — | — | — | not started |
+| 5. Measurement | — | — | — | — | not started |
+
+Neither gauntlet result can be a real gain — both arms are byte-identical at
+fixed depth, so there is no mechanism for one. What the pair actually
+establishes is the **measurement noise floor at 3000 games: ≈ ±8 Elo**, which
+is the number to judge phase 3 against. (Phase 2's +4.75 also drifted up from
++1.21 at 2018 games during a window when the box may have been in use — read
+the CI bound, not the central value.)
+
+- **Phase 1** (`transposition_table.hpp`): the table's storage cell became
+  `TTSlot` — two relaxed atomic `uint64`s holding `key ^ payload` and
+  `payload`. A read torn across a concurrent store decodes to a bogus key and
+  is reported as a miss. Without it a torn read hands `best_move` from an
+  unrelated position to `pick_next_move` and singular extensions.
+- **Phase 2** (`search.hpp`): scoping showed the planned Engine→SearchWorker
+  split was unnecessary — an `Engine` **already is** the right per-thread unit
+  (history, killers, counter-moves, PV table, node counter, stop flag are all
+  correctly private to a worker). Only the TT and book are genuinely shared, so
+  they were lifted out behind a second constructor
+  `Engine(TranspositionTable&, PolyglotBook&, SyzygyTablebase*)` with the
+  members becoming references. +224/−6 lines instead of a sprawling refactor,
+  and every existing call site (incl. all 18 `Engine engine;` test sites) is
+  untouched. New `test_smp_shared_resources.cpp` pins both halves of the
+  contract.
+
+**Phase 3 design:** [SMP_PHASE3_DESIGN.md](SMP_PHASE3_DESIGN.md). Three things
+that draft surfaced, all of which would have been bugs in a naive "wrap
+`searchPosition` in threads" implementation:
+  1. `clearForSearch` calls `tt_table.new_search()`, and the TT search date is
+     **global** (#42). Once per worker would bump it N times per search, making
+     worker 0's entries look stale to worker 1 *within the same search* — quietly
+     gutting the aging that shipped at t34.
+  2. `checkup()`'s input block (`on_input` / `read_input`) is main-thread-only
+     ([input_checking.hpp:30](../src/input_checking.hpp#L30)); a helper reaching
+     it could consume a GUI command. Needs an explicit `polls_input` opt-out.
+  3. The root book/TB probe, `info` emission, and the iteration-start time gate
+     are all driver-only, so `searchPosition` must split into driver + worker loop.
+
+  Resolved while drafting: **Fathom is thread-safe as built** — it guards probes
+  with real mutexes and `TB_NO_THREADS` is not defined anywhere in our build.
+
+**Why it was deferred until now** (the original writeup, still the live risk list):
 
 - The biggest *Elo-at-tournament-hardware* lever short of NNUE: ~**+100–200 Elo**
   on the 8-core gauntlet boxes (currently idle — a cc=4 gauntlet just runs 4
@@ -200,7 +262,12 @@ the strategic picture is explicit.
      10+0.1 wall-clock meaningless) → ~4× throughput hit per box. Concurrency
      bugs are the worst class to debug — and #37 (a *single*-threaded desync) is
      still open.
-- **Decision:** revisit after the HCE roadmap is mined out (or alongside NNUE).
+- ~~**Decision:** revisit after the HCE roadmap is mined out (or alongside NNUE).~~
+  **Superseded 2026-08-04** — the HCE roadmap was declared largely mined out at
+  the v2.3 release, so this is now the active v2.4 workstream (see the phase
+  ladder above). Catch 1 (buys Elo with hardware) is accepted as the point of
+  the release; catch 2 is answered by the `Threads=1` bit-identity contract;
+  catch 3 is what the phase ladder de-risks.
 
 ## Deferred / parked ideas
 
