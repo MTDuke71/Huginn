@@ -251,9 +251,13 @@ void UCIInterface::send_id() {
  */
 void UCIInterface::send_options() {
     std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
-    // #56: Threads and Ponder are NOT advertised — the engine is
-    // single-threaded and does not ponder; advertising them promised
-    // support that did not exist. Re-add when implemented.
+    // #40 phase 4: Threads is advertised again now that Lazy SMP exists (#56
+    // had removed it because it promised support the engine did not have).
+    // Default 1 — the shipped default stays deterministic and bit-identical to
+    // baseline-t34; multithreading is opt-in.
+    std::cout << "option name Threads type spin default 1 min 1 max "
+              << Huginn::SearchPool::MAX_THREADS << std::endl;
+    // Ponder is still NOT advertised — the engine does not ponder.
     std::cout << "option name OwnBook type check default false" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
     // #56: tablebases default to DISABLED — no hard-coded c:\TB\ auto-probe.
@@ -456,7 +460,22 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
                 std::cout << "info string Hash value invalid: " << option_value << std::endl;
             }
         }
-        // #56: Threads / Ponder handlers removed with their advertisements —
+        // #40 phase 4: Lazy SMP worker count. Safe to apply here — searches are
+        // synchronous, so all workers are joined by the time a command is
+        // dispatched. Worker 0 survives the resize, so the cached
+        // `search_engine` alias stays valid (see SearchPool::set_threads).
+        else if (option_name == "Threads") {
+            long long n = 0;
+            if (parse_spin_clamped(option_value, 1, Huginn::SearchPool::MAX_THREADS, n)) {
+                pool->set_threads(static_cast<int>(n));
+                if (debug_mode) {
+                    std::cout << "info string Threads set to " << pool->threads() << std::endl;
+                }
+            } else if (debug_mode) {
+                std::cout << "info string Threads value invalid: " << option_value << std::endl;
+            }
+        }
+        // #56: the Ponder handler stays removed with its advertisement —
         // unknown or unadvertised options are ignored per protocol.
         else if (option_name == "OwnBook") {
             bool new_own_book = (option_value == "true");

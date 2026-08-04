@@ -14,14 +14,28 @@ namespace Huginn {
 
 void SearchPool::set_threads(int n) {
     n = std::max(1, std::min(n, MAX_THREADS));
-    if (static_cast<int>(workers_.size()) == n) return;
+    const int cur = static_cast<int>(workers_.size());
+    if (cur == n) return;
 
-    workers_.clear();
-    workers_.reserve(static_cast<size_t>(n));
-    for (int i = 0; i < n; ++i) {
-        // Every worker binds to the SAME table and book (the phase-2 sharing
-        // constructor) while keeping its own ordering tables.
-        workers_.push_back(std::make_unique<Engine>(tt_, book_, tablebase_));
+    // GROW/SHRINK in place rather than rebuilding. Worker 0 must survive a
+    // thread-count change: driver() hands out a reference to it, and the UCI
+    // layer caches that as `search_engine`. Rebuilding the vector would leave
+    // that dangling the moment a GUI sent `setoption name Threads`. Keeping
+    // existing workers also preserves their ordering tables, so changing
+    // Threads mid-game doesn't wipe the driver's history.
+    //
+    // Note the vector's own buffer may reallocate on push_back — that moves the
+    // unique_ptrs, not the Engines, so Engine addresses (and driver()) stay
+    // stable regardless.
+    if (n < cur) {
+        workers_.resize(static_cast<size_t>(n));
+    } else {
+        workers_.reserve(static_cast<size_t>(n));
+        for (int i = cur; i < n; ++i) {
+            // Every worker binds to the SAME table and book (the phase-2
+            // sharing constructor) while keeping its own ordering tables.
+            workers_.push_back(std::make_unique<Engine>(tt_, book_, tablebase_));
+        }
     }
 
     node_counts_ = std::make_unique<std::atomic<uint64_t>[]>(static_cast<size_t>(n));

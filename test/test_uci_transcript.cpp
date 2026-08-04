@@ -171,7 +171,10 @@ TEST(UciTranscript, SilentUntilUciThenHonestOptions) {
     const std::string& t = eng.transcript();
     EXPECT_NE(t.find("id name Huginn"), std::string::npos);
     EXPECT_NE(t.find("option name SyzygyPath type string default <empty>"), std::string::npos);
-    EXPECT_EQ(t.find("option name Threads"), std::string::npos);
+    // #40 phase 4: Threads is a real option now (Lazy SMP), advertised with a
+    // default of 1 so the shipped binary stays single-threaded unless asked.
+    EXPECT_NE(t.find("option name Threads type spin default 1 min 1"), std::string::npos);
+    // Ponder remains unadvertised — still not implemented.
     EXPECT_EQ(t.find("option name Ponder"), std::string::npos);
 
     eng.send("quit");
