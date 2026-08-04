@@ -49,7 +49,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
-| 40 | Lazy SMP / multithreading | **IN-PROGRESS (2026-08-04)** — phases 1+2 (refactors) landed + gauntleted; phase 3 (threading) drafted, not started | feature/speed | high |
+| 40 | Lazy SMP / multithreading | **IN-PROGRESS (2026-08-04)** — phases 1–4 landed; `Threads=8` measures **+199 ± 26** vs 2.3 on one box; phase 5 (ship protocol) open | feature/speed | high |
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
@@ -193,13 +193,69 @@ on the `baseline-t34` fixed-depth signatures (startpos d14 = 3,481,582 / cp 31
 is "is it not worse", not "is it better", and an early-stopping SPRT returns a
 loose CI on a true null.
 
-| Phase | Commit | Signatures | Tests | NPS vs t34 | Gauntlet vs t34 (10+0.1, cc=4, AMD) |
-|---|---|---|---|---|---|
-| 1. Lockless-safe TT (Hyatt XOR key) | `3ea44d2` | identical | 295/295 | +0.1% | **+0.12 ± 8.29**, LOS 51.1%, 3000g |
-| 2. Shared TT/book across Engines | `50439da` | identical | 300/300 | −0.45% | **+4.75 ± 8.41**, LOS 86.6%, 3000g |
-| 3. Spawn helper threads | — | *n/a from here* | — | — | not started |
-| 4. Re-advertise `Threads` option | — | — | — | — | not started |
-| 5. Measurement | — | — | — | — | not started |
+| Phase | Commit | Signatures | Tests | Measurement |
+|---|---|---|---|---|
+| 1. Lockless-safe TT (Hyatt XOR key) | `3ea44d2` | identical | 295/295 | **+0.12 ± 8.29** vs t34, LOS 51.1%, 3000g (NPS +0.1%) |
+| 2. Shared TT/book across Engines | `50439da` | identical | 300/300 | **+4.75 ± 8.41** vs t34, LOS 86.6%, 3000g (NPS −0.45%) |
+| 3. Spawn helper threads (`SearchPool`) | `3d836d8` | identical @ `Threads=1` | 310/310 | see scaling below |
+| 4. Re-advertise `Threads` option | `fa8a655` | identical @ `Threads=1` | 310/310 | — |
+| 3r2. Real per-thread diversification | `429cefd` | identical @ `Threads=1` | 310/310 | **+199.05 ± 25.63** @ t8 vs 2.3, LOS 100%, 400g |
+| 5. Measurement / ship protocol | — | — | — | OPEN — see below |
+
+**`Threads=1` is bit-identical to `baseline-t34` at every phase** (startpos d14
+= 3,481,582 / cp 31 / e2e4; Kiwipete d13 = 1,958,182 / cp −85 / e2a6). That
+contract is what carries the ship discipline now that fixed-depth node counts
+stop being a comparable unit above one thread — the shipped default is
+single-threaded, so the default binary is provably unchanged.
+
+#### The r1 diversification bug (worth remembering)
+
+Phase 3 r1 skewed only the **start depth** by `thread_id % 2` — exactly TWO
+distinct schedules, so at 8 threads workers 1/3/5/7 all ran one identical
+schedule and 2/4/6 another. Every helper past the second was re-deriving a
+result another thread was already computing. It was invisible to the test
+suite (all the correctness properties held) and only showed up as a *scaling*
+measurement:
+
+| Kiwipete d17, median of 3 | t1 | t2 | t4 | t8 |
+|---|---|---|---|---|
+| r1 time-to-depth | 1.00× | 1.49× | 1.40× | **1.49×** (saturated) |
+| r1 nodes | 34.05M | 45.39M | 87.33M | **147.39M** |
+| r2 time-to-depth | 1.00× | 1.73× | 2.38× | **3.61×** |
+| r2 nodes | 34.05M | 26.98M | 48.29M | **48.23M** |
+
+Fixed by Stockfish's iteration-skipping (19 distinct size/phase pairs) plus the
+per-thread aspiration skew the design specified but r1 never implemented.
+**Lesson: a correct-but-non-diversified Lazy SMP passes every functional test
+and still wastes the hardware.** Scaling has to be measured explicitly.
+
+#### Depth scaling (r2), two independent methods
+
+Controlled A/B — identical position, fixed 1000ms, only `Threads` varying, 40
+positions evenly sampled from `CC_Games.pgn`'s 1929 eligible, median of 3:
+
+| | t1 | t2 | t4 | t8 |
+|---|---|---|---|---|
+| mean depth | 13.57 | 14.30 | 14.82 | 15.43 |
+| vs t1 | — | **+0.72** | **+1.25** | **+1.85** ply |
+| deeper / equal / shallower | — | 27/12/1 | 35/5/0 | **38/2/0** |
+
+Real games (400g vs 2.3, 48,925 annotated moves, paired by game+move): **+1.92
+ply** at t8, deeper on 79% of moves, shallower on 6.4%. Node use 3.04M/move vs
+0.54M (5.6×); `s/move` identical at 0.22 (time management undisturbed).
+
+The two methods agree to **0.07 ply**. Move-pairing is confounded in principle
+(White's move N and Black's move N are different positions — a deep quiet
+position vs a forced recapture), but at 24k pairs with colour-balanced openings
+it washes out, so the free-with-any-gauntlet method is usable.
+
+> ⚠ **The +199 Elo does NOT move Huginn's ~2625 CCRL number.** CCRL's main
+> Blitz / 40-15 lists run engines single-core, so a `Threads=8` gain does not
+> apply there. What was measured is *Huginn on 8 cores vs Huginn on 1 core* —
+> the maximum-possible SMP delta by construction (at equal thread counts the
+> difference is zero). It belongs in release notes as a **multicore-scaling
+> figure**, not as a strength increase, and must not be added to the calibrated
+> rating (see `#5`).
 
 Neither gauntlet result can be a real gain — both arms are byte-identical at
 fixed depth, so there is no mechanism for one. What the pair actually
