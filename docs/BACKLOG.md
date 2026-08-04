@@ -257,6 +257,41 @@ it washes out, so the free-with-any-gauntlet method is usable.
 > figure**, not as a strength increase, and must not be added to the calibrated
 > rating (see `#5`).
 
+#### Phase 5: ship protocol (open)
+
+**Release-claim framing — DECIDED (2026-08-04, user call):** report the
+multicore gain as a **separate figure**, not folded into the rating. The
+calibrated number stays "~2625 CCRL-blitz, single-core" and SMP ships as a
+distinct scaling claim ("Huginn on 8 cores vs 1 core: +199 ± 26 Elo"). Any
+phrasing that lets the two be added is wrong on every CCRL list.
+
+**Ship gate (running):** the arm that actually ships is `Threads=1`, which is
+a *different arm* from the one measured at +199. It is bit-identical to t34 at
+fixed depth, so the gate tests what fixed depth cannot: whether the pool
+wrapper, group-stop plumbing, and per-checkup node-mirror stores cost anything
+under a real clock. `Threads=1` (default, unset) vs 2.3, 1000g, cc=4 — both
+sides single-threaded, so cc=4 is legitimate here. **Nothing merges to `main`
+without this.** At 1000g the CI is ≈ ±14 Elo (vs ±8 at 3000), so it bounds a
+regression at ~14 rather than ~8 — accepted as adequate for a null test (user
+call).
+
+**Queued, not yet run:**
+- **Hash sweep at `Threads=8`.** At t8 the engine searches ~5.6× the nodes in
+  the same wall-clock, so TT pressure is ~5.6× higher against an unchanged
+  64 MB default. The optimal Hash at t8 is very likely larger. Concrete
+  mechanism, precedent in `#31`, and plausibly free Elo on top of the +199 —
+  it also changes what the release should recommend to users.
+- **Scaling curve (t2, t4 vs t1).** Elo per thread count instead of the single
+  t8 point. ~3h per rung at cc=1. Depth data predicts ≈ +0.72 / +1.25 ply.
+- **Intel leg.** Every baseline in the ladder has two machines; SMP is the most
+  hardware-sensitive thing shipped so far (core count, cache, SMT), so
+  cross-machine agreement matters more here than usual.
+
+**Also open:** one unreproduced test flake (single ctest run right after a
+build; 9 subsequent runs clean — see `429cefd`), and `#37`'s attribution
+ambiguity is now live: a future desync report can no longer be cleanly assigned
+between the old single-threaded bug and a new SMP race.
+
 Neither gauntlet result can be a real gain — both arms are byte-identical at
 fixed depth, so there is no mechanism for one. What the pair actually
 establishes is the **measurement noise floor at 3000 games: ≈ ±8 Elo**, which
