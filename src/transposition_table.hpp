@@ -17,8 +17,13 @@
  *   and compares it on probe, so a wrong-position hit is effectively impossible
  *   (no separate index/lock split). ENABLE_TT_CLUSTERS (#42b) changes the index
  *   unit to a 4-entry cluster — see the flag block below.
- * - 16-byte entries (8 key + 2 score + 1 depth + 1 type + 4 move) for cache-line
- *   friendliness (4 entries = one 64-byte line, the #42b cluster).
+ * - 16-byte cells (8 key + 2 score + 1 depth + 1 type + 4 move) for cache-line
+ *   friendliness (4 cells = one 64-byte line, the #42b cluster).
+ * - **Lockless-safe storage** (#40 phase 1): the two 8-byte halves are relaxed
+ *   atomics and the key half is stored XOR'd with the payload, so a read torn
+ *   across a concurrent store decodes to a bogus key and is reported as a miss.
+ *   See ::TTSlot. Single-threaded behaviour is unchanged (byte-identical to
+ *   baseline-t34).
  *
  * @par Replacement (and the aging gap)
  * Slots are scarce, so a store must sometimes evict. The base policy is
@@ -160,6 +165,101 @@ struct TTEntry {
 };
 
 /**
+ * @struct TTSlot
+ * @brief Lockless-safe storage cell holding one ::TTEntry (#40 phase 1).
+ *
+ * Under Lazy SMP every worker probes and stores into the SAME table with no
+ * lock, so a 16-byte entry can be read while another thread is halfway through
+ * writing it — a **torn** read whose key comes from one store and whose payload
+ * comes from another. That is not merely a stale entry: `best_move` would be a
+ * move from an unrelated position, handed straight to `pick_next_move` for
+ * ordering (and, via the TT-move path, to singular extensions).
+ *
+ * Hyatt's XOR trick makes tearing self-detecting at zero cost. The cell stores
+ * `key_xor = zobrist_key ^ data` next to `data`; a reader recovers the key as
+ * `key_xor ^ data`, which equals the probed key only when both halves came from
+ * the *same* store. Any mismatched pair decodes to a key that (barring a 2^-64
+ * coincidence) fails the probe's full-key compare and is reported as a miss —
+ * exactly the outcome a slot-eviction race should produce anyway. This also
+ * makes good on the guarantee the header above already claimed: a wrong-position
+ * hit is effectively impossible.
+ *
+ * Both halves are `relaxed` atomics. On x86-64 that emits the same plain 64-bit
+ * `mov` the non-atomic fields did — the fixed-depth signature is unchanged —
+ * but it makes the concurrent access defined behaviour instead of a data race.
+ * No ordering is needed between the two: every torn combination is rejected.
+ *
+ * An empty cell is `{0, 0}`, which decodes to key 0 — the same "key 0 means
+ * empty" convention the direct-mapped arm has always used.
+ */
+struct TTSlot {
+    std::atomic<uint64_t> key_xor;  ///< zobrist_key ^ data (0 when empty)
+    std::atomic<uint64_t> data;     ///< score | depth | node_type | best_move
+
+    /// Payload packing: score in bits 0-15, depth 16-23, node_type 24-31,
+    /// best_move 32-63. Exactly the 8 non-key bytes of a ::TTEntry.
+    static uint64_t pack(const TTEntry& e) {
+        return uint64_t(static_cast<uint16_t>(e.score))
+             | (uint64_t(e.depth) << 16)
+             | (uint64_t(e.node_type) << 24)
+             | (uint64_t(e.best_move) << 32);
+    }
+    static void unpack(uint64_t d, TTEntry& e) {
+        e.score     = static_cast<int16_t>(static_cast<uint16_t>(d & 0xFFFFu));
+        e.depth     = static_cast<uint8_t>((d >> 16) & 0xFFu);
+        e.node_type = static_cast<uint8_t>((d >> 24) & 0xFFu);
+        e.best_move = static_cast<uint32_t>(d >> 32);
+    }
+
+    TTSlot() : key_xor(0), data(0) {}
+
+    // Copyable so the table can live in a std::vector (std::atomic is neither
+    // copyable nor movable on its own). Only ever used for bulk (re)init in
+    // resize_mb — never while a search is running.
+    TTSlot(const TTSlot& o)
+        : key_xor(o.key_xor.load(std::memory_order_relaxed)),
+          data(o.data.load(std::memory_order_relaxed)) {}
+    TTSlot& operator=(const TTSlot& o) {
+        key_xor.store(o.key_xor.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        data.store(o.data.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        return *this;
+    }
+
+    /**
+     * @brief Decodes the cell into `out` and returns the key it claims.
+     * @return The recovered Zobrist key: 0 for an empty cell, the stored key for
+     *         a clean read, and effectively-random garbage for a torn read (which
+     *         the caller's full-key compare then rejects as a miss).
+     */
+    uint64_t load(TTEntry& out) const {
+        const uint64_t d = data.load(std::memory_order_relaxed);
+        const uint64_t k = key_xor.load(std::memory_order_relaxed);
+        unpack(d, out);
+        return k ^ d;
+    }
+
+    /// Key-only decode, for callers that don't need the payload (`permill_full`).
+    uint64_t load_key() const {
+        return key_xor.load(std::memory_order_relaxed)
+             ^ data.load(std::memory_order_relaxed);
+    }
+
+    /// Publishes `e` under `key`. Payload first, then the XOR'd key — though the
+    /// order is immaterial, since both torn combinations decode to a bad key.
+    void store_entry(uint64_t key, const TTEntry& e) {
+        const uint64_t d = pack(e);
+        data.store(d, std::memory_order_relaxed);
+        key_xor.store(key ^ d, std::memory_order_relaxed);
+    }
+
+    /// Returns the cell to the empty state (`ucinewgame` / resize).
+    void reset() {
+        key_xor.store(0, std::memory_order_relaxed);
+        data.store(0, std::memory_order_relaxed);
+    }
+};
+
+/**
  * @class TranspositionTable
  * @brief High-performance hash table for storing and retrieving search results
  * 
@@ -177,11 +277,11 @@ struct TTEntry {
 class TranspositionTable {
 private:
 #if ENABLE_TT_CLUSTERS
-    /// #42b: the index unit — 4 × 16B entries = exactly one 64-byte cache
+    /// #42b: the index unit — 4 × 16B cells = exactly one 64-byte cache
     /// line, so a whole-cluster probe scan costs the same memory traffic as a
     /// single-entry probe on the baseline arm.
     static constexpr size_t CLUSTER_SIZE = 4;
-    struct alignas(64) TTCluster { TTEntry e[CLUSTER_SIZE]; };
+    struct alignas(64) TTCluster { TTSlot e[CLUSTER_SIZE]; };
 #endif
 
     // mutable: probe() is logically a read but re-dates the hit entry under
@@ -191,7 +291,7 @@ private:
     mutable std::vector<TTCluster> table;  ///< Main hash table storage (#42b: cluster-indexed)
     size_t size_mask;              ///< Bit mask for fast modulo (cluster count - 1)
 #else
-    mutable std::vector<TTEntry> table;    ///< Main hash table storage
+    mutable std::vector<TTSlot> table;     ///< Main hash table storage
     size_t size_mask;              ///< Bit mask for fast modulo (table.size() - 1)
 #endif
 
@@ -201,10 +301,48 @@ private:
     static constexpr uint8_t AGE_MASK = 0x3F;
     uint8_t current_age = 0;
 
-    // Statistics tracking for performance analysis
-    mutable uint64_t hits = 0;      // Successful probes
-    mutable uint64_t misses = 0;    // Failed probes
-    uint64_t writes = 0;            // Store operations
+    /// Builds the payload a store publishes, stamping the current search date
+    /// above the 2-bit bound type (#42). Shared by both replacement arms so the
+    /// date-packing rule has exactly one definition.
+    TTEntry make_entry(int score, uint8_t depth, uint8_t node_type, uint32_t best_move) const {
+        TTEntry e;
+        e.score = static_cast<int16_t>(score);
+        e.depth = depth;
+#if ENABLE_TT_AGING
+        e.node_type = static_cast<uint8_t>((node_type & TTEntry::TYPE_MASK)
+                                           | (current_age << 2));
+#else
+        e.node_type = node_type;
+#endif
+        e.best_move = best_move;
+        return e;
+    }
+
+#if ENABLE_TT_AGING
+    /// #42 probe touch: re-date a hit so hot entries stay current.
+    ///
+    /// Skipped when the date already matches. Single-threaded that is exactly
+    /// the old behaviour (the unconditional `set_age` rewrote the byte it
+    /// already held); under SMP it turns the overwhelmingly common case from a
+    /// gratuitous store — which invalidates the cache line in every other
+    /// worker — into a pure read. When the date HAS moved, the touch republishes
+    /// the whole cell; if that races a concurrent store to the same slot one of
+    /// them simply wins. The table is a cache, so a lost store costs work, never
+    /// correctness — and the XOR key guarantees no reader sees the blend.
+    void touch(TTSlot& slot, uint64_t key, TTEntry& e) const {
+        if (e.get_age() == current_age) return;
+        e.set_age(current_age);
+        slot.store_entry(key, e);
+    }
+#endif
+
+    // Statistics tracking for performance analysis. Relaxed atomics (#40): with
+    // ENABLE_INFO_DIAGNOSTICS on, every worker bumps these from its own thread —
+    // plain uint64_t counters would be a data race (and would lose counts).
+    // Relaxed is right: they are pure statistics, ordered against nothing.
+    mutable std::atomic<uint64_t> hits{0};    // Successful probes
+    mutable std::atomic<uint64_t> misses{0};  // Failed probes
+    std::atomic<uint64_t> writes{0};          // Store operations
 
 public:
     explicit TranspositionTable(size_t size_mb = 64) {
@@ -237,11 +375,11 @@ public:
             power_of_2 *= 2;
         }
 
-        table.assign(power_of_2, TTEntry());  // resize + zero-initialize
+        table.assign(power_of_2, TTSlot());  // resize + zero-initialize
         size_mask = power_of_2 - 1;
 #endif
         current_age = 0;  // #42: fresh table, fresh date
-        hits = misses = writes = 0;
+        hits = 0; misses = 0; writes = 0;
     }
 
     // #42 (ENABLE_TT_AGING): advance the global search date. Called once per
@@ -282,28 +420,38 @@ public:
      */
     void store(uint64_t zobrist_key, int score, uint8_t depth, uint8_t node_type, uint32_t best_move = 0) {
 #if ENABLE_TT_CLUSTERS
-        TTEntry* const cluster = table[zobrist_key & size_mask].e;
+        TTSlot* const cluster = table[zobrist_key & size_mask].e;
 
         // Victim selection (#42b, Fruit): same key always refreshes in place;
         // otherwise the most replaceable slot by `age_dist*256 - depth` —
         // empty beats everything, then stale-dated (any age distance dwarfs
         // any depth), then shallowest. With ENABLE_TT_AGING off, ages are all
         // 0 and the value collapses to plain min-depth.
-        TTEntry* victim = nullptr;
+        // #40: each candidate is decoded once (a torn read just yields a bogus
+        // key/depth, which at worst picks a different victim — the choice is a
+        // heuristic, so a raced eviction is harmless).
+        TTSlot* victim = nullptr;
+        TTEntry victim_e;
+        uint64_t victim_key = 0;
         int victim_value = -256;            // below any real slot's value
         for (size_t i = 0; i < CLUSTER_SIZE; ++i) {
-            TTEntry& e = cluster[i];
-            if (e.zobrist_key == zobrist_key) {
-                victim = &e;                // same position — refresh with newer info
+            TTEntry e;
+            const uint64_t k = cluster[i].load(e);
+            if (k == zobrist_key) {
+                victim = &cluster[i];       // same position — refresh with newer info
+                victim_e = e;
+                victim_key = k;
                 break;
             }
-            const int value = (e.zobrist_key == 0)
+            const int value = (k == 0)
                 ? (1 << 30)                 // empty slot wins outright
                 : static_cast<int>((current_age - e.get_age()) & AGE_MASK) * 256
                       - static_cast<int>(e.depth);
             if (value > victim_value) {
                 victim_value = value;
-                victim = &e;
+                victim = &cluster[i];
+                victim_e = e;
+                victim_key = k;
             }
         }
 
@@ -318,63 +466,43 @@ public:
         // FEWER stores than the baseline (weakest-of-4 ≤ the one random
         // occupant baseline compares against). With aging off, ages are all
         // 0 and the gate reduces to the baseline depth rule.
-        if (victim->zobrist_key != 0 && victim->zobrist_key != zobrist_key
-            && victim->get_age() == current_age
-            && depth < victim->depth) {
+        if (victim_key != 0 && victim_key != zobrist_key
+            && victim_e.get_age() == current_age
+            && depth < victim_e.depth) {
             return;                         // keep the deeper current-date resident
         }
 
-        TTEntry& entry = *victim;
-        entry.zobrist_key = zobrist_key;
-        entry.score = score;
-        entry.depth = depth;
-#if ENABLE_TT_AGING
-        // Pack the current date above the 2-bit bound type (entry stays 16B).
-        entry.node_type = static_cast<uint8_t>((node_type & TTEntry::TYPE_MASK)
-                                               | (current_age << 2));
-#else
-        entry.node_type = node_type;
-#endif
-        entry.best_move = best_move;
+        victim->store_entry(zobrist_key, make_entry(score, depth, node_type, best_move));
 #if ENABLE_INFO_DIAGNOSTICS
-        writes++;  // Track write operations
+        writes.fetch_add(1, std::memory_order_relaxed);  // Track write operations
 #endif
 #else  // !ENABLE_TT_CLUSTERS — baseline direct-mapped arm
-        size_t index = zobrist_key & size_mask;
-        TTEntry& entry = table[index];
+        TTSlot& slot = table[zobrist_key & size_mask];
+        TTEntry resident;
+        const uint64_t resident_key = slot.load(resident);
 
         // Depth-preferred replacement: empty | same position | deeper-or-equal
         // (#42 aging arm adds: | stale date).
         bool should_replace = false;
 
-        if (entry.zobrist_key == 0) {
+        if (resident_key == 0) {
             should_replace = true;          // empty slot
-        } else if (entry.zobrist_key == zobrist_key) {
+        } else if (resident_key == zobrist_key) {
             should_replace = true;          // same position — refresh with newer info
 #if ENABLE_TT_AGING
-        } else if (entry.get_age() != current_age) {
+        } else if (resident.get_age() != current_age) {
             should_replace = true;          // stale resident from an earlier search (#42)
 #endif
-        } else if (depth >= entry.depth) {
+        } else if (depth >= resident.depth) {
             should_replace = true;          // collision, but ours is at least as deep
         } else {
             should_replace = false;         // keep the deeper current-date resident
         }
 
         if (should_replace) {
-            entry.zobrist_key = zobrist_key;
-            entry.score = score;
-            entry.depth = depth;
-#if ENABLE_TT_AGING
-            // Pack the current date above the 2-bit bound type (entry stays 16B).
-            entry.node_type = static_cast<uint8_t>((node_type & TTEntry::TYPE_MASK)
-                                                   | (current_age << 2));
-#else
-            entry.node_type = node_type;
-#endif
-            entry.best_move = best_move;
+            slot.store_entry(zobrist_key, make_entry(score, depth, node_type, best_move));
 #if ENABLE_INFO_DIAGNOSTICS
-            writes++;  // Track write operations
+            writes.fetch_add(1, std::memory_order_relaxed);  // Track write operations
 #endif
         }
 #endif  // ENABLE_TT_CLUSTERS
@@ -393,10 +521,10 @@ public:
 #if ENABLE_TT_CLUSTERS
         // #42b: scan the 4-slot cluster for a full-key match — all four
         // candidates live in the same 64-byte cache line as a baseline probe.
-        TTEntry* const cluster = table[zobrist_key & size_mask].e;
+        TTSlot* const cluster = table[zobrist_key & size_mask].e;
         for (size_t i = 0; i < CLUSTER_SIZE; ++i) {
-            TTEntry& entry = cluster[i];
-            if (entry.zobrist_key != zobrist_key) continue;
+            TTEntry entry;
+            if (cluster[i].load(entry) != zobrist_key) continue;
             score = entry.score;
             depth = entry.depth;
             // Masked read: callers always see EXACT/LOWER/UPPER (0..2), never
@@ -404,22 +532,22 @@ public:
             node_type = entry.get_type();
             best_move = entry.best_move;
 #if ENABLE_TT_AGING
-            entry.set_age(current_age);  // touch: keep hot entries current (#42)
+            touch(cluster[i], zobrist_key, entry);  // keep hot entries current (#42)
 #endif
 #if ENABLE_INFO_DIAGNOSTICS
-            hits++;  // Track successful probes
+            hits.fetch_add(1, std::memory_order_relaxed);  // Track successful probes
 #endif
             return true;
         }
 #if ENABLE_INFO_DIAGNOSTICS
-        misses++;  // Track failed probes
+        misses.fetch_add(1, std::memory_order_relaxed);  // Track failed probes
 #endif
         return false;
 #else  // !ENABLE_TT_CLUSTERS — baseline direct-mapped arm
-        size_t index = zobrist_key & size_mask;
-        TTEntry& entry = table[index];
+        TTSlot& slot = table[zobrist_key & size_mask];
+        TTEntry entry;
 
-        if (entry.zobrist_key == zobrist_key) {
+        if (slot.load(entry) == zobrist_key) {
             score = entry.score;
             depth = entry.depth;
             // Masked read: callers always see EXACT/LOWER/UPPER (0..2), never
@@ -427,34 +555,34 @@ public:
             node_type = entry.get_type();
             best_move = entry.best_move;
 #if ENABLE_TT_AGING
-            entry.set_age(current_age);  // touch: keep hot entries current (#42)
+            touch(slot, zobrist_key, entry);  // keep hot entries current (#42)
 #endif
 #if ENABLE_INFO_DIAGNOSTICS
-            hits++;  // Track successful probes
+            hits.fetch_add(1, std::memory_order_relaxed);  // Track successful probes
 #endif
             return true;
         }
 #if ENABLE_INFO_DIAGNOSTICS
-        misses++;  // Track failed probes
+        misses.fetch_add(1, std::memory_order_relaxed);  // Track failed probes
 #endif
         return false;
 #endif  // ENABLE_TT_CLUSTERS
     }
-    
+
     // Clear all entries (ucinewgame, #46)
     void clear() {
 #if ENABLE_TT_CLUSTERS
         for (auto& cluster : table) {
-            for (auto& entry : cluster.e) entry = TTEntry();
+            for (auto& slot : cluster.e) slot.reset();
         }
 #else
-        for (auto& entry : table) {
-            entry = TTEntry();
+        for (auto& slot : table) {
+            slot.reset();
         }
 #endif
         current_age = 0;  // #42: new game restarts the search-date clock
         // Reset statistics
-        hits = misses = writes = 0;
+        hits = 0; misses = 0; writes = 0;
     }
 
     // Total ENTRY capacity on both arms (#42b: clusters × 4), so the UCI
@@ -483,15 +611,15 @@ public:
         size_t filled = 0;
         for (size_t i = 0; i < sample; ++i) {
 #if ENABLE_TT_CLUSTERS
-            if (table[i / CLUSTER_SIZE].e[i % CLUSTER_SIZE].zobrist_key != 0) ++filled;
+            if (table[i / CLUSTER_SIZE].e[i % CLUSTER_SIZE].load_key() != 0) ++filled;
 #else
-            if (table[i].zobrist_key != 0) ++filled;
+            if (table[i].load_key() != 0) ++filled;
 #endif
         }
         return static_cast<int>((filled * 1000ULL) / sample);
     }
 
     // Get statistics
-    uint64_t get_hits() const { return hits; }
-    uint64_t get_writes() const { return writes; }
+    uint64_t get_hits() const { return hits.load(std::memory_order_relaxed); }
+    uint64_t get_writes() const { return writes.load(std::memory_order_relaxed); }
 };
