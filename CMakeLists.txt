@@ -634,6 +634,7 @@ if(BUILD_TESTING)
     test/test_lmp.cpp
     test/test_transposition_table.cpp
     test/test_randomized_invariants.cpp
+    test/test_smp_shared_resources.cpp
     )
 
     add_executable(huginn_tests

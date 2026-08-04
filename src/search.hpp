@@ -29,6 +29,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace Huginn {
@@ -218,17 +219,54 @@ struct MinimalLimits {
 class Engine {
 public:  // Make members public for easier access
     /**
-     * @brief Constructs the engine and initializes its tables.
+     * @brief Constructs a self-contained engine that owns its TT and book.
      * @param tb Optional Syzygy tablebase handle (nullptr = tablebases disabled).
+     *
+     * The single-threaded shape: one Engine owning everything, exactly as before
+     * (#40 phase 2 changed only *who owns* the TT and book, not this signature).
      */
-    Engine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
+    Engine(SyzygyTablebase* tb = nullptr)
+        : pv_table(2),
+          owned_tt(std::make_unique<TranspositionTable>(64)),
+          owned_book(std::make_unique<PolyglotBook>()),
+          tt_table(*owned_tt), opening_book(*owned_book),
+          tablebase(tb) {
         // Initialize MVV-LVA table
         init_mvv_lva();
-        
+
         // Clear search tables
         clear_search_tables();
     }
-    
+
+    /**
+     * @brief Constructs a Lazy SMP worker that SHARES the caller's TT and book.
+     * @param shared_tt   The one transposition table all workers cooperate through.
+     * @param shared_book Opening book (read-only during search).
+     * @param tb          Optional Syzygy tablebase handle.
+     *
+     * #40 phase 2: an Engine is exactly the right per-thread unit — everything
+     * it owns besides the TT/book (history, killers, counter-moves, PV table,
+     * MVV-LVA, node counter, stop flag) is *supposed* to be private to a worker
+     * under Lazy SMP. So instead of splitting the class, the two genuinely
+     * shared resources are lifted out and N Engines are built around them. That
+     * leaves every existing member access (`engine.tt_table.store(...)`, the
+     * search's `search_history[...]`, ...) untouched — the per-thread state was
+     * already correctly encapsulated.
+     *
+     * Sharing is safe because both resources are concurrency-ready: the TT is
+     * lockless-safe as of phase 1 (see ::TTSlot), and the book is immutable once
+     * loaded — `load_opening_book`/`clear` only ever run between searches, from
+     * the UCI thread.
+     */
+    Engine(TranspositionTable& shared_tt, PolyglotBook& shared_book, SyzygyTablebase* tb = nullptr)
+        : pv_table(2),
+          tt_table(shared_tt), opening_book(shared_book),
+          tablebase(tb) {
+        init_mvv_lva();
+        clear_search_tables();
+    }
+
+
     // #56: the ONE cross-thread cancellation channel. stop()/signal_stop()
     // (any thread) set it; checkup() polls it and translates it into
     // info.stopped ON the searching thread, so SearchInfo itself is never
@@ -239,8 +277,22 @@ public:  // Make members public for easier access
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
-    TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
-    PolyglotBook opening_book;    // VICE Part 85: Polyglot opening book for opening moves
+
+private:
+    // #40 phase 2: backing storage for the default (self-contained) constructor
+    // only. Null in an SMP worker, which binds the references below to the
+    // shared instances its owner passed in. Declared BEFORE the references so
+    // member-init order builds them first.
+    std::unique_ptr<TranspositionTable> owned_tt;
+    std::unique_ptr<PolyglotBook> owned_book;
+
+public:
+    // The two resources Lazy SMP workers share. References (not values) so that
+    // every existing call site — `engine.tt_table.probe(...)`,
+    // `engine.opening_book.clear()` — keeps working verbatim whether the engine
+    // owns them or borrows them.
+    TranspositionTable& tt_table;  // VICE Part 84: Transposition table for storing search results
+    PolyglotBook& opening_book;    // VICE Part 85: Polyglot opening book for opening moves
     SyzygyTablebase* tablebase;  // Syzygy tablebase for endgame perfect play
     
     // Search History array (3:55) - stores scores for moves that improved alpha
