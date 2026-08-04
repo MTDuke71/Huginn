@@ -180,12 +180,43 @@ struct SearchInfo {
     // to read_input()'s conservative any-input-stops behaviour.
     std::function<void(SearchInfo&)> on_input;
 
+    // #40 phase 3: may THIS search poll stdin? `input_is_waiting()` and
+    // `read_input()` touch global console state and are documented
+    // main-thread-only (input_checking.hpp) — a Lazy SMP helper reaching either
+    // would race the UCI thread and could consume a command the GUI sent. So
+    // helpers set this false and checkup() skips the whole input block for
+    // them. Opt-OUT (default true) so every existing construction site — tests,
+    // bench, and the UCI driver itself — behaves exactly as before.
+    bool polls_input;
+
+    // #40 phase 3: helper threads emit no UCI output (interleaved `info` lines
+    // from N threads are malformed protocol) and skip the driver-only
+    // iteration-start time gate — they run until the group stop fires. Thread 0
+    // leaves this false and is the sole writer to stdout.
+    bool is_helper;
+
+    // #40 phase 3: worker index, used only to diversify the search (depth and
+    // aspiration skew). 0 = the driver.
+    int thread_id;
+
+    // #40 phase 3: relaxed-atomic mirror of `nodes`, published from checkup()
+    // so the driver can sum node counts across threads for the UCI `nodes`/`nps`
+    // fields without racing on the plain counter. Null in single-threaded use.
+    std::atomic<uint64_t>* node_mirror;
+
+    // #40 phase 3: driver-only. Returns the node total summed across every
+    // worker's mirror, for the UCI `nodes`/`nps` fields — a GUI expects the
+    // whole search's node count, not thread 0's share. Null in single-threaded
+    // use, where `nodes` is already the whole story.
+    std::function<uint64_t()> aggregate_nodes;
+
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
                    quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
                    best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0),
                    singular_exts(0), aspiration_researches(0), history_lmr_adjusts(0),
-                   lmp_prunes(0) {
+                   lmp_prunes(0), polls_input(true), is_helper(false), thread_id(0),
+                   node_mirror(nullptr) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();
@@ -273,6 +304,14 @@ public:  // Make members public for easier access
     // written cross-thread (the old path published a raw pointer to the
     // stack SearchInfo and wrote its non-atomic fields from another thread).
     std::atomic<bool> should_stop{false};
+
+    // #40 phase 3: group cancellation for Lazy SMP. `should_stop` is per-Engine
+    // (a worker must be individually stoppable), but a UCI `stop` has to reach
+    // every worker at once — relying on the driver to notice and fan out would
+    // add a whole checkup interval of latency per worker. checkup() consults
+    // both. Null outside SMP, so the single-threaded path is unchanged.
+    std::atomic<bool>* group_stop = nullptr;
+
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
@@ -476,6 +515,23 @@ public:
      * @return The best move found (also left in `info.best_move`). (VICE Part 57)
      */
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
+
+    /**
+     * @brief The iterative-deepening loop alone, without the once-per-search
+     *        setup — the entry point a Lazy SMP helper thread runs (#40 phase 3).
+     *
+     * `searchPosition` = book/TB root probe + clearForSearch + this. Helpers
+     * must NOT repeat that setup: the probes would be redundant, and
+     * clearForSearch bumps the *global* TT search date, which run per-worker
+     * would make each worker's entries look stale to the others within a single
+     * search. Callers driving this directly are responsible for having done the
+     * setup exactly once.
+     *
+     * @param pos  Position to search (the calling thread's own copy).
+     * @param info Per-thread state; `is_helper` and `thread_id` select the role.
+     * @return This thread's best move.
+     */
+    S_MOVE iterativeDeepening(Position& pos, SearchInfo& info);
 
     /**
      * @brief Probes Syzygy WDL tablebases at a leaf.

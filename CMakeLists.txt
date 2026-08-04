@@ -478,6 +478,7 @@ set(COMMON_SOURCES
     src/evaluation.cpp
     src/input_checking.cpp
     src/search.cpp
+    src/search_pool.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
     src/syzygy_tablebase.cpp
@@ -635,6 +636,7 @@ if(BUILD_TESTING)
     test/test_transposition_table.cpp
     test/test_randomized_invariants.cpp
     test/test_smp_shared_resources.cpp
+    test/test_smp_pool.cpp
     )
 
     add_executable(huginn_tests

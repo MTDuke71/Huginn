@@ -53,8 +53,11 @@ UCIInterface::UCIInterface() {
     // — unsolicited startup output the protocol forbids.
     tablebase = std::make_unique<Huginn::SyzygyTablebase>();
 
-    // Initialize search engine with tablebase
-    search_engine = std::make_unique<Huginn::Engine>(tablebase.get());
+    // #40 phase 3: the pool owns the shared TT/book and the worker Engines.
+    // It starts at 1 thread, so until `Threads` is advertised (phase 4) the
+    // call path is exactly the single-threaded one — no thread is spawned.
+    pool = std::make_unique<Huginn::SearchPool>(tablebase.get());
+    search_engine = &pool->driver();
 
     // Load opening book if enabled
     if (own_book) {
@@ -137,14 +140,14 @@ bool UCIInterface::dispatch_command(const std::string& line) {
         }
         else if (command == "ucinewgame") {
             position.set_startpos();
-            search_engine->reset();
             // New game: wipe cross-game state so stale entries from the previous
             // game can't be probed on a transposition (there is no TT aging yet,
             // #42). This MUST live here, not in reset(): reset() also runs once
             // per `go` (search_best_move), so clearing the TT there would destroy
             // it every move. (#46)
-            search_engine->tt_table.clear();
-            search_engine->clear_search_tables();
+            // #40 phase 3: goes through the pool so EVERY worker's ordering
+            // tables are cleared, not just thread 0's.
+            pool->new_game();
             if (debug_mode) std::cout << "info string New game started (TT + search tables cleared)" << std::endl;
         }
         else if (command == "position") {
@@ -546,7 +549,9 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool ho
     // the chosen move against this clean snapshot before emitting bestmove.
     auto pre_search = position;
     try {
-        best_move = search_engine->searchPosition(position, info);  // Engine method
+        // #40 phase 3: the pool drives the search. At Threads=1 it spawns
+        // nothing and this is exactly the old searchPosition path.
+        best_move = pool->search(position, info);
     } catch (const std::exception& e) {
         std::cout << "info string Search threw exception: " << e.what() << std::endl;
         std::cout.flush();
@@ -685,7 +690,8 @@ void UCIInterface::load_opening_book() {
  * hazard if the search unwound while the write was in flight.
  */
 void UCIInterface::signal_stop() {
-    if (search_engine) search_engine->stop();
+    // #40 phase 3: fan out to every worker, not just thread 0.
+    if (pool) pool->stop_all();
 }
 
 /**
