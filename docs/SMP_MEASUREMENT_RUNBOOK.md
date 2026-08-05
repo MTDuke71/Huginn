@@ -139,7 +139,34 @@ the pool wrapper and group-stop plumbing cost anything under a real clock. Use
 a fixed round count and read the CI bound; an early-stopping SPRT returns a
 loose CI on a true null.
 
-## 7. Known gotchas
+## 7. Gating a merge (learned the hard way)
+
+**Fixed-depth bit-identity is necessary, not sufficient.** It proves the search
+builds the same *tree*. It says nothing about strength *under a clock* — it
+cannot see throughput, time management, or per-search overhead. Use it as the
+cheap pre-check (section 2), then gate the merge on a real match.
+
+**Gate against the immediate predecessor, not a shared baseline.** Comparing
+`new vs t34` and `old vs t34` and subtracting accumulates the error of both and
+invites chasing mechanisms that aren't there. A direct `new vs old` A/B needs no
+transitivity. This is what settled #40 phase 5: the default-arm gate against 2.3
+first returned −17.39 ± 14.01 (LOS 0.74%) and looked like a real regression;
+the baseline-free A/B against the phase-2 binary returned +2.78 ± 14.80 and
+proved the threading commits were clean, without ever having to explain the
+apparent t34-vs-2.3 discrepancy.
+
+**Never run anything on a box hosting a timed gauntlet.** Not a build, not a
+test suite, not a one-second benchmark. The false negative above was partly
+caused by running these very scripts — which spawn engines and search — during
+the match they were about to be used on. Symmetric load still inflates
+variance, and a `10+0.1` match has no headroom.
+
+**Diagnose a surprising result cheapest-first.** Node counts and NPS (seconds)
+→ diff of the affected code path (minutes) → baseline-free A/B (hours). Do not
+start by hypothesising mechanisms; two of the three steps above are nearly free
+and both were decisive.
+
+## 8. Known gotchas
 
 - **A pre-`429cefd` build measures the r1 bug.** r1 diversified only by
   `thread_id % 2` — two distinct schedules regardless of thread count, so t8

@@ -200,7 +200,7 @@ loose CI on a true null.
 | 3. Spawn helper threads (`SearchPool`) | `3d836d8` | identical @ `Threads=1` | 310/310 | see scaling below |
 | 4. Re-advertise `Threads` option | `fa8a655` | identical @ `Threads=1` | 310/310 | — |
 | 3r2. Real per-thread diversification | `429cefd` | identical @ `Threads=1` | 310/310 | **+199.05 ± 25.63** @ t8 vs 2.3, LOS 100%, 400g |
-| 5. Measurement / ship protocol | — | — | — | OPEN — see below |
+| 5. Ship gate (default arm) | — | identical @ `Threads=1` | 310/310 | **+1.04 ± 14.91** vs 2.3, 1000g · **+2.78 ± 14.80** vs phase-2 build, 1000g |
 
 **`Threads=1` is bit-identical to `baseline-t34` at every phase** (startpos d14
 = 3,481,582 / cp 31 / e2e4; Kiwipete d13 = 1,958,182 / cp −85 / e2a6). That
@@ -265,7 +265,34 @@ calibrated number stays "~2625 CCRL-blitz, single-core" and SMP ships as a
 distinct scaling claim ("Huginn on 8 cores vs 1 core: +199 ± 26 Elo"). Any
 phrasing that lets the two be added is wrong on every CCRL list.
 
-**Ship gate (running):** the arm that actually ships is `Threads=1`, which is
+**Ship gate: PASSED (2026-08-04).** `Threads=1` (default) vs 2.3, 1000g, cc=4:
+**+1.04 ± 14.91**, LOS 55.5%, 50.15%. And the stronger, baseline-free version —
+phase 4 @ `Threads=1` vs the **phase-2 binary**, isolating exactly
+`3d836d8 + fa8a655 + 429cefd` — **+2.78 ± 14.80**, LOS 64.4%, 1000g. The
+threading commits cost nothing at the shipped default.
+
+> **A false negative happened first, and the lesson is worth keeping.** The
+> first run of this gate returned **−17.39 ± 14.01, LOS 0.74%** — an apparently
+> significant regression. It was wrong. Two causes: (a) engine-spawning
+> measurement scripts were run on the box *during* the timed match (including a
+> `Threads=4` search), and (b) ordinary variance — the two runs differ by ~1.8σ.
+> Diagnosis order that worked, cheapest first: node counts + NPS across all
+> three binaries (identical → not throughput), then a diff of the
+> single-threaded path (every phase-3/4 change provably inert at `thread_id==0`),
+> then the **baseline-free A/B against the immediate predecessor**, which
+> settled it without needing to resolve the apparent t34-vs-2.3 discrepancy at
+> all. **Never run anything on a box hosting a timed gauntlet**, and prefer an
+> A/B against the immediate predecessor over a chain of comparisons through a
+> shared baseline — transitive chains accumulate error and invite chasing
+> phantom mechanisms.
+
+**Why fixed-depth bit-identity is not sufficient as a ship gate:** it
+guarantees the same *tree*, not the same *strength under a clock*. It cannot
+see throughput, time management, or per-search overhead. The `Threads=1`
+signature remains a necessary cheap check that the search is unchanged, but the
+clock-based A/B against the immediate predecessor is what actually gates a ship.
+
+**Original gate rationale:** the arm that actually ships is `Threads=1`, which is
 a *different arm* from the one measured at +199. It is bit-identical to t34 at
 fixed depth, so the gate tests what fixed depth cannot: whether the pool
 wrapper, group-stop plumbing, and per-checkup node-mirror stores cost anything
