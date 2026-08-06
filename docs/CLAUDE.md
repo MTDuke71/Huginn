@@ -13,7 +13,28 @@ location is derived from the bitboards via `Position::at_sq64()`.
 
 **Current Status (`pure-bitboard-engine` branch, 2026-05-16):**
 - ✅ **Functional UCI engine**: tested with Arena and direct UCI piping
-- ✅ **Baseline tag**: `baseline-t34` — **#42 idea 1: date-based TT aging**
+- ✅ **Released: `v2.4`** (2026-08-06) — **Lazy SMP (`#40`) + soft/hard time
+  bounds (`#65`)**. Eval unchanged from 2.3; both features live in the search's
+  *control* layer. `Threads` option (default 1, max 512); helpers share one TT
+  and book and run diverging ID schedules. `#65` splits the single per-move
+  deadline into a soft bound (gates starting a new iteration) and a hard bound
+  (`min(3×soft, safe_max, cap60, time/2)`), so an iteration already begun runs
+  to completion: clock utilisation 83.2% → 96.9%, max/move 0.56 s → 1.67 s,
+  median/move *down* 0.203 → 0.157 s.
+  **`Threads=1` is bit-identical to `baseline-t34`** (startpos d14 =
+  **3,481,582** / cp 31 / e2e4; Kiwipete d13 = **1,958,182** / cp −85 / e2a6) —
+  the shipped default is provably the 2.3 search. 316/316 tests (1 by-design
+  skip). `#65` measured **+10.60 ± 10.57**, LOS 97.54%, 2000g vs its own
+  predecessor — a **fixed-N positive, NOT an SPRT accept** (LLR reached 1.70 of
+  2.94), single machine, logged-exception class (t25/t27/t34 precedent).
+  ⚠ **Multicore is a scaling claim, never a rating.** 8 cores vs 1 core:
+  **+199.05 ± 25.63** (AMD) / **+172.78 ± 25.51** (Intel), reported separately
+  and deliberately not pooled. CCRL runs single-core, so this must **never** be
+  added to the ~2625. `Hash` default stays **64 MB** — measured, not assumed
+  (128 MB at t8 came back −18.08 ± 21.85; larger tables cost throughput on this
+  96 MB-V-Cache box, and the result is machine-specific). Full writeup:
+  [CHANGELOG_2.4.md](CHANGELOG_2.4.md).
+- ✅ **Prior baseline tag**: `baseline-t34` — **#42 idea 1: date-based TT aging**
   (`ENABLE_TT_AGING`, default ON; road-to-2.3 item 2). A 6-bit search date
   packed in the TT entry's node_type byte; `new_search()` bumps the global
   date per search; stale-dated entries are evictable regardless of depth;

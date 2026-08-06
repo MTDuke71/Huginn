@@ -105,6 +105,12 @@
 #define ENABLE_KING_SAFETY 1
 #endif
 
+// ENABLE_SOFT_TIME_BOUND (BACKLOG #65) is defined in search.hpp — it is read by
+// BOTH this file (the root iteration-boundary check) and uci.cpp (which wires
+// the two deadlines), so its default must live in a header they share. Defining
+// it here would leave uci.cpp seeing it undefined (== 0) whenever CMake did not
+// pass it, silently splitting the two halves of the feature.
+
 // ENABLE_THREATS_R2: BACKLOG #9 threats round 2 — three classes layered on the
 // t15 attacker→target table: hanging units (attacked + undefended), safe
 // pawn-push threats (the tempo before t15's pawn-attacks-piece can see it),
@@ -1867,6 +1873,22 @@ void Engine::checkup(SearchInfo& info) {
         return;
     }
 
+    // #40 phase 3: the Lazy SMP group stop — one atomic every worker reads, so
+    // a `stop` reaches all of them at once instead of waiting for the driver to
+    // notice and fan out. Null (and so free) in the single-threaded path.
+    if (group_stop && group_stop->load(std::memory_order_relaxed)) {
+        info.stopped = true;
+        return;
+    }
+
+    // #40 phase 3: publish this thread's node count for the driver to sum into
+    // the UCI `nodes`/`nps` fields. Once per checkup (~2048 nodes), not per
+    // node, so the cost is negligible and the reported figure lags by less than
+    // one checkup interval per thread.
+    if (info.node_mirror) {
+        info.node_mirror->store(info.nodes, std::memory_order_relaxed);
+    }
+
     // VICE Part 70: Check for GUI input during search (3:23).
     // The Windows console poll (GetNumberOfConsoleInputEvents / PeekConsoleInput)
     // is ~5us — profiling a `go depth` run showed ~6% of total time spent here
@@ -1875,7 +1897,11 @@ void Engine::checkup(SearchInfo& info) {
     // does not, so the input poll is gated 16x coarser. INPUT_CHECK_MASK must be
     // a multiple of checkup()'s 2048-node interval so it still lands on a call.
     constexpr uint64_t INPUT_CHECK_MASK = 32767;  // poll stdin every ~32768 nodes
-    if ((info.nodes & INPUT_CHECK_MASK) == 0 && input_is_waiting()) {
+    // #40 phase 3: helpers never touch stdin. input_is_waiting()/read_input()
+    // manipulate global console state and are main-thread-only by contract
+    // (input_checking.hpp:30, :54); a helper reaching either would race the UCI
+    // thread for console input and could swallow a command meant for it.
+    if (info.polls_input && (info.nodes & INPUT_CHECK_MASK) == 0 && input_is_waiting()) {
         // #56: the UCI layer installs a pump that answers `isready` without
         // stopping, applies `stop`/`quit`, and queues other commands. Bare
         // Engine use keeps read_input()'s any-input-stops fallback.
@@ -3102,7 +3128,38 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     
     // VICE Part 57: Clear everything before starting search
     clearForSearch(*this, info);
-    
+
+    return iterativeDeepening(pos, info);
+}
+
+/**
+ * @brief The iterative-deepening loop, run by every search thread (#40 phase 3).
+ *
+ * Split out of searchPosition so a Lazy SMP helper can run it directly. What
+ * stays in searchPosition is precisely the work that must happen ONCE per
+ * search, on the driver, before any helper exists:
+ *   - the opening-book and tablebase root probes (a hit short-circuits the
+ *     whole search, not one worker's copy of it), and
+ *   - clearForSearch, which bumps the **global** TT search date. Running that
+ *     per worker would advance the date N times per search, so entries stored
+ *     by worker 0 would read as stale to worker 1 *within the same search* and
+ *     become evictable at any depth — silently gutting the #42 aging that
+ *     shipped at t34.
+ *
+ * Helpers (`info.is_helper`) additionally skip all UCI output — interleaved
+ * `info` lines from N threads are malformed protocol, so thread 0 is the sole
+ * writer to stdout — along with the PV-display walk that feeds it, and the
+ * iteration-start time gate, since a helper has no budget of its own and runs
+ * until the group stop fires.
+ *
+ * @param pos  Position to search (this thread's own copy under SMP).
+ * @param info Per-thread search state; `is_helper` / `thread_id` select the role.
+ * @return This thread's best move.
+ */
+S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
+    S_MOVE best_move;
+    best_move.move = 0;
+
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
     const int root_static_eval = evalPosition(pos);
@@ -3113,11 +3170,63 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
     int prev_score = 0;
 #endif
 
+#if ENABLE_SOFT_TIME_BOUND
+    // #65: the soft bound is only live when the caller actually set one. A
+    // default-constructed SearchInfo leaves soft_stop_time at the clock epoch
+    // (tests, bench, and any bare-Engine caller), which would otherwise read as
+    // "already expired" and truncate every search to a single iteration.
+    const bool soft_bound_live =
+        info.soft_stop_time > info.start_time && !info.infinite && !info.depth_only;
+#endif
+
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
         if (info.stopped || info.quit) {
             break;
+        }
+
+#if ENABLE_SOFT_TIME_BOUND
+        // #65: past the soft bound, do not START another iteration — but an
+        // iteration already running is never interrupted here; it runs to the
+        // hard deadline (info.stop_time) via checkup(). depth 1 is exempt so a
+        // search always returns a legal move even on a near-flagged clock.
+        if (soft_bound_live && current_depth > 1 &&
+            std::chrono::steady_clock::now() >= info.soft_stop_time) {
+            break;
+        }
+#endif
+
+        // #40 phase 3 (r2) — per-helper ITERATION SKIPPING.
+        //
+        // Desynchronisation is the entire mechanism of Lazy SMP: threads must
+        // search differently-shaped trees so their TT entries are worth
+        // something to each other. r1 skewed only the START depth by
+        // `thread_id % 2`, which has exactly TWO distinct schedules — so at 8
+        // threads, workers 1/3/5/7 were all running one identical schedule and
+        // 2/4/6 another. Measured on Kiwipete: time-to-depth saturated at 2
+        // threads (t2 and t8 both 1.49x at d17) while node counts still scaled
+        // 3.2x — the extra workers were re-deriving each other's results.
+        //
+        // Fix (Stockfish's scheme): each helper gets its own (size, phase) pair
+        // and sits out the iterations where `((depth + phase) / size)` is odd.
+        // With 19 distinct pairs, helpers spread across genuinely different
+        // depth sequences instead of collapsing onto two.
+        //
+        // The driver (thread_id 0) NEVER skips — it must complete every
+        // iteration, since its result is the move that gets played and its
+        // schedule is what the Threads=1 bit-identity contract pins.
+        if (info.thread_id > 0) {
+            static constexpr int SKIP_SIZE[]  = {1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
+                                                 3, 3, 3, 3, 3, 3, 3, 3, 3};
+            static constexpr int SKIP_PHASE[] = {0, 1, 0, 1, 2, 3, 0, 1, 2, 3,
+                                                 4, 5, 6, 7, 8, 9, 10, 11, 12};
+            constexpr int SKIP_N = static_cast<int>(sizeof(SKIP_SIZE) / sizeof(SKIP_SIZE[0]));
+
+            const int i = (info.thread_id - 1) % SKIP_N;
+            if (((current_depth + SKIP_PHASE[i]) / SKIP_SIZE[i]) % 2 != 0) {
+                continue;  // this helper sits this depth out
+            }
         }
 
         // Reset per-iteration UCI counters so each `info` line reports
@@ -3135,7 +3244,10 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // while elapsed < budget/2 (i.e. 2*elapsed < budget). (#47: the old gate
         // assumed next≈3x elapsed and bailed at budget/4, leaving ~75% of the
         // clock unused — Huginn finished games with minutes to spare.)
-        if (current_depth > 1 && !info.infinite && !info.depth_only
+        // #40 phase 3: helpers skip this gate — they have no budget of their
+        // own and are released by the group stop, not by predicting whether
+        // one more iteration fits.
+        if (current_depth > 1 && !info.is_helper && !info.infinite && !info.depth_only
                 && info.stop_time != std::chrono::steady_clock::time_point{}) {
             auto now = std::chrono::steady_clock::now();
             auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time).count();
@@ -3198,7 +3310,14 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         const bool use_window =
             current_depth >= ASPIRATION_MIN_DEPTH &&
             prev_score > -ASPIRATION_MATE_BOUND && prev_score < ASPIRATION_MATE_BOUND;
-        int delta = ASPIRATION_DELTA;
+        // #40 phase 3 (r2) — the SECOND diversification axis, alongside
+        // iteration skipping. Helpers widen their initial window by a
+        // thread-dependent amount, so they fail high/low at different scores
+        // than the driver and re-search different windows. Without this, two
+        // helpers landing on the same depth still search near-identical trees.
+        // Exactly 0 for the driver, so the Threads=1 signature is untouched.
+        const int aspiration_skew = info.is_helper ? ((info.thread_id * 13) % 45) : 0;
+        int delta = ASPIRATION_DELTA + aspiration_skew;
         int alpha = use_window ? std::max(prev_score - delta, -30000) : -30000;
         int beta  = use_window ? std::min(prev_score + delta,  30000) :  30000;
 
@@ -3385,10 +3504,17 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         prev_score = best_score;
 #endif
 
+        // #40 phase 3: everything from here to the end of the iteration is
+        // reporting — the PV-display walk and the UCI `info` line. Only the
+        // driver does it. A helper skipping the walk also skips its
+        // make/unmake + movegen cost per iteration, which is pure overhead for
+        // a thread whose output nobody reads.
+        if (info.is_helper) continue;
+
         // Calculate elapsed time for output
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
-        
+
         // Build the PV to display: take the triangular PV as the prefix,
         // then extend by walking the transposition table. When a root move
         // bottoms out via a TT cutoff, the child never populates its own
@@ -3512,12 +3638,17 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
         // (PV is variable-length and consumes to end-of-line per the spec).
         // depth/seldepth/multipv/score/nodes/nps/hashfull/tbhits/time are
         // the standard fields every UCI GUI and adjudication tool expects.
-        const uint64_t nps = info.nodes * 1000ULL / std::max<int64_t>(elapsed.count(), 1);
+        // #40 phase 3: report the whole search's node count, not just this
+        // thread's. Publish our own tally first so the sum includes work done
+        // since the last checkup, then aggregate every worker's mirror.
+        if (info.node_mirror) info.node_mirror->store(info.nodes, std::memory_order_relaxed);
+        const uint64_t reported_nodes = info.aggregate_nodes ? info.aggregate_nodes() : info.nodes;
+        const uint64_t nps = reported_nodes * 1000ULL / std::max<int64_t>(elapsed.count(), 1);
         std::cout << "info depth " << current_depth
                   << " seldepth " << info.seldepth
                   << " multipv 1"
                   << " score " << format_uci_score(best_score, pos.side_to_move)
-                  << " nodes " << info.nodes
+                  << " nodes " << reported_nodes
                   << " nps " << nps
                   << " hashfull " << tt_table.permill_full()
                   << " tbhits " << info.tbhits

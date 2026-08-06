@@ -46,6 +46,7 @@
 #include "position.hpp"
 #include "movegen.hpp"
 #include "search.hpp"  // Changed from search.hpp
+#include "search_pool.hpp"
 #include "syzygy_tablebase.hpp"
 
 /**
@@ -55,7 +56,10 @@
 class UCIInterface {
 private:
     Position position;                                       ///< Current root position (set by the `position` command).
-    std::unique_ptr<Huginn::Engine> search_engine;          ///< The search engine (owns the transposition table).
+    std::unique_ptr<Huginn::SearchPool> pool;               ///< #40: owns the shared TT/book and the worker Engines.
+    Huginn::Engine* search_engine = nullptr;                ///< Non-owning alias for pool->driver() — the thread-0 Engine.
+                                                            ///< Kept so every existing `search_engine->...` call site is unchanged;
+                                                            ///< its tt_table/opening_book ARE the pool's shared instances.
     std::unique_ptr<Huginn::SyzygyTablebase> tablebase;     ///< Syzygy probe wrapper (disabled until SyzygyPath is set).
     bool debug_mode = false;                                ///< Extra `info string` logging when true.
     bool quit_received = false;                             ///< `quit` seen (possibly mid-search); run() exits after unwinding.

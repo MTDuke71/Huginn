@@ -53,8 +53,11 @@ UCIInterface::UCIInterface() {
     // — unsolicited startup output the protocol forbids.
     tablebase = std::make_unique<Huginn::SyzygyTablebase>();
 
-    // Initialize search engine with tablebase
-    search_engine = std::make_unique<Huginn::Engine>(tablebase.get());
+    // #40 phase 3: the pool owns the shared TT/book and the worker Engines.
+    // It starts at 1 thread, so until `Threads` is advertised (phase 4) the
+    // call path is exactly the single-threaded one — no thread is spawned.
+    pool = std::make_unique<Huginn::SearchPool>(tablebase.get());
+    search_engine = &pool->driver();
 
     // Load opening book if enabled
     if (own_book) {
@@ -137,14 +140,14 @@ bool UCIInterface::dispatch_command(const std::string& line) {
         }
         else if (command == "ucinewgame") {
             position.set_startpos();
-            search_engine->reset();
             // New game: wipe cross-game state so stale entries from the previous
             // game can't be probed on a transposition (there is no TT aging yet,
             // #42). This MUST live here, not in reset(): reset() also runs once
             // per `go` (search_best_move), so clearing the TT there would destroy
             // it every move. (#46)
-            search_engine->tt_table.clear();
-            search_engine->clear_search_tables();
+            // #40 phase 3: goes through the pool so EVERY worker's ordering
+            // tables are cleared, not just thread 0's.
+            pool->new_game();
             if (debug_mode) std::cout << "info string New game started (TT + search tables cleared)" << std::endl;
         }
         else if (command == "position") {
@@ -231,7 +234,7 @@ bool UCIInterface::dispatch_command(const std::string& line) {
  * for engine selection and tournament management.
  */
 void UCIInterface::send_id() {
-    std::cout << "id name Huginn 2.3" << std::endl;
+    std::cout << "id name Huginn 2.4" << std::endl;
     std::cout << "id author MTDuke71" << std::endl;
 }
 
@@ -248,9 +251,13 @@ void UCIInterface::send_id() {
  */
 void UCIInterface::send_options() {
     std::cout << "option name Hash type spin default 64 min 1 max 4096" << std::endl;
-    // #56: Threads and Ponder are NOT advertised — the engine is
-    // single-threaded and does not ponder; advertising them promised
-    // support that did not exist. Re-add when implemented.
+    // #40 phase 4: Threads is advertised again now that Lazy SMP exists (#56
+    // had removed it because it promised support the engine did not have).
+    // Default 1 — the shipped default stays deterministic and bit-identical to
+    // baseline-t34; multithreading is opt-in.
+    std::cout << "option name Threads type spin default 1 min 1 max "
+              << Huginn::SearchPool::MAX_THREADS << std::endl;
+    // Ponder is still NOT advertised — the engine does not ponder.
     std::cout << "option name OwnBook type check default false" << std::endl;
     std::cout << "option name BookFile type string default src/performance.bin" << std::endl;
     // #56: tablebases default to DISABLED — no hard-coded c:\TB\ auto-probe.
@@ -453,7 +460,22 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
                 std::cout << "info string Hash value invalid: " << option_value << std::endl;
             }
         }
-        // #56: Threads / Ponder handlers removed with their advertisements —
+        // #40 phase 4: Lazy SMP worker count. Safe to apply here — searches are
+        // synchronous, so all workers are joined by the time a command is
+        // dispatched. Worker 0 survives the resize, so the cached
+        // `search_engine` alias stays valid (see SearchPool::set_threads).
+        else if (option_name == "Threads") {
+            long long n = 0;
+            if (parse_spin_clamped(option_value, 1, Huginn::SearchPool::MAX_THREADS, n)) {
+                pool->set_threads(static_cast<int>(n));
+                if (debug_mode) {
+                    std::cout << "info string Threads set to " << pool->threads() << std::endl;
+                }
+            } else if (debug_mode) {
+                std::cout << "info string Threads value invalid: " << option_value << std::endl;
+            }
+        }
+        // #56: the Ponder handler stays removed with its advertisement —
         // unknown or unadvertised options are ignored per protocol.
         else if (option_name == "OwnBook") {
             bool new_own_book = (option_value == "true");
@@ -534,7 +556,21 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool ho
     // Convert time limits
     auto search_start = std::chrono::steady_clock::now();
     info.start_time = search_start;
+#if ENABLE_SOFT_TIME_BOUND
+    // #65: hard deadline aborts an in-flight iteration; soft deadline gates
+    // starting a NEW one. hard_time_ms == 0 means the caller supplied no
+    // extension allowance (movetime / bare `go` / depth-only), in which case
+    // both collapse to max_time_ms — exactly the pre-#65 single deadline.
+    const int hard_ms = (limits.hard_time_ms > limits.max_time_ms) ? limits.hard_time_ms
+                                                                  : limits.max_time_ms;
+    info.stop_time = search_start + std::chrono::milliseconds(hard_ms);
+    info.soft_stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#else
+    // Single-deadline arm (pre-#65). The A/B baseline: max_time_ms is BOTH the
+    // "no new iteration" point and the abort point. soft_stop_time is left at
+    // the clock epoch so the root check reads it as unset even if compiled in.
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#endif
 
     // Perform the search using Engine interface
     S_MOVE best_move;
@@ -546,7 +582,9 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool ho
     // the chosen move against this clean snapshot before emitting bestmove.
     auto pre_search = position;
     try {
-        best_move = search_engine->searchPosition(position, info);  // Engine method
+        // #40 phase 3: the pool drives the search. At Threads=1 it spawns
+        // nothing and this is exactly the old searchPosition path.
+        best_move = pool->search(position, info);
     } catch (const std::exception& e) {
         std::cout << "info string Search threw exception: " << e.what() << std::endl;
         std::cout.flush();
@@ -685,7 +723,8 @@ void UCIInterface::load_opening_book() {
  * hazard if the search unwound while the write was in flight.
  */
 void UCIInterface::signal_stop() {
-    if (search_engine) search_engine->stop();
+    // #40 phase 3: fan out to every worker, not just thread 0.
+    if (pool) pool->stop_all();
 }
 
 /**

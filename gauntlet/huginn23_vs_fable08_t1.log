@@ -1,0 +1,15 @@
+[INFO  ] [19:56:02.398960] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [19:56:02.399060] <   > fastchess --- Setting seed to: 4281865563447384802
+[INFO  ] [19:56:02.429024] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [19:56:02.435703] <   > fastchess --- Starting tournament...
+[WARN  ] [19:57:30.306568] <   > fastchess --- Warning; PV continues after fifty-move rule - move c2d1 from Fable_0.8
+Info; info depth 18 score cp 29 nodes 231884 nps 5945743 time 39 pv f4e5 g4h5 h6f8 h5g4 f8g7 d3e2 g7h6 e2d3 e5d5 g4f5 d5c5 d3e2 h6f4 f5e4 c5b4 e4c2 b4c3 c2d1
+Position; fen rnbqkbnr/1pp1pp1p/p5p1/3p4/P7/6P1/1PPPPPBP/RNBQK1NR w KQkq - 0 4
+Moves; d2d4 f8g7 c2c3 g8f6 g1f3 e8g8 e1g1 b8c6 c1e3 f6g4 e3c1 g4f6 c1e3 f6g4 e3d2 c8f5 d2f4 e7e5 d4e5 f5e6 f3d4 g4e5 d4e6 f7e6 b1d2 g6g5 f4e3 d8e7 h2h3 b7b6 b2b4 e5f7 d1c2 f7d6 d2f3 h7h6 a1d1 g8h8 d1d3 d6c4 e3c1 h8g8 d3d1 e7f6 e2e4 f6c3 c2c3 g7c3 e4d5 e6d5 f3d2 c4d2 g2d5 g8h8 c1d2 c3d2 d5c6 a8d8 b4b5 a6a5 f2f3 d8d4 g1g2 f8d8 f1f2 h8g7 c6e4 g7f6 f2e2 d2b4 d1d4 d8d4 e4c2 h6h5 c2b3 h5h4 g3h4 g5h4 b3c2 d4d2 e2d2 b4d2 g2f1 f6e5 f1e2 d2b4 e2e3 b4c5 e3e2 e5f4 c2g6 c5f8 g6e4 f8d6 e4g6 d6e7 g6h5 e7f8 h5g4 f8c5 g4d7 c5e3 d7c6 e3c1 c6e4 c1b2 e2f2 b2a3 f2e2 a3b4 e4c6 f4e5 e2d3 b4c5 c6d7 c5f2 d7c6 e5f4 d3e2 f2g1 c6d7 g1d4 d7g4 d4e5 g4e6 e5b2 e6g4 b2h8 g4e6 h8f6 e6g4 f4e5 e2d2 f6g5 d2d3 g5e7 g4h5 e7c5 h5g4 c5f8 g4h5 f8d6 h5g4 d6a3 d3e3 a3c1 e3d3 e5d5 g4f5 c1h6 d3c3 h6g5 f5b1 g5f6 c3d3 d5e5 b1a2 e5f4 d3e2 f6d4 a2e6 d4g7 e6g4 g7h6 e2d3
+
+[INFO  ] [20:15:21.742905] <   > fastchess --- Finished match
+
+[INFO  ] [20:15:21.742936] <   > fastchess --- Total Time: 00:19:19 (hours:minutes:seconds)
+
+

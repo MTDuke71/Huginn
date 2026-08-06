@@ -50,8 +50,29 @@ bool parse_spin_clamped(const std::string& s, long long lo, long long hi, long l
 ///                  increment either).
 /// @param inc_ms    Side-to-move increment in ms (negative treated as 0).
 /// @param movestogo Moves to the next time control; 0 = sudden death.
-/// @return The per-move budget in ms, always >= 1.
+/// @return The per-move budget in ms, always >= 1. Under #65 this is the SOFT
+///         bound (see compute_hard_time_budget_ms); its value is unchanged.
 long long compute_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo);
+
+/// @brief BACKLOG #65: the HARD per-move deadline — the point at which an
+///        in-flight search is aborted mid-iteration.
+///
+/// Huginn historically had ONE deadline: `compute_time_budget_ms` was both the
+/// "don't start another iteration" point and the "abort now" point, so an
+/// iteration that would have taken 10% longer than the budget was killed and
+/// its work discarded. At 10+0.1 that pinned every move to <= 550 ms — across
+/// 2455 measured moves Huginn never once exceeded 0.56 s, while Fable 0.8
+/// (soft 408 / hard 1224) peaked at 1.23 s and used 95.5% of its clock to
+/// Huginn's 83.2%.
+///
+/// Split: the soft bound still gates *starting* a new iteration; this hard
+/// bound lets an iteration already begun run to completion, up to 3x soft.
+/// The anti-forfeit guarantees are untouched — the same `safe_max` (clock
+/// minus reserve) and `cap60` (60% of the clock) still bound the result, so
+/// the hard deadline can never exceed what #47 already deemed safe to spend.
+///
+/// @return The hard deadline in ms; always >= the soft bound and >= 1.
+long long compute_hard_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo);
 
 /// @brief BACKLOG #60 parser-purity refactor: pure parse of the UCI `go`
 ///        command tokens into search limits, with no side effects (does not

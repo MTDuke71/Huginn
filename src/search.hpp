@@ -29,9 +29,35 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace Huginn {
+
+// ENABLE_SOFT_TIME_BOUND: BACKLOG #65 — split the single per-move deadline into
+// a SOFT bound (gates STARTING a new iteration; checked only at the root
+// iteration boundary) and a HARD bound (aborts an in-flight search — the
+// existing mid-search checkup() abort, unchanged).
+//
+// Pre-#65 both were `time/20 + inc/2`, so an iteration overrunning the budget
+// by any margin was killed and its work discarded. Measured at 10+0.1: Huginn
+// never exceeded 0.56 s across 2455 moves and used 83.2% of its clock, against
+// Fable 0.8's 1.23 s peak and 95.5% (gauntlet/huginn23_vs_fable08_t1.pgn).
+// Hard = min(3*soft, safe_max, cap60, time/2): #47's anti-forfeit caps still
+// bind, plus a half-clock guard that is load-bearing only under a 3x allowance
+// (see compute_hard_time_budget_ms). An allowance, not a relaxed safety margin.
+//
+// Lives in this HEADER, not search.cpp: both search.cpp (the iteration-boundary
+// check) and uci.cpp (which wires the two deadlines onto SearchInfo) read it,
+// and a search.cpp-local default would leave uci.cpp seeing 0 whenever CMake
+// did not pass the definition — silently splitting the feature in half.
+//
+// TIME-ONLY: fixed-depth node counts must stay bit-identical in both arms
+// (startpos d14 = 3,481,582), so signature.py is a complete correctness
+// pre-check here. Flip with -DENABLE_SOFT_TIME_BOUND=OFF.
+#ifndef ENABLE_SOFT_TIME_BOUND
+#define ENABLE_SOFT_TIME_BOUND 1
+#endif
 
 // BACKLOG #3: 1-ply continuation history (counter-move history). Generalizes
 // the scalar counter-move table (ENABLE_PLY_TRACKED_COUNTERMOVE) into a full
@@ -92,7 +118,12 @@ const int MATE = 29000;
  */
 struct SearchInfo {
     std::chrono::steady_clock::time_point start_time;  // When search started
-    std::chrono::steady_clock::time_point stop_time;   // When to stop search
+    std::chrono::steady_clock::time_point stop_time;   // HARD deadline: abort mid-iteration here
+    /// @brief BACKLOG #65: SOFT deadline — checked ONLY at the root iteration
+    ///        boundary, never inside the search. Past it, no new iteration is
+    ///        started, but an iteration already running continues to
+    ///        ::stop_time. Defaults equal to stop_time (pre-#65 behaviour).
+    std::chrono::steady_clock::time_point soft_stop_time;
     int depth;          // Current search depth
     int max_depth;      // Maximum depth to search (set from limits or manually in tests)
     int ply;            // Current search ply (VICE Part 57)
@@ -179,12 +210,43 @@ struct SearchInfo {
     // to read_input()'s conservative any-input-stops behaviour.
     std::function<void(SearchInfo&)> on_input;
 
+    // #40 phase 3: may THIS search poll stdin? `input_is_waiting()` and
+    // `read_input()` touch global console state and are documented
+    // main-thread-only (input_checking.hpp) — a Lazy SMP helper reaching either
+    // would race the UCI thread and could consume a command the GUI sent. So
+    // helpers set this false and checkup() skips the whole input block for
+    // them. Opt-OUT (default true) so every existing construction site — tests,
+    // bench, and the UCI driver itself — behaves exactly as before.
+    bool polls_input;
+
+    // #40 phase 3: helper threads emit no UCI output (interleaved `info` lines
+    // from N threads are malformed protocol) and skip the driver-only
+    // iteration-start time gate — they run until the group stop fires. Thread 0
+    // leaves this false and is the sole writer to stdout.
+    bool is_helper;
+
+    // #40 phase 3: worker index, used only to diversify the search (depth and
+    // aspiration skew). 0 = the driver.
+    int thread_id;
+
+    // #40 phase 3: relaxed-atomic mirror of `nodes`, published from checkup()
+    // so the driver can sum node counts across threads for the UCI `nodes`/`nps`
+    // fields without racing on the plain counter. Null in single-threaded use.
+    std::atomic<uint64_t>* node_mirror;
+
+    // #40 phase 3: driver-only. Returns the node total summed across every
+    // worker's mirror, for the UCI `nodes`/`nps` fields — a GUI expects the
+    // whole search's node count, not thread 0's share. Null in single-threaded
+    // use, where `nodes` is already the whole story.
+    std::function<uint64_t()> aggregate_nodes;
+
     SearchInfo() : depth(0), max_depth(25), ply(0), movestogo(30), infinite(false),
                    quit(false), stopped(false), depth_only(false), nodes(0), seldepth(0), tbhits(0),
                    best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0),
                    singular_exts(0), aspiration_researches(0), history_lmr_adjusts(0),
-                   lmp_prunes(0) {
+                   lmp_prunes(0), polls_input(true), is_helper(false), thread_id(0),
+                   node_mirror(nullptr) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
             search_stack[i] = S_MOVE();
@@ -201,7 +263,12 @@ struct SearchInfo {
  */
 struct MinimalLimits {
     int max_depth = 25;     ///< Maximum search depth (copied to SearchInfo::max_depth).
-    int max_time_ms = 5000; ///< Soft time budget for the move, in milliseconds.
+    int max_time_ms = 5000; ///< SOFT time budget: the point past which no NEW iteration starts.
+    /// @brief BACKLOG #65: HARD deadline — abort an in-flight iteration here.
+    ///        0 means "unset"; callers then fall back to max_time_ms, which is
+    ///        exactly the pre-#65 single-deadline behaviour. Always >=
+    ///        max_time_ms when set.
+    int hard_time_ms = 0;
     bool infinite = false;  ///< If true, search until explicitly stopped (ignore the time budget).
 };
 
@@ -218,29 +285,88 @@ struct MinimalLimits {
 class Engine {
 public:  // Make members public for easier access
     /**
-     * @brief Constructs the engine and initializes its tables.
+     * @brief Constructs a self-contained engine that owns its TT and book.
      * @param tb Optional Syzygy tablebase handle (nullptr = tablebases disabled).
+     *
+     * The single-threaded shape: one Engine owning everything, exactly as before
+     * (#40 phase 2 changed only *who owns* the TT and book, not this signature).
      */
-    Engine(SyzygyTablebase* tb = nullptr) : tablebase(tb), pv_table(2), tt_table(64) {
+    Engine(SyzygyTablebase* tb = nullptr)
+        : pv_table(2),
+          owned_tt(std::make_unique<TranspositionTable>(64)),
+          owned_book(std::make_unique<PolyglotBook>()),
+          tt_table(*owned_tt), opening_book(*owned_book),
+          tablebase(tb) {
         // Initialize MVV-LVA table
         init_mvv_lva();
-        
+
         // Clear search tables
         clear_search_tables();
     }
-    
+
+    /**
+     * @brief Constructs a Lazy SMP worker that SHARES the caller's TT and book.
+     * @param shared_tt   The one transposition table all workers cooperate through.
+     * @param shared_book Opening book (read-only during search).
+     * @param tb          Optional Syzygy tablebase handle.
+     *
+     * #40 phase 2: an Engine is exactly the right per-thread unit — everything
+     * it owns besides the TT/book (history, killers, counter-moves, PV table,
+     * MVV-LVA, node counter, stop flag) is *supposed* to be private to a worker
+     * under Lazy SMP. So instead of splitting the class, the two genuinely
+     * shared resources are lifted out and N Engines are built around them. That
+     * leaves every existing member access (`engine.tt_table.store(...)`, the
+     * search's `search_history[...]`, ...) untouched — the per-thread state was
+     * already correctly encapsulated.
+     *
+     * Sharing is safe because both resources are concurrency-ready: the TT is
+     * lockless-safe as of phase 1 (see ::TTSlot), and the book is immutable once
+     * loaded — `load_opening_book`/`clear` only ever run between searches, from
+     * the UCI thread.
+     */
+    Engine(TranspositionTable& shared_tt, PolyglotBook& shared_book, SyzygyTablebase* tb = nullptr)
+        : pv_table(2),
+          tt_table(shared_tt), opening_book(shared_book),
+          tablebase(tb) {
+        init_mvv_lva();
+        clear_search_tables();
+    }
+
+
     // #56: the ONE cross-thread cancellation channel. stop()/signal_stop()
     // (any thread) set it; checkup() polls it and translates it into
     // info.stopped ON the searching thread, so SearchInfo itself is never
     // written cross-thread (the old path published a raw pointer to the
     // stack SearchInfo and wrote its non-atomic fields from another thread).
     std::atomic<bool> should_stop{false};
+
+    // #40 phase 3: group cancellation for Lazy SMP. `should_stop` is per-Engine
+    // (a worker must be individually stoppable), but a UCI `stop` has to reach
+    // every worker at once — relying on the driver to notice and fan out would
+    // add a whole checkup interval of latency per worker. checkup() consults
+    // both. Null outside SMP, so the single-threaded path is unchanged.
+    std::atomic<bool>* group_stop = nullptr;
+
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
     MinimalLimits current_limits;
     PVTable pv_table;  // Principal Variation table (VICE tutorial style)
-    TranspositionTable tt_table;  // VICE Part 84: Transposition table for storing search results
-    PolyglotBook opening_book;    // VICE Part 85: Polyglot opening book for opening moves
+
+private:
+    // #40 phase 2: backing storage for the default (self-contained) constructor
+    // only. Null in an SMP worker, which binds the references below to the
+    // shared instances its owner passed in. Declared BEFORE the references so
+    // member-init order builds them first.
+    std::unique_ptr<TranspositionTable> owned_tt;
+    std::unique_ptr<PolyglotBook> owned_book;
+
+public:
+    // The two resources Lazy SMP workers share. References (not values) so that
+    // every existing call site — `engine.tt_table.probe(...)`,
+    // `engine.opening_book.clear()` — keeps working verbatim whether the engine
+    // owns them or borrows them.
+    TranspositionTable& tt_table;  // VICE Part 84: Transposition table for storing search results
+    PolyglotBook& opening_book;    // VICE Part 85: Polyglot opening book for opening moves
     SyzygyTablebase* tablebase;  // Syzygy tablebase for endgame perfect play
     
     // Search History array (3:55) - stores scores for moves that improved alpha
@@ -424,6 +550,23 @@ public:  // Make members public for easier access
      * @return The best move found (also left in `info.best_move`). (VICE Part 57)
      */
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
+
+    /**
+     * @brief The iterative-deepening loop alone, without the once-per-search
+     *        setup — the entry point a Lazy SMP helper thread runs (#40 phase 3).
+     *
+     * `searchPosition` = book/TB root probe + clearForSearch + this. Helpers
+     * must NOT repeat that setup: the probes would be redundant, and
+     * clearForSearch bumps the *global* TT search date, which run per-worker
+     * would make each worker's entries look stale to the others within a single
+     * search. Callers driving this directly are responsible for having done the
+     * setup exactly once.
+     *
+     * @param pos  Position to search (the calling thread's own copy).
+     * @param info Per-thread state; `is_helper` and `thread_id` select the role.
+     * @return This thread's best move.
+     */
+    S_MOVE iterativeDeepening(Position& pos, SearchInfo& info);
 
     /**
      * @brief Probes Syzygy WDL tablebases at a leaf.

@@ -231,7 +231,12 @@ TEST(UciSearchControl, OptionsAdvertiseSyzygyDisabledAndNoFalsePromises) {
 
     EXPECT_NE(out.find("option name SyzygyPath type string default <empty>"), std::string::npos)
         << "SyzygyPath must default to disabled, not a hard-coded path";
-    EXPECT_EQ(out.find("Threads"), std::string::npos);
+    // #40 phase 4: Threads is now an honest advertisement — Lazy SMP exists, so
+    // the option is real. It must default to 1 so the shipped binary stays
+    // deterministic and bit-identical to baseline-t34; SMP is opt-in.
+    EXPECT_NE(out.find("option name Threads type spin default 1 min 1"), std::string::npos)
+        << "Threads must be advertised now that it is implemented, defaulting to 1";
+    // Ponder is still a false promise — the engine does not ponder.
     EXPECT_EQ(out.find("Ponder"), std::string::npos);
 }
 

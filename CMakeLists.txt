@@ -193,6 +193,21 @@ else()
     message(STATUS "Check-aware quiescence disabled (pre-t26 arm)")
 endif()
 
+# BACKLOG #65: soft/hard per-move time bounds (see ENABLE_SOFT_TIME_BOUND in
+# src/search.cpp). CANDIDATE, under SPRT — default ON in the candidate build;
+# -DENABLE_SOFT_TIME_BOUND=OFF rebuilds the single-deadline arm, which is the
+# correct A/B baseline for this change (runbook §7: gate against the immediate
+# predecessor, not a shared baseline). TIME-ONLY: both arms must produce
+# identical fixed-depth signatures (startpos d14 = 3,481,582).
+option(ENABLE_SOFT_TIME_BOUND "BACKLOG #65: soft/hard per-move time bounds (candidate)" ON)
+if(ENABLE_SOFT_TIME_BOUND)
+    add_compile_definitions(ENABLE_SOFT_TIME_BOUND=1)
+    message(STATUS "Soft/hard time bounds enabled (BACKLOG #65, candidate)")
+else()
+    add_compile_definitions(ENABLE_SOFT_TIME_BOUND=0)
+    message(STATUS "Soft/hard time bounds disabled (single-deadline arm)")
+endif()
+
 # BACKLOG #53: rule-50-aware TT eligibility (see ENABLE_RULE50_TT_GUARD in
 # src/search.cpp). SHIPPED in baseline-t26 on correctness+tests (#50/#51
 # precedent; blitz SPRT ~neutral: Intel −18.08 / AMD +5.21 vs t25) — default
@@ -478,6 +493,7 @@ set(COMMON_SOURCES
     src/evaluation.cpp
     src/input_checking.cpp
     src/search.cpp
+    src/search_pool.cpp
     src/pvtable.cpp
     src/polyglot_book.cpp
     src/syzygy_tablebase.cpp
@@ -634,6 +650,8 @@ if(BUILD_TESTING)
     test/test_lmp.cpp
     test/test_transposition_table.cpp
     test/test_randomized_invariants.cpp
+    test/test_smp_shared_resources.cpp
+    test/test_smp_pool.cpp
     )
 
     add_executable(huginn_tests

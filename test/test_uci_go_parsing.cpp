@@ -20,6 +20,26 @@ std::vector<std::string> split_command(const std::string& command) {
 }
 } // namespace
 
+TEST(UCIGoParsingTest, HardTimeBoundSetOnlyForClockBasedMoves) {
+    // BACKLOG #65: only a real clock earns an extension allowance. max_time_ms
+    // keeps its pre-#65 meaning (the SOFT bound) so every other assertion in
+    // this file still pins what it always did.
+    bool infinite = false;
+    auto clocked = parse_go_command(split_command("go wtime 10000 btime 10000 winc 100 binc 100"),
+                                    Color::White, infinite);
+    EXPECT_EQ(clocked.max_time_ms, 550);    // time/20 + inc/2, unchanged
+    EXPECT_EQ(clocked.hard_time_ms, 1650);  // 3x soft, inside safe_max/cap60
+
+    // `movetime` is an explicit GUI instruction — obey it exactly.
+    auto fixed = parse_go_command(split_command("go movetime 3000"), Color::White, infinite);
+    EXPECT_EQ(fixed.max_time_ms, 3000);
+    EXPECT_EQ(fixed.hard_time_ms, 0) << "movetime must not get an extension allowance";
+
+    // Depth-only and bare `go` leave the allowance unset -> single deadline.
+    EXPECT_EQ(parse_go_command(split_command("go depth 8"), Color::White, infinite).hard_time_ms, 0);
+    EXPECT_EQ(parse_go_command(split_command("go"), Color::White, infinite).hard_time_ms, 0);
+}
+
 TEST(UCIGoParsingTest, ParseDepth) {
     bool infinite_requested = false;
     auto limits = parse_go_command(split_command("go depth 6"), Color::White, infinite_requested);

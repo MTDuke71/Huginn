@@ -216,6 +216,12 @@ Huginn::MinimalLimits parse_go_command(const std::vector<std::string>& tokens,
 		const long long side_time = white_to_move ? wtime : btime;  // -1 = our clock not sent
 		const long long side_inc = white_to_move ? winc : binc;
 		limits.max_time_ms = static_cast<int>(compute_time_budget_ms(side_time, side_inc, movestogo));
+		// #65: clock-based moves are the only case that gets an extension
+		// allowance. `movetime` is an explicit instruction from the GUI and
+		// must be obeyed exactly; bare `go` is a fallback, not a measured
+		// slice. Both leave hard_time_ms at 0 -> single-deadline behaviour.
+		limits.hard_time_ms =
+		    static_cast<int>(compute_hard_time_budget_ms(side_time, side_inc, movestogo));
 	}
 	else if (!limits.infinite) {
 		// Bare `go` with no limits at all: a defined default budget.
@@ -261,4 +267,42 @@ long long compute_time_budget_ms(long long time_ms, long long inc_ms, long long 
 	if (alloc > safe_max) alloc = safe_max;
 	if (alloc < 1) alloc = 1;
 	return alloc;
+}
+
+long long compute_hard_time_budget_ms(long long time_ms, long long inc_ms, long long movestogo) {
+	const long long soft = compute_time_budget_ms(time_ms, inc_ms, movestogo);
+
+	// No clock sent, or an emergency-tier budget: nothing to extend into. The
+	// `time_ms < 0` branch of the soft allocator is already a conservative
+	// guess rather than a measured slice, so tripling it would be inventing
+	// time we were never told we had.
+	if (time_ms < 0) return soft;
+
+	// Same two hard caps the soft path uses — deliberately recomputed rather
+	// than passed in, so the two functions cannot drift apart.
+	const long long reserve = std::max(50LL, std::min(1000LL, time_ms / 10));
+	const long long safe_max = std::max(0LL, time_ms - reserve);
+	const long long cap60 = (time_ms * 6) / 10;
+
+	long long hard = soft * 3;
+	hard = std::min(hard, std::min(safe_max, cap60));
+
+	// The clamp that actually earns its keep. `cap60` was never load-bearing
+	// pre-#65: the single deadline was time/20 + inc/2, which cannot approach
+	// 60% of the clock on a normal TC, so the cap only ever fired on clocks
+	// already near zero. A 3x allowance changes that — 3*soft >= cap60 once
+	// time <= 3.33*inc (below ~333 ms at a 0.1 s increment), which would let a
+	// single move eat 60% of a scramble clock. Halving is the standard guard
+	// (Fable uses (t-30)/2 for the same reason): never commit more than half
+	// the remaining clock to one move, so a bad estimate costs a move, not the
+	// game. Binds only at low clock — at 10+0.1 this is 5000 ms vs a 1650 ms
+	// hard bound, i.e. inert during normal play.
+	hard = std::min(hard, time_ms / 2);
+
+	// The hard deadline is an ALLOWANCE, never a restriction: if the caps bite
+	// below the soft bound (very low clock), fall back to soft so this can
+	// never shorten a search relative to the pre-#65 behaviour.
+	if (hard < soft) hard = soft;
+	if (hard < 1) hard = 1;
+	return hard;
 }
