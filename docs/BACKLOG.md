@@ -225,6 +225,35 @@ stops at depth 11 in 353 ms.
 PGN: `gauntlet/softtime_vs_singledeadline.pgn`. Flip with
 `-DENABLE_SOFT_TIME_BOUND=OFF`.
 
+**Stress test — PASSED (2026-08-06, user-proposed).** The combination #65 had
+never seen: **fast clock + SMP**. `softtime_t8` vs `singledeadline_t8`,
+**5+0.05, `Threads=8` both sides, cc=1** (runbook §3 — `cc>1` with `Threads=8`
+oversubscribes and makes wall-clock meaningless), 200g, TB both sides.
+
+*Pass criterion was forfeits, not Elo* — 200g gives ±32, which cannot resolve a
+~10 Elo effect, but it can resolve whether a 3× allowance flags under pressure.
+
+- **Zero time forfeits, zero illegal moves, zero disconnects, zero crashes.**
+  All 200 games ended on legitimate chess termination: 93 threefold, 52 Black
+  mates, 46 White mates, 8 insufficient material, 1 stalemate. Warn-level log
+  contains only startup INFO.
+- Elo **+6.95 ± 32.38**, LOS 66.35%, 51.00% — same sign as the 10+0.1 result
+  and its CI comfortably contains +10.60. No contradiction; no new information.
+- Clock (budget ≈ 8.21 s at 64.2 moves): utilisation **85.1% → 97.7%**,
+  max/move **0.28 s → 0.83 s**, median/move **down** 0.097 → 0.066 s.
+
+Both maxima land exactly on the computed bounds — at 5+0.05, soft =
+`5000/20 + 50/2` = **275 ms** (observed single-deadline max 0.28 s) and hard =
+`min(3*275, safe_max, cap60, 2500)` = **825 ms** (observed candidate max
+0.83 s). The formulas predict the measured behaviour to the millisecond at a
+second, faster TC.
+
+⚠ 97.7% utilisation is deliberately close to the edge. It is safe *by
+construction* rather than by luck: a forfeit needs a single move to outlast the
+remaining clock, and no move can exceed `time/2`. The guards scale with the
+clock, so the margin holds as the clock drains. PGN:
+`gauntlet/softtime_t8_stress_5p05.pgn`.
+
 **Original analysis follows.**
 
 ### #65: Soft/hard time bounds — the measurement (2026-08-05)
