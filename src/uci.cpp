@@ -556,7 +556,21 @@ void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool ho
     // Convert time limits
     auto search_start = std::chrono::steady_clock::now();
     info.start_time = search_start;
+#if ENABLE_SOFT_TIME_BOUND
+    // #65: hard deadline aborts an in-flight iteration; soft deadline gates
+    // starting a NEW one. hard_time_ms == 0 means the caller supplied no
+    // extension allowance (movetime / bare `go` / depth-only), in which case
+    // both collapse to max_time_ms — exactly the pre-#65 single deadline.
+    const int hard_ms = (limits.hard_time_ms > limits.max_time_ms) ? limits.hard_time_ms
+                                                                  : limits.max_time_ms;
+    info.stop_time = search_start + std::chrono::milliseconds(hard_ms);
+    info.soft_stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#else
+    // Single-deadline arm (pre-#65). The A/B baseline: max_time_ms is BOTH the
+    // "no new iteration" point and the abort point. soft_stop_time is left at
+    // the clock epoch so the root check reads it as unset even if compiled in.
     info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#endif
 
     // Perform the search using Engine interface
     S_MOVE best_move;

@@ -34,6 +34,31 @@
 
 namespace Huginn {
 
+// ENABLE_SOFT_TIME_BOUND: BACKLOG #65 — split the single per-move deadline into
+// a SOFT bound (gates STARTING a new iteration; checked only at the root
+// iteration boundary) and a HARD bound (aborts an in-flight search — the
+// existing mid-search checkup() abort, unchanged).
+//
+// Pre-#65 both were `time/20 + inc/2`, so an iteration overrunning the budget
+// by any margin was killed and its work discarded. Measured at 10+0.1: Huginn
+// never exceeded 0.56 s across 2455 moves and used 83.2% of its clock, against
+// Fable 0.8's 1.23 s peak and 95.5% (gauntlet/huginn23_vs_fable08_t1.pgn).
+// Hard = min(3*soft, safe_max, cap60, time/2): #47's anti-forfeit caps still
+// bind, plus a half-clock guard that is load-bearing only under a 3x allowance
+// (see compute_hard_time_budget_ms). An allowance, not a relaxed safety margin.
+//
+// Lives in this HEADER, not search.cpp: both search.cpp (the iteration-boundary
+// check) and uci.cpp (which wires the two deadlines onto SearchInfo) read it,
+// and a search.cpp-local default would leave uci.cpp seeing 0 whenever CMake
+// did not pass the definition — silently splitting the feature in half.
+//
+// TIME-ONLY: fixed-depth node counts must stay bit-identical in both arms
+// (startpos d14 = 3,481,582), so signature.py is a complete correctness
+// pre-check here. Flip with -DENABLE_SOFT_TIME_BOUND=OFF.
+#ifndef ENABLE_SOFT_TIME_BOUND
+#define ENABLE_SOFT_TIME_BOUND 1
+#endif
+
 // BACKLOG #3: 1-ply continuation history (counter-move history). Generalizes
 // the scalar counter-move table (ENABLE_PLY_TRACKED_COUNTERMOVE) into a full
 // depth^2-updated history conditioned on the parent move. Gated for clean SPRT
@@ -93,7 +118,12 @@ const int MATE = 29000;
  */
 struct SearchInfo {
     std::chrono::steady_clock::time_point start_time;  // When search started
-    std::chrono::steady_clock::time_point stop_time;   // When to stop search
+    std::chrono::steady_clock::time_point stop_time;   // HARD deadline: abort mid-iteration here
+    /// @brief BACKLOG #65: SOFT deadline — checked ONLY at the root iteration
+    ///        boundary, never inside the search. Past it, no new iteration is
+    ///        started, but an iteration already running continues to
+    ///        ::stop_time. Defaults equal to stop_time (pre-#65 behaviour).
+    std::chrono::steady_clock::time_point soft_stop_time;
     int depth;          // Current search depth
     int max_depth;      // Maximum depth to search (set from limits or manually in tests)
     int ply;            // Current search ply (VICE Part 57)
@@ -233,7 +263,12 @@ struct SearchInfo {
  */
 struct MinimalLimits {
     int max_depth = 25;     ///< Maximum search depth (copied to SearchInfo::max_depth).
-    int max_time_ms = 5000; ///< Soft time budget for the move, in milliseconds.
+    int max_time_ms = 5000; ///< SOFT time budget: the point past which no NEW iteration starts.
+    /// @brief BACKLOG #65: HARD deadline — abort an in-flight iteration here.
+    ///        0 means "unset"; callers then fall back to max_time_ms, which is
+    ///        exactly the pre-#65 single-deadline behaviour. Always >=
+    ///        max_time_ms when set.
+    int hard_time_ms = 0;
     bool infinite = false;  ///< If true, search until explicitly stopped (ignore the time budget).
 };
 

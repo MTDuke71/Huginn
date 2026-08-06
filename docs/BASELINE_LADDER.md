@@ -9,6 +9,106 @@ binary between boxes) and snapshotted as `huginn_tN.exe` in the fastchess dir.
 
 ---
 
+### #65 soft/hard time bounds — SHIPPED 2026-08-06 (not yet tagged; see note)
+
+= prior + `ENABLE_SOFT_TIME_BOUND` (default ON). Splits the single per-move
+deadline into a **soft** bound (gates STARTING a new iteration; checked only at
+the root iteration boundary) and a **hard** bound (the existing mid-search
+`checkup()` abort). Pre-#65 both were `time/20 + inc/2`, so an iteration
+overrunning by any margin was killed and its work discarded — at 10+0.1 Huginn
+never exceeded **0.56 s across 2455 measured moves** and used **83.2%** of its
+clock. Hard = `min(3*soft, safe_max, cap60, time/2)`.
+
+**Verdict (AMD, 10+0.1, cc=4, 2000g, vs its OWN predecessor — same commit,
+flag off, Fathom matched; runbook §7):**
+
+```
+Elo: +10.60 +/- 10.57   nElo: 15.28 +/- 15.23   LOS: 97.54%
+W501 L440 D1059   51.52%   Ptnml [48, 242, 377, 267, 66]
+LLR: 1.70 (57.8%) of (-2.94, 2.94) [0.00, 10.00]
+```
+
+⚠ **Fixed-N positive, NOT an SPRT accept** — the LLR reached 1.70 of 2.94
+before the round cap. With bounds `[0, 10]` and a true value near 10.6 the
+hypothesis sits on the H1 boundary, the slowest case an SPRT can be handed.
+CI `[0.03, 21.17]` excludes zero, barely. **Single machine** — logged-exception
+class (t25 / t27 / t34 precedent), not two-machine confirmed.
+
+**Signature: bit-identical in both arms** — startpos d14 = **3,481,582**,
+Kiwipete d13 = **1,958,182**. A time-only change must not move fixed-depth node
+counts, which makes `signature.py` a *complete* correctness pre-check here —
+unusually clean for a search change. 315/315 tests (1 by-design skip).
+
+Mechanism confirmed against FableR over 1000 games: clock **83.2% → 96.9%**,
+max/move **0.56 s → 1.67 s**, median/move **down** 0.203 → 0.157 s (less on
+easy moves, more on hard ones). Head-to-head gap to FableR closed ~49 → 35.6
+Elo. The `time/2` clamp is load-bearing, not decoration — `cap60` was never
+binding pre-#65, and under a 3× allowance a scramble move could otherwise
+commit 60% of the remaining clock (credit: FableR's lab flagged the failure
+mode before it happened).
+
+📌 **Not tagged `baseline-t35`.** This work sits on `smp-phase1-lockless-tt`,
+which is `main` + 15 unshipped SMP commits; a tag here would bundle #40 with
+#65 and break the "one baseline = one shipped change" convention. Tag when the
+SMP line merges, or cherry-pick #65 to `main` first. Binary snapshot:
+`huginn_softtime.exe`. PGN: `gauntlet/softtime_vs_singledeadline.pgn`.
+
+---
+
+## Cross-engine signature baseline vs Fable 0.8 (2026-08-05, Intel box)
+
+**Not a ship** — a reference snapshot taken before the Fable rematch. Fable is
+a Rust UCI engine (~2,800 LOC, single-threaded, no TB, no book) developed
+against Huginn over two days; it claims **+49.0 ± 53.4 (57.0%, 100g, 10+0.1)**
+over Huginn 2.3. Repo: `Repos/Fable`, ladder in its `docs/LADDER.md`.
+
+`go depth 14`, Hash=64, fresh TT, one run per cell (NPS carries ~±5% noise):
+
+| Position | Engine | Thr | Best | Score | Nodes | NPS | Time |
+|---|---|---|---|---|---|---|---|
+| startpos | Huginn 2.3 | 1 | e2e4 | cp 31 | **3,481,582** | 3.47 M | 1004 ms |
+| startpos | Huginn SMP | 1 | e2e4 | cp 31 | **3,481,582** | 3.46 M | 1005 ms |
+| startpos | Huginn SMP | 8 | e2e4 | cp 29 | 8,627,827 | 18.96 M | 455 ms |
+| startpos | Fable 0.8 | 1 | e2e4 | cp 28 | 3,578,817 | 4.38 M | 817 ms |
+| Kiwipete | Huginn 2.3 | 1 | e2a6 | cp −91 | **4,247,039** | 2.23 M | 1908 ms |
+| Kiwipete | Huginn SMP | 1 | e2a6 | cp −91 | **4,247,039** | 2.30 M | 1843 ms |
+| Kiwipete | Huginn SMP | 8 | e2a6 | cp −75 | 8,613,800 | 12.59 M | 684 ms |
+| Kiwipete | Fable 0.8 | 1 | e2a6 | cp −69 | 9,711,410 | 4.01 M | 2419 ms |
+
+Startpos d14 = 3,481,582 matches the recorded `t34` signature exactly, and the
+SMP arm at `Threads=1` is node-identical to 2.3 on **both** positions — the #40
+bit-identity gate re-confirmed on a second position.
+
+**The two engines have inverted profiles.** Fable is the faster searcher,
+Huginn the more selective one:
+
+- Fable wins raw NPS everywhere — 1.26× on startpos, **1.80× on Kiwipete**.
+- Huginn wins tree size where it counts — Kiwipete d14 in **4.25M nodes vs
+  Fable's 9.71M, a 2.29× smaller tree**. On the quiet startpos they are level
+  (within 3%).
+- Net time-to-depth splits: Fable −19% on startpos, Huginn **−21% on
+  Kiwipete** despite conceding 1.8× in NPS.
+
+The Kiwipete gap is the actionable number: a wide tactical middlegame is
+exactly where Fable's search should leak, and it burns 2.3× the nodes for the
+same depth. Their own parked 0.4 says why — no LMP, and history-LMR failed
+because their history carries no maluses to discriminate with. Huginn ships
+both, plus continuation history (#3) and counter-moves.
+
+SMP time-to-depth scaling: **2.21×** (startpos) / **2.69×** (Kiwipete) on
+5.47× raw NPS — normal Lazy SMP efficiency, better on the wider tree.
+
+⚠ Fixed-depth comparisons *across* engines are soft: depth 14 means different
+things under different reduction schemes. Node counts within an engine are
+exact; use them for gating, and use games for strength.
+
+Reproduce with `tools/smp/signature.py` (see the caveat in
+[SMP_MEASUREMENT_RUNBOOK.md](SMP_MEASUREMENT_RUNBOOK.md) §2 — piping `go depth
+N` from `printf` silently truncates the search; a closed pipe makes
+`input_is_waiting()` return true and the search bails early).
+
+---
+
 ### baseline-t34 — #42 idea 1: date-based TT aging (road-to-2.3 item 2, LTC ship)
 = t33 + date-based TT aging behind `ENABLE_TT_AGING` (default ON as of this
 ship). Fruit/Toga design: a 6-bit search date packed into the upper bits of

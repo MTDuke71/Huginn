@@ -13,6 +13,7 @@
 #include "../src/uci_utils.hpp"
 #include "../src/uci.hpp"
 #include "../src/init.hpp"
+#include <algorithm>
 #include <chrono>
 #include <sstream>
 #include <vector>
@@ -102,6 +103,70 @@ TEST(UciTimeAllocation, UnknownClockFallsBackToIncrementSlice) {
     EXPECT_EQ(compute_time_budget_ms(-1, 40, 0), 50);
     EXPECT_EQ(compute_time_budget_ms(-1, 0, 0), 5000);
 }
+
+// --- BACKLOG #65: hard (extension) deadline -----------------------------------
+
+TEST(UciHardTimeBudget, IsThreeTimesSoftOnNormalClocks) {
+    // The house gauntlet TC. Soft is unchanged at time/20 + inc/2 = 550; the
+    // hard bound is 3x that, well inside both caps (safe_max 9000, cap60 6000).
+    EXPECT_EQ(compute_time_budget_ms(10000, 100, 0), 550);
+    EXPECT_EQ(compute_hard_time_budget_ms(10000, 100, 0), 1650);
+    // 60+0.1: soft 3050, hard 9150 (safe_max 59000, cap60 36000 — neither bites).
+    EXPECT_EQ(compute_hard_time_budget_ms(60000, 100, 0), 9150);
+}
+
+TEST(UciHardTimeBudget, NeverExceedsTheAntiForfeitCaps) {
+    // #47's two caps still bind the extension. Sweep a wide grid and assert the
+    // hard deadline can never reach into the reserve or past 60% of the clock —
+    // this is the property that makes #65 safe by construction.
+    for (long long t : {1LL, 10LL, 50LL, 100LL, 500LL, 1000LL, 10000LL, 60000LL, 300000LL}) {
+        for (long long inc : {0LL, 50LL, 100LL, 1000LL}) {
+            for (long long mtg : {0LL, 1LL, 5LL, 40LL}) {
+                const long long soft = compute_time_budget_ms(t, inc, mtg);
+                const long long hard = compute_hard_time_budget_ms(t, inc, mtg);
+                const long long reserve = std::max(50LL, std::min(1000LL, t / 10));
+                EXPECT_GE(hard, soft) << "hard must never shorten a search";
+                EXPECT_GE(hard, 1);
+                // The allowance may not exceed what the soft path already
+                // deemed safely spendable, except where soft itself was
+                // floored above the caps on a tiny clock (soft is the floor).
+                if (soft <= (t * 6) / 10) {
+                    EXPECT_LE(hard, std::max(soft, (t * 6) / 10)) << "t=" << t;
+                    EXPECT_LE(hard, std::max(soft, t - reserve)) << "t=" << t;
+                }
+            }
+        }
+    }
+}
+
+TEST(UciHardTimeBudget, NeverCommitsMoreThanHalfTheClockToOneMove) {
+    // The scramble guard. Below time <= 3.33*inc the 3x allowance would
+    // otherwise reach cap60 and spend 60% of a near-flagged clock on a single
+    // move. Assert the halving clamp across the whole low-clock band, and that
+    // it stays inert on a normal TC.
+    for (long long t = 20; t <= 4000; t += 20) {
+        for (long long inc : {0LL, 50LL, 100LL, 500LL}) {
+            const long long soft = compute_time_budget_ms(t, inc, 0);
+            const long long hard = compute_hard_time_budget_ms(t, inc, 0);
+            // Half-clock guard, except where soft itself is already above it
+            // (soft is a floor the extension may never undercut).
+            EXPECT_LE(hard, std::max(soft, t / 2)) << "t=" << t << " inc=" << inc;
+            EXPECT_GE(hard, soft) << "t=" << t << " inc=" << inc;
+        }
+    }
+    // Inert during normal play: 10+0.1 is bounded by 3x soft (1650), not t/2 (5000).
+    EXPECT_EQ(compute_hard_time_budget_ms(10000, 100, 0), 1650);
+}
+
+TEST(UciHardTimeBudget, UnknownClockGetsNoExtension) {
+    // The negative-clock branch is a guess, not a measured slice — tripling it
+    // would invent time the GUI never told us we had.
+    EXPECT_EQ(compute_hard_time_budget_ms(-1, 2000, 0), compute_time_budget_ms(-1, 2000, 0));
+    EXPECT_EQ(compute_hard_time_budget_ms(-1, 0, 0), compute_time_budget_ms(-1, 0, 0));
+}
+
+// (parse_go_command wiring for both bounds is covered in test_uci_go_parsing.cpp,
+//  which owns the token-splitting helper.)
 
 // --- Strict numeric parsing (shared setoption/go parser) ----------------------
 

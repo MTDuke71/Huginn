@@ -46,6 +46,10 @@ below for the full number and its caveats). Tagged `v2.3`; see
 |---|-------|--------|------|----------|
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS, paused** — search/EBF work has dominated since #45; roadmap below | feature/eval | high |
+| 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
+| 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
+| 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
+| 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
@@ -148,6 +152,260 @@ write-up — key finding carried forward:
   older round-robin method instead. Then fold the refreshed estimate into
   CLAUDE.md (already done for the 2026-07-16 measurement above).
 
+### #64: Full joint re-tune of the 841-vector — OPEN (2026-08-05)
+
+**Origin: the Fable rematch diagnostic.** Fable 0.8 (a Rust engine built
+against Huginn in two days, `Repos/Fable`) beats 2.3 by roughly +50 Elo. A
+40-game match at 10+0.1, both single-threaded, plus the depth analysis below
+localizes *where* that comes from — and it is not search.
+
+Measured (`gauntlet/huginn23_vs_fable08_t1.pgn`, 40g, −52.51 ± 79.74, 42.50%):
+
+| | depth/move | nodes/move | s/move |
+|---|---|---|---|
+| Fable 0.8 | 13.37 | **1.08 M** | 0.250 |
+| Huginn 2.3 | 13.27 | **0.53 M** | 0.219 |
+
+Head-to-head paired depth diff is **zero** (+0.22 / +0.03 / −0.07 ply at
+filter caps 100/40/26 — sign flips, median +0.0 at every cut). ⚠ The naive
+number is **+1.41 ply** and is wrong: Fable reports `depth 127` (its
+`MAX_PLY`) on mate-terminated searches and never emits `seldepth` (`sd=0`
+always). Any depth comparison against Fable must filter those; `tools/smp/
+pgn_depth_compare.py` does not.
+
+**So: Huginn reaches the same depth on half the nodes and still loses.** The
+tree is strictly more efficient (matching the Kiwipete signature's 2.29×);
+the deficit is leaf eval quality.
+
+**The mechanism.** t30 threats were fit `--only-new` — six new params tuned,
+the rest of the 841-vector deliberately **frozen** for clean SPRT attribution.
+Correct for attribution, but the vector has had no joint re-tune underneath
+the four selectivity ships that followed (t31 singular, t32 aspiration, t33
+history-LMR, t34 TT aging), all of which reshape the tree the eval is fit
+against. Fable ran two full 815-param joint re-tunes in two days and records
+its threat fit (14/8, 15/2, −4/28) as diverging sharply from Huginn's (9/18,
+10/4, −5/34) — engine-specific fit confirmed necessary by both labs
+independently.
+
+**Plan.** Full joint re-tune of all 841 params with the existing tuner (no new
+code), then SPRT vs t34. Expect this to be the largest single eval lever
+available; it is also the cheapest, since the tooling already exists.
+
+### #65: Soft/hard time bounds — SHIPPED 2026-08-06
+
+**Verdict (AMD box, 10+0.1, cc=4, 2000g, vs its OWN immediate predecessor —
+same commit, `ENABLE_SOFT_TIME_BOUND=OFF`, Fathom matched):**
+
+```
+Elo: +10.60 +/- 10.57   nElo: 15.28 +/- 15.23   LOS: 97.54%
+W501 L440 D1059   51.52%   DrawRatio 37.70%   PairsRatio 1.15
+Ptnml(0-2): [48, 242, 377, 267, 66]
+LLR: 1.70 (57.8%) of (-2.94, 2.94) [0.00, 10.00]
+```
+
+⚠ **Reported as a fixed-N positive, NOT an SPRT accept.** The LLR reached only
+1.70 of the 2.94 bound before the 1000-round cap. That is not a failure of the
+test: with bounds `[0, 10]` and a true value near 10.6, the hypothesis sits on
+the H1 boundary, which is the slowest case an SPRT can be given. The 95% CI
+`[0.03, 21.17]` excludes zero, but barely. Single machine — same
+logged-exception class as t25 / t27 / t34 (user call), NOT two-machine
+confirmed.
+
+**It does mechanically what it was designed to do.** Measured against FableR
+over 1000 games: clock utilisation **83.2% → 96.9%**, max/move **0.56 s →
+1.67 s**, and median/move **down** 0.203 → 0.157 s — less on easy moves, far
+more on hard ones. The head-to-head gap to FableR closed from ~49 to 35.6 Elo,
+consistent with +10.6 plus FableR's own two commits.
+
+Verification: fixed-depth signatures **bit-identical in both arms** (startpos
+d14 = 3,481,582; Kiwipete d13 = 1,958,182), 315/315 tests, and on Kiwipete at
+10+0.1 the candidate reaches depth 13 in 897 ms where the single-deadline arm
+stops at depth 11 in 353 ms.
+
+PGN: `gauntlet/softtime_vs_singledeadline.pgn`. Flip with
+`-DENABLE_SOFT_TIME_BOUND=OFF`.
+
+**Original analysis follows.**
+
+### #65: Soft/hard time bounds — the measurement (2026-08-05)
+
+Huginn has **one** deadline. [uci_utils.cpp:243](../src/uci_utils.cpp#L243)
+computes `alloc = time_ms/20 + inc_ms/2`, and [uci.cpp:559](../src/uci.cpp#L559)
+turns it into a single `info.stop_time` that aborts the search mid-iteration.
+
+At 10+0.1 that is `10000/20 + 100/2` = **550 ms**, and across 2,455 observed
+moves Huginn never once exceeded **0.56 s**. It is structurally incapable of
+spending longer on a critical position, no matter how sharp.
+
+Fable ([search.rs:156-160](../../Fable/src/search.rs#L156-L160)) splits it:
+
+```
+alloc = t/30 + inc*3/4        = 408 ms
+soft  = min(alloc, t/2)       = 408 ms   -> do not START another iteration
+hard  = min(alloc*3, (t-30)/2) = 1224 ms -> abort mid-search
+```
+
+Observed Fable max: **1.23 s**. Both formulas reproduce their engines' measured
+maxima to the millisecond.
+
+**The counter-intuitive part:** Huginn's base allocation is 35% *larger* than
+Fable's soft bound (550 vs 408 ms), yet Huginn uses less total clock —
+**13.42 s vs 15.41 s per game against a ~16.1 s budget (83.2% vs 95.5%)**. The
+difference is structural, not generosity: Fable's soft bound only prevents
+*starting* a new iteration, so an iteration already begun runs to 3× soft and
+completes. Huginn kills it and plays the previous depth's move. Peak-to-mean
+ratios: Fable 4.9×, Huginn 2.6×. The surplus concentrates in moves 1–9 (Fable
+1.5–1.7× Huginn), converging to parity by move ~20.
+
+**Plan.** Add a soft bound behind a flag: `soft` = current `alloc` checked at
+the root iteration boundary; `hard` = `min(3*soft, safe_max, cap60, time/2)`
+keeps the existing mid-search abort.
+
+⚠ **The `time/2` clamp is load-bearing, not decoration.** `cap60` was never
+binding pre-#65 (`time/20 + inc/2` cannot approach 60% of a normal clock), so
+it only ever fired on near-zero clocks. A 3× allowance changes that:
+`3*soft >= cap60` once `time <= 3.33*inc` — below ~333 ms at a 0.1 s increment
+— which would let one move eat 60% of a scramble clock. Halving bounds the
+cost of a bad estimate to a move rather than the game. Inert in normal play
+(5000 ms vs a 1650 ms hard bound at 10+0.1). Fable uses `(t-30)/2` for exactly
+this reason; **port the clamp, not just the multiplier.**
+
+**Follow-up, gated separately (do NOT fold into this candidate — one
+functional change per SPRT):** *best-move instability scaling.* Multiply
+`soft` by ~1.3–1.8× when the root best move has changed across the last few
+iterations, and shrink it when the same move has been stable for many — i.e.
+explicit criticality detection layered on the implicit kind this candidate
+provides. Both refinements above came from Fable's lab; they are on its own
+candidate list too, so expect a race.
+
+⚠ The current allocation is **not** arbitrary — [uci_utils.cpp:240](../src/uci_utils.cpp#L240)
+records it as gauntleted at t21 for **+127 Elo**. But that ship fixed *time
+forfeits* (a catastrophic bug); the `/20` divisor and the single-deadline
+structure were never swept on their own. This changes the structure, not the
+safety margin. Watch time-forfeit count as a hard gate on any candidate.
+
+**Signature note:** a time-only change must leave fixed-depth node counts
+**bit-identical** (startpos d14 = 3,481,582). That makes `signature.py` a free
+and complete correctness pre-check here — unusually clean for a search change.
+
+### #66: Flat TB score gives no progress gradient — OPEN (2026-08-05)
+
+**Found by reading the #65 SPRT PGN** (`gauntlet/softtime_vs_singledeadline.pgn`,
+moves 72–79 of a won ending; both arms are Huginn, so both probe TB).
+
+`probe_tablebase_wdl` returns a **ply-independent** score:
+[syzygy_tablebase.cpp:185](../src/syzygy_tablebase.cpp#L185) maps `TB_WIN` to
+`MATE - 1000` = **28000** (UCI renders it `+280.00`), and
+[search.cpp:2148](../src/search.cpp#L2148) returns it verbatim — no `- ply`.
+
+So **every move that preserves the win scores exactly 28000.** There is no
+gradient to prefer mating over shuffling:
+
+```
+72. Qd4+  +280.00/9        <- plateau
+73. Nc3+  +280.00/8        <- plateau
+74. Qd1+  +280.00/8  Kxf2  <- Black captures; score unmoved
+75. Ne4+  +280.00/8  Kxe3  <- Black captures again; score unmoved
+76. Qc2   +M7/10           <- mate enters the horizon: gradient appears
+79. Qf2#                   <- finishes in three
+```
+
+Four moves of aimless checks while **shedding material to captures**, then an
+immediate finish the moment a real mate score existed. It converted here, but
+the failure modes are real: the **50-move rule** can draw a TB-won position
+while the engine shuffles at +280.00, and enough material shedding drops the
+position out of the TB win altogether.
+
+**Why the two sides report differently** (the observation that surfaced this).
+WDL tablebases are **distance-free by construction** — win/draw/loss, never
+"win in N" — so the *winning* side cannot report a mate distance from a TB hit
+at all; it must find the mate in its own tree. The *losing* side reports real
+mate scores (`-M12`, `-M8`) at shallow depth because its tree is forced and
+narrow: in check with a handful of legal replies, the whole sequence fits
+inside the horizon. Verifying a mate against you is cheap; proving one across
+all your own alternatives is expensive. This is NOT one side outsearching the
+other, and it is not itself the bug — the flat plateau is.
+
+**Fix (cheap, standard).** Make the TB score ply-sensitive exactly as mate
+scores are:
+
+```
+TB_WIN  ->  MATE - 1000 - ply
+TB_LOSS -> -MATE + 1000 + ply
+```
+
+Bound check: `ASPIRATION_MATE_BOUND` is 27000
+([search.cpp:3308](../src/search.cpp#L3308)); even at ply 128 the score is
+27872, still above it, so aspiration keeps treating TB scores as out-of-range
+exactly as today. Does not interact with the deliberate "TB scores are never
+stored in the TT" rule (#53 / rule50 keying) — that stays.
+
+⚠ **Signature note:** unlike #65 this is NOT time-only. It changes returned
+scores, so fixed-depth node counts WILL move on any TB-reachable position and
+`signature.py` cannot be used as a pass/fail gate here. Gate on the TB tests
+plus a direct A/B. Verification idea beyond SPRT: a won-endgame suite scored
+on *moves-to-mate*, which measures the actual defect (Elo may barely move —
+these positions are already won — while 50-move draws are the real leak).
+
+**Correspondence note:** this is a Huginn-specific bug; FableR cannot have it,
+having no tablebases at all. Reported to their lab in the interest of the
+shared ledger, matching the two Fable bugs their letter received.
+
+### #67: Eval-discontinuity mining of match PGNs — TOOLING (2026-08-05)
+
+Every gauntlet PGN already carries both engines' per-move eval, depth, seldepth
+and node count. Mining the **eval step functions** — the plies where a game
+goes from near-equal to decided — locates the moments games were actually lost,
+and (uniquely) says *which side was blind and for how long*.
+
+Worked example that motivated this (`softtime_vs_singledeadline.pgn`, evals
+normalized to White's POV):
+
+| ply | White | Black | reading |
+|---|---|---|---|
+| 32 | −0.03 (d11) | −0.18 (d9) | agree, near equal |
+| 33 | **+1.17** (d11) | +0.07 (d9) | **disagree by 1.10** |
+| 34 | +0.97 (d11) | +1.17 (d10) | Black finally agrees |
+
+The step lands on White's `gxf5`; **Black's eval lagged two plies**, still
+calling it equal one ply after the position had turned. Note Black was
+searching **2 plies shallower at every one of those moves**. If "the side that
+eats the swing is the side searching shallower" holds across a corpus, that is
+direct evidence for the depth→strength chain #65 rests on — a mechanism, not
+just an Elo delta.
+
+**Signals to extract**
+1. Δeval per ply per engine (White-normalized); flag `|Δ| >= ~0.75`.
+2. Cross-engine disagreement — adjacent-ply evals should roughly negate; a
+   persistent gap says one side is blind and which.
+3. **Lag** — plies until the overturned side's own eval catches up. Long lag =
+   deep structural blindness; this is exactly the #52 check-blind-qsearch
+   signature.
+4. Attribution + persistence — swings that revert are search instability;
+   swings that persist to the result are real. Bucket by move number and arm.
+
+⚠ **Mate/TB scores must be clamped before differencing.** `+M7` and the
+`+280.00` TB verdict (#66) otherwise manufacture enormous fake swings and
+dominate every statistic.
+
+⚠ **An engine's own eval is not ground truth.** A step can be a genuine
+blunder, ordinary horizon resolution (nobody erred), an eval bug, or
+aspiration/TT instability — indistinguishable from the PGN alone. So this is
+**not a verdict machine**: it is a triage front-end to the oracle already in
+`tools/analyze_played_vs_engines.py`, which sweeps ~6,837 positions at SF depth
+22 in 4–4.5 h. Mining first cuts that to the ~50–100 positions that decided
+games. Precedent: `tools/SF_winning_Huginn_losing.csv`.
+
+**Two distinct payoffs.** On a *self-play A/B* (#65) both arms are near-
+identical, so asymmetry in who commits the swings is attributable to the change
+alone — the mechanism check Elo cannot give. On a *cross-engine* match
+(FableR) the clustering of swings says which eval terms Huginn misprices,
+making the #64 thesis concrete instead of assumed.
+
+This is the "audit structures, not deltas" method that produced this ladder's
+largest gains (#44, #45, #52) — and it comes free with every gauntlet already
+run. Tool: `tools/pgn_swing_mine.py`.
+
 ## Big levers (deferred — HCE first)
 
 The two architectural jumps that dwarf any single HCE term. Both deliberately
@@ -177,6 +435,139 @@ the strategic picture is explicit.
   (see the AVX-512 note under #32 in the archive), so NNUE is the project that
   justifies an AVX-512 code path. (Intel consumer 12–14th gen lacks AVX-512 →
   the fast path would be a build-gated AMD variant with an AVX2 fallback.)
+
+#### Training data: the existing PGN archive is NOT a training corpus (2026-08-05)
+
+Measured, so the decision is not a rule of thumb. `gauntlet/` holds **102
+PGNs, 73,797 games, 235 MB ≈ ~8M raw plies** — and `tools/texel/extract_fens.py`
+already distils all of it to `fens_gauntlet.txt`: **19,825 positions**. That
+ratio is the whole answer. Three reasons, worst first:
+
+1. **Effective diversity, not raw volume.** Successive plies of a game are
+   near-duplicates; every game starts from `noob_3moves.epd` (~3 moves of
+   opening variety); and much of the archive is *near-identical engine
+   versions* playing near-identical positions — that is what an A/B IS. NNUE
+   wants ~1e7 positions minimum, ~1e8 to be competitive. We are 1–2 orders
+   short on count and worse on independent information.
+2. **Wrong label type.** PGN evals come from a **time-limited** search at
+   wildly varying depth (8 → 25+ within one game), so identical positions get
+   inconsistent labels — that teaches the net the variance of our time
+   management, not chess. Training wants a *consistent* budget (fixed nodes or
+   fixed depth). Mate scores and the `#66` `+280.00` TB verdicts must also be
+   stripped.
+3. **On-policy coverage only.** These are positions Huginn *chose* to enter. A
+   net trained on them never learns to evaluate what Huginn currently avoids —
+   which is exactly where the eval is wrong. Real generators inject random
+   opening plies specifically to escape the engine's own preferences.
+
+**Keep the archive** — it is a good *held-out validation set* (real outcomes,
+never trained on), the `K` sigmoid-fit corpus, and the #67 diagnostic input.
+`extract_fens.py` is reusable plumbing; only scale and label type are wrong.
+
+**#40 IS A PREREQUISITE FOR #39.** Data generation is embarrassingly parallel.
+At ~3.5 Mnps and 5k nodes/position: ~700 positions/sec/thread → **1e8 positions
+≈ 40 h single-threaded, ≈ 5 h at `Threads=8`.** The v2.4-SMP-then-v3.0-NNUE
+roadmap ordering is therefore load-bearing, not just sequencing.
+
+**Generation must be chunked and resumable — 6-hour sessions, kicked off at
+night, checked in the morning** (user requirement, 2026-08-05). Design
+consequences for the `gensfen`-equivalent, all cheaper to build in than to
+retrofit:
+- **Wall-clock budget flag** (`--max-hours 6`) that finishes the current game
+  and exits *cleanly*. Do not rely on killing the process — a kill mid-write
+  truncates the output.
+- **Append-only output + a manifest** (positions written, sessions run, seeds
+  used) so a new session continues instead of restarting. Same resumable
+  pattern `run_cc_analysis.bat` already uses for the SF oracle sweep.
+- **Distinct seed per session**, recorded in the manifest. Without this, seven
+  nights produce one night of unique data seven times — the single most
+  expensive mistake available here.
+- **Dedup across sessions** (position hash); opening randomisation will collide
+  near the root.
+- Note: at `Threads=8` the full 1e8 fits in ONE ~5 h overnight window, so the
+  chunked path matters mainly if generation runs single-threaded, if the target
+  grows, or if the box is shared with gauntlets (it usually is).
+
+**SEPARATE POSITION GENERATION FROM LABELLING.** The two halves have completely
+different reuse lifetimes, and fusing them throws away the expensive half:
+
+| component | engine-specific? | reuse |
+|---|---|---|
+| positions (FEN) | no | universal — across engines AND across our own versions |
+| game result (WDL) | no | reusable; quality scales with generator strength |
+| eval score | **yes** | scale + search-coupling are ours; re-labelling is cheap |
+
+Eval is engine-specific in two ways: **scale** (our `+1.00` != another engine's;
+this is what the Texel `K` sigmoid fit calibrates) and **search coupling** —
+RFP / futility / razoring margins are denominated in HCE centipawns, so a net
+trained to a foreign scale silently miscalibrates every pruning margin. FableR
+confirmed the same principle from the other side: its threat fit (14/8, 15/2,
+−4/28) diverged sharply from ours (9/18, 10/4, −5/34) on identical terms,
+because each was fit against its own search.
+
+Consequences:
+- Store positions/results and eval labels in **separate, joinable** files
+  (position hash as key). Re-labelling then costs a pass, not a regeneration.
+- This is what makes **iterative training** affordable — the standard NNUE loop
+  is: train net v1 on HCE labels, re-label the SAME corpus with net v1 + search,
+  train v2, repeat. Impossible to do cheaply if labels are baked into the
+  position file.
+- It also survives **#64**: a full 841-vector re-tune changes our eval, which
+  invalidates *labels* but not *positions*. Fusing them would mean regenerating
+  40 h of corpus for an eval change.
+- Cross-engine data reuse is standard practice (Leela data trains many engines;
+  public SF binpacks are widely consumed). A stronger teacher's evals beat
+  self-labelling — that is distillation.
+
+**DECIDED (user, 2026-08-05): Stockfish is an acceptable teacher.** The
+project-values question above is settled — importing a stronger engine's
+evaluation knowledge is in scope. Same call covers open co-development with
+FableR (shared cooperation/competition), so a **shared position corpus between
+the two engines is viable**: positions are engine-agnostic, and only labels are
+ours.
+
+⚠ **This may delete the 40 h generation step entirely — check before running
+it.** If a Stockfish/Leela teacher is acceptable, the fastest path is not to
+generate at all but to consume an existing **public pre-labelled dataset**
+(SF binpacks, Leela data), which are already 1e9+ positions, already labelled
+by a far stronger teacher, and already diversity-filtered. Cost/benefit before
+committing overnight runs:
+
+| path | cost | label quality | notes |
+|---|---|---|---|
+| public dataset | download | **best** (SF/Leela) | needs a binpack/`.bin` reader; format is tied to the trainer |
+| SF-labelled own positions | generation + SF pass | very good | keeps our position distribution |
+| self-labelled (HCE) | ~40 h / ~5 h at t8 | capped near our own ceiling | fully ours; the from-scratch path |
+
+**Licensing — checked, and we are clear (2026-08-05).** Attribution is the
+user's stated condition ("as long as we credit whatever external source we
+use"), but for NNUE data the binding constraint is the *license*, not the
+attribution convention. Stockfish is **GPLv3**, and the SF project's position
+is that nets trained on SF-generated data are derivative works that must also
+be GPLv3 — the point actually litigated in the ChessBase dispute (settled
+2022). Lc0 is GPLv3 as well.
+
+**Huginn already ships GPLv3** (`LICENSE`), so consuming SF- or Leela-derived
+data or nets creates **no copyleft conflict**. This would have been a genuine
+blocker under MIT/Apache. Requirements reduce to: record provenance in-repo —
+dataset name, version/URL, and the net/teacher used — and keep the GPLv3
+notice intact. (Not legal advice; this is the community-standard reading.)
+
+⚠ **FableR should check its own license before consuming the same data.** It
+has **no LICENSE file** as of today (`Repos/Fable`: no LICENSE, no `license`
+field in `Cargo.toml`), which defaults to all-rights-reserved. That is fine
+for a private lab engine, but it matters for two things now on the table: the
+shared position corpus above, and publishing to GitHub (the rename to FableR
+implies intent to publish). If FableR ingests SF-derived labels, it inherits
+GPLv3 obligations. Flagged for their lab in the correspondence — cheaper to
+choose a license now than to relicense after a net ships.
+
+Practical route for a first net: public data + an existing trainer (`bullet` is
+the common Rust one) gets a working net fastest, and the engine-side work
+(quantisation, incremental accumulator updates in make/unmake, AVX-512 path) is
+the same regardless of data source — that integration, not the data, is the
+real #39 lift. Revisit self-generation only if the position distribution turns
+out to matter (our search coupling) or for later self-play iterations.
 
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 

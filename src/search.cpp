@@ -105,6 +105,12 @@
 #define ENABLE_KING_SAFETY 1
 #endif
 
+// ENABLE_SOFT_TIME_BOUND (BACKLOG #65) is defined in search.hpp — it is read by
+// BOTH this file (the root iteration-boundary check) and uci.cpp (which wires
+// the two deadlines), so its default must live in a header they share. Defining
+// it here would leave uci.cpp seeing it undefined (== 0) whenever CMake did not
+// pass it, silently splitting the two halves of the feature.
+
 // ENABLE_THREATS_R2: BACKLOG #9 threats round 2 — three classes layered on the
 // t15 attacker→target table: hanging units (attacked + undefended), safe
 // pawn-push threats (the tempo before t15's pawn-attacks-piece can see it),
@@ -3164,12 +3170,32 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
     int prev_score = 0;
 #endif
 
+#if ENABLE_SOFT_TIME_BOUND
+    // #65: the soft bound is only live when the caller actually set one. A
+    // default-constructed SearchInfo leaves soft_stop_time at the clock epoch
+    // (tests, bench, and any bare-Engine caller), which would otherwise read as
+    // "already expired" and truncate every search to a single iteration.
+    const bool soft_bound_live =
+        info.soft_stop_time > info.start_time && !info.infinite && !info.depth_only;
+#endif
+
     // Iterative deepening loop (0:22) - search depth 1, then 2, then 3, etc.
     for (int current_depth = 1; current_depth <= info.max_depth; ++current_depth) {
         // Check if we should stop before starting new depth (time management)
         if (info.stopped || info.quit) {
             break;
         }
+
+#if ENABLE_SOFT_TIME_BOUND
+        // #65: past the soft bound, do not START another iteration — but an
+        // iteration already running is never interrupted here; it runs to the
+        // hard deadline (info.stop_time) via checkup(). depth 1 is exempt so a
+        // search always returns a legal move even on a near-flagged clock.
+        if (soft_bound_live && current_depth > 1 &&
+            std::chrono::steady_clock::now() >= info.soft_stop_time) {
+            break;
+        }
+#endif
 
         // #40 phase 3 (r2) — per-helper ITERATION SKIPPING.
         //
