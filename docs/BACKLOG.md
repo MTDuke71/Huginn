@@ -754,9 +754,47 @@ call).
   out to be the entire result. **A hash sweep must be measured across a
   continuous game, never per-position.**
 
-  Remaining: an Elo gauntlet (64 vs 256 at t8, 10+0.1, cc=1) to price it, and
-  a decision on whether the shipped default should scale with `Threads` or
-  merely be documented.
+  **GAUNTLETED 2026-08-06 — and the saturation inference was WRONG. Default
+  stays 64 MB.**
+
+  `Hash=128` vs `Hash=64`, same binary both sides, `Threads=8`, 10+0.1, cc=1,
+  500g: **−18.08 ± 21.85**, LOS **5.18%**, 47.40%, zero anomalies. The CI
+  includes zero, so this is not proof 128 MB is worse — but there is no case
+  whatsoever for raising the default, and a ~95% lean that it would hurt.
+
+  **Measured mechanism (this is the part that survives).** Raw throughput at
+  `Threads=8`, movetime 3000, median NPS of 3:
+
+  | Hash | NPS | vs 64 MB |
+  |---|---|---|
+  | 64 MB | 13.52 M | — |
+  | 128 MB | 13.15 M | **−2.7%** |
+  | 256 MB | 12.90 M | −4.6% |
+  | 1024 MB | 12.87 M | −4.8% |
+
+  Bigger tables cost throughput and the cost plateaus near −4.7% — the shape of
+  falling out of cache. This box is a **Ryzen 7 7800X3D with 96 MB L3
+  V-Cache**: a 64 MB TT largely fits, 128 MB does not. `#31`'s own runner
+  header predicted exactly this ("the AMD 7800X3D's 96 MB L3 V-Cache holds a
+  meaningful fraction of a small TT, the Intel box's L3 does not, so the
+  optimal size may differ per machine").
+
+  ⚠ **Therefore this result is machine-specific and must not be generalised.**
+  On a normal L3 (~30 MB, the Intel box) 64 MB is *already* out of cache, so
+  the throughput cliff sits elsewhere and more Hash may well help. An Intel leg
+  is the one genuinely informative follow-up; until then the release should
+  document the trade-off rather than prescribe a size.
+
+  **Lesson: mechanism is not Elo.** The saturation data was real and correctly
+  measured — 64 MB pegs at 998‰ by move 7 at LTC/t8 — and the inference drawn
+  from it ("therefore raise the Hash") was still wrong. A full table with TT
+  aging (`#34`) evicts stale entries perfectly well; the collision cost it
+  implies never showed up, while the cache cost of avoiding it did. Same family
+  as `#53` (correct ≠ Elo-positive). This is precisely why a *default* must not
+  be changed on a mechanism argument alone.
+
+  **#31 stays closed, now for both thread counts on this box.** PGN:
+  `gauntlet/hash128_vs_hash64_t8.pgn`.
 - **Scaling curve (t2, t4 vs t1).** Elo per thread count instead of the single
   t8 point. ~3h per rung at cc=1. Depth data predicts ≈ +0.72 / +1.25 ply.
 - ~~**Intel leg.**~~ **DONE** (`d5f9c5b`): `smp_t8` vs 2.3, **+172.78 ± 25.51**,
