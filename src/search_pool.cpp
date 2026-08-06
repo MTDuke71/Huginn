@@ -143,6 +143,33 @@ S_MOVE SearchPool::search(Position& pos, SearchInfo& info) {
         hi.depth_only  = info.depth_only;
         hi.start_time  = info.start_time;
         hi.stop_time   = info.stop_time;
+        // BACKLOG #65: `soft_stop_time` is deliberately NOT propagated; helpers
+        // inherit only the hard deadline (stop_time, above).
+        //
+        // The soft bound means "do not START another iteration", and that is a
+        // DRIVER decision: only the driver's move is played, and the driver
+        // returning is what ends the whole search (group_stop_ fires a few lines
+        // below, so helpers are cut off within a poll regardless). Coupling
+        // helper scheduling to a driver-only time policy would be wrong in
+        // principle even where it is harmless in practice.
+        //
+        // Mechanically, leaving it at the clock epoch makes the root check's
+        // liveness guard (`soft_stop_time > start_time`) read false, so helpers
+        // skip the bound entirely.
+        //
+        // Honest scope: propagating it would NOT strand the helpers for long —
+        // each would stop at its own next iteration boundary past the soft
+        // bound, which lands near where the driver stops anyway. Iteration
+        // skipping means those boundaries differ per helper, so the effect is
+        // real but small. Keep it driver-only for the semantics, not because
+        // the alternative is catastrophic.
+        //
+        // Verified 2026-08-06, Kiwipete @ 10+0.1 (soft 550 ms / hard 1650 ms):
+        //   Threads=1 -> d13 @ 945 ms | Threads=2 -> d13 @ 906 ms
+        //   Threads=8 -> d14 @ 816 ms
+        // Time stays bounded as threads rise and t8 buys a ply; nothing runs
+        // away to the hard deadline. See
+        // SmpPoolTest.HelpersContributeUnderALiveSoftTimeBound.
         hi.thread_id   = i;
         hi.is_helper   = true;
         hi.polls_input = false;          // main-thread-only console state

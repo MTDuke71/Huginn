@@ -701,9 +701,25 @@ call).
   it also changes what the release should recommend to users.
 - **Scaling curve (t2, t4 vs t1).** Elo per thread count instead of the single
   t8 point. ~3h per rung at cc=1. Depth data predicts ≈ +0.72 / +1.25 ply.
-- **Intel leg.** Every baseline in the ladder has two machines; SMP is the most
-  hardware-sensitive thing shipped so far (core count, cache, SMT), so
-  cross-machine agreement matters more here than usual.
+- ~~**Intel leg.**~~ **DONE** (`d5f9c5b`): `smp_t8` vs 2.3, **+172.78 ± 25.51**,
+  400g. Cross-machine agreement holds in sign and rough magnitude against AMD's
+  +199.05 ± 25.63 — which is the signal to look for; per §6 of the runbook the
+  two legs are deliberately **not pooled**, since `Threads=8` is physically a
+  different workload on different silicon.
+
+**Also verified (2026-08-06): #65 soft/hard time bounds behave under SMP.**
+`soft_stop_time` is deliberately NOT propagated to helpers — the soft bound is
+a driver-only decision, and the driver's return fires `group_stop_` immediately.
+Kiwipete @ 10+0.1 (soft 550 ms / hard 1650 ms): `Threads=1` → d13 @ 945 ms,
+`Threads=2` → d13 @ 906 ms, `Threads=8` → d14 @ 816 ms. Time stays bounded as
+threads rise and t8 buys a ply; nothing runs away to the hard deadline. Covered
+by `SmpPoolTest.HelpersContributeUnderALiveSoftTimeBound`, which asserts the
+coarse property the other pool tests cannot (they are all depth-limited, so a
+time-handling change that crippled helpers under a clock would pass every one
+of them). ⚠ Scope stated honestly: propagating the field would *not* strand
+helpers for long — each would stop at its own next iteration boundary past the
+soft bound, near where the driver stops anyway. It stays driver-only for the
+semantics, not because the alternative is catastrophic.
 
 **Also open:** one unreproduced test flake (single ctest run right after a
 build; 9 subsequent runs clean — see `429cefd`), and `#37`'s attribution

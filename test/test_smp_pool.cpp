@@ -150,6 +150,46 @@ TEST_F(SmpPoolTest, HelpersContributeNodes) {
         << info.nodes << ") — helpers are not contributing";
 }
 
+// BACKLOG #65 x #40: the pool still uses every thread under a live soft bound.
+//
+// #65 gave SearchInfo two deadlines. `soft_stop_time` ("do not START another
+// iteration") is deliberately not propagated to helpers in SearchPool::search:
+// that decision belongs to the driver, whose move is the one played and whose
+// return fires group_stop_. Helpers inherit only the hard deadline.
+//
+// Honest scope of what this guards: propagating the field would NOT idle the
+// helpers for long — they would stop at their own next iteration boundary past
+// the soft bound, which lands near where the driver stops anyway. The reason to
+// keep it driver-only is semantic (helper scheduling must not be coupled to a
+// driver-only time policy), and the reason to test is coarser: that a
+// clock-bounded search still recruits every thread at all. A time-handling
+// change that crippled helpers under a clock would pass every OTHER test here,
+// since they all use depth-limited searches.
+TEST_F(SmpPoolTest, HelpersContributeUnderALiveSoftTimeBound) {
+    SearchPool pool;
+    pool.set_threads(4);
+
+    Position pos;
+    pos.set_startpos();
+
+    // A clock-style search with a LIVE soft bound (strictly after start_time,
+    // or the root check's liveness guard makes it inert and this test asserts
+    // nothing) and a hard bound far enough out that it never binds.
+    SearchInfo info;
+    info.max_depth = 24;
+    info.start_time = std::chrono::steady_clock::now();
+    info.soft_stop_time = info.start_time + std::chrono::milliseconds(200);
+    info.stop_time = info.start_time + std::chrono::seconds(5);
+
+    const S_MOVE best = pool.search(pos, info);
+    EXPECT_TRUE(is_legal_in(pos, best));
+
+    EXPECT_GT(pool.total_nodes(), info.nodes)
+        << "helpers contributed nothing (" << pool.total_nodes() << " total vs "
+        << info.nodes << " driver) under a clock-bounded search; see the "
+        << "soft_stop_time comment in SearchPool::search";
+}
+
 // A stop must be honoured promptly at every thread count. This is the
 // regression guard for a helper that misses the group flag and hangs the join.
 TEST_F(SmpPoolTest, StopIsHonouredPromptlyAtEveryThreadCount) {
