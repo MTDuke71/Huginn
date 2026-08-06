@@ -723,11 +723,40 @@ regression at ~14 rather than ~8 — accepted as adequate for a null test (user
 call).
 
 **Queued, not yet run:**
-- **Hash sweep at `Threads=8`.** At t8 the engine searches ~5.6× the nodes in
-  the same wall-clock, so TT pressure is ~5.6× higher against an unchanged
-  64 MB default. The optimal Hash at t8 is very likely larger. Concrete
-  mechanism, precedent in `#31`, and plausibly free Elo on top of the +199 —
-  it also changes what the release should recommend to users.
+- **Hash sweep at `Threads=8` — MEASURED 2026-08-06: the 64 MB default is
+  inadequate at t8.** Not yet gauntleted for Elo, but the mechanism is
+  established and it already changes the release recommendation.
+
+  `hashfull` (permille) over a **continuous game** — no `ucinewgame` between
+  moves, which is how the TT really behaves (#46 clears only on `ucinewgame`):
+
+  | regime | Hash | move 1 → 15 |
+  |---|---|---|
+  | blitz 550 ms, **t1** | 64 MB | 14 → 272 (never fills — `#31`'s null was right) |
+  | blitz 550 ms, **t8** | 64 MB | 126 → **779**, still climbing |
+  | blitz 550 ms, t8 | 256 MB | 18 → 299 |
+  | LTC 3000 ms, t8 | 64 MB | 414 → **998 by move 7**, pegged thereafter |
+  | LTC 3000 ms, t8 | 256 MB | 177 → 742 |
+
+  ⚠ **Our own SMP legs were measured under TT starvation.** AMD +199.05 and
+  Intel +172.78 both ran at 10+0.1 / `Threads=8` / 64 MB — i.e. against a table
+  ~78% loaded by move 15. Whatever the true t8 gain is, it was measured on a
+  starved table; a re-measure at adequate Hash can only be read as a *different*
+  configuration, not as a correction to those numbers.
+
+  **Methodology warning, the real lesson here.** The first instrument
+  (`tools/smp/hash_ab.py`, 40 positions, `ucinewgame` per position) reported
+  **flat**: 64/128/256/1024 MB all within ±0.25 ply of each other at t8,
+  every delta smaller than its own 95% CI. That was a true measurement of
+  *within-search* pressure and a completely misleading answer to the question
+  asked, because it resets the table before every position. Real games
+  accumulate. The tool documents this limitation — and the limitation turned
+  out to be the entire result. **A hash sweep must be measured across a
+  continuous game, never per-position.**
+
+  Remaining: an Elo gauntlet (64 vs 256 at t8, 10+0.1, cc=1) to price it, and
+  a decision on whether the shipped default should scale with `Threads` or
+  merely be documented.
 - **Scaling curve (t2, t4 vs t1).** Elo per thread count instead of the single
   t8 point. ~3h per rung at cc=1. Depth data predicts ≈ +0.72 / +1.25 ply.
 - ~~**Intel leg.**~~ **DONE** (`d5f9c5b`): `smp_t8` vs 2.3, **+172.78 ± 25.51**,
