@@ -515,6 +515,49 @@ parked on node count alone. #69's +287% remains a reasonable cheap park because
 of its magnitude and because its mechanism is understood, but that judgement is
 weaker than it looked before this result.
 
+#### Combination tested (2026-08-07): #68+#69 is WORSE, and the screening metric was wrong all along
+
+Asked whether the three flat candidates might combine into a positive. Two
+answers, one structural and one measured.
+
+**Structural: #69 and #70 are alternatives, not complements.** #70's grain
+values (1024 / 16384) were derived *from* the one-sided distribution; #69 exists
+to eliminate that one-sidedness. Stacking them applies an asymmetric threshold
+to a distribution that is no longer asymmetric. The only coherent combination is
+**#68 + #69 with symmetric grain** — the standard modern scheme.
+
+**Measured — depth reached at FIXED 1000 ms, 40 `cc_positions`, `Threads=1`,
+median of 3:**
+
+| arm | mean depth | seldepth | Mnodes | vs 2.4 |
+|---|---|---|---|---|
+| 2.4 baseline | **13.55** | 26.68 | 1.93 | — |
+| #68 gravity | 13.53 | 26.57 | 1.96 | −0.02 |
+| #70 asymmetric grain | 13.30 | 26.88 | 1.93 | −0.25 |
+| **#68 + #69** | **12.62** | 25.15 | **2.00** | **−0.93 ply** |
+
+The combination searches **more** nodes and reaches **nearly a ply less** depth —
+a strictly worse-shaped tree. Not gauntleted: a −0.93 ply deficit at equal clock
+is a strong prior for a negative result, and the parts were already flat.
+
+⚠ **METHODOLOGY: depth-at-fixed-time is the right screen; fixed-depth node count
+is not.** Compare what each metric predicted against the three SPRT verdicts:
+
+| arm | fixed-depth nodes | depth @ fixed time | actual SPRT |
+|---|---|---|---|
+| #68 | **+40% (looks bad)** | −0.02 ply (neutral) | **flat** ✓ depth was right |
+| #70 | +5.2% (looks mildly bad) | −0.25 ply | **flat** ✓ |
+| #69 | +287% (looks terrible) | (via combo: large) | never run |
+
+Fixed-depth node count called #68 a disaster; it was flat. Depth-at-fixed-time
+called it neutral; it was flat. **The cheap screen that was available all day
+would have predicted every verdict, and running it first would have saved
+~4.5 h of gauntlet time.** It measures what a clock actually buys, which is the
+quantity that decides games. Use `tools/smp/depth_ab.py <exe> cc_positions.epd
+1000 3 1` as the standard pre-gauntlet screen from now on. Three data points, so
+treat it as a strong prior rather than a verdict — but it is strictly better
+motivated than counting nodes at a depth no game ever plays to.
+
 #### #70 VERDICT: flat (+3.47 ± 14.96, 1000g)
 
 `huginn_grain70` vs 2.4, 10+0.1, cc=4, 1000g: **+3.47 ± 14.96**, LOS 67.57%,
