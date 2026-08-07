@@ -226,6 +226,17 @@ else()
     message(STATUS "Symmetric LMR grain 4096 (pre-#70)")
 endif()
 
+# BACKLOG #66: ply-scaled Syzygy WDL scores (see ENABLE_TB_PLY_SCALED in
+# src/search.cpp). CANDIDATE, default OFF. Inert without a SyzygyPath.
+option(ENABLE_TB_PLY_SCALED "BACKLOG #66: ply-scaled TB scores (candidate, default OFF)" OFF)
+if(ENABLE_TB_PLY_SCALED)
+    add_compile_definitions(ENABLE_TB_PLY_SCALED=1)
+    message(STATUS "Ply-scaled TB scores enabled (BACKLOG #66, candidate)")
+else()
+    add_compile_definitions(ENABLE_TB_PLY_SCALED=0)
+    message(STATUS "Flat TB scores (pre-#66)")
+endif()
+
 # BACKLOG #65: soft/hard per-move time bounds (see ENABLE_SOFT_TIME_BOUND in
 # src/search.cpp). CANDIDATE, under SPRT — default ON in the candidate build;
 # -DENABLE_SOFT_TIME_BOUND=OFF rebuilds the single-deadline arm, which is the

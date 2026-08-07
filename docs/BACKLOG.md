@@ -48,7 +48,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS, paused** — search/EBF work has dominated since #45; roadmap below | feature/eval | high |
 | 64 | Full joint re-tune of the 841-vector (stale eval fit) | **CLOSED — FLAT, thesis falsified (2026-08-07)** — −1.74 ± 13.41, 1200g; re-fit buys nothing. Was: **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
-| 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
+| 66 | Flat TB score = no progress gradient in won endgames | **IMPLEMENTED, UNVERIFIED (2026-08-07)** — `ENABLE_TB_PLY_SCALED` default OFF. Inert without SyzygyPath (2.4 signature exact). Functional demo inconclusive — see note | bug/search | medium |
 | 70 | Asymmetric #63 LMR grain (+1024 / −16384) | **FLAT (2026-08-07)** — +3.47 ± 14.96, 1000g. Grain values un-swept; sweep or park | candidate/search | low |
 | 68 | Gravity-bounded butterfly history | **PARKED FLAT (2026-08-07)** — −0.87 ± 17.08, 800g. Bounds magnitude, doesn't fix the one-sidedness | candidate/search | low |
 | 69 | History malus only at beta cutoffs | **PARKED on cheap evidence (2026-08-07)** — +287% fixed-depth nodes, ordering collapses | candidate/search | low |
@@ -603,6 +603,42 @@ tunable; if the arm is flat, sweeping them before parking is cheap.
 re-scale `HISTORY_LMR_GRAIN` (or make it relative to the observed spread) so
 #63's positive branch can fire against the distribution that actually exists.
 That treats the measured defect without disturbing the ordering signal.
+
+### #66 implementation note — done, but NOT demonstrated (2026-08-07)
+
+Fix implemented behind `ENABLE_TB_PLY_SCALED` (default OFF): at the leaf probe,
+`TB_WIN` scores get `-= info.ply` and `TB_LOSS` `+= info.ply`, giving the
+verdict the same progress gradient mate scores already have. Applied at the
+search site because the tablebase layer has no notion of ply.
+CURSED_WIN/BLESSED_LOSS (±1) and DRAW (0) untouched — they adjudicate as draws
+and have no distance to shorten.
+
+**Verified:** inert without a `SyzygyPath` — reproduces 2.4 exactly (startpos
+d14 3,481,582 / Kiwipete d13 1,958,182), which is a clean gate.
+
+⚠ **NOT verified: that the gradient actually changes play.** The functional
+test was inconclusive and the reason is worth recording, because it affects how
+much #66 can be worth at all:
+
+**Huginn only probes when `halfmove_clock == 0`** (the safe-wrapper requirement
+noted at the probe site — TB scores are valid only for the rule50=0 case). In a
+quiet won ending the clock never resets, so probes almost never fire: KQ vs K
+searched at depth 5 produced **10 tbhits in 20,647 nodes (0.05%)** and the root
+score was a normal `cp 1229`, never the TB verdict. The flat `+280.00` seen in
+`softtime_vs_singledeadline.pgn` occurred where a recent capture had reset the
+clock.
+
+So the chosen test position could not exercise the path. A valid test needs a
+won position where the leaf clock is genuinely 0 — i.e. immediately after a
+capture or pawn move — or an EPD suite scored on **moves-to-mate**, which is
+the right instrument here anyway (these positions are already won, so SPRT
+measures almost nothing).
+
+**Second-order question this raised, arguably larger than #66:** if the rule50
+gate makes probes this rare, the practical value of tablebases to Huginn is
+much smaller than the `tbhits` counter suggests, and so is the value of any
+change to TB scoring. Worth measuring probe-hit rate over a real game corpus
+before investing further here.
 
 ## Big levers (deferred — HCE first)
 

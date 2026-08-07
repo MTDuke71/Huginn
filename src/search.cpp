@@ -258,6 +258,23 @@
 #define ENABLE_ASYMMETRIC_LMR_GRAIN 0
 #endif
 
+// ENABLE_TB_PLY_SCALED: BACKLOG #66 -- make the Syzygy WDL verdict prefer a
+// faster win by subtracting ply, the same way mate scores already do.
+//
+// WDL tables answer win/draw/loss and carry no distance, so probe_wdl returns
+// a flat MATE-1000. Every winning move scores identically and the engine has
+// no gradient toward actually mating; the exposure is the 50-move rule in a
+// won ending. See the comment at the probe site for the observed shuffling.
+//
+// NOT signature-preserving when tablebases are loaded -- returned scores
+// change. It IS inert without a SyzygyPath (no probe fires), so the standard
+// signature check still reproduces 2.4 exactly.
+// DEFAULT OFF -- candidate. Build the arm with -DENABLE_TB_PLY_SCALED=ON.
+#ifndef ENABLE_TB_PLY_SCALED
+#define ENABLE_TB_PLY_SCALED 0
+#endif
+
+
 
 // Saturation bound for gravity updates. 16384 keeps values 4x the #63 grain,
 // so the modulation still has graded headroom on both sides.
@@ -2258,6 +2275,38 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         int wdl_score;
         if (probe_tablebase_wdl(pos, wdl_score)) {
             info.tbhits++;  // standard UCI `tbhits`
+#if ENABLE_TB_PLY_SCALED
+            // BACKLOG #66: give the TB verdict a PROGRESS GRADIENT.
+            //
+            // probe_wdl maps TB_WIN to a flat MATE-1000 (28000, displayed as
+            // +280.00) regardless of how far away the win is -- WDL tables are
+            // distance-free by construction. Every move that preserves the win
+            // therefore scored identically, so the search had nothing to
+            // prefer a mating move over an aimless check. Observed in
+            // gauntlet/softtime_vs_singledeadline.pgn moves 72-79: four
+            // consecutive checks at a flat +280.00 while SHEDDING material to
+            // captures, then an immediate finish the moment a real mate score
+            // entered the horizon. It converts, but the exposure is the
+            // 50-move rule.
+            //
+            // Subtracting ply is exactly how mate scores already earn their
+            // gradient: a win found nearer the root outscores the same win
+            // found deeper, so the search prefers the shorter path. Applied
+            // here, at the search site, because the tablebase layer has no
+            // notion of ply.
+            //
+            // Bound check: ASPIRATION_MATE_BOUND is 27000 and ply is capped by
+            // MAX_DEPTH, so the adjusted score stays far above it and
+            // aspiration keeps treating TB scores as out-of-range exactly as
+            // before. CURSED_WIN/BLESSED_LOSS (+/-1) and DRAW (0) are
+            // deliberately untouched -- they adjudicate as draws and carry no
+            // distance to shorten.
+            if (wdl_score >= MATE - 1000) {
+                wdl_score -= info.ply;
+            } else if (wdl_score <= -(MATE - 1000)) {
+                wdl_score += info.ply;
+            }
+#endif
             return wdl_score;
         }
     }
