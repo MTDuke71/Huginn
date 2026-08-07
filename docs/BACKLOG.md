@@ -49,7 +49,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
 | 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
-| 70 | Asymmetric #63 LMR grain (+1024 / −16384) | **CANDIDATE, built + screened (2026-08-07)** — fits thresholds to the measured distribution instead of reshaping it; +5.2%/+10.9% nodes. Not yet gauntleted | candidate/search | medium |
+| 70 | Asymmetric #63 LMR grain (+1024 / −16384) | **FLAT (2026-08-07)** — +3.47 ± 14.96, 1000g. Grain values un-swept; sweep or park | candidate/search | low |
 | 68 | Gravity-bounded butterfly history | **PARKED FLAT (2026-08-07)** — −0.87 ± 17.08, 800g. Bounds magnitude, doesn't fix the one-sidedness | candidate/search | low |
 | 69 | History malus only at beta cutoffs | **PARKED on cheap evidence (2026-08-07)** — +287% fixed-depth nodes, ordering collapses | candidate/search | low |
 | 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
@@ -514,6 +514,30 @@ predictor on this ladder — t27 shipped at **+12.8% nodes and stronger**, #68 i
 parked on node count alone. #69's +287% remains a reasonable cheap park because
 of its magnitude and because its mechanism is understood, but that judgement is
 weaker than it looked before this result.
+
+#### #70 VERDICT: flat (+3.47 ± 14.96, 1000g)
+
+`huginn_grain70` vs 2.4, 10+0.1, cc=4, 1000g: **+3.47 ± 14.96**, LOS 67.57%,
+50.50%, LLR 0.00. Point estimate mildly positive, CI spans zero.
+
+That completes the set. All three attacks on the #63 history/LMR interaction —
+reshape the distribution (#68, flat), change when maluses fire (#69, parked on
++287% nodes), fit the thresholds to the distribution that exists (#70, flat) —
+measure flat or worse. **The dormant positive branch of #63 is real and
+measured, and waking it appears to be worth nothing.** Either the modulation
+carries little Elo either way, or 1024/16384 are the wrong values: both grains
+were read off a single measurement and never swept. A sweep is cheap and is the
+only thing standing between "flat" and "properly parked".
+
+⚠ **Unrelated observation, logged for `#47`/`#65`: one time forfeit by released
+2.4** in this run — the only one in **~6,700 games of 2.4 across seven
+gauntlets today** (2000 + 1200 + 1000 + 1000 + 800 + 500 + 200). Mechanism from
+the PGN: the losing move took **0.078 s** and returned a normal score, so the
+engine was NOT thinking long — it was a low-clock scramble where per-move
+overhead outran a nearly-empty clock. Checkup granularity at the extreme, i.e.
+the pre-existing `#47` risk profile, not a `#65` over-spend (#65's own stress
+test was 200 games at 5+0.05 / `Threads=8` with zero forfeits). Rate ~0.015%.
+Not an emergency; worth attention if it ever recurs at a higher rate.
 
 #### #70: fit the thresholds to the distribution, not the reverse
 

@@ -1,0 +1,23 @@
+[INFO  ] [13:44:00.347071] <   > fastchess --- fastchess alpha 1.8.0 compiled for windows-latest 20260128-072859b (CI) 
+[INFO  ] [13:44:00.347161] <   > fastchess --- Setting seed to: 1387772237765624871
+[INFO  ] [13:44:00.376801] <   > fastchess --- Indexing opening suite...
+
+[INFO  ] [13:44:00.383085] <   > fastchess --- Starting tournament...
+[WARN  ] [15:53:51.561437] <   > fastchess --- Warning; No bestmove found in the last line from Huginn_2.4 because: Element 'bestmove' not found
+
+[WARN  ] [15:53:51.561531] <  6> fastchess --- Engine Huginn_2.4 loses on time
+[INFO  ] [15:54:01.895141] <   > fastchess --- 
+
+[INFO  ] [15:54:01.895336] <   > fastchess --- Player: Huginn_2.4
+
+[INFO  ] [15:54:01.895367] <   > fastchess ---   Timeouts: 1
+
+[INFO  ] [15:54:01.895384] <   > fastchess ---   Crashed: 0
+
+[INFO  ] [15:54:01.895399] <   > fastchess --- 
+
+[INFO  ] [15:54:02.771091] <   > fastchess --- Finished match
+
+[INFO  ] [15:54:02.771143] <   > fastchess --- Total Time: 02:10:02 (hours:minutes:seconds)
+
+
