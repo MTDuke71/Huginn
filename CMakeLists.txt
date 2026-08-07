@@ -215,6 +215,17 @@ else()
     message(STATUS "History malus on every non-improving quiet (pre-#69)")
 endif()
 
+# BACKLOG #70: asymmetric #63 LMR grain (see ENABLE_ASYMMETRIC_LMR_GRAIN in
+# src/search.cpp). CANDIDATE, default OFF. Not signature-preserving.
+option(ENABLE_ASYMMETRIC_LMR_GRAIN "BACKLOG #70: asymmetric LMR history grain (candidate, default OFF)" OFF)
+if(ENABLE_ASYMMETRIC_LMR_GRAIN)
+    add_compile_definitions(ENABLE_ASYMMETRIC_LMR_GRAIN=1)
+    message(STATUS "Asymmetric LMR grain enabled (BACKLOG #70, candidate)")
+else()
+    add_compile_definitions(ENABLE_ASYMMETRIC_LMR_GRAIN=0)
+    message(STATUS "Symmetric LMR grain 4096 (pre-#70)")
+endif()
+
 # BACKLOG #65: soft/hard per-move time bounds (see ENABLE_SOFT_TIME_BOUND in
 # src/search.cpp). CANDIDATE, under SPRT — default ON in the candidate build;
 # -DENABLE_SOFT_TIME_BOUND=OFF rebuilds the single-deadline arm, which is the

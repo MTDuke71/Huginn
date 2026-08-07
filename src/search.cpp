@@ -240,6 +240,25 @@
 #define ENABLE_HISTORY_MALUS_ON_CUTOFF 0
 #endif
 
+// ENABLE_ASYMMETRIC_LMR_GRAIN: BACKLOG #70 -- fit #63's LMR thresholds to the
+// history distribution that actually exists, rather than reshaping the
+// distribution to fit a symmetric threshold.
+//
+// #68 and #69 both attacked the distribution and both failed: gravity was
+// gauntleted dead flat (-0.87 +/- 17.08, 800g) after inflating the tree 40%,
+// and restricting the malus to cutoffs inflated it 287%. The broad all-node
+// malus turns out to be load-bearing for quiet ordering. What remains wrong is
+// the THRESHOLD: one grain of 4096 against a distribution spanning
+// -510,135..+15,613, which leaves the positive branch of #63 dormant.
+//
+// Positive grain 1024 / negative grain 16384 are read off the measured spread
+// in test_history_saturation.cpp. Untested as of this commit.
+// DEFAULT OFF -- candidate. Build the arm with -DENABLE_ASYMMETRIC_LMR_GRAIN=ON.
+#ifndef ENABLE_ASYMMETRIC_LMR_GRAIN
+#define ENABLE_ASYMMETRIC_LMR_GRAIN 0
+#endif
+
+
 // Saturation bound for gravity updates. 16384 keeps values 4x the #63 grain,
 // so the modulation still has graded headroom on both sides.
 static constexpr int HISTORY_MAX = 16384;
@@ -2663,14 +2682,37 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             // top of this file). MakeMove already ran, so the mover sits on
             // `to` (promotions are LMR-exempt, at_sq64(to) is the mover).
             {
-                const int HISTORY_LMR_GRAIN = 4096;
+                // BACKLOG #70: ASYMMETRIC grain. The single 4096 threshold
+                // assumed a roughly symmetric history distribution. Measured,
+                // it is nothing of the sort -- bonuses fire only on alpha
+                // improvement while maluses fire on every non-improving quiet
+                // at every node, so after one search the table spans
+                // -510,135..+15,613 and entries below -4096 outnumber those
+                // above +4096 by ~40x (test_history_saturation.cpp). The
+                // positive branch below therefore almost never fires: half of
+                // a SHIPPED feature is dormant.
+                //
+                // #68 (gravity) and #69 (malus only at cutoffs) both tried to
+                // reshape the DISTRIBUTION and both made the tree far worse
+                // (+40% and +287% fixed-depth nodes; #68 then gauntleted dead
+                // flat). The distribution is load-bearing for quiet ordering.
+                // So instead, leave it alone and fit the THRESHOLDS to it:
+                // a low positive grain the real positive values can clear, and
+                // a high negative grain matched to how deeply negatives run.
+#if ENABLE_ASYMMETRIC_LMR_GRAIN
+                const int HISTORY_LMR_GRAIN_POS = 1024;
+                const int HISTORY_LMR_GRAIN_NEG = 16384;
+#else
+                const int HISTORY_LMR_GRAIN_POS = 4096;
+                const int HISTORY_LMR_GRAIN_NEG = 4096;
+#endif
                 const int to = move_list.moves[i].get_to();
                 const int hist =
                     search_history[history_piece_row(pos.at_sq64(to))][to];
-                if (hist >= HISTORY_LMR_GRAIN) {
+                if (hist >= HISTORY_LMR_GRAIN_POS) {
                     --reduction;
                     info.history_lmr_adjusts++;
-                } else if (hist <= -HISTORY_LMR_GRAIN) {
+                } else if (hist <= -HISTORY_LMR_GRAIN_NEG) {
                     ++reduction;
                     info.history_lmr_adjusts++;
                 }

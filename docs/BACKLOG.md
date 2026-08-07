@@ -49,6 +49,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
 | 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
+| 70 | Asymmetric #63 LMR grain (+1024 / −16384) | **CANDIDATE, built + screened (2026-08-07)** — fits thresholds to the measured distribution instead of reshaping it; +5.2%/+10.9% nodes. Not yet gauntleted | candidate/search | medium |
 | 68 | Gravity-bounded butterfly history | **PARKED FLAT (2026-08-07)** — −0.87 ± 17.08, 800g. Bounds magnitude, doesn't fix the one-sidedness | candidate/search | low |
 | 69 | History malus only at beta cutoffs | **PARKED on cheap evidence (2026-08-07)** — +287% fixed-depth nodes, ordering collapses | candidate/search | low |
 | 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
@@ -514,7 +515,24 @@ parked on node count alone. #69's +287% remains a reasonable cheap park because
 of its magnitude and because its mechanism is understood, but that judgement is
 weaker than it looked before this result.
 
-**Untested alternative, cheaper than either:** leave the distribution alone and
+#### #70: fit the thresholds to the distribution, not the reverse
+
+The alternative both failures point to. #63 compares history against a single
+grain of 4096; the distribution it actually faces spans −510,135..+15,613. So
+leave the distribution alone — it is load-bearing — and split the threshold:
+
+```
+positive grain  1024   (real positive values can clear it)
+negative grain 16384   (matched to how deeply negatives run)
+```
+
+Built and screened 2026-08-07 (`build/lmrgrain70`, `ENABLE_ASYMMETRIC_LMR_GRAIN`,
+default OFF): startpos d14 **3,661,662** (+5.2%), Kiwipete d13 **2,171,476**
+(+10.9%) — an order gentler than #68's +40% and #69's +287%. **Not yet
+gauntleted.** Both grain values are read off one measurement and are themselves
+tunable; if the arm is flat, sweeping them before parking is cheap.
+
+**Superseded note:** **Untested alternative, cheaper than either:** leave the distribution alone and
 re-scale `HISTORY_LMR_GRAIN` (or make it relative to the observed spread) so
 #63's positive branch can fire against the distribution that actually exists.
 That treats the measured defect without disturbing the ordering signal.
