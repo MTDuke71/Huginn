@@ -49,7 +49,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
 | 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
-| 68 | Gravity-bounded butterfly history | **CANDIDATE (2026-08-07)** — bounds magnitude but does NOT fix the one-sidedness; +40% fixed-depth nodes | candidate/search | medium |
+| 68 | Gravity-bounded butterfly history | **PARKED FLAT (2026-08-07)** — −0.87 ± 17.08, 800g. Bounds magnitude, doesn't fix the one-sidedness | candidate/search | low |
 | 69 | History malus only at beta cutoffs | **PARKED on cheap evidence (2026-08-07)** — +287% fixed-depth nodes, ordering collapses | candidate/search | low |
 | 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
@@ -500,6 +500,19 @@ all-node malus looks wrong by textbook standards and is what makes both the
 quiet ordering and #63's negative branch work at all. FableR's +129.8 came from
 having *no* malus to having one; Huginn is already past that point, on a
 different local optimum.
+
+**#68 GAUNTLETED — flat, parked (2026-08-07).** `huginn_hist68` vs 2.4,
+10+0.1, cc=4, 800g: **−0.87 ± 17.08**, LOS 46.03%, 49.88%, LLR −0.41 (no
+bound). Neither better nor worse.
+
+⚠ **And the +40% fixed-depth node inflation cost nothing measurable.** That is
+now the third data point that node count at fixed depth is a poor strength
+predictor on this ladder — t27 shipped at **+12.8% nodes and stronger**, #68 is
++40% and flat. Fixed-depth nodes are a *signature* (bit-identity gate) and a
+*mechanism* probe; they are not an Elo proxy, and a candidate should not be
+parked on node count alone. #69's +287% remains a reasonable cheap park because
+of its magnitude and because its mechanism is understood, but that judgement is
+weaker than it looked before this result.
 
 **Untested alternative, cheaper than either:** leave the distribution alone and
 re-scale `HISTORY_LMR_GRAIN` (or make it relative to the observed spread) so
