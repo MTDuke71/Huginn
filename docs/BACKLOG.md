@@ -46,7 +46,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 |---|-------|--------|------|----------|
 | 37 | Board-desync illegal bestmove | **GUARDED + INSTRUMENTED**; root cause OPEN (needs repro) | bug | high |
 | 9 / 35 | Texel eval program + tapered eval | **IN-PROGRESS, paused** — search/EBF work has dominated since #45; roadmap below | feature/eval | high |
-| 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
+| 64 | Full joint re-tune of the 841-vector (stale eval fit) | **CLOSED — FLAT, thesis falsified (2026-08-07)** — −1.74 ± 13.41, 1200g; re-fit buys nothing. Was: **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
 | 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
 | 70 | Asymmetric #63 LMR grain (+1024 / −16384) | **FLAT (2026-08-07)** — +3.47 ± 14.96, 1000g. Grain values un-swept; sweep or park | candidate/search | low |
@@ -56,7 +56,7 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
 | 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
-| 40 | Lazy SMP / multithreading | **IN-PROGRESS (2026-08-04)** — phases 1–4 landed; `Threads=8` measures **+199 ± 26** vs 2.3 on one box; phase 5 (ship protocol) open | feature/speed | high |
+| 40 | Lazy SMP / multithreading | **SHIPPED in v2.4 (2026-08-06)** — all 5 phases; 8-core vs 1-core +199.05 ± 25.63 AMD / +172.78 ± 25.51 Intel. Remaining: t2/t4 scaling curve (optional) | feature/speed | high |
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
 
