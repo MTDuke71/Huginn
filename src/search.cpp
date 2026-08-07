@@ -172,6 +172,78 @@
 // the mover). `info.history_lmr_adjusts` counts modulations. SHIPPED
 // baseline-t33 (default ON); build the pre-t33 OFF arm with
 // -DENABLE_HISTORY_LMR=0.
+// ENABLE_HISTORY_GRAVITY: BACKLOG #68 -- bound butterfly history with the
+// standard gravity update instead of raw accumulation.
+//
+// THE BUG IT FIXES. update_search_history adds +depth^2 only when a quiet
+// IMPROVES ALPHA; penalize_search_history subtracts depth^2 from every quiet
+// that does not -- which in an all-node is every quiet there is. Bonuses are
+// rare, maluses ubiquitous, and nothing bounds either, so the table drifts hard
+// negative: measured after a single search, min/max were -125,564/+1,929
+// (Kiwipete d12) and -510,135/+15,613 (d14).
+//
+// #63's history-modulated LMR thresholds those values against a FIXED grain of
+// 4096, so entries below -grain outnumber entries above +grain by roughly 40x
+// (119/3, 138/0, 269/6 measured). The "proven-good quiet, reduce one ply LESS"
+// half of #63 almost never fires while its counterpart fires constantly -- the
+// feature is effectively one-directional. See test_history_saturation.cpp.
+//
+// THE FIX. history += bonus - history*|bonus|/HISTORY_MAX. The correction term
+// grows with |history|, so the value self-limits inside (-HISTORY_MAX,
+// +HISTORY_MAX) and a single bonus lifts a saturated-negative entry a long way
+// (at -16000 a +900 bonus applies ~+1779).
+//
+// SCOPE, MEASURED -- this bounds MAGNITUDE but does NOT fix the one-sidedness.
+// After the change: min pins at exactly -16384 and max falls from +18,758 to
+// +5,240, but entries below -grain still outnumber those above by ~50x
+// (115/2, 133/0, 237/4). An earlier draft of this comment claimed gravity
+// would "largely cancel the frequency asymmetry"; re-measuring refuted that.
+// The frequency imbalance is set by WHEN updates fire, which gravity does not
+// touch -- that is #69's job (malus only to quiets tried before a beta cutoff,
+// instead of to every quiet in every all-node). Gravity is worth testing on
+// its own because unbounded -510,135 entries make the fixed #63 grain
+// comparison degenerate regardless, but do not expect it to restore the
+// positive half of the modulation.
+//
+// NOT a signature-preserving change: move ordering shifts, so fixed-depth node
+// counts move by design and signature.py cannot gate this. Flip with
+// DEFAULT OFF -- candidate under test, `main` must stay 2.4 behaviour.
+// Build the arm with -DENABLE_HISTORY_GRAVITY=ON.
+#ifndef ENABLE_HISTORY_GRAVITY
+#define ENABLE_HISTORY_GRAVITY 0
+#endif
+// ENABLE_HISTORY_MALUS_ON_CUTOFF: BACKLOG #69 -- apply the history malus only
+// to quiets tried BEFORE a beta cutoff, instead of to every quiet that fails to
+// improve alpha at every node.
+//
+// Pre-#69, penalize_search_history fired in the move loop's else-branch: any
+// quiet that did not raise alpha was penalised, at EVERY node. In an all-node
+// nothing raises alpha, so every quiet there gets -depth^2 -- a penalty that
+// carries no information, because they did not lose to anything in particular.
+// Meanwhile the bonus fires only on alpha improvement, which is comparatively
+// rare. That frequency imbalance is what drives the one-sided distribution
+// measured in test_history_saturation.cpp (entries below the #63 grain
+// outnumber those above it ~40x), which in turn leaves half of #63's
+// history-modulated LMR effectively dormant.
+//
+// The standard scheme, and the one FableR measured +129.8 Elo for when it
+// adopted maluses at all: in a CUT-node, the quiets searched before the move
+// that caused the cutoff genuinely did lose to a specific alternative, so
+// penalising exactly those is informative. In an all-node, say nothing.
+//
+// One functional change: the BONUS site is untouched (still fires on alpha
+// improvement). Only the malus target moves. NOT signature-preserving --
+// ordering shifts, so fixed-depth node counts move by design.
+// DEFAULT OFF -- PARKED 2026-08-07 on cheap evidence (+287% fixed-depth
+// nodes). Build the arm with -DENABLE_HISTORY_MALUS_ON_CUTOFF=ON.
+#ifndef ENABLE_HISTORY_MALUS_ON_CUTOFF
+#define ENABLE_HISTORY_MALUS_ON_CUTOFF 0
+#endif
+
+// Saturation bound for gravity updates. 16384 keeps values 4x the #63 grain,
+// so the modulation still has graded headroom on both sides.
+static constexpr int HISTORY_MAX = 16384;
+
 #ifndef ENABLE_HISTORY_LMR
 #define ENABLE_HISTORY_LMR 1  // shipped t33 (two-machine SPRT vs t32, pooled +13.6, LOS ~99.4%)
 #endif
@@ -1356,6 +1428,20 @@ inline int history_piece_row(Piece piece) {
 
 /// @brief Reward a quiet move that improved alpha: `history[piece][to] += depth²`
 ///        (depth-weighted), to float it earlier in future orderings.
+
+#if ENABLE_HISTORY_GRAVITY
+/// @brief BACKLOG #68: gravity-bounded history update.
+/// `entry += bonus - entry*|bonus|/HISTORY_MAX` -- the correction scales with
+/// the current magnitude, so entries self-limit inside (-HISTORY_MAX, +MAX)
+/// and a saturated value recovers quickly when the sign flips.
+static inline void apply_history_gravity(int& entry, int bonus) {
+    const long long e = entry;
+    const long long b = bonus;
+    const long long babs = b < 0 ? -b : b;
+    entry = static_cast<int>(e + b - (e * babs) / HISTORY_MAX);
+}
+#endif
+
 void Engine::update_search_history(const Position& pos, const S_MOVE& move, int depth) {
     if (move.move == 0) return;
 
@@ -1369,7 +1455,11 @@ void Engine::update_search_history(const Position& pos, const S_MOVE& move, int 
     int piece_index = history_piece_row(piece);
 
     // Increase history score for this piece-to-square combination
+#if ENABLE_HISTORY_GRAVITY
+    apply_history_gravity(search_history[piece_index][to], depth * depth);
+#else
     search_history[piece_index][to] += depth * depth;  // Deeper moves get higher bonus
+#endif
 }
 
 /// @brief Penalize a quiet move that was tried before a beta cutoff but failed
@@ -1387,7 +1477,11 @@ void Engine::penalize_search_history(const Position& pos, const S_MOVE& move, in
     int piece_index = history_piece_row(piece);
 
     // Decrease history score for this piece-to-square combination
+#if ENABLE_HISTORY_GRAVITY
+    apply_history_gravity(search_history[piece_index][to], -depth * depth);
+#else
     search_history[piece_index][to] -= depth * depth;  // Penalize with same magnitude as bonus
+#endif
 }
 
 /// @brief Halve all history scores to cap their magnitude (keep them in a useful
@@ -2420,6 +2514,15 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
     // crippling TT pruning. See docs/PERFORMANCE_ARCHITECTURE_REVIEW.md (Priority 1).
     const int original_alpha = alpha;
 
+#if ENABLE_HISTORY_MALUS_ON_CUTOFF
+    // #69: quiets SEARCHED at this node, in order, so a beta cutoff can
+    // penalise exactly those that lost to the cutting move. Capped: beyond 64
+    // quiets the ordering signal is worthless anyway and the array must not
+    // grow the stack frame of a function that recurses to MAX_DEPTH.
+    S_MOVE tried_quiets[64];
+    int tried_quiet_count = 0;
+#endif
+
     // Try each move
     for (int i = 0; i < move_list.count; ++i) {
         // VICE Part 62: Pick best move from remaining moves. BACKLOG #48: the
@@ -2634,7 +2737,17 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
         if (info.stopped || info.quit) {
             return 0;
         }
-        
+
+#if ENABLE_HISTORY_MALUS_ON_CUTOFF
+        // #69: remember every quiet actually searched here, in search order.
+        // Recorded AFTER the stop check so an aborted search contributes
+        // nothing, and before the score is classified so the cutting move is
+        // itself present (it is skipped explicitly when the malus is applied).
+        if (!move_list.moves[i].is_capture() && tried_quiet_count < 64) {
+            tried_quiets[tried_quiet_count++] = move_list.moves[i];
+        }
+#endif
+
         if (score > best_score) {
             best_score = score;
             best_move = move_list.moves[i];  // Track best move for TT storage
@@ -2685,6 +2798,19 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
 
                     // Beta cutoff - update killer moves and history
                     update_killer_moves(move_list.moves[i], depth);
+
+#if ENABLE_HISTORY_MALUS_ON_CUTOFF
+                    // #69: these quiets were searched and lost to a specific
+                    // alternative -- the one that just cut. That is the only
+                    // place a malus carries information. The cutting move
+                    // itself is excluded (it already took its bonus above).
+                    if (depth > 0) {
+                        for (int q = 0; q < tried_quiet_count; ++q) {
+                            if (tried_quiets[q].move == move_list.moves[i].move) continue;
+                            penalize_search_history(pos, tried_quiets[q], depth);
+                        }
+                    }
+#endif
                     
 #if ENABLE_PLY_TRACKED_COUNTERMOVE
                     // Update counter-move table if we have a previous move
@@ -2701,6 +2827,11 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
             }
         } else {
             // Move didn't improve alpha - apply negative history scoring for quiet moves
+            // #69: when ENABLE_HISTORY_MALUS_ON_CUTOFF is on this site is
+            // silent -- the malus moved to the cutoff site above, where the
+            // penalty actually means "lost to that move" rather than "did not
+            // happen to raise alpha at a node where nothing did".
+#if !ENABLE_HISTORY_MALUS_ON_CUTOFF
             if (!move_list.moves[i].is_capture() && depth > 0) {
                 penalize_search_history(pos, move_list.moves[i], depth);
 #if ENABLE_CONTINUATION_HISTORY
@@ -2711,6 +2842,7 @@ int Engine::AlphaBeta(Position& pos, int alpha, int beta, int depth, SearchInfo&
                 }
 #endif
             }
+#endif  // !ENABLE_HISTORY_MALUS_ON_CUTOFF
         }
     }
 

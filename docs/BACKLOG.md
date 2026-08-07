@@ -49,6 +49,8 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 64 | Full joint re-tune of the 841-vector (stale eval fit) | **OPEN (2026-08-05)** — eval params frozen since t30 `--only-new`; four selectivity ships landed underneath | feature/eval | high |
 | 65 | Soft/hard time bounds (single-deadline TM) | **SHIPPED (2026-08-06)** — `ENABLE_SOFT_TIME_BOUND` default ON; +10.60 ± 10.57, LOS 97.54%, 2000g vs its own predecessor (fixed-N, SPRT did NOT reach the bound) | feature/search | high |
 | 66 | Flat TB score = no progress gradient in won endgames | **OPEN (2026-08-05)** — WDL win returns a ply-independent 28000; engine shuffles at +280.00 with nothing to prefer a faster win | bug/search | medium |
+| 68 | Gravity-bounded butterfly history | **CANDIDATE (2026-08-07)** — bounds magnitude but does NOT fix the one-sidedness; +40% fixed-depth nodes | candidate/search | medium |
+| 69 | History malus only at beta cutoffs | **PARKED on cheap evidence (2026-08-07)** — +287% fixed-depth nodes, ordering collapses | candidate/search | low |
 | 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
@@ -434,6 +436,75 @@ making the #64 thesis concrete instead of assumed.
 This is the "audit structures, not deltas" method that produced this ladder's
 largest gains (#44, #45, #52) — and it comes free with every gauntlet already
 run. Tool: `tools/pgn_swing_mine.py`.
+
+### #68 / #69: butterfly-history rework — the measured defect, and why the
+### obvious fixes made it worse (2026-08-07)
+
+**Origin.** FableR shipped gravity/malus history for **+129.8 ± 30.5**, its
+largest single gain ever, off our own per-move diagnosis. That prompted the
+question: does Huginn have the same headroom?
+
+**Huginn already has maluses** ([search.cpp](../src/search.cpp)
+`penalize_search_history`), so that gain does not transfer wholesale. But the
+*formulation* differs in two ways, and one of them turns out to be a real,
+measured defect.
+
+#### The defect: #63's LMR modulation is effectively one-directional
+
+`search_history` accumulates raw ±depth² with no bound, aged only ×7/8 every
+third ID depth. The **bonus** fires only when a quiet improves alpha; the
+**malus** fires on every quiet that does not — which in an all-node is every
+quiet there is. Bonuses are rare, maluses ubiquitous, nothing bounds either.
+
+Measured (`test/test_history_saturation.cpp`, one search each):
+
+| position | max | min | > +4096 | < −4096 |
+|---|---|---|---|---|
+| startpos d12 | +18,758 | −66,522 | **3** | **119** |
+| Kiwipete d12 | +1,929 | −125,564 | **0** | **138** |
+| Kiwipete d14 | +15,613 | −510,135 | **6** | **269** |
+
+`#63` thresholds these against a **fixed** `HISTORY_LMR_GRAIN = 4096`. Entries
+below −grain outnumber those above by ~40×, so the "proven-good quiet, reduce
+one ply LESS" half of the feature almost never fires while its counterpart
+fires constantly. **Half of a shipped feature is dormant.** That is a genuine
+find of the #44/#45/#52 latent-bug class.
+
+⚠ An earlier draft of the test asserted the positive half was *unreachable*.
+The test failed and falsified it — 3, 0 and 6 entries do clear +grain. It now
+asserts the **ratio**, not an absolute. Claim trimmed to what was measured.
+
+#### Both obvious fixes made the tree dramatically worse
+
+| arm | startpos d14 nodes | vs 2.4 |
+|---|---|---|
+| 2.4 baseline | 3,481,582 | — |
+| **#68** gravity-bounded (`±HISTORY_MAX` = 16384) | 4,878,930 | **+40%** |
+| **#69** malus only to quiets tried before a cutoff | 13,491,453 | **+287%** |
+| both | 9,064,266 | +160% |
+
+- **#68 bounds magnitude but not the asymmetry.** After the change min pins at
+  exactly −16384 and max falls to +5,240, yet `>+grain` vs `<−grain` is still
+  2/115, 0/133, 4/237. The imbalance is set by *when* updates fire, which
+  gravity does not touch. A first draft of the source comment claimed gravity
+  would "largely cancel the frequency asymmetry"; re-measuring refuted it and
+  the comment now says so.
+  Plausible cost: ordering uses raw history as its score, so unbounded values
+  carried fine-grained discrimination among bad quiets that ±16384 compresses.
+- **#69 is decisively bad.** Removing the broad malus leaves most quiets near
+  zero, so both quiet ordering *and* #63's "reduce more" branch lose their
+  signal — a 3.9× tree. **Parked on cheap evidence; no gauntlet spent.**
+
+**The real lesson: Huginn's unconventional scheme is load-bearing.** The broad
+all-node malus looks wrong by textbook standards and is what makes both the
+quiet ordering and #63's negative branch work at all. FableR's +129.8 came from
+having *no* malus to having one; Huginn is already past that point, on a
+different local optimum.
+
+**Untested alternative, cheaper than either:** leave the distribution alone and
+re-scale `HISTORY_LMR_GRAIN` (or make it relative to the observed spread) so
+#63's positive branch can fire against the distribution that actually exists.
+That treats the measured defect without disturbing the ordering signal.
 
 ## Big levers (deferred — HCE first)
 

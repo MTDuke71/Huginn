@@ -193,6 +193,28 @@ else()
     message(STATUS "Check-aware quiescence disabled (pre-t26 arm)")
 endif()
 
+# BACKLOG #68: gravity-bounded butterfly history (see ENABLE_HISTORY_GRAVITY in
+# src/search.cpp). CANDIDATE. Not signature-preserving -- ordering shifts.
+option(ENABLE_HISTORY_GRAVITY "BACKLOG #68: gravity-bounded history (candidate, default OFF)" OFF)
+if(ENABLE_HISTORY_GRAVITY)
+    add_compile_definitions(ENABLE_HISTORY_GRAVITY=1)
+    message(STATUS "History gravity enabled (BACKLOG #68, candidate)")
+else()
+    add_compile_definitions(ENABLE_HISTORY_GRAVITY=0)
+    message(STATUS "History gravity disabled (raw accumulation, pre-#68)")
+endif()
+
+# BACKLOG #69: history malus only to quiets tried before a beta cutoff (see
+# ENABLE_HISTORY_MALUS_ON_CUTOFF in src/search.cpp). CANDIDATE.
+option(ENABLE_HISTORY_MALUS_ON_CUTOFF "BACKLOG #69: malus only at cutoffs (PARKED, default OFF)" OFF)
+if(ENABLE_HISTORY_MALUS_ON_CUTOFF)
+    add_compile_definitions(ENABLE_HISTORY_MALUS_ON_CUTOFF=1)
+    message(STATUS "History malus restricted to cutoffs (BACKLOG #69, candidate)")
+else()
+    add_compile_definitions(ENABLE_HISTORY_MALUS_ON_CUTOFF=0)
+    message(STATUS "History malus on every non-improving quiet (pre-#69)")
+endif()
+
 # BACKLOG #65: soft/hard per-move time bounds (see ENABLE_SOFT_TIME_BOUND in
 # src/search.cpp). CANDIDATE, under SPRT — default ON in the candidate build;
 # -DENABLE_SOFT_TIME_BOUND=OFF rebuilds the single-deadline arm, which is the
@@ -652,6 +674,7 @@ if(BUILD_TESTING)
     test/test_randomized_invariants.cpp
     test/test_smp_shared_resources.cpp
     test/test_smp_pool.cpp
+    test/test_history_saturation.cpp
     )
 
     add_executable(huginn_tests
