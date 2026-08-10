@@ -884,6 +884,42 @@ Both arms are one exe from one commit with `UseNNUE` flipped, so the only
 difference in the match is the leaf evaluation. The NNUE-off arm is separately
 confirmed bit-identical to 2.4 (startpos d14 = 3,481,582 / cp 31 / e2e4).
 
+**Kiwipete, arbitrated by Stockfish 17 — the net corrects its teacher.**
+White to move; positive = good for White:
+
+| evaluator | Kiwipete |
+|---|---|
+| Stockfish 17, static NNUE | **-129** (final eval -171) |
+| Stockfish 17, depth 24 | **-177**, bestmove dxe6 |
+| Huginn NNUE1 (static) | **-71** |
+| FableR 0.17 net (run inside Huginn) | -41 |
+| Huginn HCE (static) | **+20 — wrong sign** |
+
+The HCE carrying the wrong sign here is a *known* Huginn property (see the
+SF18 gap study: the static eval is wrong-signed on Kiwipete until depth 6). The
+net trained on that same HCE gets the sign right and lands closest to Stockfish
+of the three engine evals. **This qualifies the distillation law: a net copies
+what you label with, not what your static eval thinks.** Labelling with depth-7
+search scores buys the search's correction for free, and is the reason
+self-distillation from a flawed HCE is not circular.
+
+**Net files are byte-compatible with FableR's, by construction.** Ours and
+theirs are both 394,756 bytes and interchangeable, because this implementation
+deliberately adopted their layout: same 768 features, same
+`(colour*6+pt)*64+sq` indexing, same `sq^56` perspective flip, same A=256 /
+B=256 / cp-over-16 quantisation, same `w1,b1,w2,b2` section order. Verified by
+loading `fabler.nnue` into Huginn and getting coherent values (startpos +18,
+queen odds +1074). This is a shared *convention*, not a standard: nothing else
+loads, and `fabler_hkp.nnue` (21 MB, 40,960 HalfKP features) is rejected on
+size. ⚠ **The loader validates size only** — two nets with the same H and a
+different piece ordering would load silently and evaluate wrongly. A magic
+header + version field is owed before the format meets anything foreign.
+
+Compatibility also enables a decisive experiment not yet run: **put FableR's
+net inside Huginn's search.** That holds evaluation constant and measures search
+against search, which is the direct test of the "the gap is all eval" claim
+below. If Huginn loses with their net too, the claim is wrong.
+
 **Cross-engine, 500 games, the scoreboard number:**
 
 ```

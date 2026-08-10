@@ -76,17 +76,21 @@ def fen_features(board, stm):
     return wf, bf, stm == "w"
 
 
-def preprocess(prefix, out_path):
+def preprocess(prefixes, out_path):
     """Two passes: count, then fill preallocated arrays.
 
     Building Python lists-of-lists first (the obvious way) costs ~300 bytes per
     row and OOMs somewhere north of 20M positions. Counting first is one extra
     cheap pass and keeps peak memory at the size of the final arrays.
     """
-    files = sorted(glob.glob(prefix + ".*.txt"))
+    if isinstance(prefixes, str):
+        prefixes = [prefixes]
+    files = []
+    for pre in prefixes:
+        files.extend(sorted(glob.glob(pre + ".*.txt")))
     files = [f for f in files if not f.endswith(".manifest.txt")]
     if not files:
-        sys.exit("no files matching %s.*.txt" % prefix)
+        sys.exit("no files matching %s.*.txt" % " / ".join(prefixes))
 
     t0 = time.time()
     total = 0
@@ -315,7 +319,9 @@ def probe(net_path, H):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["preprocess", "train", "probe"])
-    ap.add_argument("prefix", nargs="?", default="nnue_data/gen")
+    # Several prefixes may be given: successive generations of the corpus are
+    # trained on the blend, not on the newest round alone.
+    ap.add_argument("prefix", nargs="*", default=["nnue_data/gen"])
     ap.add_argument("--npz", default="nnue_data/train.npz")
     ap.add_argument("--epochs", type=int, default=12)
     ap.add_argument("--batch", type=int, default=16384)
@@ -327,7 +333,7 @@ def main():
     a = ap.parse_args()
 
     if a.mode == "preprocess":
-        preprocess(a.prefix, a.npz)
+        preprocess(a.prefix or ["nnue_data/gen"], a.npz)
     elif a.mode == "train":
         train(a.npz, a.epochs, a.batch, a.out, a.lr, a.hidden, a.val_frac)
     else:
