@@ -55,7 +55,8 @@ below for the full number and its caveats). Tagged `v2.3`; see
 | 67 | Eval-discontinuity mining of match PGNs | **TOOLING (2026-08-05)** — triage front-end to the SF oracle; every gauntlet already carries the data | tooling/research | medium |
 | 5 | Recalibrate vs external opponents (CCRL scale) | **MEASURED @t34/pre-v2.3 (2026-07-16)** — ~2600–2680 CCRL-blitz, pooled ~2625 ± 18; next: drop stash19, use 20/21/21.2 | maintenance | medium |
 | 34 | Pin/blocker-aware legal movegen | **OPEN** | speed/research | low |
-| 39 | NNUE evaluation | **DEFERRED** (HCE first) — big lever | feature/eval | — |
+| 39 | NNUE evaluation | **SHIPPED (2026-08-10)** — (768→256)×2, AVX2, nps-neutral. Net v1 **+162.07 ± 34.74** vs HCE; ratchet round 2 **+70.44 ± 24.54** vs v1. Next lever is corpus size | feature/eval | high |
+| 71 | Cross-eval A/B: FableR's net inside Huginn's search | **OPEN — designed, not run (2026-08-10)** — holds evaluation constant to measure search vs search. Falsification test for the "remaining gap is all eval" claim | research/search | high |
 | 40 | Lazy SMP / multithreading | **SHIPPED in v2.4 (2026-08-06)** — all 5 phases; 8-core vs 1-core +199.05 ± 25.63 AMD / +172.78 ± 25.51 Intel. Remaining: t2/t4 scaling curve (optional) | feature/speed | high |
 
 ### #37: Board-desync illegal bestmove — GUARDED + INSTRUMENTED, root cause OPEN
@@ -954,10 +955,7 @@ size. ⚠ **The loader validates size only** — two nets with the same H and a
 different piece ordering would load silently and evaluate wrongly. A magic
 header + version field is owed before the format meets anything foreign.
 
-Compatibility also enables a decisive experiment not yet run: **put FableR's
-net inside Huginn's search.** That holds evaluation constant and measures search
-against search, which is the direct test of the "the gap is all eval" claim
-below. If Huginn loses with their net too, the claim is wrong.
+That compatibility is what makes **#71** runnable — see below.
 
 **Cross-engine, 500 games, the scoreboard number:**
 
@@ -1027,6 +1025,58 @@ as teacher, retrain, which is the loop that took FableR 0.14 -> 0.17 for +78;
 still climbing; (3) HalfKP only after (1) and (2) — FableR parked it dead flat
 at 42M positions on the grounds that the features were data-starved, so it is
 strictly downstream of corpus size.
+
+### #71: Cross-eval A/B — FableR's net inside Huginn's search — OPEN (2026-08-10)
+
+**The claim this is designed to falsify.** After the first net shipped, the
+per-move data said Huginn and FableR 0.17 now search *identically* — 12.83 vs
+12.65 ply, 673,794 vs 687,113 nodes, 2.70 vs 2.79 Mnps over 32k game moves each
+— and were still 195 Elo apart. The conclusion recorded under #39 was that
+**the entire remaining deficit is leaf evaluation**. That conclusion is an
+inference from an equality of summary statistics, not a measurement, and equal
+depth at equal nodes does not prove equal tree *quality*: two searches can
+reach the same depth while pruning different things.
+
+**The experiment.** Net files are byte-compatible between the two engines (see
+#39 — same 768 features, same indexing, same quantisation, both 394,756 bytes;
+verified by loading `fabler.nnue` into Huginn and getting coherent values:
+startpos +18, queen odds +1074, Kiwipete −41). So the same evaluation function
+can be run inside both searches:
+
+| arm | binary | net |
+|---|---|---|
+| A | `huginn_nnue*.exe` | `fabler.nnue` (FableR 0.17's net) |
+| B | `fabler_v17.exe` | `fabler.nnue` (its own net — unchanged) |
+
+House standard, 10+0.1, cc=4, SPRT [0, 10] or a fixed 500. **Evaluation is
+identical in both arms, so the result is a pure search-vs-search measurement**
+— the first one either lab has been able to make, and only possible because of
+an accident of shared file convention.
+
+**Reading the outcome, decided in advance so it cannot be rationalised after:**
+
+| result | meaning |
+|---|---|
+| **~0** | Searches are genuinely equivalent. The #39 "all eval" conclusion stands, and the only lever left is corpus/labels. |
+| **Huginn positive** | Our search is *better* and the eval deficit is even larger than 195 — a stronger version of the #39 conclusion, and it means their net is beating ours by more than the scoreboard shows. |
+| **Huginn negative** | **The #39 conclusion is wrong.** A search gap survived the depth/node parity, and the summary statistics were hiding it. This is the outcome that costs us a retraction, which is exactly why the experiment is worth running. |
+
+**Prerequisites, all already satisfied:** cross-loading verified; `UseNNUE` and
+the paired-net convention make the arms trivial to stage; both engines are
+single-threaded by default at these settings.
+
+**Caveat to state in any writeup.** Huginn's search margins (RFP, futility,
+razoring, LMR thresholds) are tuned against *Huginn's* centipawn scale. FableR's
+net reads systematically cooler than ours on the positions probed so far
+(Kiwipete −41 vs our −71; queen odds +1074 vs +1197), so arm A is running our
+pruning against a slightly different scale. That is a real confound and it
+biases against Huginn. If arm A loses by less than ~20 Elo the result should be
+called inconclusive rather than negative, and re-run with a scale factor fitted
+between the two nets.
+
+**Status:** designed, staged, not run. Deferred deliberately so it is run with
+the user present — it is the experiment most likely to overturn something this
+lab has already written down.
 
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 
