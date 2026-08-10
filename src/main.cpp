@@ -18,23 +18,35 @@ int run_nnuecheck(int argc, char* argv[]);
 
 namespace {
 
-/// @brief Directory containing the running executable, with trailing separator.
-std::string exe_dir(const char* argv0) {
+/**
+ * @brief Net file paired with this executable: `<exe path minus extension>.nnue`.
+ *
+ * Deliberately NOT a fixed `huginn.nnue`. The ladder keeps every historical
+ * binary in one fastchess folder, so a fixed name would mean dropping one net
+ * file there silently converts `huginn_2.4.exe` — and every other baseline in
+ * the folder — into an NNUE engine, corrupting any future A/B that used them.
+ * Naming the net after its exe makes each binary's evaluation self-contained.
+ */
+std::string paired_net_path(const char* argv0) {
     std::string p = argv0 ? argv0 : "";
-    const size_t cut = p.find_last_of("/\\");
-    return cut == std::string::npos ? std::string() : p.substr(0, cut + 1);
+    const size_t slash = p.find_last_of("/\\");
+    const size_t dot = p.find_last_of('.');
+    if (dot != std::string::npos && (slash == std::string::npos || dot > slash)) {
+        p = p.substr(0, dot);
+    }
+    return p + ".nnue";
 }
 
 /**
- * @brief Auto-load `huginn.nnue` from the executable's own directory.
+ * @brief Auto-load the paired net, if one is sitting next to the executable.
  *
- * The ladder tests binaries by copying them into the fastchess folder, so the
- * net has to travel with the exe rather than depend on the working directory.
  * Absent net file => nothing loads, NNUE stays off, and the binary is the
- * hand-crafted-eval engine it has always been.
+ * hand-crafted-eval engine it has always been. This is what keeps a build with
+ * the NNUE code compiled in bit-identical to 2.4 unless a net is deliberately
+ * shipped alongside it.
  */
 void autoload_net(const char* argv0) {
-    const std::string path = exe_dir(argv0) + "huginn.nnue";
+    const std::string path = paired_net_path(argv0);
     if (Huginn::NNUE::load(path)) {
         Huginn::NNUE::set_enabled(true);
         std::cout << "info string NNUE loaded: " << Huginn::NNUE::description() << std::endl;
