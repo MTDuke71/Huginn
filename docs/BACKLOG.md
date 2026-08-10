@@ -871,6 +871,45 @@ the net already separates material cleanly: queen odds +1049, rook +651, knight
 same early regime, and it says material is learned long before the net is
 strong.
 
+#### SHIPPED 2026-08-10: the ratchet turns -- round 2 is +70 over round 1
+
+```
+Huginn_NNUE2 vs Huginn_NNUE1    10+0.1, cc=4, same binary, only the .nnue differs
+Elo: +70.44 +/- 24.54           nElo: +98.18 +/- 33.23
+LOS 100.00%   60.00%            W158 L74 D188, 420 games
+Ptnml(0-2): [7, 31, 71, 73, 28] LLR 2.95 (-2.94, 2.94) [0, 10] -- H1 ACCEPTED
+```
+
+Round 2 regenerated 11,189,727 positions from 123,446 games **with the round-1
+net as the teacher** (4 h, 15 threads, 776 pos/s), then retrained on the
+**blend** of both rounds -- 25,402,899 positions -- for 32 epochs. Both arms are
+the same binary; only the paired net file differs.
+
+**This independently replicates FableR's ratchet at nearly identical
+magnitude.** Their 0.17 turn measured **+78.4 +/- 24.3**; ours measures **+70.4
++/- 24.5**. Two labs, different engines, different HCE ancestors, different
+corpora, same loop (net -> better labels -> better net) -- and the same payoff
+within error. The loop generalises; it is not an artefact of either codebase.
+
+**The blind spot keeps dissolving, as predicted.** KB-vs-K across four nets now:
+**+408** (1.6M) -> **+180** (14.2M/14ep) -> **+92** (14.2M/32ep) -> **+64**
+(25.4M/32ep). Monotone in data and training every time. The underfitting
+diagnosis holds.
+
+**Tree unchanged, as intended.** Per-move over the match: NNUE2 12.96 ply /
+683,894 nodes / 2.704 Mnps versus NNUE1 12.83 / 684,461 / 2.704. Identical
+search, identical speed, +70 Elo -- a clean eval-only delta, which is what an
+A/B that changes one file should look like.
+
+**Chained estimate, explicitly not a measurement:** NNUE1 measured -194.6 +/-
+25.8 against FableR 0.17, so NNUE2 should sit near **-124** against it. That
+number is a chain, not a match; it needs its own 500 games before it goes in any
+ladder as fact.
+
+Next: the corpus is the lever and it is pure box-time -- round 3 with the
+round-2 teacher, and more positions. HalfKP still waits behind corpus size
+(FableR parked it flat at 42M on exactly that reasoning).
+
 #### SHIPPED 2026-08-10: first net is +162 over the HCE
 
 ```
