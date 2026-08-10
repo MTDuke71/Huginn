@@ -871,6 +871,60 @@ the net already separates material cleanly: queen odds +1049, rook +651, knight
 same early regime, and it says material is learned long before the net is
 strong.
 
+#### SHIPPED 2026-08-10: first net is +162 over the HCE
+
+```
+Huginn_NNUE1 vs Huginn_HCE      10+0.1, cc=4, same binary, UseNNUE flipped
+Elo: +162.07 +/- 34.74          nElo: +241.43 +/- 44.71
+LOS 100.00%   71.77%            W125 L24 D83, 232 games
+Ptnml(0-2): [1, 7, 27, 52, 29]  LLR 2.97 (-2.94, 2.94) [0, 10] -- H1 ACCEPTED
+```
+
+Both arms are one exe from one commit with `UseNNUE` flipped, so the only
+difference in the match is the leaf evaluation. The NNUE-off arm is separately
+confirmed bit-identical to 2.4 (startpos d14 = 3,481,582 / cp 31 / e2e4).
+
+**Corpus:** 14,213,172 positions from 161,765 self-play games at depth 7 — 5
+hours on 15 threads at 784 pos/s. **Net:** 32 epochs, ~23 s/epoch on the RX 9070
+XT; val-sigmoid loss 0.004292 -> 0.002583, plateaued over the last six epochs.
+
+**The KB-vs-K blind spot was underfitting, not a bug.** Tracked across three
+nets: **+408** at 1.6M positions, **+180** at 14.2M / 14 epochs, **+92** at
+14.2M / 32 epochs. FableR diagnosed the same defect in its own net (+367) as an
+inherited teacher blind spot and shipped a targeted fix (insufficient-material
+zero + rule-50 decay) that measured **flat, -1.4 +/- 12.5 @ 1000g**. The
+evidence here says the defect dissolves on its own with data and training —
+which is consistent with their fix measuring nothing, and is a cheaper
+explanation than theirs. Testable in their lab by re-probing 0.14 and 0.17.
+
+**The depth screen missed this one, and that is worth recording.** Screened
+before the arena at fixed 1000 ms over 40 quiet midgame positions:
+**-0.450 +/- 0.202 ply**. Measured from the match PGN afterwards, over 27k
+actual game moves at ~0.26 s/move:
+
+| arm | depth/move | nodes/move | s/move | implied nps |
+|---|---|---|---|---|
+| NNUE | **12.77** | 699,646 | 0.261 | **2.68 M** |
+| HCE | 12.60 | 646,306 | 0.262 | 2.47 M |
+
+The arena arm was **+0.17 ply deeper and 8% faster in nodes**, the opposite
+sign to the screen. The screen was run at 1000 ms; real moves at 10+0.1 average
+260 ms. **Depth-at-fixed-time is sensitive to the time point chosen, and the
+screening budget should match the tournament budget** — screening at 1 s for a
+match played at a quarter of that measured a regime the games never enter. The
+instrument still gave the right *decision* (it said "run it"), but its sign was
+wrong; do not read the magnitude as a prediction.
+
+**AVX2 is why the eval is free.** Scalar NNUE ran at 0.36x HCE nps and would
+have cost real depth. See the build notes above.
+
+Next rungs, in order: (1) **the data ratchet** — regenerate labels with the net
+as teacher, retrain, which is the loop that took FableR 0.14 -> 0.17 for +78;
+(2) more positions, since 14.2M is below the 22.6M where FableR's curve was
+still climbing; (3) HalfKP only after (1) and (2) — FableR parked it dead flat
+at 42M positions on the grounds that the features were data-starved, so it is
+strictly downstream of corpus size.
+
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 
 **Branch:** `smp-phase1-lockless-tt`. Kickoff decisions (2026-08-04): proceed
