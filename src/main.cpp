@@ -56,11 +56,16 @@ void autoload_net(const char* argv0) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    // Autoload FIRST, before any subcommand dispatch. datagen in particular
+    // must see the net: the iterative training loop is net -> better labels ->
+    // better net, and generating a second-round corpus with the paired net
+    // silently unloaded would relabel with the HCE and produce a round of data
+    // no stronger than the first.
+    autoload_net(argc > 0 ? argv[0] : nullptr);
+
     if (argc >= 2 && std::strcmp(argv[1], "datagen") == 0) {
         return run_datagen(argc, argv);
     }
-
-    autoload_net(argc > 0 ? argv[0] : nullptr);
 
     if (argc >= 2 && std::strcmp(argv[1], "nnuecheck") == 0) {
         return run_nnuecheck(argc, argv);

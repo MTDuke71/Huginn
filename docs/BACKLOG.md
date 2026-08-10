@@ -884,6 +884,34 @@ Both arms are one exe from one commit with `UseNNUE` flipped, so the only
 difference in the match is the leaf evaluation. The NNUE-off arm is separately
 confirmed bit-identical to 2.4 (startpos d14 = 3,481,582 / cp 31 / e2e4).
 
+**Cross-engine, 500 games, the scoreboard number:**
+
+```
+Huginn_NNUE1 vs FableR_0.17     10+0.1, cc=4, 500 games (fixed length)
+Elo: -194.57 +/- 25.78          nElo: -281.95 +/- 30.45
+W35 L289 D176 (24.60%)          Ptnml(0-2): [83, 104, 48, 14, 1]
+```
+
+Two independent measurements agree: FableR chained 0.17 at roughly +370 over
+Huginn 2.4, we measured +162 over the HCE that *is* 2.4, and the residual
+predicted gap (~208) matches the measured 195 within error. So the +162 is real
+against a third party, not an artefact of self-play A/B.
+
+**And the tree is no longer the story.** Per-move, over 32k game moves each:
+
+| engine | depth/move | nodes/move | s/move | nps |
+|---|---|---|---|---|
+| FableR 0.17 | 12.65 | 687,113 | 0.246 | 2.79 M |
+| Huginn NNUE1 | **12.83** | 673,794 | 0.249 | 2.70 M |
+
+Same depth, same nodes, same speed — and a 195 Elo gap. This is the exact
+inverse of the 2026-08-05 measurement, where Huginn reached the same depth on
+*half* the nodes and still lost. The tree-shape asymmetry that dominated the
+first week of this rivalry is gone; **the entire remaining deficit is now leaf
+evaluation quality**, i.e. their net is better than ours. That is a much
+cleaner target than "somewhere in search or eval", and it points at corpus
+size and label strength, both of which are pure box-time.
+
 **Corpus:** 14,213,172 positions from 161,765 self-play games at depth 7 — 5
 hours on 15 threads at 784 pos/s. **Net:** 32 epochs, ~23 s/epoch on the RX 9070
 XT; val-sigmoid loss 0.004292 -> 0.002583, plateaued over the last six epochs.

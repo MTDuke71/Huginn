@@ -223,11 +223,14 @@ int run_datagen(int argc, char* argv[]) {
     {
         std::ofstream mf(opt.prefix + ".manifest.txt", std::ios::app);
         mf << "seed=" << opt.seed << " games=" << opt.games << " depth=" << opt.depth
-           << " threads=" << opt.threads << " book=" << opt.book << "\n";
+           << " threads=" << opt.threads
+           << " teacher=" << (Huginn::NNUE::enabled() ? "NNUE" : "HCE")
+           << " book=" << opt.book << "\n";
     }
 
     std::cout << "datagen: " << book.size() << " openings, " << opt.games << " games, depth "
-              << opt.depth << ", " << opt.threads << " threads, seed " << opt.seed << " -> "
+              << opt.depth << ", " << opt.threads << " threads, seed " << opt.seed
+              << ", teacher " << (Huginn::NNUE::enabled() ? "NNUE" : "HCE") << " -> "
               << opt.prefix << ".N.txt" << std::endl;
 
     const auto start = std::chrono::steady_clock::now();
