@@ -383,6 +383,10 @@ void Position::rebuild_counts() {
         }
     }
 
+    // #39: the derived caches just moved, so the NNUE accumulator must too.
+    // This is the single refresh point for every position-setup path
+    // (set_from_fen commits through here; set_startpos goes through set_from_fen).
+    Huginn::NNUE::refresh(*this);
 }
 
 // Set up the standard chess starting position using FEN

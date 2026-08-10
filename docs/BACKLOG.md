@@ -803,6 +803,74 @@ the same regardless of data source — that integration, not the data, is the
 real #39 lift. Revisit self-generation only if the position distribution turns
 out to matter (our search coupling) or for later self-play iterations.
 
+#### BUILT 2026-08-09/10: the engine side is done and measured
+
+The integration — not the data — was always the real #39 lift, and it is in.
+
+**Architecture.** (768 -> 256) x 2 perspectives, shared feature transformer,
+clipped ReLU, single linear head to centipawns (side-to-move POV). Features are
+colour(2) x piece-type(6) x square(64); the black perspective flips the colour
+bit and mirrors the square (`sq ^ 56`), which preserves the colour symmetry the
+mirror suite asserts. `src/nnue.hpp` / `src/nnue.cpp`.
+
+**Incremental accumulator, no undo stack.** The accumulator lives in `Position`
+and is maintained by the three atomic piece ops (`add_piece_sq64`,
+`clear_piece_sq64`, `move_piece_sq64`). Because `TakeMove` replays the exact
+inverse piece operations, the accumulator unwinds itself — nothing is stored in
+`S_UNDO`. Verified by `huginn nnuecheck <fen> <depth>`, which compares the
+incremental accumulator against a from-scratch refresh at every node of a full
+legal walk: **4.9M nodes across startpos, Kiwipete, the en-passant pin
+position, promotion-with-capture and underpromotion — 0 mismatches.**
+
+**Regression gate holds.** With the net loaded but `UseNNUE` off, startpos
+d14 = **3,481,582 / cp 31 / e2e4** — bit-identical to t34 / 2.3 / 2.4. The HCE
+engine is untouched by construction.
+
+**AVX2, and it matters more than expected.** The first working version ran at
+**0.36x** HCE nps. Explicit AVX2 for the accumulator deltas (16 int16 lanes per
+register; kHidden=256 is exactly 16 registers per perspective) took that to
+0.58x, and vectorising the forward pass with `_mm256_madd_epi16` took it to
+**nps parity with the HCE** (1.80M vs 1.77M and 1.97M vs 1.63M on a loaded box).
+Both steps are bit-identical to the scalar path — node counts unchanged at
+1,655,639, eval outputs unchanged. This is the AVX-512/VNNI payoff the entry
+predicted, arriving one instruction set early. Depth screen at 1000 ms over 40
+positions: **+0.125 +/- 0.206 ply**, i.e. the net costs no depth. FableR paid
+~40% nps for the same architecture, so this is a materially better starting
+point than their +290 was built on.
+
+**The insufficient-material short-circuit stays in front of the net, and it is
+load-bearing.** FableR shipped a net that read KB-vs-K as +367 because it had
+distilled its own HCE's blind spot, then spent a night on a fix that measured
+**flat (-1.4 +/- 12.5, 1000g)**. Our first net has exactly the same defect —
+probe says **+408** — and the engine is immune to it anyway: `evaluate()`
+returns the contempt draw (-25) before the net is consulted. **Distillation
+copies the teacher's ignorance at full fidelity; the cheapest defence is to keep
+the provably-correct terminal checks in front of the learned eval rather than
+hoping the net learns them.** Independent cross-lab reproduction of their bug,
+and a free pass on their fix.
+
+**Data generation** (`huginn datagen`, `src/datagen.cpp`): multithreaded
+self-play at fixed depth, per-thread append-only output files (a kill loses at
+most one game per thread), a manifest recording the seed of every session, a
+`--max-hours` clean-exit budget, and 8% random-move exploration noise before
+ply 20. Recorded positions are quiet only (not in check, mover is not a capture
+or promotion), `ply >= 10`, `|score| < 1500`. Measured throughput on this box:
+**404 pos/s at depth 8, 751 pos/s at depth 7** on 15 threads.
+
+**Tooling.** `tools/train_nnue.py` (preprocess / train / probe) and
+`tools/screen_depth.py` — the latter is the depth-at-fixed-time screen FableR
+adopted from us; it now lives in-repo under the name they cite. `probe` mode
+evaluates known material imbalances straight out of the quantised file using the
+same integer arithmetic the engine uses: **run it before booking arena time**,
+because a clean loss curve is not a working net.
+
+**Learning-curve datum (ours, not borrowed).** At **1.6M positions / 8 epochs**
+the net already separates material cleanly: queen odds +1049, rook +651, knight
++343, symmetric for Black, startpos +15. FableR's curve was measured in Elo
+(1M -> -460, 11M -> parity, 22.6M -> +177); this is the probe-level view of the
+same early regime, and it says material is learned long before the net is
+strong.
+
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 
 **Branch:** `smp-phase1-lockless-tt`. Kickoff decisions (2026-08-04): proceed

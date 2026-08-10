@@ -117,3 +117,8 @@ tools/SF_Huginn_diff.csv
 tools/SF_winning_Huginn_losing.csv
 thriver-lab-s2-f1e618a5.js
 toes-fetish-agi-2-s2-b4f556e8.js
+
+# #39 NNUE: generated training corpora and nets are large and regenerable
+nnue_data/
+nnue/*.nnue
+build/nnue-dev/

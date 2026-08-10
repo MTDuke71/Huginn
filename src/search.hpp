@@ -551,6 +551,11 @@ public:
      */
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
 
+    /// #39: score (side-to-move POV) of the last completed root iteration.
+    /// Written only by in-window, uninterrupted iterations — datagen reads it
+    /// as the position's label.
+    int last_root_score = 0;
+
     /**
      * @brief The iterative-deepening loop alone, without the once-per-search
      *        setup — the entry point a Lazy SMP helper thread runs (#40 phase 3).

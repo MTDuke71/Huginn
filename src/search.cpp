@@ -37,6 +37,7 @@
 #include "input_checking.hpp"
 #include "msvc_optimizations.hpp"
 #include "see.hpp"
+#include "nnue.hpp"
 #include <cassert>
 #include <climits>   // INT_MIN selection sentinel (ENABLE_SEE_ORDER_SPLIT)
 #include <cstdlib>
@@ -693,6 +694,15 @@ int Engine::evaluate(const Position& pos) {
     // VICE Part 82: Check for material draw first (2:03)
     if (pos.get_white_pawns() == 0 && pos.get_black_pawns() == 0 && MaterialDraw(pos)) {
         return -CONTEMPT; // Insufficient material draw — contempt-biased (BACKLOG #16)
+    }
+
+    // #39: NNUE replaces every term below when a net is loaded and enabled. The
+    // insufficient-material short-circuit above stays in front of it on purpose:
+    // it is cheap, provably correct, and it is exactly the KB-vs-K blind spot a
+    // net distilled from our own HCE would otherwise inherit from its teacher
+    // (FableR measured its net reading KB-vs-K as +367 for precisely this reason).
+    if (Huginn::NNUE::enabled()) {
+        return Huginn::NNUE::evaluate(pos);
     }
     
     // VICE Part 56: Basic Evaluation with piece-square tables
@@ -3385,6 +3395,13 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
 
     // Set up search parameters
     info.start_time = std::chrono::steady_clock::now();
+
+    // #39: the accumulator is only maintained while NNUE is enabled, so a
+    // toggle between searches (or a helper's fresh copy of the root) can leave
+    // it stale. One refresh per search is negligible and makes correctness
+    // independent of when UseNNUE was flipped.
+    if (Huginn::NNUE::enabled()) Huginn::NNUE::refresh(pos);
+
     const int root_static_eval = evalPosition(pos);
 
 #if ENABLE_ASPIRATION
@@ -3720,6 +3737,12 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
             // Store in PV table for next iteration's move ordering
             store_pv_move(pos.zobrist_key, depth_best_move);
         }
+
+        // #39: score of the last COMPLETED iteration, side-to-move POV. Only
+        // in-window, uninterrupted iterations reach here, so this is exactly the
+        // consistent fixed-depth label datagen wants (an interrupted iteration's
+        // score would be the time-management variance the backlog warns against).
+        last_root_score = best_score;
 
 #if ENABLE_ASPIRATION
         // Centre the next depth's aspiration window on this depth's accepted

@@ -25,6 +25,7 @@
 #include "uci_utils.hpp"
 #include "movegen.hpp"
 #include "input_checking.hpp"
+#include "nnue.hpp"
 #include <fstream>
 #include <algorithm>
 
@@ -263,6 +264,12 @@ void UCIInterface::send_options() {
     // #56: tablebases default to DISABLED — no hard-coded c:\TB\ auto-probe.
     // `<empty>` is the UCI convention for an empty string default.
     std::cout << "option name SyzygyPath type string default <empty>" << std::endl;
+    // #39: NNUE. EvalFile loads a quantised net; UseNNUE routes evaluate()
+    // through it. UseNNUE is a no-op until a net loads, so an engine shipped
+    // without a net file behaves exactly like 2.4.
+    std::cout << "option name EvalFile type string default <empty>" << std::endl;
+    std::cout << "option name UseNNUE type check default "
+              << (Huginn::NNUE::loaded() ? "true" : "false") << std::endl;
 }
 
 /**
@@ -504,6 +511,34 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
             }
             if (debug_mode) {
                 std::cout << "info string BookFile set to " << book_file << std::endl;
+            }
+        }
+        else if (option_name == "EvalFile") {
+            if (option_value.empty() || option_value == "<empty>") {
+                Huginn::NNUE::set_enabled(false);
+                std::cout << "info string NNUE disabled" << std::endl;
+            } else if (Huginn::NNUE::load(option_value)) {
+                Huginn::NNUE::set_enabled(true);
+                // The accumulator for the position currently loaded is stale
+                // (it was never maintained while NNUE was off), so rebuild it.
+                position.rebuild_counts();
+                std::cout << "info string NNUE loaded: " << Huginn::NNUE::description()
+                          << std::endl;
+            } else {
+                std::cout << "info string Failed to load NNUE net from: " << option_value
+                          << std::endl;
+            }
+        }
+        else if (option_name == "UseNNUE") {
+            const bool want = (option_value == "true" || option_value == "1");
+            Huginn::NNUE::set_enabled(want);
+            if (want && !Huginn::NNUE::loaded()) {
+                std::cout << "info string UseNNUE ignored: no net loaded (set EvalFile first)"
+                          << std::endl;
+            } else {
+                position.rebuild_counts();
+                std::cout << "info string UseNNUE " << (Huginn::NNUE::enabled() ? "on" : "off")
+                          << std::endl;
             }
         }
         else if (option_name == "SyzygyPath") {

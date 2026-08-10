@@ -48,6 +48,7 @@
 #include "bitboard.hpp"
 #include "chess_types.hpp"
 #include "move.hpp"
+#include "nnue.hpp"
 #include "msvc_optimizations.hpp"
 #include "zobrist.hpp"
 
@@ -123,6 +124,11 @@ public:
     uint64_t zobrist_key{0};         ///< Incremental Zobrist hash (repetition detection + TT key).
 
     std::array<int, 2> material_score{ 0, 0 }; ///< Per-side material total (cp), indexed [White, Black].
+
+    /// NNUE hidden-layer accumulator (#39), maintained incrementally by the three
+    /// atomic piece ops below. `TakeMove` replays their exact inverses, so the
+    /// accumulator unwinds without an undo stack. Untouched when NNUE is off.
+    Huginn::NNUE::Accumulator acc{};
 
     std::vector<S_UNDO> move_history; ///< Undo stack; one ::S_UNDO per made move.
     int ply{0};                      ///< Current search/game ply (depth from the root).
@@ -265,6 +271,9 @@ public:
         zobrist_key ^= Zobrist::Piece[zpc][from_sq64];
         zobrist_key ^= Zobrist::Piece[zpc][to_sq64];
 
+        if (Huginn::NNUE::enabled())
+            Huginn::NNUE::acc_move(acc, piece_color, piece_type, from_sq64, to_sq64);
+
         popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], from_sq64);
         popBit(color_bitboards[size_t(piece_color)], from_sq64);
         popBit(occupied_bitboard, from_sq64);
@@ -298,6 +307,8 @@ public:
         }
         zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
 
+        if (Huginn::NNUE::enabled()) Huginn::NNUE::acc_sub(acc, piece_color, piece_type, sq64);
+
         popBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
         popBit(color_bitboards[size_t(piece_color)], sq64);
         popBit(occupied_bitboard, sq64);
@@ -321,6 +332,8 @@ public:
             material_score[size_t(piece_color)] += value_of(piece);
         }
         zobrist_key ^= Zobrist::Piece[int(piece_type) + (piece_color == Color::Black ? 6 : 0)][sq64];
+
+        if (Huginn::NNUE::enabled()) Huginn::NNUE::acc_add(acc, piece_color, piece_type, sq64);
 
         setBit(piece_bitboards[size_t(piece_color)][size_t(piece_type)], sq64);
         setBit(color_bitboards[size_t(piece_color)], sq64);
