@@ -44,13 +44,20 @@ std::string paired_net_path(const char* argv0) {
  * hand-crafted-eval engine it has always been. This is what keeps a build with
  * the NNUE code compiled in bit-identical to 2.4 unless a net is deliberately
  * shipped alongside it.
+ *
+ * SILENT by design (#72): UCI forbids unsolicited stdout before the GUI
+ * speaks (the same contract #56 pinned with SilentUntilUciThenHonestOptions,
+ * which a startup print breaks the moment a net is deployed next to the exe).
+ * The `uci` handler announces the net instead; the dev subcommands announce
+ * it themselves in main().
  */
-void autoload_net(const char* argv0) {
+bool autoload_net(const char* argv0) {
     const std::string path = paired_net_path(argv0);
     if (Huginn::NNUE::load(path)) {
         Huginn::NNUE::set_enabled(true);
-        std::cout << "info string NNUE loaded: " << Huginn::NNUE::description() << std::endl;
+        return true;
     }
+    return false;
 }
 
 }  // namespace
@@ -61,14 +68,19 @@ int main(int argc, char* argv[]) {
     // better net, and generating a second-round corpus with the paired net
     // silently unloaded would relabel with the HCE and produce a round of data
     // no stronger than the first.
-    autoload_net(argc > 0 ? argv[0] : nullptr);
+    const bool net_loaded = autoload_net(argc > 0 ? argv[0] : nullptr);
 
-    if (argc >= 2 && std::strcmp(argv[1], "datagen") == 0) {
-        return run_datagen(argc, argv);
-    }
-
-    if (argc >= 2 && std::strcmp(argv[1], "nnuecheck") == 0) {
-        return run_nnuecheck(argc, argv);
+    if (argc >= 2 && (std::strcmp(argv[1], "datagen") == 0 ||
+                      std::strcmp(argv[1], "nnuecheck") == 0)) {
+        // Dev consoles, not UCI: say which eval is labelling, up front.
+        // Datagen in particular must not silently relabel with the HCE (#39).
+        if (net_loaded) {
+            std::cout << "info string NNUE loaded: " << Huginn::NNUE::description() << std::endl;
+        } else {
+            std::cout << "info string no paired net; HCE evaluation" << std::endl;
+        }
+        return std::strcmp(argv[1], "datagen") == 0 ? run_datagen(argc, argv)
+                                                    : run_nnuecheck(argc, argv);
     }
 
     UCIInterface uci;

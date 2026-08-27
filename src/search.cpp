@@ -3307,6 +3307,100 @@ int Engine::quiescence(Position& pos, int alpha, int beta, SearchInfo& info, int
     return alpha;
 }
 
+// ---- SearchInfo role-typed factories ----------------------------------------
+// The three valid ways to build a SearchInfo. All the caller-must-know
+// combination rules that used to be distributed across uci.cpp,
+// search_pool.cpp, and datagen.cpp live here, next to their rationale.
+
+SearchInfo SearchInfo::for_uci(const MinimalLimits& limits,
+                               std::function<void(SearchInfo&)> pump) {
+    SearchInfo info;
+    info.max_depth = limits.max_depth;
+    info.stopped = false;
+    info.infinite = limits.infinite;
+
+    // #56: the mid-search command pump. checkup() calls it when stdin has
+    // pending input: `isready` is answered without stopping, `stop`/`quit`
+    // flag this SearchInfo (on this thread — no cross-thread writes), and
+    // other commands queue for the UCI run() loop to replay after bestmove.
+    info.on_input = std::move(pump);
+
+    const auto search_start = std::chrono::steady_clock::now();
+    info.start_time = search_start;
+#if ENABLE_SOFT_TIME_BOUND
+    // #65: hard deadline aborts an in-flight iteration; soft deadline gates
+    // starting a NEW one. hard_time_ms == 0 means the caller supplied no
+    // extension allowance (movetime / bare `go` / depth-only), in which case
+    // both collapse to max_time_ms — exactly the pre-#65 single deadline.
+    const int hard_ms = (limits.hard_time_ms > limits.max_time_ms) ? limits.hard_time_ms
+                                                                   : limits.max_time_ms;
+    info.stop_time = search_start + std::chrono::milliseconds(hard_ms);
+    info.soft_stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#else
+    // Single-deadline arm (pre-#65). The A/B baseline: max_time_ms is BOTH the
+    // "no new iteration" point and the abort point. soft_stop_time is left at
+    // the clock epoch so the root check reads it as unset even if compiled in.
+    info.stop_time = search_start + std::chrono::milliseconds(limits.max_time_ms);
+#endif
+    return info;
+}
+
+SearchInfo SearchInfo::for_helper(const SearchInfo& driver, int thread_id,
+                                  std::atomic<uint64_t>* node_mirror) {
+    SearchInfo hi;
+    // The driver's depth/time frame — exactly these five fields, nothing else.
+    hi.max_depth  = driver.max_depth;
+    hi.infinite   = driver.infinite;
+    hi.depth_only = driver.depth_only;
+    hi.start_time = driver.start_time;
+    hi.stop_time  = driver.stop_time;
+    // BACKLOG #65: `soft_stop_time` is deliberately NOT inherited; helpers get
+    // only the hard deadline (stop_time, above).
+    //
+    // The soft bound means "do not START another iteration", and that is a
+    // DRIVER decision: only the driver's move is played, and the driver
+    // returning is what ends the whole search (the pool fires the group stop
+    // right after, so helpers are cut off within a poll regardless). Coupling
+    // helper scheduling to a driver-only time policy would be wrong in
+    // principle even where it is harmless in practice.
+    //
+    // Mechanically, leaving it at the clock epoch makes the root check's
+    // liveness guard (`soft_stop_time > start_time`) read false, so helpers
+    // skip the bound entirely.
+    //
+    // Honest scope: propagating it would NOT strand the helpers for long —
+    // each would stop at its own next iteration boundary past the soft
+    // bound, which lands near where the driver stops anyway. Iteration
+    // skipping means those boundaries differ per helper, so the effect is
+    // real but small. Keep it driver-only for the semantics, not because
+    // the alternative is catastrophic.
+    //
+    // Verified 2026-08-06, Kiwipete @ 10+0.1 (soft 550 ms / hard 1650 ms):
+    //   Threads=1 -> d13 @ 945 ms | Threads=2 -> d13 @ 906 ms
+    //   Threads=8 -> d14 @ 816 ms
+    // Time stays bounded as threads rise and t8 buys a ply; nothing runs
+    // away to the hard deadline. See
+    // SmpPoolTest.HelpersContributeUnderALiveSoftTimeBound.
+    hi.thread_id          = thread_id;   // diversification key (skip + skew)
+    hi.emit_uci_output    = false;       // thread 0 is the sole stdout writer
+    hi.use_iteration_gate = false;       // no budget of its own; group stop releases it
+    hi.polls_input        = false;       // main-thread-only console state
+    hi.node_mirror        = node_mirror;
+    // hi.on_input deliberately left empty, and polls_input false, so a helper
+    // can never reach input_is_waiting()/read_input().
+    return hi;
+}
+
+SearchInfo SearchInfo::for_quiet_fixed_depth(int depth) {
+    SearchInfo info;
+    info.max_depth       = depth;
+    info.depth_only      = true;   // no time management at all
+    info.infinite        = false;
+    info.polls_input     = false;  // oracle searches never touch stdin
+    info.emit_uci_output = false;  // ...and say nothing
+    return info;
+}
+
 /**
  * @brief Root search driver — iterative deepening + time management + UCI output.
  *
@@ -3379,14 +3473,15 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
  *     become evictable at any depth — silently gutting the #42 aging that
  *     shipped at t34.
  *
- * Helpers (`info.is_helper`) additionally skip all UCI output — interleaved
- * `info` lines from N threads are malformed protocol, so thread 0 is the sole
- * writer to stdout — along with the PV-display walk that feeds it, and the
- * iteration-start time gate, since a helper has no budget of its own and runs
- * until the group stop fires.
+ * Helpers additionally skip all UCI output (`info.emit_uci_output` false) —
+ * interleaved `info` lines from N threads are malformed protocol, so thread 0
+ * is the sole writer to stdout — along with the PV-display walk that feeds it,
+ * and the iteration-start time gate (`info.use_iteration_gate` false), since a
+ * helper has no budget of its own and runs until the group stop fires.
  *
  * @param pos  Position to search (this thread's own copy under SMP).
- * @param info Per-thread search state; `is_helper` / `thread_id` select the role.
+ * @param info Per-thread search state, built by a SearchInfo factory;
+ *             `emit_uci_output` / `use_iteration_gate` / `thread_id` select the role.
  * @return This thread's best move.
  */
 S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
@@ -3487,7 +3582,7 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         // #40 phase 3: helpers skip this gate — they have no budget of their
         // own and are released by the group stop, not by predicting whether
         // one more iteration fits.
-        if (current_depth > 1 && !info.is_helper && !info.infinite && !info.depth_only
+        if (current_depth > 1 && info.use_iteration_gate && !info.infinite && !info.depth_only
                 && info.stop_time != std::chrono::steady_clock::time_point{}) {
             auto now = std::chrono::steady_clock::now();
             auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time).count();
@@ -3555,8 +3650,9 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         // thread-dependent amount, so they fail high/low at different scores
         // than the driver and re-search different windows. Without this, two
         // helpers landing on the same depth still search near-identical trees.
-        // Exactly 0 for the driver, so the Threads=1 signature is untouched.
-        const int aspiration_skew = info.is_helper ? ((info.thread_id * 13) % 45) : 0;
+        // Keyed on thread_id like iteration skipping above: exactly 0 for
+        // thread 0, so the driver's Threads=1 signature is untouched.
+        const int aspiration_skew = (info.thread_id * 13) % 45;
         int delta = ASPIRATION_DELTA + aspiration_skew;
         int alpha = use_window ? std::max(prev_score - delta, -30000) : -30000;
         int beta  = use_window ? std::min(prev_score + delta,  30000) :  30000;
@@ -3751,11 +3847,11 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
 #endif
 
         // #40 phase 3: everything from here to the end of the iteration is
-        // reporting — the PV-display walk and the UCI `info` line. Only the
-        // driver does it. A helper skipping the walk also skips its
-        // make/unmake + movegen cost per iteration, which is pure overhead for
-        // a thread whose output nobody reads.
-        if (info.is_helper) continue;
+        // reporting — the PV-display walk and the UCI `info` line. Only a
+        // search that emits output does it. A quiet search skipping the walk
+        // also skips its make/unmake + movegen cost per iteration, which is
+        // pure overhead for a thread whose output nobody reads.
+        if (!info.emit_uci_output) continue;
 
         // Calculate elapsed time for output
         auto now = std::chrono::steady_clock::now();

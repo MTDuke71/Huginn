@@ -1078,6 +1078,42 @@ between the two nets.
 the user present — it is the experiment most likely to overturn something this
 lab has already written down.
 
+### #72: SearchInfo role-typed factories + is_helper split — DONE 2026-08-27
+
+Architecture-review pick (candidate 1 of 6 from the deepening scan). SearchInfo
+carried ~30 raw public fields whose valid combinations lived only in comments;
+`is_helper` conflated four meanings (datagen was setting it on a search that is
+not a helper, safe only because diversification is keyed on `thread_id`, which
+is 0 there).
+
+**Shipped shape:**
+- `is_helper` split into two single-meaning flags: `emit_uci_output` (stdout +
+  PV-display walk) and `use_iteration_gate` (the #47 elapsed×2 gate). The
+  aspiration skew dropped its `is_helper` guard — `(thread_id * 13) % 45` is
+  already exactly 0 for the driver.
+- Three factories own construction: `SearchInfo::for_uci` (absorbed the #65
+  soft/hard deadline collapse from uci.cpp), `::for_helper` (the 8-field copy
+  contract + the soft-stop non-propagation rationale, moved from
+  search_pool.cpp), `::for_quiet_fixed_depth` (datagen/tests/bench). Raw
+  field-setting stays legal for tests; factory contracts pinned by two new
+  SmpPoolTest cases.
+- Follow-up in the same change: net autoload announce moved from process
+  startup to the `uci` handshake (+ an explicit line in the datagen/nnuecheck
+  branches). The startup print broke #56's silence-before-uci contract
+  (SilentUntilUciThenHonestOptions) whenever a net sat next to the exe.
+
+**Verification (equality, not Elo — no SPRT):** signature gate on BOTH eval
+arms (net present, and nets hidden = HCE) × 4 positions (startpos d14 =
+3,481,582 HCE arm, Kiwipete d13, middlegame d13, endgame d15) — all
+bit-identical to pre-refactor HEAD; startpos d16 = 13,119,377 identical; nps
+parity over 5 alternating runs (4.639M base vs 4.636M new, overlapping);
+Threads=4 smoke healthy (9.9M aggregated nodes, sane bestmove).
+
+**Trap recorded:** the exe-name-paired net convention means a binary copied for
+A/B silently drops to HCE unless a same-stem `.nnue` travels with it — this
+produced an all-positions-differ false alarm before diagnosis. Pair the net
+with every binary copy, and gate both arms.
+
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 
 **Branch:** `smp-phase1-lockless-tt`. Kickoff decisions (2026-08-04): proceed

@@ -106,6 +106,8 @@ const int INFINITE = 30000;
 const int MATE = 29000;
 // MAX_DEPTH is defined in pvtable.hpp
 
+struct MinimalLimits;  // declared below; SearchInfo::for_uci takes it
+
 /**
  * @brief Per-search runtime state, limits, statistics, and the collected PV.
  *
@@ -219,11 +221,20 @@ struct SearchInfo {
     // bench, and the UCI driver itself — behaves exactly as before.
     bool polls_input;
 
-    // #40 phase 3: helper threads emit no UCI output (interleaved `info` lines
-    // from N threads are malformed protocol) and skip the driver-only
-    // iteration-start time gate — they run until the group stop fires. Thread 0
-    // leaves this false and is the sole writer to stdout.
-    bool is_helper;
+    // Does THIS search write UCI output? Interleaved `info` lines from N
+    // threads are malformed protocol, so under SMP only the driver (thread 0)
+    // leaves this true and is the sole writer to stdout (#40 phase 3). Datagen
+    // and any other "search but say nothing" caller clears it too — output
+    // suppression (including the PV-display walk that feeds stdout) is ALL
+    // this flag means.
+    bool emit_uci_output;
+
+    // Does the iteration-start time gate (#47: stop when elapsed*2 > budget)
+    // apply to this search? A helper has no budget of its own — it runs until
+    // the group stop fires — so `for_helper` clears this (#40 phase 3). Single
+    // meaning: the gate, nothing else. Time-unbounded roles (infinite,
+    // depth_only) already bypass the gate via their own fields.
+    bool use_iteration_gate;
 
     // #40 phase 3: worker index, used only to diversify the search (depth and
     // aspiration skew). 0 = the driver.
@@ -245,7 +256,8 @@ struct SearchInfo {
                    best_move(), fh(0), fhf(0), null_cut(0),
                    futility_cuts(0), lmr_attempts(0), lmr_failures(0), razoring_cuts(0),
                    singular_exts(0), aspiration_researches(0), history_lmr_adjusts(0),
-                   lmp_prunes(0), polls_input(true), is_helper(false), thread_id(0),
+                   lmp_prunes(0), polls_input(true), emit_uci_output(true),
+                   use_iteration_gate(true), thread_id(0),
                    node_mirror(nullptr) {
         // Initialize search stack
         for (int i = 0; i < 64; ++i) {
@@ -253,6 +265,29 @@ struct SearchInfo {
             pv_length[i] = 0;
         }
     }
+
+    // ---- Role-typed factories -----------------------------------------------
+    // The blessed construction paths. Each owns the complete set of valid field
+    // combinations for one role, so no caller re-derives them (they used to be
+    // distributed across uci.cpp, search_pool.cpp, and datagen.cpp, held
+    // together by comments). Raw field-setting stays legal — tests reach fields
+    // directly — but new call sites should go through one of these.
+    // Defined in search.cpp (cold path).
+
+    /// The driver search behind a UCI `go`: full output, time policy from
+    /// `limits` (#65 soft/hard deadlines), the #56 mid-search input pump.
+    static SearchInfo for_uci(const MinimalLimits& limits,
+                              std::function<void(SearchInfo&)> pump);
+
+    /// A Lazy SMP helper (#40 phase 3): inherits the driver's depth/time frame
+    /// (except the driver-only soft bound), no output, no iteration gate, no
+    /// stdin, diversified by `thread_id`.
+    static SearchInfo for_helper(const SearchInfo& driver, int thread_id,
+                                 std::atomic<uint64_t>* node_mirror);
+
+    /// A quiet fixed-depth oracle search (datagen labels, tests, bench):
+    /// depth-bounded, no time management, no stdin, no output.
+    static SearchInfo for_quiet_fixed_depth(int depth);
 };
 
 /**
@@ -568,7 +603,9 @@ public:
      * setup exactly once.
      *
      * @param pos  Position to search (the calling thread's own copy).
-     * @param info Per-thread state; `is_helper` and `thread_id` select the role.
+     * @param info Per-thread state, built by one of the SearchInfo factories;
+     *             `emit_uci_output`, `use_iteration_gate`, and `thread_id`
+     *             select the role.
      * @return This thread's best move.
      */
     S_MOVE iterativeDeepening(Position& pos, SearchInfo& info);

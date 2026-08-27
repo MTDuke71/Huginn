@@ -115,9 +115,12 @@ S_MOVE SearchPool::search(Position& pos, SearchInfo& info) {
     Engine::clearForSearch(driver, info);
 
     driver.group_stop = &group_stop_;
+    // Pin the driver role regardless of what the caller set: thread 0, sole
+    // stdout writer, owns the time policy, hosts the #56 UCI pump.
     info.thread_id = 0;
-    info.is_helper = false;
-    info.polls_input = true;             // the #56 UCI pump lives on this thread
+    info.emit_uci_output = true;
+    info.use_iteration_gate = true;
+    info.polls_input = true;
     info.node_mirror = &node_counts_[0];
     info.aggregate_nodes = [this]() { return total_nodes(); };
 
@@ -138,44 +141,9 @@ S_MOVE SearchPool::search(Position& pos, SearchInfo& info) {
         w.should_stop.store(false, std::memory_order_relaxed);
         w.group_stop = &group_stop_;
 
-        hi.max_depth   = info.max_depth;
-        hi.infinite    = info.infinite;
-        hi.depth_only  = info.depth_only;
-        hi.start_time  = info.start_time;
-        hi.stop_time   = info.stop_time;
-        // BACKLOG #65: `soft_stop_time` is deliberately NOT propagated; helpers
-        // inherit only the hard deadline (stop_time, above).
-        //
-        // The soft bound means "do not START another iteration", and that is a
-        // DRIVER decision: only the driver's move is played, and the driver
-        // returning is what ends the whole search (group_stop_ fires a few lines
-        // below, so helpers are cut off within a poll regardless). Coupling
-        // helper scheduling to a driver-only time policy would be wrong in
-        // principle even where it is harmless in practice.
-        //
-        // Mechanically, leaving it at the clock epoch makes the root check's
-        // liveness guard (`soft_stop_time > start_time`) read false, so helpers
-        // skip the bound entirely.
-        //
-        // Honest scope: propagating it would NOT strand the helpers for long —
-        // each would stop at its own next iteration boundary past the soft
-        // bound, which lands near where the driver stops anyway. Iteration
-        // skipping means those boundaries differ per helper, so the effect is
-        // real but small. Keep it driver-only for the semantics, not because
-        // the alternative is catastrophic.
-        //
-        // Verified 2026-08-06, Kiwipete @ 10+0.1 (soft 550 ms / hard 1650 ms):
-        //   Threads=1 -> d13 @ 945 ms | Threads=2 -> d13 @ 906 ms
-        //   Threads=8 -> d14 @ 816 ms
-        // Time stays bounded as threads rise and t8 buys a ply; nothing runs
-        // away to the hard deadline. See
-        // SmpPoolTest.HelpersContributeUnderALiveSoftTimeBound.
-        hi.thread_id   = i;
-        hi.is_helper   = true;
-        hi.polls_input = false;          // main-thread-only console state
-        hi.node_mirror = &node_counts_[i];
-        // hi.on_input deliberately left empty, and polls_input false, so a
-        // helper can never reach input_is_waiting()/read_input().
+        // The helper's SearchInfo contract — which of the driver's fields are
+        // inherited (and why soft_stop_time is not) — lives in the factory.
+        hi = SearchInfo::for_helper(info, i, &node_counts_[i]);
 
         helpers.emplace_back([&w, &hi, &helper_pos, i]() {
             w.iterativeDeepening(helper_pos[static_cast<size_t>(i - 1)], hi);

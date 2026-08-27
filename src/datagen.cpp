@@ -136,15 +136,10 @@ void worker(int tid, const Options& opt, const std::vector<std::string>& book,
             if (ply < 20 && (xorshift(rng) % 100) < 8) {
                 chosen = legal.moves[xorshift(rng) % size_t(legal.count)];
             } else {
-                Huginn::SearchInfo info;
-                info.max_depth = opt.depth;
-                info.depth_only = true;
-                info.polls_input = false;
-                info.infinite = false;
-                // is_helper suppresses all UCI output and the per-iteration PV
-                // display walk. Search behaviour is unchanged; it is the
-                // engine's existing "search but say nothing" role (#40 phase 3).
-                info.is_helper = true;
+                // The oracle role: fixed depth, no time management, no stdin,
+                // no UCI output. Search behaviour is identical to the driver's.
+                Huginn::SearchInfo info =
+                    Huginn::SearchInfo::for_quiet_fixed_depth(opt.depth);
                 chosen = engine.searchPosition(pos, info);
                 if (chosen.move == 0) break;
                 label = engine.last_root_score;

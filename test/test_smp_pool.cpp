@@ -271,9 +271,47 @@ TEST_F(SmpPoolTest, NewGameClearsSharedTableAndAllWorkers) {
 TEST_F(SmpPoolTest, SearchInfoPollsInputByDefaultForNonHelpers) {
     SearchInfo info;
     EXPECT_TRUE(info.polls_input) << "existing single-threaded callers must keep polling";
-    EXPECT_FALSE(info.is_helper);
+    EXPECT_TRUE(info.emit_uci_output);
+    EXPECT_TRUE(info.use_iteration_gate);
     EXPECT_EQ(info.thread_id, 0);
     EXPECT_EQ(info.node_mirror, nullptr);
+}
+
+// The SearchInfo factories are the blessed construction paths: pin each role's
+// contract so a future field can't silently leak into (or out of) a role.
+TEST_F(SmpPoolTest, ForHelperInheritsFrameButNotSoftBoundOrOutput) {
+    SearchInfo driver;
+    driver.max_depth = 17;
+    driver.start_time = std::chrono::steady_clock::now();
+    driver.stop_time = driver.start_time + std::chrono::milliseconds(1650);
+    driver.soft_stop_time = driver.start_time + std::chrono::milliseconds(550);
+
+    std::atomic<uint64_t> mirror{0};
+    SearchInfo hi = SearchInfo::for_helper(driver, 3, &mirror);
+
+    EXPECT_EQ(hi.max_depth, 17);
+    EXPECT_EQ(hi.start_time, driver.start_time);
+    EXPECT_EQ(hi.stop_time, driver.stop_time);
+    // BACKLOG #65: the soft bound is a driver-only policy; a helper's stays at
+    // the epoch so the root liveness guard reads it as unset.
+    EXPECT_EQ(hi.soft_stop_time, std::chrono::steady_clock::time_point{});
+    EXPECT_EQ(hi.thread_id, 3);
+    EXPECT_FALSE(hi.emit_uci_output);
+    EXPECT_FALSE(hi.use_iteration_gate);
+    EXPECT_FALSE(hi.polls_input);
+    EXPECT_EQ(hi.node_mirror, &mirror);
+    EXPECT_FALSE(static_cast<bool>(hi.on_input))
+        << "a helper must never reach input_is_waiting()/read_input()";
+}
+
+TEST_F(SmpPoolTest, ForQuietFixedDepthIsSilentAndTimeless) {
+    SearchInfo info = SearchInfo::for_quiet_fixed_depth(9);
+    EXPECT_EQ(info.max_depth, 9);
+    EXPECT_TRUE(info.depth_only);
+    EXPECT_FALSE(info.infinite);
+    EXPECT_FALSE(info.polls_input);
+    EXPECT_FALSE(info.emit_uci_output);
+    EXPECT_EQ(info.thread_id, 0) << "quiet searches are undiversified";
 }
 
 }  // namespace
