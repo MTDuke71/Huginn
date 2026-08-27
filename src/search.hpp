@@ -308,6 +308,39 @@ struct MinimalLimits {
 };
 
 /**
+ * @brief One search thread's cancellation channel (#73).
+ *
+ * Two layers with one poll site: a per-Engine `local` flag (#56 — a worker
+ * must be individually stoppable, and stop()/signal_stop() may fire from
+ * another thread) and an optional shared `group` flag (#40 phase 3 — a UCI
+ * `stop` must reach every SMP worker at once; relying on the driver to notice
+ * and fan out would add a whole checkup interval of latency per worker).
+ * checkup() polls stop_requested() and translates it into info.stopped ON the
+ * searching thread, so SearchInfo itself is never written cross-thread.
+ *
+ * The protocol is three verbs, owned by the search lifecycle
+ * (SearchPool::search arms at entry, releases at exit; clearForSearch clears
+ * for bare-Engine callers):
+ *  - request_stop(): trip this thread's flag (any thread may call)
+ *  - stop_requested(): the one poll, local first then group
+ *  - clear(): lower the local flag; the group attachment is left alone
+ *    (attach_group rebinds it — the pool does this every search)
+ */
+struct StopToken {
+    void request_stop() { local_.store(true, std::memory_order_relaxed); }
+    bool stop_requested() const {
+        return local_.load(std::memory_order_relaxed) ||
+               (group_ && group_->load(std::memory_order_relaxed));
+    }
+    void clear() { local_.store(false, std::memory_order_relaxed); }
+    void attach_group(std::atomic<bool>* g) { group_ = g; }
+
+private:
+    std::atomic<bool> local_{false};
+    std::atomic<bool>* group_ = nullptr;  // null outside SMP: single-threaded path pays one null test
+};
+
+/**
  * @brief The search engine: owns the search tables and runs alpha-beta.
  *
  * A single Engine drives one search position at a time. It owns the
@@ -368,19 +401,9 @@ public:  // Make members public for easier access
     }
 
 
-    // #56: the ONE cross-thread cancellation channel. stop()/signal_stop()
-    // (any thread) set it; checkup() polls it and translates it into
-    // info.stopped ON the searching thread, so SearchInfo itself is never
-    // written cross-thread (the old path published a raw pointer to the
-    // stack SearchInfo and wrote its non-atomic fields from another thread).
-    std::atomic<bool> should_stop{false};
-
-    // #40 phase 3: group cancellation for Lazy SMP. `should_stop` is per-Engine
-    // (a worker must be individually stoppable), but a UCI `stop` has to reach
-    // every worker at once — relying on the driver to notice and fan out would
-    // add a whole checkup interval of latency per worker. checkup() consults
-    // both. Null outside SMP, so the single-threaded path is unchanged.
-    std::atomic<bool>* group_stop = nullptr;
+    // #73: this Engine's cancellation channel — see StopToken above Engine for
+    // the protocol. Replaces the former `should_stop` + `group_stop` pair.
+    StopToken stop_token;
 
     int nodes_searched = 0;
     std::chrono::steady_clock::time_point start_time;
@@ -483,8 +506,8 @@ public:
     // UCI score formatting
     std::string format_uci_score(int score, Color side_to_move) const;
 
-    void stop() { should_stop = true; }
-    void reset() { should_stop = false; nodes_searched = 0; }
+    void stop() { stop_token.request_stop(); }
+    void reset() { stop_token.clear(); nodes_searched = 0; }
     
     // Utility to convert move to UCI string
     static std::string move_to_uci(const S_MOVE& move);
@@ -585,6 +608,19 @@ public:
      * @return The best move found (also left in `info.best_move`). (VICE Part 57)
      */
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
+
+    /**
+     * @brief The pre-search short-circuits: opening-book probe (with legality
+     *        re-check) and tablebase root probe (#73).
+     *
+     * A hit obviates the whole search — the caller returns the move directly.
+     * ONE copy, shared by both lifecycle owners: searchPosition (bare-Engine
+     * callers: tests, datagen) and SearchPool::search (the UCI path). The
+     * `info string` announcements obey `info.emit_uci_output`.
+     *
+     * @return The book/TB move, or move == 0 when the search must run.
+     */
+    S_MOVE root_shortcut(Position& pos, const SearchInfo& info);
 
     /// #39: score (side-to-move POV) of the last completed root iteration.
     /// Written only by in-window, uninterrupted iterations — datagen reads it

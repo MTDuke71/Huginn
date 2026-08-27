@@ -125,6 +125,10 @@ public:
     Engine& driver() { return *workers_[0]; }
 
 private:
+    /// #73: the one exit path from search() — trip, fan out, join, re-clear.
+    /// Both the normal return and the exception path go through here.
+    void release_and_join(std::vector<std::thread>& helpers);
+
     TranspositionTable tt_{64};
     PolyglotBook book_;
     SyzygyTablebase* tablebase_;

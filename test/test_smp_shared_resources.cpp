@@ -81,11 +81,11 @@ TEST(SmpSharedResources, WorkersDoNotShareOrderingTables) {
     EXPECT_EQ(w1.search_killers[3][0].move, 0u)
         << "killers must be private to a worker";
 
-    // The stop flag is per-Engine too; the SMP stop path fans out to each
-    // worker rather than relying on one shared atomic.
+    // The stop token's local channel is per-Engine too; the SMP stop path
+    // fans out to each worker rather than relying on one shared atomic.
     w0.stop();
-    EXPECT_TRUE(w0.should_stop.load());
-    EXPECT_FALSE(w1.should_stop.load());
+    EXPECT_TRUE(w0.stop_token.stop_requested());
+    EXPECT_FALSE(w1.stop_token.stop_requested());
 }
 
 // A default-constructed Engine still owns its own TT and book. This is what

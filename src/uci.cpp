@@ -580,8 +580,9 @@ void UCIInterface::handle_setoption(const std::vector<std::string>& tokens) {
  *               the engine should search.
  */
 void UCIInterface::search_best_move(const Huginn::MinimalLimits& limits, bool hold_for_stop) {
-    // Reset the search engine
-    search_engine->reset();
+    // #73: no pre-search flag reset here — SearchPool::search arms every
+    // worker's stop token (and the group flag) at its own entry, before the
+    // book/TB probes can short-circuit. One owner for the hygiene.
 
     // Deadline wiring (#65 soft/hard collapse) and the #56 mid-search command
     // pump both live in the factory now.
@@ -815,7 +816,7 @@ void UCIInterface::pump_search_input(Huginn::SearchInfo& info) {
  */
 void UCIInterface::wait_for_stop(Huginn::SearchInfo& info) {
     while (!info.stopped && !info.quit && !quit_received) {
-        if (search_engine->should_stop.load(std::memory_order_relaxed)) break;
+        if (search_engine->stop_token.stop_requested()) break;
         if (Huginn::input_is_waiting()) {
             pump_search_input(info);
         } else {

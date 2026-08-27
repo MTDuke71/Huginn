@@ -2005,18 +2005,12 @@ void Engine::checkup(SearchInfo& info) {
     // Check if we should stop due to time limit
     if (info.quit || info.stopped) return;
 
-    // #56: race-free cancellation — stop()/signal_stop() (possibly another
-    // thread) raise the engine's atomic; it is translated into info.stopped
-    // HERE, on the searching thread, so SearchInfo has a single writer.
-    if (should_stop.load(std::memory_order_relaxed)) {
-        info.stopped = true;
-        return;
-    }
-
-    // #40 phase 3: the Lazy SMP group stop — one atomic every worker reads, so
-    // a `stop` reaches all of them at once instead of waiting for the driver to
-    // notice and fan out. Null (and so free) in the single-threaded path.
-    if (group_stop && group_stop->load(std::memory_order_relaxed)) {
+    // #56/#73: race-free cancellation — stop()/signal_stop() (possibly another
+    // thread) trip the token; it is translated into info.stopped HERE, on the
+    // searching thread, so SearchInfo has a single writer. One poll covers
+    // both channels (per-Engine local, then the Lazy SMP group flag — null and
+    // so free in the single-threaded path), same order as the old two ifs.
+    if (stop_token.stop_requested()) {
         info.stopped = true;
         return;
     }
@@ -2097,7 +2091,7 @@ void Engine::clearForSearch(Engine& engine, SearchInfo& info) {
     info.nodes = 0;          // Reset nodes count
     
     // Reset engine state for new search
-    engine.should_stop = false;     // Reset stop flag
+    engine.stop_token.clear();      // Reset stop flag
     engine.nodes_searched = 0;      // Reset nodes count
 }
 
@@ -3415,9 +3409,18 @@ SearchInfo SearchInfo::for_quiet_fixed_depth(int depth) {
  * @return The best move found (the move actually played by the engine).
  */
 S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
-    S_MOVE best_move;
-    best_move.move = 0;
-    
+    // #73: the pre-search short-circuits live in root_shortcut — ONE copy,
+    // shared with SearchPool::search (the UCI path).
+    S_MOVE shortcut = root_shortcut(pos, info);
+    if (shortcut.move != 0) return shortcut;
+
+    // VICE Part 57: Clear everything before starting search
+    clearForSearch(*this, info);
+
+    return iterativeDeepening(pos, info);
+}
+
+S_MOVE Engine::root_shortcut(Position& pos, const SearchInfo& info) {
     // VICE Part 85: Check opening book first
     if (opening_book.is_book_loaded() && opening_book.has_book_moves(pos)) {
         S_MOVE book_move = opening_book.get_book_move(pos);
@@ -3425,7 +3428,7 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
             // CRITICAL: Validate that the book move is actually legal in current position
             S_MOVELIST legal_moves;
             generate_legal_moves(pos, legal_moves);
-            
+
             // Check if book move is in the legal move list
             bool book_move_is_legal = false;
             for (int i = 0; i < legal_moves.count; ++i) {
@@ -3434,29 +3437,32 @@ S_MOVE Engine::searchPosition(Position& pos, SearchInfo& info) {
                     break;
                 }
             }
-            
+
             if (book_move_is_legal) {
-                std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
+                if (info.emit_uci_output) {
+                    std::cout << "info string Found book move: " << move_to_uci(book_move) << std::endl;
+                }
                 return book_move;
-            } else {
+            } else if (info.emit_uci_output) {
                 std::cout << "info string Book move " << move_to_uci(book_move) << " is illegal, ignoring" << std::endl;
             }
         }
     }
-    
+
     // Syzygy Tablebase Root Probe - Check for perfect endgame move
     if (tablebase && tablebase->is_available()) {
         S_MOVE tablebase_move = probe_tablebase_root(pos);
         if (tablebase_move.move != 0) {
-            std::cout << "info string Found tablebase move: " << move_to_uci(tablebase_move) << std::endl;
+            if (info.emit_uci_output) {
+                std::cout << "info string Found tablebase move: " << move_to_uci(tablebase_move) << std::endl;
+            }
             return tablebase_move;
         }
     }
-    
-    // VICE Part 57: Clear everything before starting search
-    clearForSearch(*this, info);
 
-    return iterativeDeepening(pos, info);
+    S_MOVE none;
+    none.move = 0;
+    return none;
 }
 
 /**

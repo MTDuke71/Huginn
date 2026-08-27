@@ -1114,6 +1114,37 @@ A/B silently drops to HCE unless a same-stem `.nnue` travels with it — this
 produced an all-positions-differ false alarm before diagnosis. Pair the net
 with every binary copy, and gate both arms.
 
+### #73: One search-lifecycle owner + StopToken — DONE 2026-08-27
+
+Architecture-review candidate 2 (follows #72). Two frictions: the start-a-search
+preamble (book probe with legality re-check + TB root probe) existed verbatim in
+`Engine::searchPosition` and `SearchPool::search`, and cancellation was two
+flags (`Engine::should_stop` + injected `SearchPool::group_stop_` pointer)
+whose arm/trip/clear stores were scattered across ~8 sites in three files, with
+the release-join-clear block duplicated on the pool's normal and throwing exits.
+
+**Shipped shape:**
+- `Engine::root_shortcut(pos, info)`: the book/TB short-circuits, one copy,
+  called by both searchPosition (tests, datagen) and the pool (UCI). Its
+  `info string` announcements now obey `emit_uci_output` (#72's flag).
+- `StopToken` type (search.hpp): per-Engine `local` atomic + optional shared
+  `group` pointer behind three verbs — `request_stop()`, `stop_requested()`
+  (one poll, local-then-group, replacing checkup's two ifs with identical
+  short-circuit order), `clear()`/`attach_group()`. Replaces the public
+  `should_stop`/`group_stop` pair.
+- `SearchPool::search` arms every token at ENTRY, before the probes can
+  short-circuit — closing a real corner: a stray `stop` between searches
+  followed by `go infinite` hitting a book move would have released bestmove
+  instantly (only UCI's belt-and-braces pre-search `reset()` guarded it; that
+  call is now gone, the pool owns the hygiene).
+- `SearchPool::release_and_join()`: the one exit path (trip, fan out, join,
+  re-clear), shared by the normal return and the exception path.
+
+**Verification:** signature gate bit-identical on both eval arms × 4 positions
+(HCE startpos d14 = 3,481,582 / cp 31 / e2e4); 319/319 tests (1 by-design
+skip); Threads=4 smoke healthy (9.3M aggregated nodes); nps parity over 3
+alternating runs (4.751M base / 4.747M new, overlapping).
+
 ### #40: Lazy SMP / multithreading — IN PROGRESS (started 2026-08-04)
 
 **Branch:** `smp-phase1-lockless-tt`. Kickoff decisions (2026-08-04): proceed
