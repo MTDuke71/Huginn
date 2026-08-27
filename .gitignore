@@ -122,3 +122,7 @@ toes-fetish-agi-2-s2-b4f556e8.js
 nnue_data/
 nnue/*.nnue
 build/nnue-dev/
+
+# Downloaded third-party skills repo (aihero.dev skills, used by Claude Code) —
+# not part of the engine; lives here for convenience only.
+.agents/skills-main/
