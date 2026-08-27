@@ -1114,6 +1114,56 @@ A/B silently drops to HCE unless a same-stem `.nnue` travels with it — this
 produced an all-positions-differ false alarm before diagnosis. Pair the net
 with every binary copy, and gate both arms.
 
+### #74: Architecture review 2026-08-27 — remaining deepening candidates (OPEN)
+
+The 2026-08-27 deepening scan produced six candidates; #72 (SearchInfo
+factories) and #73 (lifecycle owner + StopToken) shipped. The remaining four,
+in recommended order:
+
+**(a) Delete the dead flag-off root loop — Strong, cheap.** The
+`ENABLE_ASPIRATION=0` arm duplicates the entire root move body (~90 lines,
+search.cpp ~3745-3815) and has been the shipped-OFF baseline since t32. The
+aspiration arm with `use_window=false` already degenerates to the full window,
+so the ablation build survives as "forced full window" rather than a second
+textual copy (the literal pre-t32 byte-identical arm is lost — note in the
+commit). Root-body fixes (e.g. the repetition clamp) currently must land in
+two copies. Signature-gateable.
+
+**(b) TimeManager — Worth exploring.** "When does the search stop" spans four
+sites in three files: budget math (uci_utils.cpp:234-308), deadline wiring
+(now SearchInfo::for_uci), the checkup hard abort + hidden 5000 ms default,
+and two root gates (soft-bound check with the epoch-as-unset encoding, and the
+#47 elapsed×2 gate). A small value type — `may_start_iteration(depth, now)` /
+`must_abort(now)` / `unbounded()` for helpers — replaces 3 time_points + flags
+in SearchInfo; slots into the #72 factories. Unit-testable with a fake clock
+(today: only via wall-clock searches). Signature-gateable; keep must_abort to
+two comparisons inline.
+
+**(c) SearchReporter seam + extract search_root_pass — Worth exploring.**
+~175 lines of PV-display walk + UCI `info` formatting live inside
+iterativeDeepening; stdout ownership is a flag convention (`emit_uci_output`).
+Two adapters already exist in flag form (UCI reporter / null reporter for
+helpers-datagen-tests) — a real seam. MultiPV or a JSON reporter becomes a
+new adapter, not search surgery. Reporter runs once per iteration — zero nps.
+Signature-gateable; preserve exact `info` token order (GUIs parse it).
+
+**(d) Retire the PVTable — Worth exploring, NOT signature-preserving.**
+pvtable.{hpp,cpp} (146 LOC) fails the deletion test: its only consumer is the
+2,000,000 ordering tier directly under the TT move (3,000,000), stored at the
+same nodes. Removing it drops a hash probe from pick_next_move (nps can only
+improve) and removes one per-worker table from SMP reasoning. Ordering shifts
+when PV and TT hints diverge (TT-evicted case), so this needs its own SPRT /
+gauntlet arm, not signature.py — land it standalone, never inside an SMP phase
+refactor.
+
+**(e) NNUE accumulator generation stamp — Speculative.** The "acc matches the
+board" invariant is patched defensively at three distant sites (two
+rebuild_counts in uci.cpp option handlers, one refresh at iterativeDeepening
+entry); datagen depends on autoload ordering. A `g_net_generation` bumped on
+load/toggle, mirrored in the Accumulator and checked in evaluate() (one int
+compare, replacing the unconditional per-search refresh), makes freshness
+self-contained. Pays off as the #39 net-swap cadence increases.
+
 ### #73: One search-lifecycle owner + StopToken — DONE 2026-08-27
 
 Architecture-review candidate 2 (follows #72). Two frictions: the start-a-search
