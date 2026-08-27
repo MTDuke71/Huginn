@@ -610,6 +610,37 @@ public:
     S_MOVE searchPosition(Position& pos, SearchInfo& info);
 
     /**
+     * @brief One pass of the root move loop at a fixed depth and window (#75).
+     *
+     * Pseudo-legal generation with per-move MakeMove legality, PVS-style
+     * local-alpha tightening, the #44 winning-repetition clamp, and the
+     * triangular-PV splice at ply 0. The aspiration loop calls this once per
+     * (re-)search pass; there is exactly ONE copy of the root body.
+     *
+     * @param move_list   Root moves, already ordered (prev best swapped first).
+     * @param[out] best_out    Best move of this pass (move == 0 if none).
+     * @param[out] legal_count Legal root moves encountered this pass.
+     * @return This pass's best score (window-relative; caller judges fail
+     *         low/high against alpha/beta).
+     */
+    int search_root_pass(Position& pos, S_MOVELIST& move_list, int depth,
+                         int alpha, int beta, int root_static_eval,
+                         SearchInfo& info, S_MOVE& best_out, int& legal_count);
+
+    /**
+     * @brief Per-iteration reporting: the PV-display walk (triangular prefix +
+     *        TT-walk extension, #36 capped at searched depth) and the UCI
+     *        `info` line (#75).
+     *
+     * Everything stdout-facing that happens per completed iteration, in one
+     * place. Callers gate on `info.emit_uci_output` — a quiet search skips the
+     * walk's movegen/make/unmake cost entirely. Kept as a plain method, not an
+     * interface: a NullReporter would just be "don't call" (one real adapter =
+     * hypothetical seam); carve the seam when a second real reporter exists.
+     */
+    void report_iteration(Position& pos, SearchInfo& info, int depth, int best_score);
+
+    /**
      * @brief The pre-search short-circuits: opening-book probe (with legality
      *        re-check) and tablebase root probe (#73).
      *

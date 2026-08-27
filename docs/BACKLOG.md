@@ -1114,20 +1114,43 @@ A/B silently drops to HCE unless a same-stem `.nnue` travels with it — this
 produced an all-positions-differ false alarm before diagnosis. Pair the net
 with every binary copy, and gate both arms.
 
+### #75: Root pass extracted + reporting carved out + dead root loop deleted — DONE 2026-08-27
+
+Architecture-review candidate 5 (#74 items a + c, shipped together).
+
+**Shipped shape:**
+- The `ENABLE_ASPIRATION=0` root loop — a ~90-line textual copy of the root
+  body, shipped-OFF since t32 — is DELETED. The flag now forces
+  `use_window = false` through the shared code (a full window cannot fail
+  low/high: that needs a score at ±30000, unreachable since mate caps at
+  ±29000, so exactly one pass runs per depth). **Equivalence proven, not
+  assumed:** a `-DENABLE_ASPIRATION=OFF` build of the old copy vs the new
+  shared body came back bit-identical on all 4 gate positions (startpos d14 =
+  4,317,830 both — genuinely the no-aspiration search). The literal pre-t32
+  byte-identical arm no longer exists; the ablation semantics are now
+  "forced full window".
+- `Engine::search_root_pass()`: ONE copy of the root move body (pseudo-legal
+  gen + per-move legality, PVS local-alpha tightening, #44 winning-repetition
+  clamp, triangular-PV splice), called once per aspiration (re-)search pass.
+  Root-body fixes now land once.
+- `Engine::report_iteration()`: the ~180-line PV-display walk (triangular
+  prefix + TT-walk extension, #36 cap) and the UCI `info` line, out of
+  iterativeDeepening (now ~330 lines, was ~550). Gated at the call site on
+  `emit_uci_output`. Deliberately a plain method, NOT a SearchReporter
+  interface: a NullReporter is just "don't call", and one real adapter is a
+  hypothetical seam — carve it when MultiPV/JSON actually exists.
+
+**Verification:** signature gate bit-identical on both eval arms × 4 positions
+(HCE startpos d14 = 3,481,582 / cp 31 / e2e4); OFF-arm old-vs-new bit-identical
+(above); 319/319 tests (1 by-design skip); Threads=4 smoke healthy; nps parity
+over 3 alternating runs (4.749M base / 4.744M new, overlapping). `info` token
+order untouched (GUIs parse it).
+
 ### #74: Architecture review 2026-08-27 — remaining deepening candidates (OPEN)
 
 The 2026-08-27 deepening scan produced six candidates; #72 (SearchInfo
-factories) and #73 (lifecycle owner + StopToken) shipped. The remaining four,
-in recommended order:
-
-**(a) Delete the dead flag-off root loop — Strong, cheap.** The
-`ENABLE_ASPIRATION=0` arm duplicates the entire root move body (~90 lines,
-search.cpp ~3745-3815) and has been the shipped-OFF baseline since t32. The
-aspiration arm with `use_window=false` already degenerates to the full window,
-so the ablation build survives as "forced full window" rather than a second
-textual copy (the literal pre-t32 byte-identical arm is lost — note in the
-commit). Root-body fixes (e.g. the repetition clamp) currently must land in
-two copies. Signature-gateable.
+factories), #73 (lifecycle owner + StopToken), and #75 (root pass + reporting
+extraction + dead-loop deletion, items a/c below) shipped. Remaining:
 
 **(b) TimeManager — Worth exploring.** "When does the search stop" spans four
 sites in three files: budget math (uci_utils.cpp:234-308), deadline wiring
@@ -1138,14 +1161,6 @@ and two root gates (soft-bound check with the epoch-as-unset encoding, and the
 in SearchInfo; slots into the #72 factories. Unit-testable with a fake clock
 (today: only via wall-clock searches). Signature-gateable; keep must_abort to
 two comparisons inline.
-
-**(c) SearchReporter seam + extract search_root_pass — Worth exploring.**
-~175 lines of PV-display walk + UCI `info` formatting live inside
-iterativeDeepening; stdout ownership is a flag convention (`emit_uci_output`).
-Two adapters already exist in flag form (UCI reporter / null reporter for
-helpers-datagen-tests) — a real seam. MultiPV or a JSON reporter becomes a
-new adapter, not search surgery. Reporter runs once per iteration — zero nps.
-Signature-gateable; preserve exact `info` token order (GUIs parse it).
 
 **(d) Retire the PVTable — Worth exploring, NOT signature-preserving.**
 pvtable.{hpp,cpp} (146 LOC) fails the deletion test: its only consumer is the

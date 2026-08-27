@@ -154,8 +154,12 @@
 // From ASPIRATION_MIN_DEPTH on, search [prev-50, prev+50] around the previous
 // depth's score; on fail-low/high widen that side geometrically (x2), snapping
 // to the full window once delta exceeds ASPIRATION_MAX_DELTA or on mate-range
-// scores. SHIPPED baseline-t32 (default ON); build the pre-t32 OFF arm with
+// scores. SHIPPED baseline-t32 (default ON); build the OFF arm with
 // -DENABLE_ASPIRATION=0.
+// #75: the OFF arm is no longer a textual copy of the pre-t32 root loop — it
+// forces use_window=false through the shared root-pass code, which searches
+// the identical full-window node order (a full window cannot fail low/high,
+// so exactly one pass runs per depth). Same search, one root body.
 #ifndef ENABLE_ASPIRATION
 #define ENABLE_ASPIRATION 1  // shipped t32 (two-machine SPRT vs t31, pooled +14.46, LOS ~99.6%)
 #endif
@@ -3505,11 +3509,11 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
 
     const int root_static_eval = evalPosition(pos);
 
-#if ENABLE_ASPIRATION
     // #17-r2: centre of the next iteration's aspiration window — the score
     // from the last completed depth (used from ASPIRATION_MIN_DEPTH on).
+    // Unconditional since #75: the flag-off arm shares this code path with
+    // the window forced shut.
     int prev_score = 0;
-#endif
 
 #if ENABLE_SOFT_TIME_BOUND
     // #65: the soft bound is only live when the caller actually set one. A
@@ -3635,12 +3639,11 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
             }
         }
 
-#if ENABLE_ASPIRATION
         // #17-r2: aspiration windows. From ASPIRATION_MIN_DEPTH on, search a
         // narrow window centred on the previous depth's score — the deep
         // iterations that dominate total cost then run with far more cutoffs.
         // On a fail (best <= alpha fail-low / best >= beta fail-high) widen the
-        // failed side geometrically (x2) and re-run the root loop; snap to the
+        // failed side geometrically (x2) and re-run the root pass; snap to the
         // full window once delta outgrows ASPIRATION_MAX_DELTA. Mate-range
         // centres skip the window entirely (mate scores move by ply, not cp).
         constexpr int ASPIRATION_MIN_DEPTH  = 6;    // measured on t31: >50cp swings persist through d5
@@ -3648,9 +3651,20 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         constexpr int ASPIRATION_MAX_DELTA  = 800;  // escape hatch: stop nibbling, open full
         constexpr int ASPIRATION_MATE_BOUND = 27000; // below the TB clamp (28000) and mate range
 
+#if ENABLE_ASPIRATION
         const bool use_window =
             current_depth >= ASPIRATION_MIN_DEPTH &&
             prev_score > -ASPIRATION_MATE_BOUND && prev_score < ASPIRATION_MATE_BOUND;
+#else
+        // #75: the ablation arm. The former flag-off root loop was a ~90-line
+        // textual copy of the pass body with the window pinned open — exactly
+        // this code with use_window false (a full window cannot fail low or
+        // high: that needs a score at ±30000, unreachable with a legal move
+        // since mate caps at ±29000, so the loop below runs one pass). Same
+        // node order as the old copy; the literal pre-t32 byte-identical arm
+        // no longer exists.
+        const bool use_window = false;
+#endif
         // #40 phase 3 (r2) — the SECOND diversification axis, alongside
         // iteration skipping. Helpers widen their initial window by a
         // thread-dependent amount, so they fail high/low at different scores
@@ -3664,72 +3678,11 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         int beta  = use_window ? std::min(prev_score + delta,  30000) :  30000;
 
         while (true) {
-            best_score = -30000;
-            depth_best_move.move = 0;
-            legal_count = 0;
-            info.pv_length[0] = 0;  // reset root PV for this (re-)search pass
-
-            // PVS-style alpha tightening within the window: local_alpha rises
-            // as root moves improve it, so sibling subtrees cut against the
-            // best score found so far instead of the window floor.
-            int local_alpha = alpha;
-
-            for (int i = 0; i < move_list.count; ++i) {
-                if (info.stopped || info.quit) break;
-
-                if (pos.MakeMove(move_list.moves[i]) != 1) {
-                    assert_search_position_integrity(pos, "after illegal root MakeMove rollback");
-                    continue; // Skip illegal moves
-                }
-                assert_search_position_integrity(pos, "after root MakeMove");
-                ++legal_count;
-#if ENABLE_ROOT_TWOFOLD_AVOID
-                // BACKLOG #44 follow-up: same gate as the baseline arm — see
-                // the flag-off loop below for the full rationale.
-                const bool immediate_repetition =
-                    (repetition_count_in_history(pos) >= 2);
-#else
-                const bool immediate_repetition = isRepetition(pos);
-#endif
-
-                // Track move in search stack for counter-move heuristic.
-                // info.ply is 0 at root; this writes search_stack[0].
-                if (info.ply >= 0 && info.ply < 64) {
-                    info.search_stack[info.ply] = move_list.moves[i];
-                }
-
-                ++info.ply;
-                const auto child = capture_search_position(pos);
-                int score = -AlphaBeta(pos, -beta, -local_alpha, current_depth - 1, info, true, false);
-                --info.ply;
-                assert_search_position_unchanged(pos, child, "after root child search");
-
-                if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
-                    score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
-                }
-
-                pos.TakeMove();
-                assert_search_position_integrity(pos, "after root TakeMove");
-
-                if (info.stopped || info.quit) break;
-
-                if (score > best_score) {
-                    best_score = score;
-                    depth_best_move = move_list.moves[i];
-
-                    // Triangular PV at the root (ply 0): this move + the child's
-                    // line, which the recursion stored at ply 1.
-                    info.pv_line[0][0] = move_list.moves[i];
-                    int child_len = info.pv_length[1];
-                    for (int j = 0; j < child_len; ++j) {
-                        info.pv_line[0][j + 1] = info.pv_line[1][j];
-                    }
-                    info.pv_length[0] = child_len + 1;
-
-                    if (best_score > local_alpha) local_alpha = best_score;
-                    if (best_score >= beta) break; // fail-high → widen beta and re-search
-                }
-            }
+            // #75: ONE copy of the root move body, shared by every (re-)search
+            // pass and both flag arms.
+            best_score = search_root_pass(pos, move_list, current_depth, alpha,
+                                          beta, root_static_eval, info,
+                                          depth_best_move, legal_count);
 
             // Don't widen or loop on an interrupted or terminal pass — the
             // shared post-loop code below discards it / handles mate+stalemate.
@@ -3752,78 +3705,6 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
                 beta  =  30000;
             }
         }
-#else
-        // Try each move at the root with PVS-style alpha tightening:
-        // pass local_alpha (the best score found so far at root) as the
-        // recursion's alpha, so subsequent subtrees can produce alpha-beta
-        // cutoffs against it instead of searching with the full window.
-        // The fail-high break is dormant here (beta = 30000 only fires on
-        // found-mate) but is in place ready for aspiration windows.
-        const int root_alpha_init = -30000;
-        const int root_beta = 30000;
-        int local_alpha = root_alpha_init;
-
-        for (int i = 0; i < move_list.count; ++i) {
-            if (info.stopped || info.quit) break;
-
-            if (pos.MakeMove(move_list.moves[i]) != 1) {
-                assert_search_position_integrity(pos, "after illegal root MakeMove rollback");
-                continue; // Skip illegal moves
-            }
-            assert_search_position_integrity(pos, "after root MakeMove");
-            ++legal_count;
-#if ENABLE_ROOT_TWOFOLD_AVOID
-            // BACKLOG #44 follow-up: rep count >= 2 means this root move
-            // recreates a position key already in the game history (a single
-            // repetition; >= 3 is the rule threefold isRepetition() requires).
-            // The winning clamp below then routes around the shuffle one move
-            // earlier. Same gate as before — no effect unless clearly winning.
-            const bool immediate_repetition =
-                (repetition_count_in_history(pos) >= 2);
-#else
-            const bool immediate_repetition = isRepetition(pos);
-#endif
-
-            // Track move in search stack for counter-move heuristic.
-            // info.ply is 0 at root; this writes search_stack[0].
-            if (info.ply >= 0 && info.ply < 64) {
-                info.search_stack[info.ply] = move_list.moves[i];
-            }
-
-            ++info.ply;
-            const auto child = capture_search_position(pos);
-            int score = -AlphaBeta(pos, -root_beta, -local_alpha, current_depth - 1, info, true, false);
-            --info.ply;
-            assert_search_position_unchanged(pos, child, "after root child search");
-
-            if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
-                score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
-            }
-
-            pos.TakeMove();
-            assert_search_position_integrity(pos, "after root TakeMove");
-
-            if (info.stopped || info.quit) break;
-
-            if (score > best_score) {
-                best_score = score;
-                depth_best_move = move_list.moves[i];
-
-                // Triangular PV at the root (ply 0): this move + the child's
-                // line, which the recursion stored at ply 1.
-                info.pv_line[0][0] = move_list.moves[i];
-                int child_len = info.pv_length[1];
-                for (int j = 0; j < child_len; ++j) {
-                    info.pv_line[0][j + 1] = info.pv_line[1][j];
-                }
-                info.pv_length[0] = child_len + 1;
-
-                if (best_score > local_alpha) local_alpha = best_score;
-                if (best_score >= root_beta) break; // fail-high (no aspiration yet → only mate)
-            }
-        }
-#endif
-
         // If search was interrupted, return previous best move (time management benefit)
         if (info.stopped || info.quit) {
             break;
@@ -3846,203 +3727,282 @@ S_MOVE Engine::iterativeDeepening(Position& pos, SearchInfo& info) {
         // score would be the time-management variance the backlog warns against).
         last_root_score = best_score;
 
-#if ENABLE_ASPIRATION
         // Centre the next depth's aspiration window on this depth's accepted
         // score (only completed, in-window iterations reach this point).
+        // Harmless on the flag-off arm, where the window never opens.
         prev_score = best_score;
-#endif
 
-        // #40 phase 3: everything from here to the end of the iteration is
-        // reporting — the PV-display walk and the UCI `info` line. Only a
-        // search that emits output does it. A quiet search skipping the walk
-        // also skips its make/unmake + movegen cost per iteration, which is
-        // pure overhead for a thread whose output nobody reads.
-        if (!info.emit_uci_output) continue;
-
-        // Calculate elapsed time for output
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
-
-        // Build the PV to display: take the triangular PV as the prefix,
-        // then extend by walking the transposition table. When a root move
-        // bottoms out via a TT cutoff, the child never populates its own
-        // pv_line and the triangular array truncates to length 1 — but the
-        // deeper line still lives in the TT, so pull it out for the GUI.
-        // Repetition / rule-50 truncation runs across both phases: the
-        // *displayed* PV stops at the first position that revisits a prior game
-        // position or reaches the fifty-move draw horizon (GUI validators
-        // reject tails that continue after either terminal condition).
-        // One make/unmake walk paid once per depth, not per node.
-        constexpr int PV_DISPLAY_CAP = 32;  // array bound (deeper than Huginn ever reaches)
-        // BACKLOG #36: never display a PV longer than the depth actually
-        // searched. The triangular prefix is search-truth (length <= depth);
-        // the TT-walk extension below recovers a full-length line when the
-        // triangular array truncates via a TT cutoff, but must not run past the
-        // searched depth — that tail is unverified, and a collision there used
-        // to print bogus moves and an over-long PV.
-        const int pv_cap = std::min(PV_DISPLAY_CAP, current_depth);
-        S_MOVE display_pv[PV_DISPLAY_CAP];
-        int pv_moves = 0;
-        {
-            // Seen-set baseline: only the actual game-history positions
-            // (move_history[0..pos.ply-1]). The full move_history vector
-            // grows during search and retains stale zobrist keys from the
-            // last move sequence each alpha-beta iteration happened to
-            // try (TakeMove decrements pos.ply but doesn't clear the slot).
-            // Iterating the full vector poisoned the seen-set with stale
-            // keys from the search interior — when one of them collided
-            // with a position our walk visited (e.g. position-after-e2e4
-            // after the search's final tried sequence ran through e2e4),
-            // the walk aborted at one move. pos.ply is the game ply at
-            // root emission, so this gives the correct rep-detection
-            // baseline without false positives.
-            std::unordered_set<uint64_t> seen;
-            seen.reserve(static_cast<size_t>(pos.ply) + PV_DISPLAY_CAP);
-            for (int i = 0; i < pos.ply; ++i) {
-                const uint64_t k = pos.move_history[i].zobrist_key;
-                if (k != 0) seen.insert(k);
-            }
-            seen.insert(pos.zobrist_key);
-
-            int made = 0;
-            bool stop = false;
-
-            // Phase 1 — triangular PV prefix (search-truth, definitely legal).
-            const S_MOVE* tri_pv = info.pv_line[0];
-            const int tri_len = info.pv_length[0];
-            for (int i = 0; i < tri_len && pv_moves < pv_cap; ++i) {
-                if (pos.MakeMove(tri_pv[i]) != 1) {
-                    assert_search_position_integrity(pos, "after illegal PV-prefix MakeMove rollback");
-                    stop = true;
-                    break;
-                }
-                assert_search_position_integrity(pos, "after PV-prefix MakeMove");
-                ++made;
-                display_pv[pv_moves++] = tri_pv[i];
-                if (pos.halfmove_clock >= 100) {
-                    stop = true;  // keep the draw-creating move, drop the tail
-                    break;
-                }
-                if (!seen.insert(pos.zobrist_key).second) {
-                    stop = true;  // keep the rep-creating move, drop the tail
-                    break;
-                }
-            }
-
-            // Phase 2 — extend via TT walk. Same collision filter the main
-            // search uses (search.cpp:853-868): sanity-check the raw best_move
-            // before calling MakeMove, since a TT collision can hand back a
-            // move whose from-square is empty or wrong-coloured in the current
-            // position. MakeMove != 1 then catches king-in-check cases.
-            while (!stop && pv_moves < pv_cap) {
-                int tt_score;
-                uint8_t tt_depth, tt_type;
-                uint32_t tt_move_raw;
-                if (!tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_type, tt_move_raw)) break;
-                if (tt_move_raw == 0) break;
-
-                S_MOVE tt_move;
-                tt_move.move = static_cast<int>(tt_move_raw);
-                tt_move.score = 0;
-
-                const int from = tt_move.get_from();
-                const int to = tt_move.get_to();
-                if (from < 0 || from >= 64 || to < 0 || to >= 64) break;
-
-                // BACKLOG #36: validate the raw TT move against this position's
-                // generated moves before applying it. A hash collision can hand
-                // back a move that belongs to a *different* position but happens
-                // to have a correctly-coloured from-square — the old check
-                // trusted that and let a bogus move into the displayed PV.
-                // Requiring membership in the pseudo-legal list (then MakeMove
-                // for king safety) makes every displayed move genuinely legal.
-                S_MOVELIST walk_moves;
-                generate_all_moves(pos, walk_moves);
-                bool tt_move_legal = false;
-                for (int wi = 0; wi < walk_moves.count; ++wi) {
-                    if (walk_moves.moves[wi].move == tt_move.move) { tt_move_legal = true; break; }
-                }
-                if (!tt_move_legal) break;
-
-                if (pos.MakeMove(tt_move) != 1) {
-                    assert_search_position_integrity(pos, "after illegal PV TT-walk MakeMove rollback");
-                    break;
-                }
-                assert_search_position_integrity(pos, "after PV TT-walk MakeMove");
-                ++made;
-                display_pv[pv_moves++] = tt_move;
-                if (pos.halfmove_clock >= 100) break;  // fifty-move rule
-                if (!seen.insert(pos.zobrist_key).second) break;  // rep
-            }
-
-            for (int i = 0; i < made; ++i) {
-                pos.TakeMove();
-                assert_search_position_integrity(pos, "after PV display TakeMove");
-            }
+        // #40 phase 3: everything past the root loop is reporting — the
+        // PV-display walk and the UCI `info` line, one method since #75. Only
+        // a search that emits output pays for it: a quiet search skips the
+        // walk's make/unmake + movegen cost per iteration, which is pure
+        // overhead for a thread whose output nobody reads.
+        if (info.emit_uci_output) {
+            report_iteration(pos, info, current_depth, best_score);
         }
-        const S_MOVE* pv_array = display_pv;
-
-        // Spec-compliant UCI `info` line: tokens in canonical order, PV last
-        // (PV is variable-length and consumes to end-of-line per the spec).
-        // depth/seldepth/multipv/score/nodes/nps/hashfull/tbhits/time are
-        // the standard fields every UCI GUI and adjudication tool expects.
-        // #40 phase 3: report the whole search's node count, not just this
-        // thread's. Publish our own tally first so the sum includes work done
-        // since the last checkup, then aggregate every worker's mirror.
-        if (info.node_mirror) info.node_mirror->store(info.nodes, std::memory_order_relaxed);
-        const uint64_t reported_nodes = info.aggregate_nodes ? info.aggregate_nodes() : info.nodes;
-        const uint64_t nps = reported_nodes * 1000ULL / std::max<int64_t>(elapsed.count(), 1);
-        std::cout << "info depth " << current_depth
-                  << " seldepth " << info.seldepth
-                  << " multipv 1"
-                  << " score " << format_uci_score(best_score, pos.side_to_move)
-                  << " nodes " << reported_nodes
-                  << " nps " << nps
-                  << " hashfull " << tt_table.permill_full()
-                  << " tbhits " << info.tbhits
-                  << " time " << elapsed.count()
-                  << " pv ";
-        for (int i = 0; i < pv_moves; ++i) {
-            std::cout << move_to_uci(pv_array[i]);
-            if (i < pv_moves - 1) std::cout << " ";
-        }
-        std::cout << std::endl;
-
-#if ENABLE_INFO_DIAGNOSTICS
-        // Engine-internal pruning/ordering counters. Gated off by default so
-        // (a) GUIs don't see non-standard tokens in the `info` line and
-        // (b) the increments above (null_cut, lmr_*, tt hits/misses/writes)
-        // compile out from the hot path. Build with
-        // `-DENABLE_INFO_DIAGNOSTICS=1` when tuning.
-        std::cout << "info string diag"
-                  << " nullcut " << info.null_cut
-                  << " lmr " << info.lmr_attempts << "/" << info.lmr_failures
-                  << " tthits " << tt_table.get_hits()
-                  << " ttwrites " << tt_table.get_writes()
-                  << std::endl;
-#endif
-        
-#if ENABLE_PRUNING_STATS
-        // Print futility pruning statistics for this depth
-        if (info.futility_cuts > 0) {
-            std::cout << "info string Depth " << current_depth << " - Futility cuts: "
-                      << info.futility_cuts << " (" << std::fixed << std::setprecision(1)
-                      << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
-        }
-
-        // Print razoring statistics for this depth
-        if (info.razoring_cuts > 0) {
-            std::cout << "info string Depth " << current_depth << " - Razoring cuts: "
-                      << info.razoring_cuts << " (" << std::fixed << std::setprecision(1)
-                      << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
-        }
-#endif
 
         // Iteration-start time gating happens at the top of the loop; no
         // post-iteration time check needed here.
     }
-    
+
     return best_move;
+}
+
+int Engine::search_root_pass(Position& pos, S_MOVELIST& move_list, int depth,
+                             int alpha, int beta, int root_static_eval,
+                             SearchInfo& info, S_MOVE& best_out, int& legal_count) {
+    int best_score = -30000;
+    best_out.move = 0;
+    legal_count = 0;
+    info.pv_length[0] = 0;  // reset root PV for this (re-)search pass
+
+    // PVS-style alpha tightening within the window: local_alpha rises
+    // as root moves improve it, so sibling subtrees cut against the
+    // best score found so far instead of the window floor.
+    int local_alpha = alpha;
+
+    for (int i = 0; i < move_list.count; ++i) {
+        if (info.stopped || info.quit) break;
+
+        if (pos.MakeMove(move_list.moves[i]) != 1) {
+            assert_search_position_integrity(pos, "after illegal root MakeMove rollback");
+            continue; // Skip illegal moves
+        }
+        assert_search_position_integrity(pos, "after root MakeMove");
+        ++legal_count;
+#if ENABLE_ROOT_TWOFOLD_AVOID
+        // BACKLOG #44 follow-up: rep count >= 2 means this root move
+        // recreates a position key already in the game history (a single
+        // repetition; >= 3 is the rule threefold isRepetition() requires).
+        // The winning clamp below then routes around the shuffle one move
+        // earlier. Same gate as before — no effect unless clearly winning.
+        const bool immediate_repetition =
+            (repetition_count_in_history(pos) >= 2);
+#else
+        const bool immediate_repetition = isRepetition(pos);
+#endif
+
+        // Track move in search stack for counter-move heuristic.
+        // info.ply is 0 at root; this writes search_stack[0].
+        if (info.ply >= 0 && info.ply < 64) {
+            info.search_stack[info.ply] = move_list.moves[i];
+        }
+
+        ++info.ply;
+        const auto child = capture_search_position(pos);
+        int score = -AlphaBeta(pos, -beta, -local_alpha, depth - 1, info, true, false);
+        --info.ply;
+        assert_search_position_unchanged(pos, child, "after root child search");
+
+        if (immediate_repetition && root_static_eval >= WINNING_REPETITION_AVOID_THRESHOLD) {
+            score = std::min(score, WINNING_REPETITION_DRAW_SCORE);
+        }
+
+        pos.TakeMove();
+        assert_search_position_integrity(pos, "after root TakeMove");
+
+        if (info.stopped || info.quit) break;
+
+        if (score > best_score) {
+            best_score = score;
+            best_out = move_list.moves[i];
+
+            // Triangular PV at the root (ply 0): this move + the child's
+            // line, which the recursion stored at ply 1.
+            info.pv_line[0][0] = move_list.moves[i];
+            int child_len = info.pv_length[1];
+            for (int j = 0; j < child_len; ++j) {
+                info.pv_line[0][j + 1] = info.pv_line[1][j];
+            }
+            info.pv_length[0] = child_len + 1;
+
+            if (best_score > local_alpha) local_alpha = best_score;
+            if (best_score >= beta) break; // fail-high → caller widens beta and re-searches
+        }
+    }
+
+    return best_score;
+}
+
+void Engine::report_iteration(Position& pos, SearchInfo& info, int depth, int best_score) {
+    // Calculate elapsed time for output
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - info.start_time);
+
+    // Build the PV to display: take the triangular PV as the prefix,
+    // then extend by walking the transposition table. When a root move
+    // bottoms out via a TT cutoff, the child never populates its own
+    // pv_line and the triangular array truncates to length 1 — but the
+    // deeper line still lives in the TT, so pull it out for the GUI.
+    // Repetition / rule-50 truncation runs across both phases: the
+    // *displayed* PV stops at the first position that revisits a prior game
+    // position or reaches the fifty-move draw horizon (GUI validators
+    // reject tails that continue after either terminal condition).
+    // One make/unmake walk paid once per depth, not per node.
+    constexpr int PV_DISPLAY_CAP = 32;  // array bound (deeper than Huginn ever reaches)
+    // BACKLOG #36: never display a PV longer than the depth actually
+    // searched. The triangular prefix is search-truth (length <= depth);
+    // the TT-walk extension below recovers a full-length line when the
+    // triangular array truncates via a TT cutoff, but must not run past the
+    // searched depth — that tail is unverified, and a collision there used
+    // to print bogus moves and an over-long PV.
+    const int pv_cap = std::min(PV_DISPLAY_CAP, depth);
+    S_MOVE display_pv[PV_DISPLAY_CAP];
+    int pv_moves = 0;
+    {
+        // Seen-set baseline: only the actual game-history positions
+        // (move_history[0..pos.ply-1]). The full move_history vector
+        // grows during search and retains stale zobrist keys from the
+        // last move sequence each alpha-beta iteration happened to
+        // try (TakeMove decrements pos.ply but doesn't clear the slot).
+        // Iterating the full vector poisoned the seen-set with stale
+        // keys from the search interior — when one of them collided
+        // with a position our walk visited (e.g. position-after-e2e4
+        // after the search's final tried sequence ran through e2e4),
+        // the walk aborted at one move. pos.ply is the game ply at
+        // root emission, so this gives the correct rep-detection
+        // baseline without false positives.
+        std::unordered_set<uint64_t> seen;
+        seen.reserve(static_cast<size_t>(pos.ply) + PV_DISPLAY_CAP);
+        for (int i = 0; i < pos.ply; ++i) {
+            const uint64_t k = pos.move_history[i].zobrist_key;
+            if (k != 0) seen.insert(k);
+        }
+        seen.insert(pos.zobrist_key);
+
+        int made = 0;
+        bool stop = false;
+
+        // Phase 1 — triangular PV prefix (search-truth, definitely legal).
+        const S_MOVE* tri_pv = info.pv_line[0];
+        const int tri_len = info.pv_length[0];
+        for (int i = 0; i < tri_len && pv_moves < pv_cap; ++i) {
+            if (pos.MakeMove(tri_pv[i]) != 1) {
+                assert_search_position_integrity(pos, "after illegal PV-prefix MakeMove rollback");
+                stop = true;
+                break;
+            }
+            assert_search_position_integrity(pos, "after PV-prefix MakeMove");
+            ++made;
+            display_pv[pv_moves++] = tri_pv[i];
+            if (pos.halfmove_clock >= 100) {
+                stop = true;  // keep the draw-creating move, drop the tail
+                break;
+            }
+            if (!seen.insert(pos.zobrist_key).second) {
+                stop = true;  // keep the rep-creating move, drop the tail
+                break;
+            }
+        }
+
+        // Phase 2 — extend via TT walk. Same collision filter the main
+        // search uses (search.cpp:853-868): sanity-check the raw best_move
+        // before calling MakeMove, since a TT collision can hand back a
+        // move whose from-square is empty or wrong-coloured in the current
+        // position. MakeMove != 1 then catches king-in-check cases.
+        while (!stop && pv_moves < pv_cap) {
+            int tt_score;
+            uint8_t tt_depth, tt_type;
+            uint32_t tt_move_raw;
+            if (!tt_table.probe(pos.zobrist_key, tt_score, tt_depth, tt_type, tt_move_raw)) break;
+            if (tt_move_raw == 0) break;
+
+            S_MOVE tt_move;
+            tt_move.move = static_cast<int>(tt_move_raw);
+            tt_move.score = 0;
+
+            const int from = tt_move.get_from();
+            const int to = tt_move.get_to();
+            if (from < 0 || from >= 64 || to < 0 || to >= 64) break;
+
+            // BACKLOG #36: validate the raw TT move against this position's
+            // generated moves before applying it. A hash collision can hand
+            // back a move that belongs to a *different* position but happens
+            // to have a correctly-coloured from-square — the old check
+            // trusted that and let a bogus move into the displayed PV.
+            // Requiring membership in the pseudo-legal list (then MakeMove
+            // for king safety) makes every displayed move genuinely legal.
+            S_MOVELIST walk_moves;
+            generate_all_moves(pos, walk_moves);
+            bool tt_move_legal = false;
+            for (int wi = 0; wi < walk_moves.count; ++wi) {
+                if (walk_moves.moves[wi].move == tt_move.move) { tt_move_legal = true; break; }
+            }
+            if (!tt_move_legal) break;
+
+            if (pos.MakeMove(tt_move) != 1) {
+                assert_search_position_integrity(pos, "after illegal PV TT-walk MakeMove rollback");
+                break;
+            }
+            assert_search_position_integrity(pos, "after PV TT-walk MakeMove");
+            ++made;
+            display_pv[pv_moves++] = tt_move;
+            if (pos.halfmove_clock >= 100) break;  // fifty-move rule
+            if (!seen.insert(pos.zobrist_key).second) break;  // rep
+        }
+
+        for (int i = 0; i < made; ++i) {
+            pos.TakeMove();
+            assert_search_position_integrity(pos, "after PV display TakeMove");
+        }
+    }
+    const S_MOVE* pv_array = display_pv;
+
+    // Spec-compliant UCI `info` line: tokens in canonical order, PV last
+    // (PV is variable-length and consumes to end-of-line per the spec).
+    // depth/seldepth/multipv/score/nodes/nps/hashfull/tbhits/time are
+    // the standard fields every UCI GUI and adjudication tool expects.
+    // #40 phase 3: report the whole search's node count, not just this
+    // thread's. Publish our own tally first so the sum includes work done
+    // since the last checkup, then aggregate every worker's mirror.
+    if (info.node_mirror) info.node_mirror->store(info.nodes, std::memory_order_relaxed);
+    const uint64_t reported_nodes = info.aggregate_nodes ? info.aggregate_nodes() : info.nodes;
+    const uint64_t nps = reported_nodes * 1000ULL / std::max<int64_t>(elapsed.count(), 1);
+    std::cout << "info depth " << depth
+              << " seldepth " << info.seldepth
+              << " multipv 1"
+              << " score " << format_uci_score(best_score, pos.side_to_move)
+              << " nodes " << reported_nodes
+              << " nps " << nps
+              << " hashfull " << tt_table.permill_full()
+              << " tbhits " << info.tbhits
+              << " time " << elapsed.count()
+              << " pv ";
+    for (int i = 0; i < pv_moves; ++i) {
+        std::cout << move_to_uci(pv_array[i]);
+        if (i < pv_moves - 1) std::cout << " ";
+    }
+    std::cout << std::endl;
+
+#if ENABLE_INFO_DIAGNOSTICS
+    // Engine-internal pruning/ordering counters. Gated off by default so
+    // (a) GUIs don't see non-standard tokens in the `info` line and
+    // (b) the increments above (null_cut, lmr_*, tt hits/misses/writes)
+    // compile out from the hot path. Build with
+    // `-DENABLE_INFO_DIAGNOSTICS=1` when tuning.
+    std::cout << "info string diag"
+              << " nullcut " << info.null_cut
+              << " lmr " << info.lmr_attempts << "/" << info.lmr_failures
+              << " tthits " << tt_table.get_hits()
+              << " ttwrites " << tt_table.get_writes()
+              << std::endl;
+#endif
+
+#if ENABLE_PRUNING_STATS
+    // Print futility pruning statistics for this depth
+    if (info.futility_cuts > 0) {
+        std::cout << "info string Depth " << depth << " - Futility cuts: "
+                  << info.futility_cuts << " (" << std::fixed << std::setprecision(1)
+                  << (double(info.futility_cuts) / info.nodes * 100.0) << "%)" << std::endl;
+    }
+
+    // Print razoring statistics for this depth
+    if (info.razoring_cuts > 0) {
+        std::cout << "info string Depth " << depth << " - Razoring cuts: "
+                  << info.razoring_cuts << " (" << std::fixed << std::setprecision(1)
+                  << (double(info.razoring_cuts) / info.nodes * 100.0) << "%)" << std::endl;
+    }
+#endif
 }
 
 /// @brief Load a Polyglot opening book from @p book_path. @return true on success.
